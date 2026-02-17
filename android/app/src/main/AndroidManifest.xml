@@ -23,5 +23,39 @@
             <category android:name="android.intent.category.LAUNCHER" />
         </intent-filter>
       </activity>
+
+      <receiver
+        android:name=".UNTILDayWidgetProvider"
+        android:exported="true"
+        android:label="UNTIL Day">
+        <intent-filter>
+          <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+        </intent-filter>
+        <meta-data
+          android:name="android.appwidget.provider"
+          android:resource="@xml/widget_day_info" />
+      </receiver>
+      <receiver
+        android:name=".UNTILMonthWidgetProvider"
+        android:exported="true"
+        android:label="UNTIL Month">
+        <intent-filter>
+          <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+        </intent-filter>
+        <meta-data
+          android:name="android.appwidget.provider"
+          android:resource="@xml/widget_month_info" />
+      </receiver>
+      <receiver
+        android:name=".UNTILYearWidgetProvider"
+        android:exported="true"
+        android:label="UNTIL Year">
+        <intent-filter>
+          <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+        </intent-filter>
+        <meta-data
+          android:name="android.appwidget.provider"
+          android:resource="@xml/widget_year_info" />
+      </receiver>
     </application>
 </manifest>

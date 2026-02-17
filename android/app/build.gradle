@@ -116,4 +116,7 @@ dependencies {
     } else {
         implementation jscFlavor
     }
+
+    implementation("androidx.work:work-runtime-ktx:2.9.0")
+    implementation("io.github.zhongwuzw:mmkv:2.2.4")
 }

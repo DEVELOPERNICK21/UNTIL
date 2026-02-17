@@ -12,7 +12,36 @@
 		6AD197529A2C6E66651170E3 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */; };
 		761780ED2CA45674006654EE /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 761780EC2CA45674006654EE /* AppDelegate.swift */; };
 		81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */; };
+		W1D00001A1234567890ABCDEF /* UNTILWidgets.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = W1D00007A1234567890ABCDEF /* UNTILWidgets.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		W1D00002A1234567890ABCDEF /* UNTILWidgets.swift in Sources */ = {isa = PBXBuildFile; fileRef = W1D00003A1234567890ABCDEF /* UNTILWidgets.swift */; };
+		W1D00004A1234567890ABCDEF /* WidgetMMKV.swift in Sources */ = {isa = PBXBuildFile; fileRef = W1D00005A1234567890ABCDEF /* WidgetMMKV.swift */; };
+		W1D00012A1234567890ABCDEF /* WidgetBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = W1D00013A1234567890ABCDEF /* WidgetBridge.m */; };
+		W1D00014A1234567890ABCDEF /* WidgetBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = W1D00015A1234567890ABCDEF /* WidgetBridge.swift */; };
 /* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		W1D0000F01234567890ABCDEF /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 83CBB9F71A601CBA00E9B192 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = W1D00009B1234567890ABCDEF;
+			remoteInfo = UNTILWidgets;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		W1D0000EF1234567890ABCDEF /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				W1D00001A1234567890ABCDEF /* UNTILWidgets.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		13B07F961A680F5B00A75B9A /* UNTIL.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = UNTIL.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -25,6 +54,13 @@
 		761780EC2CA45674006654EE /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = UNTIL/AppDelegate.swift; sourceTree = "<group>"; };
 		81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = LaunchScreen.storyboard; path = UNTIL/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
+		W1D00003A1234567890ABCDEF /* UNTILWidgets.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UNTILWidgets.swift; sourceTree = "<group>"; };
+		W1D00005A1234567890ABCDEF /* WidgetMMKV.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetMMKV.swift; sourceTree = "<group>"; };
+		W1D00007A1234567890ABCDEF /* UNTILWidgets.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = UNTILWidgets.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		W1D0000CA1234567890ABCDEF /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		W1D0000DA1234567890ABCDEF /* UNTILWidgets.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = UNTILWidgets.entitlements; sourceTree = "<group>"; };
+		W1D00013A1234567890ABCDEF /* WidgetBridge.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = WidgetBridge.m; path = UNTIL/WidgetBridge.m; sourceTree = "<group>"; };
+		W1D00015A1234567890ABCDEF /* WidgetBridge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = WidgetBridge.swift; path = UNTIL/WidgetBridge.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -33,6 +69,13 @@
 			buildActionMask = 2147483647;
 			files = (
 				0C80B921A6F3F58F76C31292 /* libPods-UNTIL.a in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		W1D0000ED1234567890ABCDEF /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -47,6 +90,8 @@
 				13B07FB61A68108700A75B9A /* Info.plist */,
 				81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */,
 				13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */,
+				W1D00015A1234567890ABCDEF /* WidgetBridge.swift */,
+				W1D00013A1234567890ABCDEF /* WidgetBridge.m */,
 			);
 			name = UNTIL;
 			sourceTree = "<group>";
@@ -71,6 +116,7 @@
 			isa = PBXGroup;
 			children = (
 				13B07FAE1A68108700A75B9A /* UNTIL */,
+				W1D0000BA1234567890ABCDEF /* UNTILWidgets */,
 				832341AE1AAA6A7D00B99B32 /* Libraries */,
 				83CBBA001A601CBA00E9B192 /* Products */,
 				2D16E6871FA4F8E400B85C8A /* Frameworks */,
@@ -85,6 +131,7 @@
 			isa = PBXGroup;
 			children = (
 				13B07F961A680F5B00A75B9A /* UNTIL.app */,
+				W1D00007A1234567890ABCDEF /* UNTILWidgets.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -96,6 +143,17 @@
 				5709B34CF0A7D63546082F79 /* Pods-UNTIL.release.xcconfig */,
 			);
 			path = Pods;
+			sourceTree = "<group>";
+		};
+		W1D0000BA1234567890ABCDEF /* UNTILWidgets */ = {
+			isa = PBXGroup;
+			children = (
+				W1D00003A1234567890ABCDEF /* UNTILWidgets.swift */,
+				W1D00005A1234567890ABCDEF /* WidgetMMKV.swift */,
+				W1D0000CA1234567890ABCDEF /* Info.plist */,
+				W1D0000DA1234567890ABCDEF /* UNTILWidgets.entitlements */,
+			);
+			path = UNTILWidgets;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -112,15 +170,34 @@
 				00DD1BFF1BD5951E006B06BC /* Bundle React Native code and images */,
 				00EEFC60759A1932668264C0 /* [CP] Embed Pods Frameworks */,
 				E235C05ADACE081382539298 /* [CP] Copy Pods Resources */,
+				W1D0000EF1234567890ABCDEF /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				W1D0000EA1234567890ABCDEF /* PBXTargetDependency */,
 			);
 			name = UNTIL;
 			productName = UNTIL;
 			productReference = 13B07F961A680F5B00A75B9A /* UNTIL.app */;
 			productType = "com.apple.product-type.application";
+		};
+		W1D00009B1234567890ABCDEF /* UNTILWidgets */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = W1D0000FA1234567890ABCDEF /* Build configuration list for PBXNativeTarget "UNTILWidgets" */;
+			buildPhases = (
+				W1D0000EC1234567890ABCDEF /* Sources */,
+				W1D0000ED1234567890ABCDEF /* Frameworks */,
+				W1D0000EE1234567890ABCDEF /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = UNTILWidgets;
+			productName = UNTILWidgets;
+			productReference = W1D00007A1234567890ABCDEF /* UNTILWidgets.appex */;
+			productType = "com.apple.product-type.app-extension";
 		};
 /* End PBXNativeTarget section */
 
@@ -132,6 +209,9 @@
 				TargetAttributes = {
 					13B07F861A680F5B00A75B9A = {
 						LastSwiftMigration = 1120;
+					};
+					W1D00009B1234567890ABCDEF = {
+						CreatedOnToolsVersion = 15.0;
 					};
 				};
 			};
@@ -149,6 +229,7 @@
 			projectRoot = "";
 			targets = (
 				13B07F861A680F5B00A75B9A /* UNTIL */,
+				W1D00009B1234567890ABCDEF /* UNTILWidgets */,
 			);
 		};
 /* End PBXProject section */
@@ -161,6 +242,13 @@
 				81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */,
 				13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */,
 				6AD197529A2C6E66651170E3 /* PrivacyInfo.xcprivacy in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		W1D0000EE1234567890ABCDEF /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -247,10 +335,29 @@
 			buildActionMask = 2147483647;
 			files = (
 				761780ED2CA45674006654EE /* AppDelegate.swift in Sources */,
+				W1D00012A1234567890ABCDEF /* WidgetBridge.m in Sources */,
+				W1D00014A1234567890ABCDEF /* WidgetBridge.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		W1D0000EC1234567890ABCDEF /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				W1D00002A1234567890ABCDEF /* UNTILWidgets.swift in Sources */,
+				W1D00004A1234567890ABCDEF /* WidgetMMKV.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		W1D0000EA1234567890ABCDEF /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = W1D00009B1234567890ABCDEF /* UNTILWidgets */;
+			targetProxy = W1D0000F01234567890ABCDEF /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		13B07F941A680F5B00A75B9A /* Debug */ = {
@@ -259,6 +366,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_ENTITLEMENTS = UNTIL/UNTIL.entitlements;
 				CURRENT_PROJECT_VERSION = 1;
 				ENABLE_BITCODE = NO;
 				INFOPLIST_FILE = UNTIL/Info.plist;
@@ -287,6 +395,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_ENTITLEMENTS = UNTIL/UNTIL.entitlements;
 				CURRENT_PROJECT_VERSION = 1;
 				INFOPLIST_FILE = UNTIL/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
@@ -453,6 +562,60 @@
 			};
 			name = Release;
 		};
+		W1D00010A1234567890ABCDEF /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_ENTITLEMENTS = UNTILWidgets/UNTILWidgets.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = UNTILWidgets/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = org.reactjs.native.example.UNTIL.UNTILWidgets;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		W1D00011A1234567890ABCDEF /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_ENTITLEMENTS = UNTILWidgets/UNTILWidgets.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = UNTILWidgets/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = org.reactjs.native.example.UNTIL.UNTILWidgets;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -470,6 +633,15 @@
 			buildConfigurations = (
 				83CBBA201A601CBA00E9B192 /* Debug */,
 				83CBBA211A601CBA00E9B192 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		W1D0000FA1234567890ABCDEF /* Build configuration list for PBXNativeTarget "UNTILWidgets" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				W1D00010A1234567890ABCDEF /* Debug */,
+				W1D00011A1234567890ABCDEF /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

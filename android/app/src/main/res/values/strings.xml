@@ -1,3 +1,15 @@
 <resources>
     <string name="app_name">UNTIL</string>
+    <string name="widget_day_description">See your day progress.</string>
+    <string name="widget_month_description">See your month progress.</string>
+    <string name="widget_year_description">See your year and day progress.</string>
+    <!-- Widget content format strings (single source for labels; supports future i18n) -->
+    <string name="widget_day_done_format">%1$d%% Done</string>
+    <string name="widget_day_left_format">%1$d%% Left</string>
+    <string name="widget_month_passed_format">%1$d Days Passed</string>
+    <string name="widget_month_left_format">%1$d Days Left</string>
+    <string name="widget_month_percent_format">%d%% Month Left</string>
+    <string name="widget_year_passed_format">%1$dd passed</string>
+    <string name="widget_year_left_format">%1$dd left</string>
+    <string name="widget_year_percent_format">%d%% consumed</string>
 </resources>
