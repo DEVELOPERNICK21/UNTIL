@@ -19,16 +19,20 @@ function computeWidgetCache(): WidgetCache {
   const month = getMonthProgress(date);
   const year = getYearProgress(date);
 
-  const dayHoursPassed = (day.progress * 24 * 60 * 60 * 1000) / (60 * 60 * 1000);
-  const dayHoursLeft = day.remainingMs / (60 * 60 * 1000);
+  const totalMinutesInDay = 24 * 60;
+  const passedMinutes = Math.floor(day.progress * totalMinutesInDay);
+  const remainingMinutes = totalMinutesInDay - passedMinutes;
 
   return {
     dayProgress: day.progress,
     dayPercentDone: Math.round(day.progress * 100),
     dayPercentLeft: Math.round((1 - day.progress) * 100),
-    dayHoursPassed: Math.round(dayHoursPassed * 10) / 10,
-    dayHoursLeft: Math.round(dayHoursLeft * 10) / 10,
+    dayHoursPassed: Math.round((day.progress * 24 * 60 * 60 * 1000) / (60 * 60 * 1000) * 10) / 10,
+    dayHoursLeft: Math.round(day.remainingMs / (60 * 60 * 1000) * 10) / 10,
+    dayPassedMinutes: passedMinutes,
+    dayRemainingMinutes: remainingMinutes,
     monthProgress: month.progress,
+    monthIndex: date.getMonth() + 1,
     monthDaysPassed: month.dayOfMonth,
     monthDaysLeft: month.remainingDays,
     monthPercent: Math.round(month.progress * 100),

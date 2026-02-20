@@ -15,6 +15,8 @@
         android:layout_weight="1"
         android:layout_marginBottom="12dp"
         android:scaleType="fitCenter"
+        android:adjustViewBounds="true"
+        android:layout_gravity="center_horizontal"
         android:contentDescription="@null" />
 
     <LinearLayout
@@ -22,17 +24,21 @@
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:gravity="center"
-        android:paddingHorizontal="8dp">
+        android:layout_gravity="center_horizontal"
+        android:paddingLeft="8dp"
+        android:paddingRight="8dp">
 
         <TextView
             android:id="@+id/widget_day_done"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:textColor="#BB86FC"
+            android:textColor="#FF3B30"
             android:textSize="13sp"
             android:textStyle="bold"
             android:gravity="center"
+            android:maxLines="1"
+            android:ellipsize="end"
             android:text="0% Done" />
 
         <TextView
@@ -40,10 +46,49 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:textColor="#E87C20"
+            android:textColor="#34C759"
             android:textSize="13sp"
             android:textStyle="bold"
             android:gravity="center"
+            android:maxLines="1"
+            android:ellipsize="end"
             android:text="100% Left" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/widget_day_hours_row"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="8dp"
+        android:paddingLeft="8dp"
+        android:paddingRight="8dp">
+
+        <TextView
+            android:id="@+id/widget_day_hours_passed"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:textColor="#AAAAAA"
+            android:textSize="12sp"
+            android:gravity="center"
+            android:maxLines="1"
+            android:ellipsize="end"
+            android:text="0h passed" />
+
+        <TextView
+            android:id="@+id/widget_day_hours_left"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:textColor="#EEEEEE"
+            android:textSize="12sp"
+            android:textStyle="bold"
+            android:gravity="center"
+            android:maxLines="1"
+            android:ellipsize="end"
+            android:text="24h left" />
     </LinearLayout>
 </LinearLayout>

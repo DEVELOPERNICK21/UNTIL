@@ -6,7 +6,7 @@
 import Foundation
 import React
 
-private let appGroupID = "group.com.until.app"
+private let appGroupID = "group.org.reactjs.native.example.UNTIL"
 private let widgetCacheKey = "widget.cache"
 
 @objc(WidgetBridge)

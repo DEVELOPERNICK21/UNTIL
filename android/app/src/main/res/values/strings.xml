@@ -6,10 +6,14 @@
     <!-- Widget content format strings (single source for labels; supports future i18n) -->
     <string name="widget_day_done_format">%1$d%% Done</string>
     <string name="widget_day_left_format">%1$d%% Left</string>
+    <string name="widget_day_hours_passed_format">%dh passed</string>
+    <string name="widget_day_hours_left_format">%dh left</string>
+    <string name="widget_day_time_passed_format">%1$dh %2$dm passed</string>
+    <string name="widget_day_time_left_format">%1$dh %2$dm left</string>
     <string name="widget_month_passed_format">%1$d Days Passed</string>
     <string name="widget_month_left_format">%1$d Days Left</string>
     <string name="widget_month_percent_format">%d%% Month Left</string>
-    <string name="widget_year_passed_format">%1$dd passed</string>
-    <string name="widget_year_left_format">%1$dd left</string>
+    <string name="widget_year_passed_format">%1$dd passed (%2$d%%)</string>
+    <string name="widget_year_left_format">%1$dd left (%2$d%%)</string>
     <string name="widget_year_percent_format">%d%% consumed</string>
 </resources>

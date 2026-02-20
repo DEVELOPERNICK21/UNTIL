@@ -23,7 +23,13 @@ export interface WidgetCache {
   dayPercentLeft: number;
   dayHoursPassed: number;
   dayHoursLeft: number;
+  /** Passed minutes in current day (0–1440). SSOT with dayRemainingMinutes: passed + remaining = 1440 */
+  dayPassedMinutes: number;
+  /** Remaining minutes in current day (0–1440) */
+  dayRemainingMinutes: number;
   monthProgress: number;
+  /** Current month 1–12 (Jan=1, Feb=2, …). Used for month dots so 2nd dot = February */
+  monthIndex: number;
   monthDaysPassed: number;
   monthDaysLeft: number;
   monthPercent: number;

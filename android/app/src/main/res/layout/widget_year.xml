@@ -11,27 +11,49 @@
     <ImageView
         android:id="@+id/widget_year_dots"
         android:layout_width="match_parent"
-        android:layout_height="160dp"
-        android:layout_marginBottom="12dp"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:minHeight="96dp"
+        android:maxHeight="160dp"
+        android:layout_marginBottom="8dp"
         android:scaleType="fitCenter"
+        android:adjustViewBounds="true"
+        android:layout_gravity="center_horizontal"
         android:contentDescription="@null" />
+
+    <ProgressBar
+        android:id="@+id/widget_year_progress"
+        style="?android:attr/progressBarStyleHorizontal"
+        android:layout_width="match_parent"
+        android:layout_height="8dp"
+        android:layout_marginTop="2dp"
+        android:layout_marginBottom="10dp"
+        android:layout_gravity="center_horizontal"
+        android:max="100"
+        android:progress="0"
+        android:progressTint="#E87C20"
+        android:progressBackgroundTint="#444444" />
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:gravity="center"
-        android:paddingHorizontal="8dp">
+        android:layout_gravity="center_horizontal"
+        android:paddingLeft="8dp"
+        android:paddingRight="8dp">
 
         <TextView
             android:id="@+id/widget_year_passed"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:textColor="#BB86FC"
-            android:textSize="14sp"
+            android:textColor="#FF3B30"
+            android:textSize="13sp"
             android:textStyle="bold"
             android:gravity="center"
+            android:maxLines="1"
+            android:ellipsize="end"
             android:text="0d passed" />
 
         <TextView
@@ -39,10 +61,12 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:textColor="#E87C20"
-            android:textSize="14sp"
+            android:textColor="#34C759"
+            android:textSize="13sp"
             android:textStyle="bold"
             android:gravity="center"
+            android:maxLines="1"
+            android:ellipsize="end"
             android:text="365d left" />
     </LinearLayout>
 
@@ -52,20 +76,21 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="10dp"
         android:layout_gravity="center_horizontal"
-        android:textColor="#EEEEEE"
-        android:textSize="16sp"
+        android:textColor="#E9A23A"
+        android:textSize="20sp"
         android:textStyle="bold"
+        android:maxLines="1"
+        android:ellipsize="end"
         android:text="0% consumed" />
 
-    <ProgressBar
-        android:id="@+id/widget_year_progress"
-        style="?android:attr/progressBarStyleHorizontal"
-        android:layout_width="match_parent"
-        android:layout_height="8dp"
-        android:layout_marginTop="12dp"
-        android:max="100"
-        android:progress="0"
-        android:progressTint="#E87C20"
-        android:progressBackgroundTint="#444444" />
+    <TextView
+        android:id="@+id/widget_year_label"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="2dp"
+        android:layout_gravity="center_horizontal"
+        android:textColor="#AAAAAA"
+        android:textSize="11sp"
+        android:text="of year" />
    
 </LinearLayout>

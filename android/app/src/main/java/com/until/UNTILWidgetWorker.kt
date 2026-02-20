@@ -52,6 +52,8 @@ class UNTILWidgetWorker(
 
         private val defaultCache = WidgetCache(
             dayPercentDone = 0, dayPercentLeft = 100,
+            dayPassedMinutes = null, dayRemainingMinutes = null,
+            monthIndex = 1,
             monthDaysPassed = 0, monthDaysLeft = 31, monthPercent = 0,
             yearDaysPassed = 0, yearDaysLeft = 365, yearPercent = 0,
             dayProgress = 0.0, monthProgress = 0.0, yearProgress = 0.0
@@ -101,12 +103,33 @@ class UNTILWidgetWorker(
             }
         }
 
+        private fun dayTimeTexts(context: Context, cache: WidgetCache, dProgress: Double): Pair<String, String> {
+            val pm = cache.dayPassedMinutes
+            val rm = cache.dayRemainingMinutes
+            val passedText = if (pm != null && pm % 60 != 0) {
+                context.getString(R.string.widget_day_time_passed_format, pm / 60, pm % 60)
+            } else {
+                val h = pm?.let { it / 60 } ?: (dProgress * 24.0).toInt().coerceIn(0, 24)
+                context.getString(R.string.widget_day_hours_passed_format, h)
+            }
+            val leftText = if (rm != null && rm % 60 != 0) {
+                context.getString(R.string.widget_day_time_left_format, rm / 60, rm % 60)
+            } else {
+                val h = rm?.let { it / 60 } ?: (24 - (dProgress * 24.0).toInt().coerceIn(0, 24)).coerceIn(0, 24)
+                context.getString(R.string.widget_day_hours_left_format, h)
+            }
+            return passedText to leftText
+        }
+
         private fun parseCache(json: String): WidgetCache? {
             return try {
                 val obj = JSONObject(json)
                 WidgetCache(
                     dayPercentDone = obj.optInt("dayPercentDone", 0),
                     dayPercentLeft = obj.optInt("dayPercentLeft", 0),
+                    dayPassedMinutes = if (obj.has("dayPassedMinutes")) obj.optInt("dayPassedMinutes", 0) else null,
+                    dayRemainingMinutes = if (obj.has("dayRemainingMinutes")) obj.optInt("dayRemainingMinutes", 0) else null,
+                    monthIndex = obj.optInt("monthIndex", 1).coerceIn(1, 12),
                     monthDaysPassed = obj.optInt("monthDaysPassed", 0),
                     monthDaysLeft = obj.optInt("monthDaysLeft", 0),
                     monthPercent = obj.optInt("monthPercent", 0),
@@ -155,6 +178,10 @@ class UNTILWidgetWorker(
                         val dProgress = cache.dayProgress.coerceIn(0.0, 1.0)
                         views.setTextViewText(R.id.widget_day_done, context.getString(R.string.widget_day_done_format, dDone))
                         views.setTextViewText(R.id.widget_day_left, context.getString(R.string.widget_day_left_format, dLeft))
+                        // Time passed/left: use SSOT from cache (minutes) when present, else compute from progress
+                        val (passedText, leftText) = dayTimeTexts(context, cache, dProgress)
+                        views.setTextViewText(R.id.widget_day_hours_passed, passedText)
+                        views.setTextViewText(R.id.widget_day_hours_left, leftText)
                         try {
                             val dotsBitmap = createDayDotsBitmap(context, dProgress)
                             if (dotsBitmap != null && !dotsBitmap.isRecycled) {
@@ -175,7 +202,7 @@ class UNTILWidgetWorker(
                         // Month progress bar (keep day widget as circular only)
                         views.setProgressBar(R.id.widget_month_progress, 100, (mProgress * 100).toInt().coerceIn(0, 100), false)
                         try {
-                            val dotsBitmap = createMonthDotsBitmap(context, mProgress)
+                            val dotsBitmap = createMonthDotsBitmap(context, cache.monthIndex)
                             if (dotsBitmap != null && !dotsBitmap.isRecycled) {
                                 views.setImageViewBitmap(R.id.widget_month_dots, dotsBitmap)
                             }
@@ -186,12 +213,19 @@ class UNTILWidgetWorker(
                     R.layout.widget_year -> {
                         val yearPassed = cache.yearDaysPassed.coerceIn(0, 365)
                         val yearLeft = cache.yearDaysLeft.coerceIn(0, 365)
-                        val yearPct = cache.yearPercent.coerceIn(0, 100)
                         val yearProgressClamped = cache.yearProgress.coerceIn(0.0, 1.0)
-                        views.setTextViewText(R.id.widget_year_passed, context.getString(R.string.widget_year_passed_format, yearPassed))
-                        views.setTextViewText(R.id.widget_year_left, context.getString(R.string.widget_year_left_format, yearLeft))
-                        views.setTextViewText(R.id.widget_year_percent, context.getString(R.string.widget_year_percent_format, yearPct))
-                        views.setProgressBar(R.id.widget_year_progress, 100, (yearProgressClamped * 100).toInt().coerceIn(0, 100), false)
+                        val yearConsumedPct = (yearProgressClamped * 100.0).toInt().coerceIn(0, 100)
+                        val yearLeftPct = (100 - yearConsumedPct).coerceIn(0, 100)
+                        views.setTextViewText(
+                            R.id.widget_year_passed,
+                            context.getString(R.string.widget_year_passed_format, yearPassed, yearConsumedPct)
+                        )
+                        views.setTextViewText(
+                            R.id.widget_year_left,
+                            context.getString(R.string.widget_year_left_format, yearLeft, yearLeftPct)
+                        )
+                        views.setTextViewText(R.id.widget_year_percent, context.getString(R.string.widget_year_percent_format, yearConsumedPct))
+                        views.setProgressBar(R.id.widget_year_progress, 100, yearConsumedPct, false)
                         try {
                             val dotsBitmap = createYearDotsBitmap(context, yearProgressClamped, yearPassed)
                             if (dotsBitmap != null && !dotsBitmap.isRecycled) {
@@ -307,14 +341,12 @@ class UNTILWidgetWorker(
             }
         }
 
-        /** Month dots: 12 dots (one per month). Purple = passed, Orange = current, Gray = remaining */
-        private fun createMonthDotsBitmap(context: Context, monthProgress: Double): Bitmap? {
+        /** Month dots: 12 dots = Jan..Dec. Orange = current month (monthIndex 1–12). */
+        private fun createMonthDotsBitmap(context: Context, monthIndex: Int): Bitmap? {
             return try {
                 val totalDots = 12
                 val cols = 6
                 val rows = 2
-                // Render at a larger fixed resolution so the ImageView doesn't need to upscale (prevents blur).
-                // The layout uses centerInside, so this bitmap will typically be downscaled slightly (sharp).
                 val bitmapWidth = 420
                 val bitmapHeight = 140
                 val bitmap = Bitmap.createBitmap(bitmapWidth, bitmapHeight, Bitmap.Config.ARGB_8888)
@@ -330,14 +362,14 @@ class UNTILWidgetWorker(
                     color = Color.parseColor("#666666")
                 }
 
-                val passedMonths = (monthProgress * totalDots).toInt().coerceIn(0, totalDots)
-                // Current month is the one we're currently in (only if not all months passed)
-                val hasCurrentMonth = passedMonths < totalDots && monthProgress < 1.0
-                val currentMonth = if (hasCurrentMonth) passedMonths else -1
+                val idx = monthIndex.coerceIn(1, 12)
+                val currentMonth = idx - 1
+                val passedMonths = currentMonth
 
                 val cellW = bitmapWidth / cols.toFloat()
                 val cellH = bitmapHeight / rows.toFloat()
-                val radius = 5.2f
+                // 30% bigger dots (as requested)
+                val radius = 5.2f * 1.3f
                 val currentRadius = radius * 1.6f
 
                 for (i in 0 until totalDots) {
@@ -429,6 +461,9 @@ class UNTILWidgetWorker(
 private data class WidgetCache(
     val dayPercentDone: Int,
     val dayPercentLeft: Int,
+    val dayPassedMinutes: Int? = null,
+    val dayRemainingMinutes: Int? = null,
+    val monthIndex: Int = 1,
     val monthDaysPassed: Int,
     val monthDaysLeft: Int,
     val monthPercent: Int,
