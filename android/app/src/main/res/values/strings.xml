@@ -3,6 +3,8 @@
     <string name="widget_day_description">See your day progress.</string>
     <string name="widget_month_description">See your month progress.</string>
     <string name="widget_year_description">See your year and day progress.</string>
+    <string name="widget_counter_description">Tap to add +1. Create counters in UNTIL.</string>
+    <string name="widget_countdown_description">Days left until a deadline. Add in UNTIL → Countdowns.</string>
     <!-- Widget content format strings (single source for labels; supports future i18n) -->
     <string name="widget_day_done_format">%1$d%% Done</string>
     <string name="widget_day_left_format">%1$d%% Left</string>
@@ -10,6 +12,8 @@
     <string name="widget_day_hours_left_format">%dh left</string>
     <string name="widget_day_time_passed_format">%1$dh %2$dm passed</string>
     <string name="widget_day_time_left_format">%1$dh %2$dm left</string>
+    <string name="widget_day_time_passed_sec_format">%1$dh %2$dm %3$ds passed</string>
+    <string name="widget_day_time_left_sec_format">%1$dh %2$dm %3$ds left</string>
     <string name="widget_month_passed_format">%1$d Days Passed</string>
     <string name="widget_month_left_format">%1$d Days Left</string>
     <string name="widget_month_percent_format">%d%% Month Left</string>

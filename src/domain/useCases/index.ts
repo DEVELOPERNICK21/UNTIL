@@ -11,5 +11,6 @@ export { LogActivityUseCase } from './LogActivityUseCase';
 export { GetCategoryTotalsUseCase } from './GetCategoryTotalsUseCase';
 export { GetRegretProjectionUseCase } from './GetRegretProjectionUseCase';
 export { GetInterventionStateUseCase } from './GetInterventionStateUseCase';
+export { SyncWidgetUseCase } from './SyncWidgetUseCase';
 
 export type { UserProfileState, TimeStateResult } from './ObserveTimeStateUseCase';

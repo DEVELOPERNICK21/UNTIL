@@ -5,14 +5,19 @@ import android.appwidget.AppWidgetManager
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import android.net.Uri
 import android.widget.RemoteViews
 import androidx.work.CoroutineWorker
 import androidx.work.ExistingPeriodicWorkPolicy
+import androidx.work.ExistingWorkPolicy
+import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import com.tencent.mmkv.MMKV
+import org.json.JSONArray
 import org.json.JSONObject
+import java.util.Calendar
 import java.util.concurrent.TimeUnit
 import android.graphics.Bitmap
 import android.graphics.Canvas
@@ -21,13 +26,17 @@ import android.graphics.Color
 
 
 private const val WIDGET_CACHE_KEY = "widget.cache"
+private const val CUSTOM_COUNTERS_KEY = "custom.counters"
+private const val COUNTDOWNS_KEY = "countdowns"
 private const val MMKV_ID = "until-storage"
 private const val WORK_NAME = "UNTILWidgetUpdate"
+private const val DAY_TICK_WORK_NAME = "UNTILDayWidgetTick"
 
 /** Request codes for widget tap PendingIntents; distinct to avoid reuse across types. */
 private const val PENDING_INTENT_DAY = 100
 private const val PENDING_INTENT_MONTH = 101
 private const val PENDING_INTENT_YEAR = 102
+private const val PENDING_INTENT_COUNTER_BASE = 200
 
 class UNTILWidgetWorker(
     context: Context,
@@ -41,7 +50,7 @@ class UNTILWidgetWorker(
 
     companion object {
         fun schedule(context: Context) {
-            val request = PeriodicWorkRequestBuilder<UNTILWidgetWorker>(30, TimeUnit.MINUTES)
+            val request = PeriodicWorkRequestBuilder<UNTILWidgetWorker>(15, TimeUnit.MINUTES)
                 .build()
             WorkManager.getInstance(context).enqueueUniquePeriodicWork(
                 WORK_NAME,
@@ -50,9 +59,21 @@ class UNTILWidgetWorker(
             )
         }
 
+        fun scheduleDayTick(context: Context) {
+            val request = OneTimeWorkRequestBuilder<DayWidgetTickWorker>()
+                .setInitialDelay(1, TimeUnit.SECONDS)
+                .build()
+            WorkManager.getInstance(context).enqueueUniqueWork(
+                DAY_TICK_WORK_NAME,
+                ExistingWorkPolicy.REPLACE,
+                request
+            )
+        }
+
         private val defaultCache = WidgetCache(
             dayPercentDone = 0, dayPercentLeft = 100,
             dayPassedMinutes = null, dayRemainingMinutes = null,
+            startOfDay = null, endOfDay = null,
             monthIndex = 1,
             monthDaysPassed = 0, monthDaysLeft = 31, monthPercent = 0,
             yearDaysPassed = 0, yearDaysLeft = 365, yearPercent = 0,
@@ -62,38 +83,63 @@ class UNTILWidgetWorker(
         fun updateWidgets(context: Context) {
             val cache = loadWidgetCache(context) ?: defaultCache
             val appWidgetManager = AppWidgetManager.getInstance(context)
-            val providers = arrayOf(
-                ComponentName(context, UNTILDayWidgetProvider::class.java),
-                ComponentName(context, UNTILMonthWidgetProvider::class.java),
-                ComponentName(context, UNTILYearWidgetProvider::class.java)
-            )
-            val ids = providers.flatMap { appWidgetManager.getAppWidgetIds(it).toList() }.distinct()
-            if (ids.isEmpty()) return
+            val dayProvider = ComponentName(context, UNTILDayWidgetProvider::class.java)
+            val monthProvider = ComponentName(context, UNTILMonthWidgetProvider::class.java)
+            val yearProvider = ComponentName(context, UNTILYearWidgetProvider::class.java)
+            val counterProvider = ComponentName(context, UNTILCounterWidgetProvider::class.java)
+            val countdownProvider = ComponentName(context, UNTILCountdownWidgetProvider::class.java)
+            val counters = loadCustomCounters(context)
+            val countdowns = loadCountdowns(context)
 
-            for (id in ids) {
-                val widgetInfo = appWidgetManager.getAppWidgetInfo(id)
-                val providerClass = widgetInfo?.provider?.className ?: ""
-                val layoutId = when {
-                    providerClass.endsWith("UNTILDayWidgetProvider") -> R.layout.widget_day
-                    providerClass.endsWith("UNTILMonthWidgetProvider") -> R.layout.widget_month
-                    providerClass.endsWith("UNTILYearWidgetProvider") -> R.layout.widget_year
-                    else -> R.layout.widget_day
+            val dayIds = appWidgetManager.getAppWidgetIds(dayProvider)
+            listOf(
+                Triple(dayIds, R.layout.widget_day, "day"),
+                Triple(appWidgetManager.getAppWidgetIds(monthProvider), R.layout.widget_month, "month"),
+                Triple(appWidgetManager.getAppWidgetIds(yearProvider), R.layout.widget_year, "year"),
+            ).forEach { (ids, layoutId, type) ->
+                if (ids.isEmpty()) return@forEach
+                for (id in ids) {
+                    try {
+                        val views = buildRemoteViews(context, layoutId, cache)
+                        appWidgetManager.updateAppWidget(id, views)
+                    } catch (e: Exception) {
+                        val views = buildRemoteViews(context, layoutId, defaultCache)
+                        appWidgetManager.updateAppWidget(id, views)
+                    }
                 }
-                try {
-                    val views = buildRemoteViews(context, layoutId, cache)
-                    appWidgetManager.updateAppWidget(id, views)
-                } catch (e: Exception) {
-                    // Still push an update so the widget doesn't stay on "Loading"
-                    val views = buildRemoteViews(context, layoutId, defaultCache)
-                    appWidgetManager.updateAppWidget(id, views)
+            }
+            if (dayIds.isNotEmpty()) scheduleDayTick(context)
+
+            val counterIds = appWidgetManager.getAppWidgetIds(counterProvider)
+            if (counterIds.isNotEmpty()) {
+                val firstCounter = counters.firstOrNull()
+                for (id in counterIds) {
+                    try {
+                        val views = buildCounterRemoteViews(context, firstCounter, id)
+                        appWidgetManager.updateAppWidget(id, views)
+                    } catch (e: Exception) {
+                        val views = buildCounterRemoteViews(context, null, id)
+                        appWidgetManager.updateAppWidget(id, views)
+                    }
+                }
+            }
+            val countdownIds = appWidgetManager.getAppWidgetIds(countdownProvider)
+            if (countdownIds.isNotEmpty()) {
+                val firstCountdown = countdowns.firstOrNull()
+                for (id in countdownIds) {
+                    try {
+                        val views = buildCountdownRemoteViews(context, firstCountdown, id)
+                        appWidgetManager.updateAppWidget(id, views)
+                    } catch (e: Exception) {
+                        val views = buildCountdownRemoteViews(context, null, id)
+                        appWidgetManager.updateAppWidget(id, views)
+                    }
                 }
             }
         }
 
         private fun loadWidgetCache(context: Context): WidgetCache? {
             return try {
-                // MMKV should already be initialized in MainApplication.onCreate(),
-                // but initialize() is safe to call multiple times (idempotent)
                 MMKV.initialize(context)
                 val mmkv = MMKV.mmkvWithID(MMKV_ID)
                 val json = mmkv?.decodeString(WIDGET_CACHE_KEY) ?: return null
@@ -103,7 +149,164 @@ class UNTILWidgetWorker(
             }
         }
 
+        private data class CustomCounterModel(val id: String, val title: String, val count: Int)
+
+        private fun loadCustomCounters(context: Context): List<CustomCounterModel> {
+            return try {
+                MMKV.initialize(context)
+                val mmkv = MMKV.mmkvWithID(MMKV_ID)
+                val json = mmkv?.decodeString(CUSTOM_COUNTERS_KEY) ?: return emptyList()
+                val arr = org.json.JSONArray(json)
+                (0 until arr.length()).map { i ->
+                    val obj = arr.getJSONObject(i)
+                    CustomCounterModel(
+                        id = obj.optString("id", ""),
+                        title = obj.optString("title", "Counter"),
+                        count = obj.optInt("count", 0)
+                    )
+                }
+            } catch (e: Exception) {
+                emptyList()
+            }
+        }
+
+        private fun incrementCounterPendingIntent(context: Context, counterId: String, appWidgetId: Int): PendingIntent {
+            val intent = Intent(context, CounterIncrementReceiver::class.java).apply {
+                action = CounterIncrementReceiver.ACTION_INCREMENT
+                putExtra(CounterIncrementReceiver.EXTRA_COUNTER_ID, counterId)
+            }
+            val requestCode = PENDING_INTENT_COUNTER_BASE + (appWidgetId and 0x7FFF)
+            return PendingIntent.getBroadcast(
+                context,
+                requestCode,
+                intent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+        }
+
+        private fun buildCounterRemoteViews(context: Context, counter: CustomCounterModel?, appWidgetId: Int): RemoteViews {
+            val views = RemoteViews(context.packageName, R.layout.widget_counter)
+            if (counter != null) {
+                views.setTextViewText(R.id.widget_counter_title, counter.title)
+                views.setTextViewText(R.id.widget_counter_count, counter.count.toString())
+                views.setOnClickPendingIntent(R.id.widget_root, incrementCounterPendingIntent(context, counter.id, appWidgetId))
+            } else {
+                views.setTextViewText(R.id.widget_counter_title, "Add a counter in UNTIL")
+                views.setTextViewText(R.id.widget_counter_count, "0")
+                val openApp = PendingIntent.getActivity(
+                    context,
+                    PENDING_INTENT_COUNTER_BASE + (appWidgetId and 0x7FFF),
+                    context.packageManager.getLaunchIntentForPackage(context.packageName)!!.apply {
+                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    },
+                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+                )
+                views.setOnClickPendingIntent(R.id.widget_root, openApp)
+            }
+            return views
+        }
+
+        private data class CountdownModel(val id: String, val title: String, val date: String)
+
+        private fun loadCountdowns(context: Context): List<CountdownModel> {
+            return try {
+                MMKV.initialize(context)
+                val mmkv = MMKV.mmkvWithID(MMKV_ID)
+                val json = mmkv?.decodeString(COUNTDOWNS_KEY) ?: return emptyList()
+                val arr = JSONArray(json)
+                (0 until arr.length()).map { i ->
+                    val obj = arr.getJSONObject(i)
+                    CountdownModel(
+                        id = obj.optString("id", ""),
+                        title = obj.optString("title", "Deadline"),
+                        date = obj.optString("date", "")
+                    )
+                }
+            } catch (e: Exception) {
+                emptyList()
+            }
+        }
+
+        private fun daysLeft(dateStr: String): Int {
+            if (dateStr.length < 10) return 0
+            return try {
+                val y = dateStr.substring(0, 4).toInt()
+                val m = dateStr.substring(5, 7).toInt() - 1
+                val d = dateStr.substring(8, 10).toInt()
+                val today = Calendar.getInstance().apply {
+                    set(Calendar.HOUR_OF_DAY, 0)
+                    set(Calendar.MINUTE, 0)
+                    set(Calendar.SECOND, 0)
+                    set(Calendar.MILLISECOND, 0)
+                }
+                val target = Calendar.getInstance().apply {
+                    set(y, m, d, 0, 0, 0)
+                    set(Calendar.MILLISECOND, 0)
+                }
+                val diffMs = target.timeInMillis - today.timeInMillis
+                val diffDays = (diffMs / (24 * 60 * 60 * 1000)).toInt()
+                maxOf(0, diffDays)
+            } catch (e: Exception) {
+                0
+            }
+        }
+
+        private fun countdownDaysText(days: Int): String {
+            return when (days) {
+                0 -> "Today"
+                1 -> "1 day left"
+                else -> "$days days left"
+            }
+        }
+
+        private fun buildCountdownRemoteViews(context: Context, countdown: CountdownModel?, appWidgetId: Int): RemoteViews {
+            val views = RemoteViews(context.packageName, R.layout.widget_countdown)
+            if (countdown != null) {
+                val days = daysLeft(countdown.date)
+                views.setTextViewText(R.id.widget_countdown_title, countdown.title)
+                views.setTextViewText(R.id.widget_countdown_days, countdownDaysText(days))
+                val openApp = PendingIntent.getActivity(
+                    context,
+                    appWidgetId,
+                    context.packageManager.getLaunchIntentForPackage(context.packageName)!!.apply { addFlags(Intent.FLAG_ACTIVITY_NEW_TASK) },
+                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+                )
+                views.setOnClickPendingIntent(R.id.widget_root, openApp)
+            } else {
+                views.setTextViewText(R.id.widget_countdown_title, "Add a countdown in UNTIL")
+                views.setTextViewText(R.id.widget_countdown_days, "0 days left")
+                val openApp = PendingIntent.getActivity(
+                    context,
+                    appWidgetId,
+                    context.packageManager.getLaunchIntentForPackage(context.packageName)!!.apply { addFlags(Intent.FLAG_ACTIVITY_NEW_TASK) },
+                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+                )
+                views.setOnClickPendingIntent(R.id.widget_root, openApp)
+            }
+            return views
+        }
+
         private fun dayTimeTexts(context: Context, cache: WidgetCache, dProgress: Double): Pair<String, String> {
+            val start = cache.startOfDay
+            val end = cache.endOfDay
+            if (start != null && end != null) {
+                val nowMs = System.currentTimeMillis()
+                val passedSec = ((nowMs - start) / 1000).toInt().coerceIn(0, ((end - start) / 1000).toInt())
+                val remainingSec = ((end - nowMs) / 1000).toInt().coerceIn(0, Int.MAX_VALUE)
+                val passedText = context.getString(
+                    R.string.widget_day_time_passed_sec_format,
+                    passedSec / 3600,
+                    (passedSec % 3600) / 60,
+                    passedSec % 60
+                )
+                val leftText = context.getString(
+                    R.string.widget_day_time_left_sec_format,
+                    remainingSec / 3600,
+                    (remainingSec % 3600) / 60,
+                    remainingSec % 60
+                )
+                return passedText to leftText
+            }
             val pm = cache.dayPassedMinutes
             val rm = cache.dayRemainingMinutes
             val passedText = if (pm != null && pm % 60 != 0) {
@@ -129,6 +332,8 @@ class UNTILWidgetWorker(
                     dayPercentLeft = obj.optInt("dayPercentLeft", 0),
                     dayPassedMinutes = if (obj.has("dayPassedMinutes")) obj.optInt("dayPassedMinutes", 0) else null,
                     dayRemainingMinutes = if (obj.has("dayRemainingMinutes")) obj.optInt("dayRemainingMinutes", 0) else null,
+                    startOfDay = if (obj.has("startOfDay")) obj.optLong("startOfDay", 0L).takeIf { it != 0L } else null,
+                    endOfDay = if (obj.has("endOfDay")) obj.optLong("endOfDay", 0L).takeIf { it != 0L } else null,
                     monthIndex = obj.optInt("monthIndex", 1).coerceIn(1, 12),
                     monthDaysPassed = obj.optInt("monthDaysPassed", 0),
                     monthDaysLeft = obj.optInt("monthDaysLeft", 0),
@@ -458,11 +663,29 @@ class UNTILWidgetWorker(
     }
 }
 
+class DayWidgetTickWorker(
+    context: Context,
+    params: WorkerParameters
+) : CoroutineWorker(context, params) {
+
+    override suspend fun doWork(): Result {
+        UNTILWidgetWorker.updateWidgets(applicationContext)
+        val dayIds = AppWidgetManager.getInstance(applicationContext)
+            .getAppWidgetIds(ComponentName(applicationContext, UNTILDayWidgetProvider::class.java))
+        if (dayIds.isNotEmpty()) {
+            UNTILWidgetWorker.scheduleDayTick(applicationContext)
+        }
+        return Result.success()
+    }
+}
+
 private data class WidgetCache(
     val dayPercentDone: Int,
     val dayPercentLeft: Int,
     val dayPassedMinutes: Int? = null,
     val dayRemainingMinutes: Int? = null,
+    val startOfDay: Long? = null,
+    val endOfDay: Long? = null,
     val monthIndex: Int = 1,
     val monthDaysPassed: Int,
     val monthDaysLeft: Int,

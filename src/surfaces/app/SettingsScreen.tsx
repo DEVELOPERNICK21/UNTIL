@@ -6,12 +6,18 @@ import {
   TouchableOpacity,
   KeyboardAvoidingView,
   Platform,
+  ScrollView,
 } from 'react-native';
-import { Text } from '../../ui';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { Text, ScreenGradient, Card } from '../../ui';
 import { useObserveTimeState, useUpdateUserProfile } from '../../hooks';
-import { Colors, Spacing } from '../../theme';
+import { syncWidgetCache } from '../../infrastructure';
+import { Colors, Spacing, Radius } from '../../theme';
+import type { RootStackParamList } from '../../navigation/RootNavigator';
 
 export function SettingsScreen() {
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList, 'Settings'>>();
   const { userProfile } = useObserveTimeState();
   const updateUserProfile = useUpdateUserProfile();
 
@@ -27,71 +33,106 @@ export function SettingsScreen() {
     if (birthInput) {
       const age = parseInt(deathInput, 10);
       updateUserProfile(birthInput, isNaN(age) || age <= 0 ? 80 : age);
+      syncWidgetCache();
     }
   };
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      style={styles.container}
-    >
-      <View style={styles.content}>
-        <Text variant="label" color="primary" style={styles.title}>
-          Settings
-        </Text>
+    <View style={styles.container}>
+      <ScreenGradient>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          style={styles.keyboard}
+        >
+          <ScrollView
+            contentContainerStyle={styles.content}
+            showsVerticalScrollIndicator={false}
+          >
+            <Text variant="sectionTitle" color="primary" style={styles.title}>
+              Settings
+            </Text>
 
-        <Text variant="label" color="secondary" style={styles.label}>
-          Birth Date (YYYY-MM-DD)
-        </Text>
-        <TextInput
-          style={styles.input}
-          value={birthInput}
-          onChangeText={setBirthInput}
-          placeholder="1990-01-15"
-          placeholderTextColor={Colors.secondaryText}
-          autoCapitalize="none"
-        />
+            <Card style={styles.card}>
+              <Text variant="caption" color="secondary" style={styles.label}>
+                Birth date (YYYY-MM-DD)
+              </Text>
+              <TextInput
+                style={styles.input}
+                value={birthInput}
+                onChangeText={setBirthInput}
+                placeholder="1990-01-15"
+                placeholderTextColor={Colors.textSecondary}
+                autoCapitalize="none"
+              />
 
-        <Text variant="label" color="secondary" style={styles.label}>
-          Expected Lifespan (years)
-        </Text>
-        <TextInput
-          style={styles.input}
-          value={deathInput}
-          onChangeText={setDeathInput}
-          placeholder="80"
-          placeholderTextColor={Colors.secondaryText}
-          keyboardType="number-pad"
-        />
+              <Text variant="caption" color="secondary" style={styles.label}>
+                Expected lifespan (years)
+              </Text>
+              <TextInput
+                style={styles.input}
+                value={deathInput}
+                onChangeText={setDeathInput}
+                placeholder="80"
+                placeholderTextColor={Colors.textSecondary}
+                keyboardType="number-pad"
+              />
+            </Card>
 
-        <TouchableOpacity style={styles.button} onPress={handleSave}>
-          <Text variant="label" color="primary">
-            Save
-          </Text>
-        </TouchableOpacity>
-      </View>
-    </KeyboardAvoidingView>
+            <TouchableOpacity style={styles.cta} onPress={handleSave}>
+              <Text variant="sectionTitle" color="primary">
+                Save
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.widgetLink}
+              onPress={() => navigation.navigate('Widget')}
+            >
+              <Text variant="body" color="secondary">Widgets</Text>
+              <Text variant="caption" color="secondary">Info and status</Text>
+            </TouchableOpacity>
+          </ScrollView>
+        </KeyboardAvoidingView>
+      </ScreenGradient>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.background },
-  content: { padding: Spacing.lg },
-  title: { marginBottom: Spacing.lg },
-  label: { marginBottom: Spacing.sm },
+  container: { flex: 1 },
+  keyboard: { flex: 1 },
+  content: {
+    paddingHorizontal: Spacing[4],
+    paddingTop: Spacing[3],
+    paddingBottom: Spacing[5],
+  },
+  title: {
+    marginBottom: Spacing[4],
+  },
+  card: {
+    marginBottom: Spacing[4],
+  },
+  label: {
+    marginBottom: Spacing[2],
+  },
   input: {
     borderWidth: 1,
     borderColor: Colors.divider,
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: Spacing.md,
-    color: Colors.primaryText,
+    borderRadius: Radius.sm,
+    padding: Spacing[3],
+    marginBottom: Spacing[3],
+    color: Colors.textPrimary,
+    fontSize: 16,
   },
-  button: {
+  cta: {
     backgroundColor: Colors.divider,
-    padding: Spacing.md,
-    borderRadius: 8,
+    paddingVertical: Spacing[3],
+    paddingHorizontal: Spacing[4],
+    borderRadius: Radius.md,
     alignItems: 'center',
-    marginTop: Spacing.sm,
+  },
+  widgetLink: {
+    marginTop: Spacing[4],
+    paddingVertical: Spacing[2],
   },
 });

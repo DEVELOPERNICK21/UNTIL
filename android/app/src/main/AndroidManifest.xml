@@ -22,6 +22,12 @@
             <action android:name="android.intent.action.MAIN" />
             <category android:name="android.intent.category.LAUNCHER" />
         </intent-filter>
+        <intent-filter>
+            <action android:name="android.intent.action.VIEW" />
+            <category android:name="android.intent.category.DEFAULT" />
+            <category android:name="android.intent.category.BROWSABLE" />
+            <data android:scheme="until" android:host="increment-counter" />
+        </intent-filter>
       </activity>
 
       <receiver
@@ -56,6 +62,35 @@
         <meta-data
           android:name="android.appwidget.provider"
           android:resource="@xml/widget_year_info" />
+      </receiver>
+      <receiver
+        android:name=".UNTILCounterWidgetProvider"
+        android:exported="true"
+        android:label="UNTIL Counter">
+        <intent-filter>
+          <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+        </intent-filter>
+        <meta-data
+          android:name="android.appwidget.provider"
+          android:resource="@xml/widget_counter_info" />
+      </receiver>
+      <receiver
+        android:name=".UNTILCountdownWidgetProvider"
+        android:exported="true"
+        android:label="UNTIL Countdown">
+        <intent-filter>
+          <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+        </intent-filter>
+        <meta-data
+          android:name="android.appwidget.provider"
+          android:resource="@xml/widget_countdown_info" />
+      </receiver>
+      <receiver
+        android:name=".CounterIncrementReceiver"
+        android:exported="true">
+        <intent-filter>
+          <action android:name="com.until.INCREMENT_COUNTER" />
+        </intent-filter>
       </receiver>
     </application>
 </manifest>

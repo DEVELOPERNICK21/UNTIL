@@ -26,6 +26,12 @@ export const STORAGE_KEYS = {
 
   // Widget
   WIDGET_CACHE: 'widget.cache',
+
+  // Custom counters (for counter widget)
+  CUSTOM_COUNTERS: 'custom.counters',
+
+  // Countdowns (for countdown widget)
+  COUNTDOWNS: 'countdowns',
 } as const;
 
 export const DEFAULTS = {

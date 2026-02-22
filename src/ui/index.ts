@@ -4,3 +4,6 @@ export { ProgressLine } from './ProgressLine';
 export { DotsGrid } from './DotsGrid';
 export { CircularProgress } from './CircularProgress';
 export { TimeStatement } from './TimeStatement';
+export { Card } from './Card';
+export { ScreenGradient } from './ScreenGradient';
+export { FAB } from './FAB';

@@ -15,6 +15,10 @@ struct WidgetCache: Codable {
     let dayHoursLeft: Double
     let dayPassedMinutes: Int?
     let dayRemainingMinutes: Int?
+    /// Start of current day (Unix ms). Used with current time for realtime seconds.
+    let startOfDay: Int64?
+    /// End of current day (Unix ms).
+    let endOfDay: Int64?
     let monthProgress: Double
     let monthIndex: Int?
     let monthDaysPassed: Int
@@ -29,7 +33,7 @@ struct WidgetCache: Codable {
 
 // MARK: - Design Tokens
 private enum Design {
-    static let background = Color(red: 0x0E/255, green: 0x0E/255, blue: 0x10/255)
+    static let background = Color.black
     static let passed = Color(red: 0xFF/255, green: 0x3B/255, blue: 0x30/255)      // #FF3B30 red
     static let left = Color(red: 0x34/255, green: 0xC7/255, blue: 0x59/255)        // #34C759 green
     static let percent = Color(red: 0xE9/255, green: 0xA2/255, blue: 0x3A/255)     // #E9A23A orange/gold
@@ -66,7 +70,33 @@ struct UNTILWidgetProvider: TimelineProvider {
     func getTimeline(in context: Context, completion: @escaping (Timeline<UNTILWidgetEntry>) -> Void) {
         let cache = loadWidgetCache()
         let entry = UNTILWidgetEntry(date: Date(), cache: cache)
-        let nextUpdate = Calendar.current.date(byAdding: .minute, value: 15, to: Date()) ?? Date()
+        let nextUpdate = Calendar.current.date(byAdding: .minute, value: 1, to: Date()) ?? Date()
+        let timeline = Timeline(entries: [entry], policy: .after(nextUpdate))
+        completion(timeline)
+    }
+}
+
+/// Day widget only: refreshes every second so passed/left time shows seconds in realtime.
+struct DayWidgetProvider: TimelineProvider {
+    private func loadWidgetCache() -> WidgetCache? {
+        guard let json = WidgetCacheReader.loadJSON() else { return nil }
+        guard let data = json.data(using: .utf8) else { return nil }
+        return try? JSONDecoder().decode(WidgetCache.self, from: data)
+    }
+
+    func placeholder(in context: Context) -> UNTILWidgetEntry {
+        UNTILWidgetEntry(date: Date(), cache: nil)
+    }
+
+    func getSnapshot(in context: Context, completion: @escaping (UNTILWidgetEntry) -> Void) {
+        let cache = loadWidgetCache()
+        completion(UNTILWidgetEntry(date: Date(), cache: cache))
+    }
+
+    func getTimeline(in context: Context, completion: @escaping (Timeline<UNTILWidgetEntry>) -> Void) {
+        let cache = loadWidgetCache()
+        let entry = UNTILWidgetEntry(date: Date(), cache: cache)
+        let nextUpdate = Calendar.current.date(byAdding: .second, value: 1, to: Date()) ?? Date()
         let timeline = Timeline(entries: [entry], policy: .after(nextUpdate))
         completion(timeline)
     }
@@ -305,13 +335,53 @@ private struct DayRingView: View {
     }
 }
 
+// MARK: - Day time strings (realtime with seconds when startOfDay/endOfDay present)
+private func dayTimePassedText(_ cache: WidgetCache, now: Date = Date()) -> String {
+    if let start = cache.startOfDay, let end = cache.endOfDay {
+        let startSec = Double(start) / 1000
+        let nowSec = now.timeIntervalSince1970
+        let passedSec = max(0, min(Int(nowSec - startSec), Int(Double(end - start) / 1000)))
+        let h = passedSec / 3600
+        let m = (passedSec % 3600) / 60
+        let s = passedSec % 60
+        if s > 0 || m > 0 { return "\(h)h \(m)m \(s)s" }
+        if m > 0 { return "\(h)h \(m)m" }
+        return "\(h)h"
+    }
+    if let pm = cache.dayPassedMinutes {
+        let h = pm / 60, m = pm % 60
+        return m > 0 ? "\(h)h \(m)m" : "\(h)h"
+    }
+    return "\(Int(cache.dayHoursPassed))h"
+}
+
+private func dayTimeLeftText(_ cache: WidgetCache, now: Date = Date()) -> String {
+    if let start = cache.startOfDay, let end = cache.endOfDay {
+        let endSec = Double(end) / 1000
+        let nowSec = now.timeIntervalSince1970
+        let remainingSec = max(0, Int(endSec - nowSec))
+        let h = remainingSec / 3600
+        let m = (remainingSec % 3600) / 60
+        let s = remainingSec % 60
+        if s > 0 || m > 0 { return "\(h)h \(m)m \(s)s" }
+        if m > 0 { return "\(h)h \(m)m" }
+        return "\(h)h"
+    }
+    if let rm = cache.dayRemainingMinutes {
+        let h = rm / 60, m = rm % 60
+        return m > 0 ? "\(h)h \(m)m" : "\(h)h"
+    }
+    return "\(Int(cache.dayHoursLeft))h"
+}
+
 // MARK: - Day Metrics View (right side metrics for large layout)
 private struct DayMetricsView: View {
     let cache: WidgetCache
+    /// Use entry date for realtime seconds; nil falls back to cache-only.
+    var now: Date = Date()
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            // Progress metric (highlighted)
             VStack(alignment: .leading, spacing: 4) {
                 Text("PROGRESS")
                     .font(.system(size: 11, weight: .medium))
@@ -322,44 +392,26 @@ private struct DayMetricsView: View {
                     .foregroundColor(Design.passedDot)
             }
 
-            // Time passed
             VStack(alignment: .leading, spacing: 4) {
                 Text("PASSED")
                     .font(.system(size: 11, weight: .medium))
                     .foregroundColor(Design.grayLabel)
                     .textCase(.uppercase)
-                Text(dayTimePassedText(cache))
+                Text(dayTimePassedText(cache, now: now))
                     .font(.system(size: 18, weight: .semibold))
                     .foregroundColor(Design.lightText)
             }
 
-            // Time left
             VStack(alignment: .leading, spacing: 4) {
                 Text("LEFT")
                     .font(.system(size: 11, weight: .medium))
                     .foregroundColor(Design.grayLabel)
                     .textCase(.uppercase)
-                Text(dayTimeLeftText(cache))
+                Text(dayTimeLeftText(cache, now: now))
                     .font(.system(size: 18, weight: .semibold))
                     .foregroundColor(Design.lightText)
             }
         }
-    }
-
-    private func dayTimePassedText(_ cache: WidgetCache) -> String {
-        if let pm = cache.dayPassedMinutes {
-            let h = pm / 60, m = pm % 60
-            return m > 0 ? "\(h)h \(m)m" : "\(h)h"
-        }
-        return "\(Int(cache.dayHoursPassed))h"
-    }
-
-    private func dayTimeLeftText(_ cache: WidgetCache) -> String {
-        if let rm = cache.dayRemainingMinutes {
-            let h = rm / 60, m = rm % 60
-            return m > 0 ? "\(h)h \(m)m" : "\(h)h"
-        }
-        return "\(Int(cache.dayHoursLeft))h"
     }
 }
 
@@ -373,14 +425,13 @@ struct DayWidgetView: View {
             if let cache = entry.cache {
                 switch family {
                 case .systemLarge:
-                    // Padded layout: circular ring left, metrics right (inspired by image pattern)
                     HStack(spacing: 24) {
                         DayRingView(progress: cache.dayProgress, size: 140)
                             .padding(.leading, 8)
 
                         Spacer()
 
-                        DayMetricsView(cache: cache)
+                        DayMetricsView(cache: cache, now: entry.date)
                             .padding(.trailing, 8)
                     }
                     .padding(.vertical, 20)
@@ -417,10 +468,10 @@ struct DayWidgetView: View {
                         }
 
                         HStack(spacing: 10) {
-                            Text(dayTimePassedText(cache))
+                            Text(dayTimePassedText(cache, now: entry.date))
                                 .font(.system(size: 13))
                                 .foregroundColor(Design.grayLabel)
-                            Text(dayTimeLeftText(cache))
+                            Text(dayTimeLeftText(cache, now: entry.date))
                                 .font(.system(size: 13, weight: .bold))
                                 .foregroundColor(Design.lightText)
                         }
@@ -433,22 +484,6 @@ struct DayWidgetView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .widgetBackground()
-    }
-
-    private func dayTimePassedText(_ cache: WidgetCache) -> String {
-        if let pm = cache.dayPassedMinutes {
-            let h = pm / 60, m = pm % 60
-            return m > 0 ? "\(h)h \(m)m passed" : "\(h)h passed"
-        }
-        return "\(Int(cache.dayHoursPassed))h passed"
-    }
-
-    private func dayTimeLeftText(_ cache: WidgetCache) -> String {
-        if let rm = cache.dayRemainingMinutes {
-            let h = rm / 60, m = rm % 60
-            return m > 0 ? "\(h)h \(m)m left" : "\(h)h left"
-        }
-        return "\(Int(cache.dayHoursLeft))h left"
     }
 
     private var placeholderView: some View {
@@ -586,12 +621,190 @@ private extension View {
     }
 }
 
+// MARK: - Counter Widget (tap to increment)
+struct CounterWidgetEntry: TimelineEntry {
+    let date: Date
+    let counter: CustomCounterItem?
+}
+
+struct CounterWidgetProvider: TimelineProvider {
+    private func loadFirstCounter() -> CustomCounterItem? {
+        guard let json = WidgetCacheReader.loadCustomCountersJSON(),
+              let data = json.data(using: .utf8) else { return nil }
+        guard let list = try? JSONDecoder().decode([CustomCounterItem].self, from: data),
+              let first = list.first else { return nil }
+        return first
+    }
+
+    func placeholder(in context: Context) -> CounterWidgetEntry {
+        CounterWidgetEntry(date: Date(), counter: nil)
+    }
+
+    func getSnapshot(in context: Context, completion: @escaping (CounterWidgetEntry) -> Void) {
+        completion(CounterWidgetEntry(date: Date(), counter: loadFirstCounter()))
+    }
+
+    func getTimeline(in context: Context, completion: @escaping (Timeline<CounterWidgetEntry>) -> Void) {
+        let entry = CounterWidgetEntry(date: Date(), counter: loadFirstCounter())
+        let nextUpdate = Calendar.current.date(byAdding: .minute, value: 1, to: Date()) ?? Date()
+        completion(Timeline(entries: [entry], policy: .after(nextUpdate)))
+    }
+}
+
+private struct CounterWidgetView: View {
+    let entry: CounterWidgetEntry
+
+    var body: some View {
+        Group {
+            if let c = entry.counter {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text(c.title)
+                        .font(.system(size: Design.labelSize, weight: .semibold))
+                        .foregroundColor(Design.lightText)
+                    Text("\(c.count)")
+                        .font(.system(size: 28, weight: .bold))
+                        .foregroundColor(Design.passedDot)
+                    Spacer(minLength: 0)
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+                .padding(16)
+                .widgetURL(URL(string: "until://increment-counter?id=\(c.id.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? c.id)"))
+            } else {
+                VStack(spacing: 8) {
+                    Text("Add a counter in UNTIL")
+                        .font(.system(size: Design.labelSize))
+                        .foregroundColor(Design.grayLabel)
+                        .multilineTextAlignment(.center)
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .widgetBackground()
+    }
+}
+
+struct CounterWidget: Widget {
+    let kind: String = "UNTILCounterWidget"
+
+    var body: some WidgetConfiguration {
+        StaticConfiguration(kind: kind, provider: CounterWidgetProvider()) { entry in
+            CounterWidgetView(entry: entry)
+        }
+        .configurationDisplayName("Counter")
+        .description("Tap to add +1. Create counters in UNTIL → Widgets → Custom counters.")
+        .supportedFamilies([.systemSmall])
+    }
+}
+
+// MARK: - Countdown Widget (days left until deadline)
+private func daysLeft(from dateString: String) -> Int {
+    let parts = dateString.split(separator: "-").compactMap { Int($0) }
+    guard parts.count >= 3 else { return 0 }
+    let cal = Calendar.current
+    guard let target = cal.date(from: DateComponents(year: parts[0], month: parts[1], day: parts[2])) else { return 0 }
+    let startOfToday = cal.startOfDay(for: Date())
+    let startOfTarget = cal.startOfDay(for: target)
+    let days = cal.dateComponents([.day], from: startOfToday, to: startOfTarget).day ?? 0
+    return max(0, days)
+}
+
+private func countdownSubtitle(days: Int) -> String {
+    if days == 0 { return "Today" }
+    if days == 1 { return "1 day left" }
+    return "\(days) days left"
+}
+
+struct CountdownWidgetEntry: TimelineEntry {
+    let date: Date
+    let countdown: CountdownItem?
+    let daysLeft: Int
+}
+
+struct CountdownWidgetProvider: TimelineProvider {
+    private func loadFirstCountdown() -> (CountdownItem, Int)? {
+        guard let json = WidgetCacheReader.loadCountdownsJSON(),
+              let data = json.data(using: .utf8),
+              let list = try? JSONDecoder().decode([CountdownItem].self, from: data),
+              let first = list.first else { return nil }
+        return (first, daysLeft(from: first.date))
+    }
+
+    func placeholder(in context: Context) -> CountdownWidgetEntry {
+        CountdownWidgetEntry(date: Date(), countdown: nil, daysLeft: 0)
+    }
+
+    func getSnapshot(in context: Context, completion: @escaping (CountdownWidgetEntry) -> Void) {
+        if let (item, days) = loadFirstCountdown() {
+            completion(CountdownWidgetEntry(date: Date(), countdown: item, daysLeft: days))
+        } else {
+            completion(CountdownWidgetEntry(date: Date(), countdown: nil, daysLeft: 0))
+        }
+    }
+
+    func getTimeline(in context: Context, completion: @escaping (Timeline<CountdownWidgetEntry>) -> Void) {
+        let entry: CountdownWidgetEntry
+        if let (item, days) = loadFirstCountdown() {
+            entry = CountdownWidgetEntry(date: Date(), countdown: item, daysLeft: days)
+        } else {
+            entry = CountdownWidgetEntry(date: Date(), countdown: nil, daysLeft: 0)
+        }
+        let nextUpdate = Calendar.current.date(byAdding: .day, value: 1, to: Calendar.current.startOfDay(for: Date())) ?? Date()
+        completion(Timeline(entries: [entry], policy: .after(nextUpdate)))
+    }
+}
+
+private struct CountdownWidgetView: View {
+    let entry: CountdownWidgetEntry
+
+    var body: some View {
+        Group {
+            if let c = entry.countdown {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text(c.title)
+                        .font(.system(size: Design.labelSize, weight: .semibold))
+                        .foregroundColor(Design.lightText)
+                    Text(countdownSubtitle(days: entry.daysLeft))
+                        .font(.system(size: 22, weight: .bold))
+                        .foregroundColor(Design.passedDot)
+                    Spacer(minLength: 0)
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+                .padding(16)
+            } else {
+                VStack(spacing: 8) {
+                    Text("Add a countdown in UNTIL")
+                        .font(.system(size: Design.labelSize))
+                        .foregroundColor(Design.grayLabel)
+                        .multilineTextAlignment(.center)
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .widgetBackground()
+    }
+}
+
+struct CountdownWidget: Widget {
+    let kind: String = "UNTILCountdownWidget"
+
+    var body: some WidgetConfiguration {
+        StaticConfiguration(kind: kind, provider: CountdownWidgetProvider()) { entry in
+            CountdownWidgetView(entry: entry)
+        }
+        .configurationDisplayName("Countdown")
+        .description("Days left until a deadline. Add deadlines in UNTIL → Widgets → Countdowns.")
+        .supportedFamilies([.systemSmall])
+    }
+}
+
 // MARK: - Widget Configurations
 struct DayWidget: Widget {
     let kind: String = "UNTILDayWidget"
 
     var body: some WidgetConfiguration {
-        StaticConfiguration(kind: kind, provider: UNTILWidgetProvider()) { entry in
+        StaticConfiguration(kind: kind, provider: DayWidgetProvider()) { entry in
             DayWidgetView(entry: entry)
         }
         .configurationDisplayName("UNTIL Day")
@@ -633,5 +846,7 @@ struct UNTILWidgetsBundle: WidgetBundle {
         DayWidget()
         MonthWidget()
         YearWidget()
+        CounterWidget()
+        CountdownWidget()
     }
 }

@@ -67,3 +67,45 @@ export interface RegretProjection {
   daysWastedByAge: number;
   targetAge: number;
 }
+
+/**
+ * Widget cache DTO — single contract for native widgets.
+ * SSOT: defined here; surfaces/widgets/dataContract re-exports for widget code.
+ */
+export interface WidgetCache {
+  dayProgress: number;
+  dayPercentDone: number;
+  dayPercentLeft: number;
+  dayHoursPassed: number;
+  dayHoursLeft: number;
+  dayPassedMinutes: number;
+  dayRemainingMinutes: number;
+  /** Start of current day (UTC ms). Widget uses this + current time for realtime seconds. */
+  startOfDay: number;
+  /** End of current day (UTC ms). Widget uses this for realtime seconds. */
+  endOfDay: number;
+  monthProgress: number;
+  monthIndex: number;
+  monthDaysPassed: number;
+  monthDaysLeft: number;
+  monthPercent: number;
+  yearProgress: number;
+  yearDaysPassed: number;
+  yearDaysLeft: number;
+  yearPercent: number;
+  updatedAt: number;
+}
+
+/** Custom counter for tap-to-increment widget (e.g. water glasses). */
+export interface CustomCounter {
+  id: string;
+  title: string;
+  count: number;
+}
+
+/** Countdown/deadline for countdown widget (e.g. Project, Interview). Date is YYYY-MM-DD. */
+export interface Countdown {
+  id: string;
+  title: string;
+  date: string;
+}

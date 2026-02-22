@@ -1,164 +1,281 @@
-import React, { useState, useRef } from 'react';
-import {
-  View,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  PanResponder,
-} from 'react-native';
+import React, { useEffect, useRef, useState } from 'react';
+import { View, StyleSheet, ScrollView, Animated, Easing } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { TimeStatement, Text } from '../../ui';
-import { useObserveTimeState, useLogActivity, useObserveCategoryTotals, useRegretProjection, useInterventionState } from '../../hooks';
-import { Colors, Spacing } from '../../theme';
+import { Text, ScreenGradient, Card, ProgressLine } from '../../ui';
+import { useObserveTimeState } from '../../hooks';
+import { Spacing, getProgressColor } from '../../theme';
 import type { RootStackParamList } from '../../navigation/RootNavigator';
-import type { ActivityCategory } from '../../types';
+import { getDayProgress } from '../../core/time/day';
+import { startOfDay, endOfDay } from '../../core/time/clock';
 
-const SWIPE_THRESHOLD = 60;
+function getDaysInMonth(): number {
+  const d = new Date();
+  return new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
+}
 
-const CATEGORIES: { key: ActivityCategory; label: string }[] = [
-  { key: 'work', label: 'Work' },
-  { key: 'sleep', label: 'Sleep' },
-  { key: 'social', label: 'Social' },
-  { key: 'gym', label: 'Gym' },
-  { key: 'nothing', label: 'Nothing' },
-];
+function getDaysInYear(): number {
+  const y = new Date().getFullYear();
+  return (y % 4 === 0 && y % 100 !== 0) || y % 400 === 0 ? 366 : 365;
+}
+
+function formatDayPassedLeftWithSeconds(date: Date) {
+  const day = getDayProgress(date);
+  const start = startOfDay(date).getTime();
+  const end = endOfDay(date).getTime();
+  const passedMs = date.getTime() - start;
+  const remainingMs = Math.max(0, end - date.getTime());
+  const passedS = Math.floor(passedMs / 1000);
+  const remainingS = Math.floor(remainingMs / 1000);
+  const passedH = Math.floor(passedS / 3600);
+  const passedM = Math.floor((passedS % 3600) / 60);
+  const passedSec = passedS % 60;
+  const leftH = Math.floor(remainingS / 3600);
+  const leftM = Math.floor((remainingS % 3600) / 60);
+  const leftSec = remainingS % 60;
+  const passedStr = `${passedH}h ${passedM}m ${passedSec}s`;
+  const leftStr = `${leftH}h ${leftM}m ${leftSec}s`;
+  const passedPct = Math.round(day.progress * 100);
+  const leftPct = 100 - passedPct;
+  return { passedStr, leftStr, passedPct, leftPct, progress: day.progress };
+}
+
+function formatMonthPassedLeft(remainingDaysMonth: number) {
+  const daysInMonth = getDaysInMonth();
+  const passedDays = daysInMonth - remainingDaysMonth;
+  const passedPct = Math.round((passedDays / daysInMonth) * 100);
+  const leftPct = 100 - passedPct;
+  return {
+    passedDays,
+    leftDays: remainingDaysMonth,
+    passedPct,
+    leftPct,
+  };
+}
+
+function formatYearPassedLeft(remainingDaysYear: number) {
+  const daysInYear = getDaysInYear();
+  const passedDays = daysInYear - remainingDaysYear;
+  const passedPct = Math.round((passedDays / daysInYear) * 100);
+  const leftPct = 100 - passedPct;
+  return {
+    passedDays,
+    leftDays: remainingDaysYear,
+    passedPct,
+    leftPct,
+  };
+}
+
+function formatLifePassedLeft(
+  lifeProgress: number,
+  remainingDaysLife: number | undefined,
+  deathAge: number
+) {
+  const totalLifeDays = Math.round(deathAge * 365.25);
+  const remaining = remainingDaysLife ?? 0;
+  const passedDays = totalLifeDays - remaining;
+  const passedPct = Math.round(lifeProgress * 100);
+  const leftPct = 100 - passedPct;
+  return {
+    passedDays,
+    leftDays: remaining,
+    passedPct,
+    leftPct,
+    totalLifeDays,
+  };
+}
+
+interface BlockProps {
+  title: string;
+  passedLabel: string;
+  leftLabel: string;
+  progress: number;
+  passedPct: number;
+  leftPct: number;
+  index?: number;
+}
+
+const GLOW_RADIUS_LEFT = 12;
+
+function leftValueGlowStyle(hexColor: string) {
+  return {
+    color: hexColor,
+    textShadowColor: hexColor,
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: GLOW_RADIUS_LEFT,
+  };
+}
+
+function TimeBlock({ title, passedLabel, leftLabel, progress, passedPct, leftPct, index = 0 }: BlockProps) {
+  const progressColor = getProgressColor(progress);
+  // Left: small left → red, big left → green (same scale as progress: 0=green, 1=red)
+  const leftColor = getProgressColor(progress);
+  const opacity = useRef(new Animated.Value(0)).current;
+  const blinkOpacity = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    Animated.timing(opacity, {
+      toValue: 1,
+      duration: 420,
+      delay: 60 + index * 50,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: true,
+    }).start();
+  }, [opacity, index]);
+
+  useEffect(() => {
+    const loop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(blinkOpacity, {
+          toValue: 0.72,
+          duration: 1100,
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver: true,
+        }),
+        Animated.timing(blinkOpacity, {
+          toValue: 1,
+          duration: 1100,
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver: true,
+        }),
+      ])
+    );
+    loop.start();
+    return () => loop.stop();
+  }, [blinkOpacity]);
+
+  return (
+    <Animated.View style={{ opacity }}>
+      <Card style={styles.block}>
+        <Text variant="sectionTitle" color="secondary" style={styles.blockTitle}>
+          {title}
+        </Text>
+        <View style={styles.row}>
+          <View style={styles.half}>
+            <Text variant="title" color="primary" style={styles.value}>
+              {passedLabel}
+            </Text>
+            <Text variant="caption" color="secondary">passed</Text>
+          </View>
+          <View style={[styles.half, styles.halfRight]}>
+            <Animated.View style={{ opacity: blinkOpacity }}>
+              <Text variant="title" style={[styles.value, leftValueGlowStyle(leftColor)]}>
+                {leftLabel}
+              </Text>
+            </Animated.View>
+            <Text variant="caption" color="secondary">left</Text>
+          </View>
+        </View>
+        <View style={styles.percentRow}>
+          <Text variant="caption" color="secondary" style={styles.percentLine}>
+            {passedPct}% passed · {leftPct}% left
+          </Text>
+        </View>
+        <ProgressLine progress={progress} fillColor={progressColor} style={styles.progress} />
+      </Card>
+    </Animated.View>
+  );
+}
 
 export function HomeScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList, 'Home'>>();
-  const { timeState } = useObserveTimeState();
-  const { startCategory, endCurrent } = useLogActivity();
-  const categoryTotals = useObserveCategoryTotals();
-  const { projection, hasEnoughData } = useRegretProjection();
-  const intervention = useInterventionState();
-  const [view, setView] = useState<'primary' | 'secondary'>('primary');
-  const [tagExpanded, setTagExpanded] = useState(false);
+  const { userProfile, timeState } = useObserveTimeState();
+  const [liveNow, setLiveNow] = useState(() => new Date());
 
-  const panResponder = useRef(
-    PanResponder.create({
-      onStartShouldSetPanResponder: () => false,
-      onMoveShouldSetPanResponder: (_, gestureState) => Math.abs(gestureState.dy) > 10,
-      onPanResponderRelease: (_, gestureState) => {
-        const { dy } = gestureState;
-        if (dy < -SWIPE_THRESHOLD) setView('secondary');
-        else if (dy > SWIPE_THRESHOLD) setView('primary');
-      },
-    })
-  ).current;
+  useEffect(() => {
+    const tick = () => setLiveNow(new Date());
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, []);
 
-  const remainingHours = timeState.remainingHours ?? Math.floor((1 - timeState.day) * 24);
-  const remainingDaysYear = timeState.remainingDaysYear ?? 0;
   const remainingDaysMonth = timeState.remainingDaysMonth ?? 0;
+  const remainingDaysYear = timeState.remainingDaysYear ?? 0;
+
+  const day = formatDayPassedLeftWithSeconds(liveNow);
+  const month = formatMonthPassedLeft(remainingDaysMonth);
+  const year = formatYearPassedLeft(remainingDaysYear);
+  const life = formatLifePassedLeft(
+    timeState.life,
+    timeState.remainingDaysLife,
+    userProfile.deathAge ?? 80
+  );
+  const hasBirthDate = !!userProfile.birthDate;
 
   return (
-    <View style={[styles.container, { backgroundColor: Colors.background }]}>
-      <ScrollView
-        style={styles.scroll}
-        contentContainerStyle={styles.content}
-        showsVerticalScrollIndicator={false}
-        {...panResponder.panHandlers}
-      >
-        {view === 'primary' ? (
-          <>
-            <TimeStatement
-              label="Today"
-              value={`${remainingHours} hours`}
-              suffix="remaining"
-              emphasis="primary"
-              showProgress
-              progress={timeState.day}
-            />
-            <View style={styles.secondaryBlock}>
-              <TimeStatement
-                label="This year"
-                value={`${remainingDaysYear} days`}
-                suffix="remaining"
-                emphasis="secondary"
-                onPress={() => setView('secondary')}
-              />
-            </View>
-            <TouchableOpacity
-              style={styles.affordance}
-              onPress={() => setView('secondary')}
-            >
-              <Text variant="meta" color="secondary">Swipe for more</Text>
-            </TouchableOpacity>
-          </>
-        ) : (
-          <>
-            <TimeStatement
-              label="This month"
-              value={`${remainingDaysMonth} days`}
-              suffix="remaining"
-              emphasis="secondary"
-              showProgress
-              progress={timeState.month}
-            />
-            <TimeStatement
-              label="This year"
-              value={`${remainingDaysYear} days`}
-              suffix="remaining"
-              emphasis="secondary"
-              showProgress
-              progress={timeState.year}
-            />
-            {hasEnoughData && projection && (
-              <View style={styles.projectionBlock}>
-                <Text variant="secondaryBlock" color="secondary" style={styles.projectionLabel}>
-                  If you continue
-                </Text>
-                <Text variant="secondaryValue" color="primary">
-                  {projection.daysWastedThisYear} days this year
-                </Text>
-                <Text variant="meta" color="secondary">
-                  {projection.daysWastedByAge} days by age {projection.targetAge}
-                </Text>
-              </View>
-            )}
-            <TouchableOpacity style={styles.affordance} onPress={() => setView('primary')}>
-              <Text variant="meta" color="secondary">Swipe to go back</Text>
-            </TouchableOpacity>
-          </>
-        )}
-
-        <TouchableOpacity
-          style={styles.lifeLink}
-          onPress={() => navigation.navigate('Life')}
+    <View style={styles.container}>
+      <ScreenGradient>
+        <ScrollView
+          style={styles.scroll}
+          contentContainerStyle={styles.content}
+          showsVerticalScrollIndicator={false}
         >
-          <Text variant="meta" color="secondary">Your life</Text>
-        </TouchableOpacity>
-      </ScrollView>
+          <Text variant="large" color="primary" style={styles.headline}>
+            Time reality
+          </Text>
+          <Text variant="body" color="secondary" style={styles.subhead}>
+            Passed and left — one place.
+          </Text>
 
-      <View style={styles.fabContainer}>
-        <TouchableOpacity
-          style={[styles.fab, intervention.shouldShowRed && styles.fabRed]}
-          onPress={() => setTagExpanded(!tagExpanded)}
-          activeOpacity={0.8}
-        >
-          <Text variant="meta" color="primary">Tag</Text>
-        </TouchableOpacity>
-        {tagExpanded && (
-          <View style={styles.chipRow}>
-            {CATEGORIES.map(({ key, label }) => {
-              const isActive = categoryTotals.currentCategory === key;
-              return (
-                <TouchableOpacity
-                  key={key}
-                  style={[styles.chip, isActive && styles.chipActive]}
-                  onPress={() => {
-                    if (isActive) endCurrent();
-                    else startCategory(key);
-                  }}
-                >
-                  <Text variant="meta" color={isActive ? 'primary' : 'secondary'}>
-                    {label}
-                  </Text>
-                </TouchableOpacity>
-              );
-            })}
-          </View>
-        )}
-      </View>
+          <TimeBlock
+            index={0}
+            title="Today"
+            passedLabel={day.passedStr}
+            leftLabel={day.leftStr}
+            progress={day.progress}
+            passedPct={day.passedPct}
+            leftPct={day.leftPct}
+          />
+
+          <TimeBlock
+            index={1}
+            title="This month"
+            passedLabel={`${month.passedDays} days`}
+            leftLabel={`${month.leftDays} days`}
+            progress={timeState.month}
+            passedPct={month.passedPct}
+            leftPct={month.leftPct}
+          />
+
+          <TimeBlock
+            index={2}
+            title="This year"
+            passedLabel={`${year.passedDays} days`}
+            leftLabel={`${year.leftDays} days`}
+            progress={timeState.year}
+            passedPct={year.passedPct}
+            leftPct={year.leftPct}
+          />
+
+          {hasBirthDate ? (
+            <TimeBlock
+              index={3}
+              title="Your life"
+              passedLabel={`${life.passedDays.toLocaleString()} days`}
+              leftLabel={`${life.leftDays.toLocaleString()} days`}
+              progress={timeState.life}
+              passedPct={life.passedPct}
+              leftPct={life.leftPct}
+            />
+          ) : (
+            <Card style={styles.block}>
+              <Text variant="sectionTitle" color="secondary" style={styles.blockTitle}>
+                Your life
+              </Text>
+              <Text variant="body" color="secondary" style={styles.lifePrompt}>
+                Set birth date in Settings to see how much life has passed and how much is left.
+              </Text>
+              <Text
+                variant="caption"
+                color="primary"
+                style={styles.settingsLink}
+                onPress={() => navigation.navigate('Settings')}
+              >
+                Open Settings
+              </Text>
+            </Card>
+          )}
+        </ScrollView>
+      </ScreenGradient>
     </View>
   );
 }
@@ -167,63 +284,54 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   scroll: { flex: 1 },
   content: {
-    paddingTop: Spacing.xl,
-    paddingHorizontal: Spacing.lg,
-    paddingBottom: Spacing.xxl,
+    paddingTop: Spacing[4],
+    paddingHorizontal: Spacing[4],
+    paddingBottom: Spacing[7],
   },
-  secondaryBlock: {
-    marginTop: Spacing.lg,
+  headline: {
+    marginBottom: Spacing[2],
+    fontWeight: '600',
   },
-  affordance: {
-    alignItems: 'center',
-    paddingVertical: Spacing.lg,
+  subhead: {
+    marginBottom: Spacing[5],
   },
-  lifeLink: {
-    alignItems: 'center',
-    paddingVertical: Spacing.xl,
-    marginTop: Spacing.lg,
+  block: {
+    marginBottom: Spacing[4],
   },
-  fabContainer: {
-    position: 'absolute',
-    bottom: Spacing.lg,
-    right: Spacing.lg,
+  blockTitle: {
+    marginBottom: Spacing[3],
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+  },
+  row: {
+    flexDirection: 'row',
+    marginBottom: Spacing[2],
+  },
+  half: {
+    flex: 1,
+  },
+  halfRight: {
     alignItems: 'flex-end',
   },
-  fab: {
-    backgroundColor: Colors.divider,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
-    borderRadius: 8,
+  value: {
+    marginBottom: 2,
   },
-  chipRow: {
+  percentRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    marginTop: Spacing.sm,
-    marginRight: -Spacing.sm,
-    marginBottom: -Spacing.sm,
+    marginBottom: Spacing[2],
+    alignItems: 'baseline',
   },
-  chip: {
-    backgroundColor: Colors.divider,
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: Spacing.xs,
-    borderRadius: 6,
-    marginRight: Spacing.sm,
-    marginBottom: Spacing.sm,
+  percentLine: {
+    marginRight: 2,
   },
-  chipActive: {
-    borderWidth: 1,
-    borderColor: Colors.primaryText,
+  progress: {
+    marginTop: Spacing[1],
   },
-  fabRed: {
-    borderWidth: 2,
-    borderColor: '#AA2222',
+  lifePrompt: {
+    marginBottom: Spacing[2],
   },
-  projectionBlock: {
-    alignItems: 'center',
-    marginTop: Spacing.lg,
-    paddingVertical: Spacing.md,
-  },
-  projectionLabel: {
-    marginBottom: Spacing.sm,
+  settingsLink: {
+    textDecorationLine: 'underline',
   },
 });

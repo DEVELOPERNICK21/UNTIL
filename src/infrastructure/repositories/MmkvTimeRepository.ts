@@ -5,7 +5,7 @@
  */
 
 import type { ITimeRepository } from '../../domain/repository/ITimeRepository';
-import type { TimeProgress } from '../../types';
+import type { TimeProgress, WidgetCache } from '../../types';
 import { getDayProgress } from '../../core/time/day';
 import { getMonthProgress } from '../../core/time/month';
 import { getYearProgress } from '../../core/time/year';
@@ -49,6 +49,37 @@ function computeTimeState(birthDate: string | null, deathAge: number): TimeProgr
   };
 }
 
+function computeWidgetCache(): WidgetCache {
+  const date = now();
+  const day = getDayProgress(date);
+  const month = getMonthProgress(date);
+  const year = getYearProgress(date);
+  const totalMinutesInDay = 24 * 60;
+  const passedMinutes = Math.floor(day.progress * totalMinutesInDay);
+  const remainingMinutes = totalMinutesInDay - passedMinutes;
+  return {
+    dayProgress: day.progress,
+    dayPercentDone: Math.round(day.progress * 100),
+    dayPercentLeft: Math.round((1 - day.progress) * 100),
+    dayHoursPassed: Math.round((day.progress * 24 * 60 * 60 * 1000) / (60 * 60 * 1000) * 10) / 10,
+    dayHoursLeft: Math.round(day.remainingMs / (60 * 60 * 1000) * 10) / 10,
+    dayPassedMinutes: passedMinutes,
+    dayRemainingMinutes: remainingMinutes,
+    startOfDay: day.startOfDay,
+    endOfDay: day.endOfDay,
+    monthProgress: month.progress,
+    monthIndex: date.getMonth() + 1,
+    monthDaysPassed: month.dayOfMonth,
+    monthDaysLeft: month.remainingDays,
+    monthPercent: Math.round(month.progress * 100),
+    yearProgress: year.progress,
+    yearDaysPassed: year.dayOfYear,
+    yearDaysLeft: year.remainingDays,
+    yearPercent: Math.round(year.progress * 100),
+    updatedAt: Date.now(),
+  };
+}
+
 export class MmkvTimeRepository implements ITimeRepository {
   private subscribers: Set<Subscriber> = new Set();
 
@@ -64,6 +95,10 @@ export class MmkvTimeRepository implements ITimeRepository {
   getTimeState(): TimeProgress {
     const profile = this.getUserProfile();
     return computeTimeState(profile.birthDate, profile.deathAge);
+  }
+
+  getWidgetCache(): WidgetCache {
+    return computeWidgetCache();
   }
 
   setUserProfile(birthDate: string, deathAge: number): void {
