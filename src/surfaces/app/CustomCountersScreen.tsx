@@ -125,8 +125,8 @@ export function CustomCountersScreen() {
 
           <Text variant="caption" color="secondary" style={styles.hint}>
             {Platform.OS === 'ios'
-              ? 'Long-press home screen → + → search UNTIL → add "Counter" widget, then choose a counter.'
-              : 'Long-press home screen → Widgets → UNTIL → Counter. When adding, choose which counter to show.'}
+              ? 'Long-press home screen → + → search Until → add "Counter" widget, then choose a counter.'
+              : 'Long-press home screen → Widgets → Until → Counter. When adding, choose which counter to show.'}
           </Text>
         </ScrollView>
       </ScreenGradient>

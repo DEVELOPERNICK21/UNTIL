@@ -87,7 +87,7 @@ export function WidgetScreen() {
             Widgets
           </Text>
           <Text variant="body" color="secondary" style={styles.subtitle}>
-            Add UNTIL widgets to your home screen to see time at a glance. Data updates when you open the app.
+            Add Until widgets to your home screen to see time at a glance. Data updates when you open the app.
           </Text>
 
           {loading && (
@@ -140,8 +140,8 @@ export function WidgetScreen() {
               </TouchableOpacity>
               <Text variant="caption" color="secondary" style={styles.hint}>
                 {Platform.OS === 'ios'
-                  ? 'Long-press the home screen, tap +, then search for UNTIL to add a widget.'
-                  : 'Long-press the home screen and tap Widgets to add an UNTIL widget.'}
+                  ? 'Long-press the home screen, tap +, then search for Until to add a widget.'
+                  : 'Long-press the home screen and tap Widgets to add an Until widget.'}
               </Text>
             </>
           )}

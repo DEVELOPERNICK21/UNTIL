@@ -1,10 +1,10 @@
 <resources>
-    <string name="app_name">UNTIL</string>
+    <string name="app_name">Until: Days left</string>
     <string name="widget_day_description">See your day progress.</string>
     <string name="widget_month_description">See your month progress.</string>
     <string name="widget_year_description">See your year and day progress.</string>
-    <string name="widget_counter_description">Tap to add +1. Create counters in UNTIL.</string>
-    <string name="widget_countdown_description">Days left until a deadline. Add in UNTIL → Countdowns.</string>
+    <string name="widget_counter_description">Tap to add +1. Create counters in Until.</string>
+    <string name="widget_countdown_description">Days left until a deadline. Add in Until → Countdowns.</string>
     <!-- Widget content format strings (single source for labels; supports future i18n) -->
     <string name="widget_day_done_format">%1$d%% Done</string>
     <string name="widget_day_left_format">%1$d%% Left</string>

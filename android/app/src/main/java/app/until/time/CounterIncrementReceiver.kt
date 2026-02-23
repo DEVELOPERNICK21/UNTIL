@@ -1,4 +1,4 @@
-package com.until
+package app.until.time
 
 import android.content.BroadcastReceiver
 import android.content.Context
@@ -17,7 +17,6 @@ class CounterIncrementReceiver : BroadcastReceiver() {
         UNTILWidgetWorker.updateWidgets(context)
     }
 
-    /** Returns true if the counter was found and incremented. */
     private fun incrementCounterInStorage(context: Context, counterId: String): Boolean {
         return try {
             MMKV.initialize(context)
@@ -45,7 +44,7 @@ class CounterIncrementReceiver : BroadcastReceiver() {
     }
 
     companion object {
-        const val ACTION_INCREMENT = "com.until.INCREMENT_COUNTER"
+        const val ACTION_INCREMENT = "app.until.time.INCREMENT_COUNTER"
         const val EXTRA_COUNTER_ID = "counter_id"
         private const val MMKV_ID = "until-storage"
         private const val CUSTOM_COUNTERS_KEY = "custom.counters"

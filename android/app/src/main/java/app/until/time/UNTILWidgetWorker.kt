@@ -1,4 +1,4 @@
-package com.until
+package app.until.time
 
 import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
@@ -191,7 +191,7 @@ class UNTILWidgetWorker(
                 views.setTextViewText(R.id.widget_counter_count, counter.count.toString())
                 views.setOnClickPendingIntent(R.id.widget_root, incrementCounterPendingIntent(context, counter.id, appWidgetId))
             } else {
-                views.setTextViewText(R.id.widget_counter_title, "Add a counter in UNTIL")
+                views.setTextViewText(R.id.widget_counter_title, "Add a counter in Until")
                 views.setTextViewText(R.id.widget_counter_count, "0")
                 val openApp = PendingIntent.getActivity(
                     context,
@@ -273,7 +273,7 @@ class UNTILWidgetWorker(
                 )
                 views.setOnClickPendingIntent(R.id.widget_root, openApp)
             } else {
-                views.setTextViewText(R.id.widget_countdown_title, "Add a countdown in UNTIL")
+                views.setTextViewText(R.id.widget_countdown_title, "Add a countdown in Until")
                 views.setTextViewText(R.id.widget_countdown_days, "0 days left")
                 val openApp = PendingIntent.getActivity(
                     context,

@@ -26,7 +26,7 @@ export function AppScreenPreview() {
       }}
     >
       <div style={{ fontSize: 14, fontWeight: 600, color: '#ededed', marginBottom: 4 }}>
-        UNTIL
+        Until: Days left
       </div>
       {PROGRESS.map(({ label, progress, color }) => (
         <div key={label}>

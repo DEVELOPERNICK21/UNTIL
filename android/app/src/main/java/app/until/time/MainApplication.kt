@@ -1,4 +1,4 @@
-package com.until
+package app.until.time
 
 import android.app.Application
 import androidx.work.OneTimeWorkRequestBuilder
@@ -24,7 +24,6 @@ class MainApplication : Application(), ReactApplication {
 
   override fun onCreate() {
     super.onCreate()
-    // Initialize MMKV BEFORE React Native loads so migrations can write to storage
     MMKV.initialize(this)
     loadReactNative(this)
     UNTILWidgetWorker.schedule(this)

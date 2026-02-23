@@ -2,7 +2,7 @@ import { PRIVACY_TITLE, PRIVACY_LAST_UPDATED, PRIVACY_SECTIONS } from '@/domain'
 
 export const metadata = {
   title: PRIVACY_TITLE,
-  description: 'Privacy Policy for UNTIL app and website.',
+  description: 'Privacy Policy for Until: Days left app and website.',
 };
 
 function renderBody(text: string) {

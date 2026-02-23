@@ -192,10 +192,10 @@ struct UNTILWidgetsBundle: WidgetBundle {
 
 ### Step 5: Android – Provider
 
-**File:** `android/app/src/main/java/com/until/UNTILWeekWidgetProvider.kt`
+**File:** `android/app/src/main/java/app/until/time/UNTILWeekWidgetProvider.kt` (or equivalent under package `app.until.time`)
 
 ```kotlin
-package com.until
+package app.until.time
 
 import android.appwidget.AppWidgetManager
 import android.appwidget.AppWidgetProvider

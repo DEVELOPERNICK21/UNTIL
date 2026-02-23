@@ -46,7 +46,7 @@ export function RootNavigator() {
           name="Home"
           component={HomeScreen}
           options={({ navigation }) => ({
-            title: 'UNTIL',
+            title: 'Until: Days left',
             headerRight: () => (
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                 <TouchableOpacity onPress={() => navigation.navigate('Widget')} style={{ padding: 8 }}>

@@ -7,4 +7,13 @@
 # For more details, see
 #   http://developer.android.com/guide/developing/tools/proguard.html
 
-# Add any project specific keep options here:
+# React Native / Hermes (keep what reflection and native code need)
+-keep class com.facebook.hermes.** { *; }
+-keep class com.facebook.jni.** { *; }
+-keep class com.facebook.react.** { *; }
+
+# MMKV
+-keep class com.tencent.mmkv.** { *; }
+
+# WorkManager (if you use it for widgets)
+-keep class androidx.work.** { *; }

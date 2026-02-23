@@ -1,4 +1,4 @@
-package com.until
+package app.until.time
 
 import android.appwidget.AppWidgetManager
 import com.facebook.react.bridge.Promise

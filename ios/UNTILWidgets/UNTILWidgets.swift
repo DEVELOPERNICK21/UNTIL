@@ -487,7 +487,7 @@ struct DayWidgetView: View {
     }
 
     private var placeholderView: some View {
-        Text("Open UNTIL to sync")
+        Text("Open Until to sync")
             .font(.system(size: Design.labelSize))
             .foregroundColor(.gray)
             .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -543,7 +543,7 @@ struct MonthWidgetView: View {
     }
 
     private var placeholderView: some View {
-        Text("Open UNTIL to sync")
+        Text("Open Until to sync")
             .font(.system(size: Design.labelSize))
             .foregroundColor(.gray)
             .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -606,7 +606,7 @@ struct YearWidgetView: View {
     }
 
     private var placeholderView: some View {
-        Text("Open UNTIL to sync")
+        Text("Open Until to sync")
             .font(.system(size: Design.labelSize))
             .foregroundColor(.gray)
             .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -671,7 +671,7 @@ private struct CounterWidgetView: View {
                 .widgetURL(URL(string: "until://increment-counter?id=\(c.id.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? c.id)"))
             } else {
                 VStack(spacing: 8) {
-                    Text("Add a counter in UNTIL")
+                    Text("Add a counter in Until")
                         .font(.system(size: Design.labelSize))
                         .foregroundColor(Design.grayLabel)
                         .multilineTextAlignment(.center)
@@ -692,7 +692,7 @@ struct CounterWidget: Widget {
             CounterWidgetView(entry: entry)
         }
         .configurationDisplayName("Counter")
-        .description("Tap to add +1. Create counters in UNTIL → Widgets → Custom counters.")
+        .description("Tap to add +1. Create counters in Until → Widgets → Custom counters.")
         .supportedFamilies([.systemSmall])
     }
 }
@@ -773,7 +773,7 @@ private struct CountdownWidgetView: View {
                 .padding(16)
             } else {
                 VStack(spacing: 8) {
-                    Text("Add a countdown in UNTIL")
+                    Text("Add a countdown in Until")
                         .font(.system(size: Design.labelSize))
                         .foregroundColor(Design.grayLabel)
                         .multilineTextAlignment(.center)
@@ -794,7 +794,7 @@ struct CountdownWidget: Widget {
             CountdownWidgetView(entry: entry)
         }
         .configurationDisplayName("Countdown")
-        .description("Days left until a deadline. Add deadlines in UNTIL → Widgets → Countdowns.")
+        .description("Days left until a deadline. Add deadlines in Until → Widgets → Countdowns.")
         .supportedFamilies([.systemSmall])
     }
 }
@@ -807,7 +807,7 @@ struct DayWidget: Widget {
         StaticConfiguration(kind: kind, provider: DayWidgetProvider()) { entry in
             DayWidgetView(entry: entry)
         }
-        .configurationDisplayName("UNTIL Day")
+        .configurationDisplayName("Until Day")
         .description("See your day progress.")
         .supportedFamilies([.systemSmall, .systemMedium, .systemLarge])
     }
@@ -820,7 +820,7 @@ struct MonthWidget: Widget {
         StaticConfiguration(kind: kind, provider: UNTILWidgetProvider()) { entry in
             MonthWidgetView(entry: entry)
         }
-        .configurationDisplayName("UNTIL Month")
+        .configurationDisplayName("Until Month")
         .description("See your month progress.")
         .supportedFamilies([.systemMedium])
     }
@@ -833,7 +833,7 @@ struct YearWidget: Widget {
         StaticConfiguration(kind: kind, provider: UNTILWidgetProvider()) { entry in
             YearWidgetView(entry: entry)
         }
-        .configurationDisplayName("UNTIL Year")
+        .configurationDisplayName("Until Year")
         .description("See your year and day progress.")
         .supportedFamilies([.systemLarge])
     }

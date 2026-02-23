@@ -1,4 +1,4 @@
-# UNTIL App Architecture
+# Until: Days left — App Architecture
 
 A **clean architecture** with **Single Source of Truth (SSOT)** for a time-progress app. Data flows in one direction; layers are independent and swappable.
 

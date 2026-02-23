@@ -2,7 +2,7 @@ import { TERMS_TITLE, TERMS_LAST_UPDATED, TERMS_SECTIONS } from '@/domain';
 
 export const metadata = {
   title: TERMS_TITLE,
-  description: 'Terms of Service for UNTIL app and website.',
+  description: 'Terms of Service for Until: Days left app and website.',
 };
 
 export default function TermsPage() {

@@ -12,6 +12,7 @@
   --amber: #f59e0b;
   --red: #ef4444;
   --radius: 16px;
+  --radius-sm: 12px;
   --font-sans: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
@@ -53,4 +54,117 @@ section {
   section {
     padding: 4rem 2rem;
   }
+}
+
+/* Landing: price badge / intro line */
+.landing-intro-line {
+  display: block;
+  text-align: center;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  margin-bottom: 1rem;
+}
+
+/* Feature / category cards */
+.landing-feature-card {
+  background: var(--bg-alt);
+  border: 1px solid var(--divider);
+  border-radius: var(--radius);
+  padding: 1.25rem 1.5rem;
+  transition: border-color 0.2s;
+}
+.landing-feature-card:hover {
+  border-color: var(--progress-fill);
+}
+
+.landing-feature-category {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-secondary);
+  margin-bottom: 0.35rem;
+}
+
+/* Why choose items */
+.landing-why-item {
+  padding: 1rem 0;
+  border-bottom: 1px solid var(--divider);
+}
+.landing-why-item:last-child {
+  border-bottom: none;
+}
+
+/* Testimonials */
+.landing-testimonial-card {
+  background: var(--bg-alt);
+  border: 1px solid var(--divider);
+  border-radius: var(--radius);
+  padding: 1.5rem;
+}
+
+.landing-testimonial-stars {
+  color: var(--amber);
+  letter-spacing: 0.15em;
+  font-size: 1rem;
+  margin-bottom: 0.75rem;
+}
+
+.landing-testimonial-meta {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin-top: 0.75rem;
+}
+
+/* Pricing CTA box */
+.landing-pricing-box {
+  background: var(--bg-alt);
+  border: 1px solid var(--divider);
+  border-radius: var(--radius);
+  padding: 2rem;
+  text-align: center;
+}
+
+.landing-pricing-checkmarks {
+  list-style: none;
+  text-align: left;
+  max-width: 320px;
+  margin: 0 auto 1.5rem;
+}
+.landing-pricing-checkmarks li {
+  padding: 0.4rem 0;
+  padding-left: 1.5rem;
+  position: relative;
+  font-size: 0.95rem;
+  color: var(--text-secondary);
+}
+.landing-pricing-checkmarks li::before {
+  content: '✓';
+  position: absolute;
+  left: 0;
+  color: var(--green);
+  font-weight: 600;
+}
+
+.landing-price-badge {
+  display: inline-block;
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+}
+.landing-price-was {
+  text-decoration: line-through;
+  color: var(--text-secondary);
+  font-size: 1rem;
+  font-weight: 400;
+  margin-left: 0.5rem;
+}
+.landing-price-save {
+  display: inline-block;
+  background: var(--green);
+  color: var(--bg);
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.2rem 0.5rem;
+  border-radius: 6px;
+  margin-left: 0.5rem;
 }

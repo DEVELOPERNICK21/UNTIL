@@ -1,10 +1,10 @@
-package com.until
+package app.until.time
 
 import android.appwidget.AppWidgetManager
 import android.appwidget.AppWidgetProvider
 import android.content.Context
 
-class UNTILMonthWidgetProvider : AppWidgetProvider() {
+class UNTILCountdownWidgetProvider : AppWidgetProvider() {
     override fun onUpdate(context: Context, appWidgetManager: AppWidgetManager, appWidgetIds: IntArray) {
         UNTILWidgetWorker.updateWidgets(context)
     }

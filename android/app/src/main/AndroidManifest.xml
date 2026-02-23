@@ -33,7 +33,7 @@
       <receiver
         android:name=".UNTILDayWidgetProvider"
         android:exported="true"
-        android:label="UNTIL Day">
+        android:label="Until Day">
         <intent-filter>
           <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
         </intent-filter>
@@ -44,7 +44,7 @@
       <receiver
         android:name=".UNTILMonthWidgetProvider"
         android:exported="true"
-        android:label="UNTIL Month">
+        android:label="Until Month">
         <intent-filter>
           <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
         </intent-filter>
@@ -55,7 +55,7 @@
       <receiver
         android:name=".UNTILYearWidgetProvider"
         android:exported="true"
-        android:label="UNTIL Year">
+        android:label="Until Year">
         <intent-filter>
           <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
         </intent-filter>
@@ -66,7 +66,7 @@
       <receiver
         android:name=".UNTILCounterWidgetProvider"
         android:exported="true"
-        android:label="UNTIL Counter">
+        android:label="Until Counter">
         <intent-filter>
           <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
         </intent-filter>
@@ -77,7 +77,7 @@
       <receiver
         android:name=".UNTILCountdownWidgetProvider"
         android:exported="true"
-        android:label="UNTIL Countdown">
+        android:label="Until Countdown">
         <intent-filter>
           <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
         </intent-filter>
@@ -89,7 +89,7 @@
         android:name=".CounterIncrementReceiver"
         android:exported="true">
         <intent-filter>
-          <action android:name="com.until.INCREMENT_COUNTER" />
+          <action android:name="app.until.time.INCREMENT_COUNTER" />
         </intent-filter>
       </receiver>
     </application>
