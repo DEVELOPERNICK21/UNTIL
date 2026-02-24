@@ -46,7 +46,7 @@ export const LANDING_COPY = {
 
   /** Pricing CTA block — checkmarks for premium value props */
   pricingCta: {
-    title: 'Get Until on iPhone or Android',
+    title: 'Get Until',
     subtitle: 'Free to use. Unlock optional Premium for ₹99 (limited time — was ₹299) for extra features and to support development.',
     checkmarks: [
       'Day, month, year, life progress',
@@ -54,12 +54,13 @@ export const LANDING_COPY = {
       'Countdowns & custom counters',
       'One-time Premium — no subscription',
     ],
-    ctaLabel: 'Get the app',
+    ctaLabelAndroid: 'Get on Google Play',
+    iosComingSoon: 'Coming soon',
   },
 
   cta: {
     title: 'Start seeing time clearly.',
-    subtitle: 'Free on iOS and Android.',
+    subtitle: 'Available on Android now. iOS coming soon.',
   },
 
   footer: {

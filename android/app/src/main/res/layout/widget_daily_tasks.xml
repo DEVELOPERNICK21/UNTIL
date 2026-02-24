@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/widget_background"
+    android:orientation="vertical"
+    android:padding="20dp"
+    android:gravity="start">
+
+    <TextView
+        android:id="@+id/widget_daily_tasks_title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textColor="#AAAAAA"
+        android:textSize="10sp"
+        android:textAllCaps="true"
+        android:letterSpacing="0.12"
+        android:text="TODAY'S TASKS"
+        android:layout_marginBottom="12dp" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
+
+        <ImageView
+            android:id="@+id/widget_daily_tasks_pie"
+            android:layout_width="72dp"
+            android:layout_height="72dp"
+            android:contentDescription="Task progress pie"
+            android:scaleType="fitCenter" />
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:layout_marginStart="16dp"
+            android:gravity="center_vertical">
+
+            <TextView
+                android:id="@+id/widget_daily_tasks_value"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="#EEEEEE"
+                android:textSize="22sp"
+                android:textStyle="bold"
+                android:text="0/0" />
+
+            <TextView
+                android:id="@+id/widget_daily_tasks_label"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="#AAAAAA"
+                android:textSize="12sp"
+                android:text="done" />
+
+            <TextView
+                android:id="@+id/widget_daily_tasks_sub"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="#AAAAAA"
+                android:textSize="11sp"
+                android:visibility="gone" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <ProgressBar
+        android:id="@+id/widget_daily_tasks_progress"
+        style="?android:attr/progressBarStyleHorizontal"
+        android:layout_width="match_parent"
+        android:layout_height="8dp"
+        android:layout_marginTop="12dp"
+        android:layout_marginBottom="10dp"
+        android:max="100"
+        android:progress="0"
+        android:progressTint="#34C759"
+        android:progressBackgroundTint="#444444" />
+
+    <TextView
+        android:id="@+id/widget_daily_tasks_cat1"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textColor="#AAAAAA"
+        android:textSize="11sp"
+        android:visibility="gone" />
+    <TextView
+        android:id="@+id/widget_daily_tasks_cat2"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textColor="#AAAAAA"
+        android:textSize="11sp"
+        android:visibility="gone" />
+    <TextView
+        android:id="@+id/widget_daily_tasks_cat3"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textColor="#AAAAAA"
+        android:textSize="11sp"
+        android:visibility="gone" />
+    <TextView
+        android:id="@+id/widget_daily_tasks_cat4"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textColor="#AAAAAA"
+        android:textSize="11sp"
+        android:visibility="gone" />
+    <TextView
+        android:id="@+id/widget_daily_tasks_cat5"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textColor="#AAAAAA"
+        android:textSize="11sp"
+        android:visibility="gone" />
+</LinearLayout>

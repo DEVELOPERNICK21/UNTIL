@@ -7,3 +7,7 @@ export { TimeStatement } from './TimeStatement';
 export { Card } from './Card';
 export { ScreenGradient } from './ScreenGradient';
 export { FAB } from './FAB';
+export { PieChart } from './PieChart';
+export type { PieSegment } from './PieChart';
+export { BarChart } from './BarChart';
+export type { BarDataPoint } from './BarChart';

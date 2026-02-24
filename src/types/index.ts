@@ -109,3 +109,97 @@ export interface Countdown {
   title: string;
   date: string;
 }
+
+/** Task categories for daily task list (separate from ActivityCategory). */
+export type TaskCategory = 'health' | 'work' | 'personal_care' | 'learning' | 'other';
+
+/** Single daily task. date is YYYY-MM-DD. Optional source when created from a monthly goal. */
+export interface DailyTask {
+  id: string;
+  date: string;
+  title: string;
+  category: TaskCategory;
+  completed: boolean;
+  order?: number;
+  /** Set when task was created from a monthly goal (for repeat-daily dedup and display). */
+  sourceGoalId?: string;
+  sourceGoalTaskId?: string;
+}
+
+/** Task template under a monthly goal. */
+export interface GoalTask {
+  id: string;
+  goalId: string;
+  title: string;
+  category: TaskCategory;
+  order: number;
+}
+
+/** Monthly goal (e.g. "Gain 5 kg this month") with tasks to complete. */
+export interface MonthlyGoal {
+  id: string;
+  month: string; // YYYY-MM
+  title: string;
+  targetDescription?: string; // e.g. "increase 5 kg"
+  tasks: GoalTask[];
+  createdAt: number;
+}
+
+/** Rule: this goal task should appear as a daily task every day. */
+export interface RepeatDailyRule {
+  goalId: string;
+  goalTaskId: string;
+}
+
+/** Per-category stats for a day. */
+export interface DailyTaskCategoryStats {
+  completed: number;
+  total: number;
+}
+
+/** Stats for a given day (for in-app report and widget). */
+export interface DailyTaskStats {
+  date: string;
+  completed: number;
+  total: number;
+  pending: number;
+  byCategory: Partial<Record<TaskCategory, DailyTaskCategoryStats>>;
+}
+
+/** Payload written for the daily tasks widget (today's stats). */
+export interface DailyTaskWidgetPayload {
+  date: string;
+  completed: number;
+  total: number;
+  pending: number;
+  byCategory: Partial<Record<TaskCategory, DailyTaskCategoryStats>>;
+}
+
+/** One day's summary for weekly/monthly aggregation. */
+export interface DayTaskSummary {
+  date: string;
+  completed: number;
+  total: number;
+}
+
+/** Weekly task stats (e.g. last 7 days or current week). */
+export interface WeeklyTaskStats {
+  startDate: string;
+  endDate: string;
+  completed: number;
+  total: number;
+  pending: number;
+  byDay: DayTaskSummary[];
+  byCategory: Partial<Record<TaskCategory, DailyTaskCategoryStats>>;
+}
+
+/** Monthly task stats. */
+export interface MonthlyTaskStats {
+  year: number;
+  month: number;
+  completed: number;
+  total: number;
+  pending: number;
+  byDay: DayTaskSummary[];
+  byCategory: Partial<Record<TaskCategory, DailyTaskCategoryStats>>;
+}

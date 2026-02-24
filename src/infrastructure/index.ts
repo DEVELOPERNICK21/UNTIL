@@ -1,2 +1,7 @@
 export * from './repositories';
-export { syncWidgetCache, syncCustomCounters, syncCountdowns } from './WidgetSync';
+export {
+  syncWidgetCache,
+  syncCustomCounters,
+  syncCountdowns,
+  syncDailyTasksWidget,
+} from './WidgetSync';

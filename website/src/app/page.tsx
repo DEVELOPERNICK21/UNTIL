@@ -70,22 +70,19 @@ export default function HomePage() {
             marginBottom: '2rem',
           }}
         >
-          <a
-            href={SITE_CONFIG.appStoreUrl}
-            target="_blank"
-            rel="noopener noreferrer"
+          <span
             style={{
               display: 'inline-block',
               padding: '0.75rem 1.5rem',
-              background: 'var(--text)',
-              color: 'var(--bg)',
+              background: 'var(--divider)',
+              color: 'var(--text-secondary)',
               borderRadius: 'var(--radius)',
               fontWeight: 600,
-              textDecoration: 'none',
+              cursor: 'default',
             }}
           >
-            App Store
-          </a>
+            App Store — Coming soon
+          </span>
           <a
             href={SITE_CONFIG.playStoreUrl}
             target="_blank"
@@ -100,7 +97,7 @@ export default function HomePage() {
               textDecoration: 'none',
             }}
           >
-            Google Play
+            Get on Google Play
           </a>
         </div>
         <HeroScreenshotShowcase />
@@ -301,22 +298,44 @@ export default function HomePage() {
           >
             <span className="landing-limited-time-text">{pricing.currencyNote}</span>
           </p>
-          <a
-            href={SITE_CONFIG.appStoreUrl}
-            target="_blank"
-            rel="noopener noreferrer"
+          <div
             style={{
-              display: 'inline-block',
-              padding: '0.75rem 1.5rem',
-              background: 'var(--text)',
-              color: 'var(--bg)',
-              borderRadius: 'var(--radius)',
-              fontWeight: 600,
-              textDecoration: 'none',
+              display: 'flex',
+              gap: '1rem',
+              justifyContent: 'center',
+              flexWrap: 'wrap',
             }}
           >
-            {pricingCta.ctaLabel}
-          </a>
+            <span
+              style={{
+                display: 'inline-block',
+                padding: '0.75rem 1.5rem',
+                background: 'var(--divider)',
+                color: 'var(--text-secondary)',
+                borderRadius: 'var(--radius)',
+                fontWeight: 600,
+                cursor: 'default',
+              }}
+            >
+              {pricingCta.iosComingSoon}
+            </span>
+            <a
+              href={SITE_CONFIG.playStoreUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                display: 'inline-block',
+                padding: '0.75rem 1.5rem',
+                background: 'var(--text)',
+                color: 'var(--bg)',
+                borderRadius: 'var(--radius)',
+                fontWeight: 600,
+                textDecoration: 'none',
+              }}
+            >
+              {pricingCta.ctaLabelAndroid}
+            </a>
+          </div>
         </div>
       </section>
 
@@ -350,7 +369,7 @@ export default function HomePage() {
             textDecoration: 'none',
           }}
         >
-          {hero.cta}
+          Get on Google Play
         </a>
       </section>
     </>

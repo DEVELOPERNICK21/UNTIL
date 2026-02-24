@@ -31,9 +31,8 @@ local.properties
 *.iml
 *.hprof
 .cxx/
+# Keystores: do not commit. Back up release keystore + passwords securely (see docs/ANDROID_RELEASE_BUILD.md).
 *.keystore
-!debug.keystore
-# Release signing: never commit; back up keystore + passwords securely (see docs/ANDROID_RELEASE_BUILD.md)
 android/app/keystore.properties
 .kotlin/
 

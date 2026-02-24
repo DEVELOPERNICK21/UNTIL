@@ -9,7 +9,12 @@ import { Colors } from './theme';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { runMigrations } from './persistence/migration';
 import { RootNavigator } from './navigation/RootNavigator';
-import { syncWidgetCache, syncCustomCounters, syncCountdowns } from './infrastructure';
+import {
+  syncWidgetCache,
+  syncCustomCounters,
+  syncCountdowns,
+  syncDailyTasksWidget,
+} from './infrastructure';
 import { incrementCustomCounterUseCase, replaceCustomCountersFromSyncUseCase } from './di';
 
 runMigrations();
@@ -37,6 +42,7 @@ function App() {
     syncWidgetCache();
     syncCustomCounters();
     syncCountdowns();
+    syncDailyTasksWidget();
 
     const processInitialUrl = () => {
       Linking.getInitialURL().then((url) => {
@@ -66,6 +72,7 @@ function App() {
         syncWidgetCache();
         syncCustomCounters();
         syncCountdowns();
+        syncDailyTasksWidget();
         processInitialUrl();
       }
     });

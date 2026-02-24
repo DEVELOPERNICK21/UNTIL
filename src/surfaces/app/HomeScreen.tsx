@@ -1,9 +1,9 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, StyleSheet, ScrollView, Animated, Easing } from 'react-native';
+import { View, StyleSheet, ScrollView, Animated, Easing, TouchableOpacity } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Text, ScreenGradient, Card, ProgressLine } from '../../ui';
-import { useObserveTimeState } from '../../hooks';
+import { useObserveTimeState, useDailyTasks } from '../../hooks';
 import { Spacing, getProgressColor } from '../../theme';
 import type { RootStackParamList } from '../../navigation/RootNavigator';
 import { getDayProgress } from '../../core/time/day';
@@ -93,6 +93,7 @@ interface BlockProps {
   passedPct: number;
   leftPct: number;
   index?: number;
+  onPress?: () => void;
 }
 
 const GLOW_RADIUS_LEFT = 12;
@@ -106,9 +107,8 @@ function leftValueGlowStyle(hexColor: string) {
   };
 }
 
-function TimeBlock({ title, passedLabel, leftLabel, progress, passedPct, leftPct, index = 0 }: BlockProps) {
+function TimeBlock({ title, passedLabel, leftLabel, progress, passedPct, leftPct, index = 0, onPress }: BlockProps) {
   const progressColor = getProgressColor(progress);
-  // Left: small left → red, big left → green (same scale as progress: 0=green, 1=red)
   const leftColor = getProgressColor(progress);
   const opacity = useRef(new Animated.Value(0)).current;
   const blinkOpacity = useRef(new Animated.Value(1)).current;
@@ -144,9 +144,8 @@ function TimeBlock({ title, passedLabel, leftLabel, progress, passedPct, leftPct
     return () => loop.stop();
   }, [blinkOpacity]);
 
-  return (
-    <Animated.View style={{ opacity }}>
-      <Card style={styles.block}>
+  const content = (
+    <Card style={styles.block}>
         <Text variant="sectionTitle" color="secondary" style={styles.blockTitle}>
           {title}
         </Text>
@@ -172,14 +171,35 @@ function TimeBlock({ title, passedLabel, leftLabel, progress, passedPct, leftPct
           </Text>
         </View>
         <ProgressLine progress={progress} fillColor={progressColor} style={styles.progress} />
+        {onPress && (
+          <Text variant="caption" color="secondary" style={styles.tapHint}>
+            Tap for details →
+          </Text>
+        )}
       </Card>
+  );
+
+  return (
+    <Animated.View style={{ opacity }}>
+      {onPress ? (
+        <TouchableOpacity onPress={onPress} activeOpacity={0.85}>
+          {content}
+        </TouchableOpacity>
+      ) : (
+        content
+      )}
     </Animated.View>
   );
+}
+
+function todayIso(): string {
+  return new Date().toISOString().slice(0, 10);
 }
 
 export function HomeScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList, 'Home'>>();
   const { userProfile, timeState } = useObserveTimeState();
+  const { stats } = useDailyTasks(todayIso());
   const [liveNow, setLiveNow] = useState(() => new Date());
 
   useEffect(() => {
@@ -224,6 +244,7 @@ export function HomeScreen() {
             progress={day.progress}
             passedPct={day.passedPct}
             leftPct={day.leftPct}
+            onPress={() => navigation.navigate('DayDetail')}
           />
 
           <TimeBlock
@@ -234,6 +255,7 @@ export function HomeScreen() {
             progress={timeState.month}
             passedPct={month.passedPct}
             leftPct={month.leftPct}
+            onPress={() => navigation.navigate('MonthDetail')}
           />
 
           <TimeBlock
@@ -244,6 +266,7 @@ export function HomeScreen() {
             progress={timeState.year}
             passedPct={year.passedPct}
             leftPct={year.leftPct}
+            onPress={() => navigation.navigate('YearDetail')}
           />
 
           {hasBirthDate ? (
@@ -255,6 +278,7 @@ export function HomeScreen() {
               progress={timeState.life}
               passedPct={life.passedPct}
               leftPct={life.leftPct}
+              onPress={() => navigation.navigate('Life')}
             />
           ) : (
             <Card style={styles.block}>
@@ -274,6 +298,61 @@ export function HomeScreen() {
               </Text>
             </Card>
           )}
+
+          <Card style={styles.block}>
+            <Text variant="sectionTitle" color="secondary" style={styles.blockTitle}>
+              Today&apos;s tasks
+            </Text>
+            {stats.total === 0 ? (
+              <Text variant="body" color="secondary" style={styles.tasksEmpty}>
+                No tasks for today. Add tasks and track your day.
+              </Text>
+            ) : (
+              <>
+                <View style={styles.row}>
+                  <View style={styles.half}>
+                    <Text variant="title" color="primary" style={styles.value}>
+                      {stats.completed}/{stats.total} done
+                    </Text>
+                    <Text variant="caption" color="secondary">
+                      {stats.pending} pending
+                    </Text>
+                  </View>
+                </View>
+                <ProgressLine
+                  progress={stats.total > 0 ? stats.completed / stats.total : 0}
+                  fillColor={getProgressColor(stats.total > 0 ? stats.completed / stats.total : 0)}
+                  style={styles.progress}
+                />
+              </>
+            )}
+            <View style={styles.tasksCtaRow}>
+              <TouchableOpacity
+                style={styles.tasksCta}
+                onPress={() => navigation.navigate('DailyTasks')}
+              >
+                <Text variant="caption" color="primary" style={styles.settingsLink}>
+                  {stats.total === 0 ? 'Add tasks' : 'See all'}
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.tasksCta}
+                onPress={() => navigation.navigate('MonthlyGoals')}
+              >
+                <Text variant="caption" color="primary" style={styles.settingsLink}>
+                  Monthly goals
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.tasksCta}
+                onPress={() => navigation.navigate('TaskReport')}
+              >
+                <Text variant="caption" color="primary" style={styles.settingsLink}>
+                  Report
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </Card>
         </ScrollView>
       </ScreenGradient>
     </View>
@@ -328,10 +407,26 @@ const styles = StyleSheet.create({
   progress: {
     marginTop: Spacing[1],
   },
+  tapHint: {
+    marginTop: Spacing[2],
+    textAlign: 'center',
+  },
   lifePrompt: {
     marginBottom: Spacing[2],
   },
   settingsLink: {
     textDecorationLine: 'underline',
+  },
+  tasksEmpty: {
+    marginBottom: Spacing[2],
+  },
+  tasksCtaRow: {
+    marginTop: Spacing[2],
+    flexDirection: 'row',
+    gap: Spacing[3],
+    flexWrap: 'wrap',
+  },
+  tasksCta: {
+    paddingVertical: Spacing[1],
   },
 });

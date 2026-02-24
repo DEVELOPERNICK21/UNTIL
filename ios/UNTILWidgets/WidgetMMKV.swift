@@ -11,6 +11,7 @@ enum WidgetCacheReader {
     static let widgetCacheKey = "widget.cache"
     static let customCountersKey = "custom.counters"
     static let countdownsKey = "countdowns"
+    static let dailyTasksWidgetKey = "daily.tasks.widget"
 
     static func loadJSON() -> String? {
         guard let defaults = UserDefaults(suiteName: appGroupID) else { return nil }
@@ -25,6 +26,11 @@ enum WidgetCacheReader {
     static func loadCountdownsJSON() -> String? {
         guard let defaults = UserDefaults(suiteName: appGroupID) else { return nil }
         return defaults.string(forKey: countdownsKey)
+    }
+
+    static func loadDailyTasksStatsJSON() -> String? {
+        guard let defaults = UserDefaults(suiteName: appGroupID) else { return nil }
+        return defaults.string(forKey: dailyTasksWidgetKey)
     }
 
     /// Write custom counters JSON (used by widget extension App Intent to persist increment without opening app).

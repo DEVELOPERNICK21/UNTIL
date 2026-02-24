@@ -117,6 +117,302 @@ struct UNTILWidgetEntry: TimelineEntry {
     let cache: WidgetCache?
 }
 
+// MARK: - Daily Tasks Widget (day report: completed / total)
+struct DailyTaskCategoryStats: Codable {
+    let completed: Int
+    let total: Int
+}
+
+struct DailyTaskWidgetPayload: Codable {
+    let date: String
+    let completed: Int
+    let total: Int
+    let pending: Int
+    let byCategory: [String: DailyTaskCategoryStats]?
+}
+
+struct DailyTasksWidgetEntry: TimelineEntry {
+    let date: Date
+    let payload: DailyTaskWidgetPayload?
+    /// Used for .systemLarge: day progress section.
+    let dayCache: WidgetCache?
+}
+
+struct DailyTasksWidgetProvider: TimelineProvider {
+    private func loadPayload() -> DailyTaskWidgetPayload? {
+        guard let json = WidgetCacheReader.loadDailyTasksStatsJSON(),
+              let data = json.data(using: .utf8) else { return nil }
+        return try? JSONDecoder().decode(DailyTaskWidgetPayload.self, from: data)
+    }
+
+    private func loadWidgetCache() -> WidgetCache? {
+        guard let json = WidgetCacheReader.loadJSON() else { return nil }
+        guard let data = json.data(using: .utf8) else { return nil }
+        return try? JSONDecoder().decode(WidgetCache.self, from: data)
+    }
+
+    func placeholder(in context: Context) -> DailyTasksWidgetEntry {
+        DailyTasksWidgetEntry(date: Date(), payload: nil, dayCache: nil)
+    }
+
+    func getSnapshot(in context: Context, completion: @escaping (DailyTasksWidgetEntry) -> Void) {
+        completion(DailyTasksWidgetEntry(date: Date(), payload: loadPayload(), dayCache: loadWidgetCache()))
+    }
+
+    func getTimeline(in context: Context, completion: @escaping (Timeline<DailyTasksWidgetEntry>) -> Void) {
+        let now = Date()
+        let entry = DailyTasksWidgetEntry(date: now, payload: loadPayload(), dayCache: loadWidgetCache())
+        // Refresh at next minute boundary so task data and day time (minutes) stay in sync
+        let cal = Calendar.current
+        var comps = cal.dateComponents([.year, .month, .day, .hour, .minute], from: now)
+        guard let startOfCurrentMinute = cal.date(from: comps) else {
+            completion(Timeline(entries: [entry], policy: .after(cal.date(byAdding: .minute, value: 1, to: now)!)))
+            return
+        }
+        let nextUpdate = cal.date(byAdding: .minute, value: 1, to: startOfCurrentMinute) ?? startOfCurrentMinute
+        completion(Timeline(entries: [entry], policy: .after(nextUpdate)))
+    }
+}
+
+private let dailyTasksCategoryLabels: [String: String] = [
+    "health": "Health",
+    "work": "Work",
+    "personal_care": "Personal care",
+    "learning": "Learning",
+    "other": "Other",
+]
+
+private struct DailyTasksPieShape: View {
+    let completed: Int
+    let total: Int
+    let size: CGFloat
+    let innerRatio: CGFloat
+
+    private var progress: Double {
+        guard total > 0 else { return 0 }
+        return Double(completed) / Double(total)
+    }
+
+    var body: some View {
+        ZStack {
+            if total > 0 {
+                if progress >= 1.0 {
+                    Circle()
+                        .fill(Design.left)
+                    Circle()
+                        .fill(Design.background)
+                        .scaleEffect(innerRatio)
+                } else {
+                    let start = Angle.degrees(-90)
+                    let end = start + Angle.degrees(360 * progress)
+                    DailyTasksDonutSectorShape(startAngle: start, endAngle: end, innerRatio: innerRatio)
+                        .fill(Design.left)
+                    DailyTasksDonutSectorShape(startAngle: end, endAngle: start + .degrees(360), innerRatio: innerRatio)
+                        .fill(Design.progressOrange)
+                }
+            } else {
+                Circle()
+                    .stroke(Design.progressBg, lineWidth: 4)
+            }
+        }
+        .frame(width: size, height: size)
+        .drawingGroup()
+    }
+}
+
+/// Donut sector that sizes itself from the view's rect so the pie renders correctly.
+private struct DailyTasksDonutSectorShape: Shape {
+    let startAngle: Angle
+    let endAngle: Angle
+    let innerRatio: CGFloat
+
+    func path(in rect: CGRect) -> Path {
+        let w = rect.width
+        let h = rect.height
+        guard w > 0, h > 0 else { return Path() }
+        let cx = rect.midX
+        let cy = rect.midY
+        let rOuter = (min(w, h) / 2) - 2
+        let rInner = rOuter * innerRatio
+        var p = Path()
+        let startOuter = CGPoint(x: cx + rOuter * CGFloat(cos(startAngle.radians)), y: cy + rOuter * CGFloat(sin(startAngle.radians)))
+        let endInner = CGPoint(x: cx + rInner * CGFloat(cos(endAngle.radians)), y: cy + rInner * CGFloat(sin(endAngle.radians)))
+        p.move(to: startOuter)
+        p.addArc(center: CGPoint(x: cx, y: cy), radius: rOuter, startAngle: startAngle, endAngle: endAngle, clockwise: false)
+        p.addLine(to: endInner)
+        p.addArc(center: CGPoint(x: cx, y: cy), radius: rInner, startAngle: endAngle, endAngle: startAngle, clockwise: false)
+        p.closeSubpath()
+        return p
+    }
+}
+
+/// Compact day block for the large Daily Tasks widget (Tasks + Day in one).
+private struct DailyTasksDaySection: View {
+    let cache: WidgetCache
+    var now: Date = Date()
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Rectangle()
+                .fill(Design.progressBg)
+                .frame(height: 1)
+                .padding(.vertical, 4)
+            Text("TODAY")
+                .font(.system(size: 10, weight: .semibold))
+                .foregroundColor(Design.grayLabel)
+                .tracking(1.2)
+            HStack(spacing: 16) {
+                Text("\(cache.dayPercentDone)% done")
+                    .font(.system(size: 16, weight: .bold))
+                    .foregroundColor(Design.passedDot)
+                Text("·")
+                    .foregroundColor(Design.grayLabel)
+                Text(dayTimePassedText(cache, now: now))
+                    .font(.system(size: 13))
+                    .foregroundColor(Design.grayLabel)
+                Text("passed")
+                    .font(.system(size: 11))
+                    .foregroundColor(Design.grayLabel)
+                Text(dayTimeLeftText(cache, now: now))
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundColor(Design.lightText)
+                Text("left")
+                    .font(.system(size: 11))
+                    .foregroundColor(Design.grayLabel)
+            }
+            GeometryReader { geo in
+                ZStack(alignment: .leading) {
+                    RoundedRectangle(cornerRadius: 4)
+                        .fill(Design.progressBg)
+                    RoundedRectangle(cornerRadius: 4)
+                        .fill(Design.passedDot)
+                        .frame(width: max(0, geo.size.width * CGFloat(cache.dayProgress)), height: 6)
+                }
+            }
+            .frame(height: 6)
+        }
+        .padding(.horizontal, 20)
+        .padding(.bottom, 20)
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+}
+
+private struct DailyTasksWidgetView: View {
+    let entry: DailyTasksWidgetEntry
+    @Environment(\.widgetFamily) private var family
+
+    var body: some View {
+        Group {
+            if family == .systemLarge {
+                VStack(alignment: .leading, spacing: 0) {
+                    if let p = entry.payload {
+                        paddedContent(payload: p)
+                    } else {
+                        placeholderView
+                    }
+                    if let cache = entry.dayCache {
+                        DailyTasksDaySection(cache: cache, now: entry.date)
+                    }
+                }
+            } else {
+                if let p = entry.payload {
+                    paddedContent(payload: p)
+                } else {
+                    placeholderView
+                }
+            }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .widgetBackground()
+    }
+
+    private func paddedContent(payload: DailyTaskWidgetPayload) -> some View {
+        let total = payload.total
+        let completed = payload.completed
+        let pending = payload.pending
+        let progress = total > 0 ? Double(completed) / Double(total) : 0.0
+        let pct = total > 0 ? Int(round(progress * 100)) : 0
+
+        return VStack(alignment: .leading, spacing: 0) {
+            Text("TODAY'S TASKS")
+                .font(.system(size: 10, weight: .semibold))
+                .foregroundColor(Design.grayLabel)
+                .tracking(1.2)
+                .padding(.bottom, 12)
+
+            HStack(alignment: .center, spacing: 16) {
+                DailyTasksPieShape(completed: completed, total: total, size: family == .systemSmall ? 72 : 88, innerRatio: 0.58)
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("\(completed)/\(total)")
+                        .font(.system(size: family == .systemSmall ? 22 : 26, weight: .bold))
+                        .foregroundColor(Design.lightText)
+                    Text("done")
+                        .font(.system(size: 12))
+                        .foregroundColor(Design.grayLabel)
+                    if total > 0 {
+                        Text("\(pct)% · \(pending) pending")
+                            .font(.system(size: 11))
+                            .foregroundColor(Design.grayLabel)
+                    }
+                }
+                Spacer(minLength: 0)
+            }
+            .padding(.bottom, 12)
+
+            if total > 0 {
+                GeometryReader { geo in
+                    ZStack(alignment: .leading) {
+                        RoundedRectangle(cornerRadius: 4)
+                            .fill(Design.progressBg)
+                        RoundedRectangle(cornerRadius: 4)
+                            .fill(progress >= 1.0 ? Design.left : Design.progressOrange)
+                            .frame(width: max(0, geo.size.width * CGFloat(progress)))
+                    }
+                }
+                .frame(height: 8)
+                .padding(.bottom, 10)
+            }
+
+            if family != .systemSmall, let byCat = payload.byCategory, !byCat.isEmpty {
+                VStack(alignment: .leading, spacing: 2) {
+                    ForEach(Array(byCat.keys.sorted()), id: \.self) { key in
+                        if let stats = byCat[key], stats.total > 0 {
+                            let label = dailyTasksCategoryLabels[key] ?? key
+                            Text("\(label) \(stats.completed)/\(stats.total)")
+                                .font(.system(size: 11))
+                                .foregroundColor(Design.grayLabel)
+                        }
+                    }
+                }
+            }
+            Spacer(minLength: 0)
+        }
+        .padding(20)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+    }
+
+    private var placeholderView: some View {
+        Text("Add tasks in Until")
+            .font(.system(size: Design.labelSize))
+            .foregroundColor(Design.grayLabel)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .padding(20)
+    }
+}
+
+struct DailyTasksWidget: Widget {
+    let kind: String = "UNTILDailyTasksWidget"
+
+    var body: some WidgetConfiguration {
+        StaticConfiguration(kind: kind, provider: DailyTasksWidgetProvider()) { entry in
+            DailyTasksWidgetView(entry: entry)
+        }
+        .configurationDisplayName("Daily tasks")
+        .description("Today's task report: completed vs pending. Add tasks in Until.")
+        .supportedFamilies([.systemSmall, .systemMedium, .systemLarge])
+    }
+}
+
 // MARK: - Day Dots View (circular ring + 24 hour dots)
 private struct DayDotsView: View {
     let progress: Double
@@ -345,16 +641,15 @@ private struct DayRingView: View {
     }
 }
 
-// MARK: - Day time strings (realtime with seconds when startOfDay/endOfDay present)
+// MARK: - Day time strings (hours and minutes only; no seconds)
 private func dayTimePassedText(_ cache: WidgetCache, now: Date = Date()) -> String {
     if let start = cache.startOfDay, let end = cache.endOfDay {
         let startSec = Double(start) / 1000
         let nowSec = now.timeIntervalSince1970
         let passedSec = max(0, min(Int(nowSec - startSec), Int(Double(end - start) / 1000)))
-        let h = passedSec / 3600
-        let m = (passedSec % 3600) / 60
-        let s = passedSec % 60
-        if s > 0 || m > 0 { return "\(h)h \(m)m \(s)s" }
+        let passedMin = passedSec / 60
+        let h = passedMin / 60
+        let m = passedMin % 60
         if m > 0 { return "\(h)h \(m)m" }
         return "\(h)h"
     }
@@ -370,10 +665,9 @@ private func dayTimeLeftText(_ cache: WidgetCache, now: Date = Date()) -> String
         let endSec = Double(end) / 1000
         let nowSec = now.timeIntervalSince1970
         let remainingSec = max(0, Int(endSec - nowSec))
-        let h = remainingSec / 3600
-        let m = (remainingSec % 3600) / 60
-        let s = remainingSec % 60
-        if s > 0 || m > 0 { return "\(h)h \(m)m \(s)s" }
+        let remainingMin = remainingSec / 60
+        let h = remainingMin / 60
+        let m = remainingMin % 60
         if m > 0 { return "\(h)h \(m)m" }
         return "\(h)h"
     }
@@ -893,5 +1187,6 @@ struct UNTILWidgetsBundle: WidgetBundle {
         YearWidget()
         CounterWidget()
         CountdownWidget()
+        DailyTasksWidget()
     }
 }

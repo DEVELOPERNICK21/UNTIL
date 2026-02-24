@@ -11,12 +11,14 @@ private let appGroupID = "group.org.reactjs.native.example.UNTIL"
 private let widgetCacheKey = "widget.cache"
 private let customCountersKey = "custom.counters"
 private let countdownsKey = "countdowns"
+private let dailyTasksWidgetKey = "daily.tasks.widget"
 
 private let kindDay = "UNTILDayWidget"
 private let kindMonth = "UNTILMonthWidget"
 private let kindYear = "UNTILYearWidget"
 private let kindCounter = "UNTILCounterWidget"
 private let kindCountdown = "UNTILCountdownWidget"
+private let kindDailyTasks = "UNTILDailyTasksWidget"
 
 @objc(WidgetBridge)
 class WidgetBridge: NSObject {
@@ -45,6 +47,13 @@ class WidgetBridge: NSObject {
     WidgetCenter.shared.reloadTimelines(ofKind: kindCountdown)
   }
 
+  @objc func setDailyTasksStats(_ json: String) {
+    guard let defaults = UserDefaults(suiteName: appGroupID) else { return }
+    defaults.set(json, forKey: dailyTasksWidgetKey)
+    defaults.synchronize()
+    WidgetCenter.shared.reloadTimelines(ofKind: kindDailyTasks)
+  }
+
   @objc func getCustomCountersFromAppGroup(_ resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
     guard let defaults = UserDefaults(suiteName: appGroupID) else {
       resolve(nil)
@@ -64,6 +73,7 @@ class WidgetBridge: NSObject {
           "yearWidgetAdded": kinds.contains(kindYear),
           "counterWidgetAdded": kinds.contains(kindCounter),
           "countdownWidgetAdded": kinds.contains(kindCountdown),
+          "dailyTasksWidgetAdded": kinds.contains(kindDailyTasks),
         ]
         resolve(payload)
       case .failure(let error):

@@ -1,21 +1,103 @@
 workflows:
 
-    android-workflow-id:
-
-        name: Android Sample Workflow
-         max_build_duration: 120
+    android-workflow:
+        name: UNTIL Android
+        max_build_duration: 120
         instance_type: mac_mini_m2
 
-        # .......    
+        triggering:
+            events:
+                - push
+            branch_patterns:
+                - pattern: "*"
+                  include: true
+                  source: true
 
-        # .......
+        environment:
+            android_signing:
+                - until_keystore  # Set in Codemagic UI: Code signing identities → Android keystores
+            vars:
+                PACKAGE_NAME: "app.until.time"
 
-        # .......  
+        scripts:
+            - name: Set Android SDK location
+              script: |
+                echo "sdk.dir=$ANDROID_SDK_ROOT" > "$CM_BUILD_DIR/android/local.properties"
+            - name: Install npm dependencies
+              script: |
+                npm install
+            - name: Build Android release AAB
+              script: |
+                cd android
+                ./gradlew bundleRelease
 
-    ios-workflow-id:
+        artifacts:
+            - android/app/build/outputs/**/*.aab
+            - android/app/build/outputs/**/*.apk
 
-        name: iOS Sample Workflow
-         max_build_duration: 120
+        publishing:
+            email:
+                recipients:
+                    - team@example.com  # Replace with your email
+                notify:
+                    success: true
+                    failure: true
+            # Uncomment and set up for Play Store:
+            # google_play:
+            #     credentials: $GOOGLE_PLAY_SERVICE_ACCOUNT_CREDENTIALS
+            #     track: internal
+            #     submit_as_draft: true
+
+    ios-workflow:
+        name: UNTIL iOS
+        max_build_duration: 120
         instance_type: mac_mini_m2
 
-        # ......
+        triggering:
+            events:
+                - push
+            branch_patterns:
+                - pattern: "*"
+                  include: true
+                  source: true
+
+        environment:
+            ios_signing:
+                distribution_type: app_store  # or ad_hoc for TestFlight/internal
+                bundle_identifier: com.develoeprnick.UNTIL
+            vars:
+                BUNDLE_ID: "com.develoeprnick.UNTIL"
+                XCODE_WORKSPACE: "UNTIL.xcworkspace"
+                XCODE_SCHEME: "UNTIL"
+
+        scripts:
+            - name: Install npm dependencies
+              script: |
+                npm install
+            - name: Install CocoaPods dependencies
+              script: |
+                cd ios && pod install
+            - name: Set up code signing
+              script: |
+                xcode-project use-profiles
+            - name: Build IPA
+              script: |
+                xcode-project build-ipa \
+                  --workspace "$CM_BUILD_DIR/ios/$XCODE_WORKSPACE" \
+                  --scheme "$XCODE_SCHEME"
+
+        artifacts:
+            - build/ios/ipa/*.ipa
+            - /tmp/xcodebuild_logs/*.log
+
+        publishing:
+            email:
+                recipients:
+                    - team@example.com  # Replace with your email
+                notify:
+                    success: true
+                    failure: true
+            # Uncomment when App Store Connect API key is added (integrations + app_store_connect):
+            # app_store_connect:
+            #     auth: integration
+            #     submit_to_testflight: true

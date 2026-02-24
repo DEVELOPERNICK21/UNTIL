@@ -6,3 +6,4 @@ export { useLogActivity } from './useLogActivity';
 export { useObserveCategoryTotals } from './useObserveCategoryTotals';
 export { useRegretProjection } from './useRegretProjection';
 export { useInterventionState } from './useInterventionState';
+export { useDailyTasks } from './useDailyTasks';

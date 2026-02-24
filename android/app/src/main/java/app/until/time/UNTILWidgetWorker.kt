@@ -28,6 +28,7 @@ import android.graphics.Color
 private const val WIDGET_CACHE_KEY = "widget.cache"
 private const val CUSTOM_COUNTERS_KEY = "custom.counters"
 private const val COUNTDOWNS_KEY = "countdowns"
+private const val DAILY_TASKS_WIDGET_KEY = "daily.tasks.widget"
 private const val MMKV_ID = "until-storage"
 private const val WORK_NAME = "UNTILWidgetUpdate"
 private const val DAY_TICK_WORK_NAME = "UNTILDayWidgetTick"
@@ -37,6 +38,7 @@ private const val PENDING_INTENT_DAY = 100
 private const val PENDING_INTENT_MONTH = 101
 private const val PENDING_INTENT_YEAR = 102
 private const val PENDING_INTENT_COUNTER_BASE = 200
+private const val PENDING_INTENT_DAILY_TASKS = 103
 
 class UNTILWidgetWorker(
     context: Context,
@@ -88,8 +90,10 @@ class UNTILWidgetWorker(
             val yearProvider = ComponentName(context, UNTILYearWidgetProvider::class.java)
             val counterProvider = ComponentName(context, UNTILCounterWidgetProvider::class.java)
             val countdownProvider = ComponentName(context, UNTILCountdownWidgetProvider::class.java)
+            val dailyTasksProvider = ComponentName(context, UNTILDailyTasksWidgetProvider::class.java)
             val counters = loadCustomCounters(context)
             val countdowns = loadCountdowns(context)
+            val dailyTasksPayload = loadDailyTasksPayload(context)
 
             val dayIds = appWidgetManager.getAppWidgetIds(dayProvider)
             listOf(
@@ -132,6 +136,18 @@ class UNTILWidgetWorker(
                         appWidgetManager.updateAppWidget(id, views)
                     } catch (e: Exception) {
                         val views = buildCountdownRemoteViews(context, null, id)
+                        appWidgetManager.updateAppWidget(id, views)
+                    }
+                }
+            }
+            val dailyTasksIds = appWidgetManager.getAppWidgetIds(dailyTasksProvider)
+            if (dailyTasksIds.isNotEmpty()) {
+                for (id in dailyTasksIds) {
+                    try {
+                        val views = buildDailyTasksRemoteViews(context, dailyTasksPayload, cache)
+                        appWidgetManager.updateAppWidget(id, views)
+                    } catch (e: Exception) {
+                        val views = buildDailyTasksRemoteViews(context, null, defaultCache)
                         appWidgetManager.updateAppWidget(id, views)
                     }
                 }
@@ -259,6 +275,178 @@ class UNTILWidgetWorker(
             }
         }
 
+        private data class DailyTaskCatStat(val completed: Int, val total: Int)
+
+        private data class DailyTasksPayload(
+            val date: String,
+            val completed: Int,
+            val total: Int,
+            val pending: Int,
+            val byCategory: Map<String, DailyTaskCatStat>
+        )
+
+        private val dailyTasksCategoryOrder = listOf("health", "work", "personal_care", "learning", "other")
+        private val dailyTasksCategoryLabels = mapOf(
+            "health" to "Health",
+            "work" to "Work",
+            "personal_care" to "Personal care",
+            "learning" to "Learning",
+            "other" to "Other"
+        )
+
+        private fun loadDailyTasksPayload(context: Context): DailyTasksPayload? {
+            return try {
+                MMKV.initialize(context)
+                val mmkv = MMKV.mmkvWithID(MMKV_ID)
+                val json = mmkv?.decodeString(DAILY_TASKS_WIDGET_KEY) ?: return null
+                val obj = JSONObject(json)
+                val byCat = mutableMapOf<String, DailyTaskCatStat>()
+                if (obj.has("byCategory")) {
+                    val catObj = obj.getJSONObject("byCategory")
+                    for (key in dailyTasksCategoryOrder) {
+                        if (catObj.has(key)) {
+                            val c = catObj.getJSONObject(key)
+                            byCat[key] = DailyTaskCatStat(
+                                completed = c.optInt("completed", 0),
+                                total = c.optInt("total", 0)
+                            )
+                        }
+                    }
+                }
+                DailyTasksPayload(
+                    date = obj.optString("date", ""),
+                    completed = obj.optInt("completed", 0),
+                    total = obj.optInt("total", 0),
+                    pending = obj.optInt("pending", 0),
+                    byCategory = byCat
+                )
+            } catch (e: Exception) {
+                null
+            }
+        }
+
+        private fun createDailyTasksPieBitmap(completed: Int, total: Int): Bitmap? {
+            return try {
+                val sizePx = 144
+                val bitmap = Bitmap.createBitmap(sizePx, sizePx, Bitmap.Config.ARGB_8888)
+                val canvas = Canvas(bitmap)
+                val center = sizePx / 2f
+                val rOuter = center - 4f
+                val rInner = rOuter * 0.58f
+                val progress = if (total > 0) (completed.toFloat() / total).coerceIn(0f, 1f) else 0f
+                val green = Color.parseColor("#34C759")
+                val orange = Color.parseColor("#E87C20")
+                val gray = Color.parseColor("#444444")
+                val oval = android.graphics.RectF(center - rOuter, center - rOuter, center + rOuter, center + rOuter)
+                val innerOval = android.graphics.RectF(center - rInner, center - rInner, center + rInner, center + rInner)
+                val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.FILL }
+                if (total > 0) {
+                    if (progress >= 1f) {
+                        paint.color = green
+                        canvas.drawCircle(center, center, rOuter, paint)
+                        paint.color = Color.BLACK
+                        canvas.drawCircle(center, center, rInner, paint)
+                    } else {
+                        paint.color = green
+                        canvas.drawArc(oval, -90f, progress * 360f, true, paint)
+                        paint.color = orange
+                        canvas.drawArc(oval, -90f + progress * 360f, (1f - progress) * 360f, true, paint)
+                        paint.color = Color.BLACK
+                        canvas.drawCircle(center, center, rInner, paint)
+                    }
+                } else {
+                    paint.color = gray
+                    paint.style = Paint.Style.STROKE
+                    paint.strokeWidth = 4f
+                    canvas.drawCircle(center, center, rOuter - 2f, paint)
+                }
+                bitmap
+            } catch (e: Exception) {
+                null
+            }
+        }
+
+        private val widgetDailyTasksCatIds = listOf(
+            R.id.widget_daily_tasks_cat1,
+            R.id.widget_daily_tasks_cat2,
+            R.id.widget_daily_tasks_cat3,
+            R.id.widget_daily_tasks_cat4,
+            R.id.widget_daily_tasks_cat5
+        )
+
+        private fun getDailyTasksWidgetPage(context: Context): Int {
+            return context.getSharedPreferences(DailyTasksWidgetTapReceiver.PREFS_NAME, Context.MODE_PRIVATE)
+                .getInt(DailyTasksWidgetTapReceiver.KEY_PAGE, 0)
+        }
+
+        private fun buildDailyTasksRemoteViews(context: Context, payload: DailyTasksPayload?, cache: WidgetCache): RemoteViews {
+            val views = RemoteViews(context.packageName, R.layout.widget_daily_tasks_flipper)
+            // Page 0: Daily tasks
+            if (payload != null && payload.total >= 0) {
+                views.setTextViewText(R.id.widget_daily_tasks_value, "${payload.completed}/${payload.total}")
+                val progress = if (payload.total > 0) (payload.completed * 100 / payload.total).coerceIn(0, 100) else 0
+                views.setProgressBar(R.id.widget_daily_tasks_progress, 100, progress, false)
+                val pct = if (payload.total > 0) (payload.completed * 100 / payload.total).coerceIn(0, 100) else 0
+                views.setTextViewText(R.id.widget_daily_tasks_sub, "$pct% · ${payload.pending} pending")
+                views.setViewVisibility(R.id.widget_daily_tasks_sub, android.view.View.VISIBLE)
+                val pieBitmap = createDailyTasksPieBitmap(payload.completed, payload.total)
+                if (pieBitmap != null && !pieBitmap.isRecycled) {
+                    views.setImageViewBitmap(R.id.widget_daily_tasks_pie, pieBitmap)
+                }
+                val categoryLines = dailyTasksCategoryOrder.mapNotNull { key ->
+                    payload.byCategory[key]?.let { stat ->
+                        if (stat.total > 0) (dailyTasksCategoryLabels[key] ?: key) + " ${stat.completed}/${stat.total}" else null
+                    }
+                }
+                widgetDailyTasksCatIds.forEachIndexed { index, id ->
+                    if (index < categoryLines.size) {
+                        views.setTextViewText(id, categoryLines[index])
+                        views.setViewVisibility(id, android.view.View.VISIBLE)
+                    } else {
+                        views.setViewVisibility(id, android.view.View.GONE)
+                    }
+                }
+            } else {
+                views.setTextViewText(R.id.widget_daily_tasks_value, "0/0")
+                views.setProgressBar(R.id.widget_daily_tasks_progress, 100, 0, false)
+                views.setViewVisibility(R.id.widget_daily_tasks_sub, android.view.View.GONE)
+                val pieBitmap = createDailyTasksPieBitmap(0, 0)
+                if (pieBitmap != null && !pieBitmap.isRecycled) {
+                    views.setImageViewBitmap(R.id.widget_daily_tasks_pie, pieBitmap)
+                }
+                widgetDailyTasksCatIds.forEach { views.setViewVisibility(it, android.view.View.GONE) }
+            }
+            // Page 1: Day progress
+            val dDone = cache.dayPercentDone.coerceIn(0, 100)
+            val dLeft = cache.dayPercentLeft.coerceIn(0, 100)
+            val dProgress = cache.dayProgress.coerceIn(0.0, 1.0)
+            views.setTextViewText(R.id.widget_day_done, context.getString(R.string.widget_day_done_format, dDone))
+            views.setTextViewText(R.id.widget_day_left, context.getString(R.string.widget_day_left_format, dLeft))
+            val (passedText, leftText) = dayTimeTexts(context, cache, dProgress)
+            views.setTextViewText(R.id.widget_day_hours_passed, passedText)
+            views.setTextViewText(R.id.widget_day_hours_left, leftText)
+            try {
+                val dotsBitmap = createDayDotsBitmap(context, dProgress)
+                if (dotsBitmap != null && !dotsBitmap.isRecycled) {
+                    views.setImageViewBitmap(R.id.widget_day_dots, dotsBitmap)
+                }
+            } catch (e: Exception) { }
+            // Which page to show (tap to flip)
+            val page = getDailyTasksWidgetPage(context)
+            views.setDisplayedChild(R.id.widget_flipper, page)
+            val toggleIntent = Intent(context, DailyTasksWidgetTapReceiver::class.java).apply {
+                action = DailyTasksWidgetTapReceiver.ACTION_TOGGLE_PAGE
+            }
+            val togglePending = PendingIntent.getBroadcast(
+                context,
+                PENDING_INTENT_DAILY_TASKS,
+                toggleIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+            views.setOnClickPendingIntent(R.id.widget_root, togglePending)
+            return views
+        }
+
         private fun buildCountdownRemoteViews(context: Context, countdown: CountdownModel?, appWidgetId: Int): RemoteViews {
             val views = RemoteViews(context.packageName, R.layout.widget_countdown)
             if (countdown != null) {
@@ -293,18 +481,20 @@ class UNTILWidgetWorker(
                 val nowMs = System.currentTimeMillis()
                 val passedSec = ((nowMs - start) / 1000).toInt().coerceIn(0, ((end - start) / 1000).toInt())
                 val remainingSec = ((end - nowMs) / 1000).toInt().coerceIn(0, Int.MAX_VALUE)
-                val passedText = context.getString(
-                    R.string.widget_day_time_passed_sec_format,
-                    passedSec / 3600,
-                    (passedSec % 3600) / 60,
-                    passedSec % 60
-                )
-                val leftText = context.getString(
-                    R.string.widget_day_time_left_sec_format,
-                    remainingSec / 3600,
-                    (remainingSec % 3600) / 60,
-                    remainingSec % 60
-                )
+                val passedH = passedSec / 3600
+                val passedM = (passedSec % 3600) / 60
+                val leftH = remainingSec / 3600
+                val leftM = (remainingSec % 3600) / 60
+                val passedText = if (passedM > 0) {
+                    context.getString(R.string.widget_day_time_passed_format, passedH, passedM)
+                } else {
+                    context.getString(R.string.widget_day_hours_passed_format, passedH)
+                }
+                val leftText = if (leftM > 0) {
+                    context.getString(R.string.widget_day_time_left_format, leftH, leftM)
+                } else {
+                    context.getString(R.string.widget_day_hours_left_format, leftH)
+                }
                 return passedText to leftText
             }
             val pm = cache.dayPassedMinutes

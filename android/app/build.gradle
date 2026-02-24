@@ -2,10 +2,11 @@ apply plugin: "com.android.application"
 apply plugin: "org.jetbrains.kotlin.android"
 apply plugin: "com.facebook.react"
 
-// Fail early with clear instructions if release build is run without keystore
+// Fail early with clear instructions if release build is run without keystore (skip when CI provides CM_* vars)
 gradle.taskGraph.whenReady { taskGraph ->
     if (taskGraph.hasTask(":app:bundleRelease") || taskGraph.hasTask(":app:assembleRelease")) {
-        if (!file("keystore.properties").exists()) {
+        boolean ciSigning = System.getenv("CI") != null && System.getenv("CM_KEYSTORE_PATH") != null
+        if (!ciSigning && !file("keystore.properties").exists()) {
             throw new GradleException(
                 "Release keystore not configured.\n" +
                 "1. Copy android/app/keystore.properties.example to android/app/keystore.properties\n" +
@@ -107,7 +108,13 @@ android {
             keyPassword 'android'
         }
         release {
-            if (file("keystore.properties").exists()) {
+            if (System.getenv("CI") != null && System.getenv("CM_KEYSTORE_PATH") != null) {
+                // Codemagic (or other CI) provides these when android_signing is configured
+                storeFile file(System.getenv("CM_KEYSTORE_PATH"))
+                storePassword System.getenv("CM_KEYSTORE_PASSWORD")
+                keyAlias System.getenv("CM_KEY_ALIAS")
+                keyPassword System.getenv("CM_KEY_PASSWORD")
+            } else if (file("keystore.properties").exists()) {
                 def keystoreProps = new Properties()
                 keystoreProps.load(new FileInputStream(file("keystore.properties")))
                 storeFile file(keystoreProps["storeFile"])

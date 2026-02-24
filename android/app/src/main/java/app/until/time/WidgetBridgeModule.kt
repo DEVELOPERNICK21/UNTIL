@@ -42,12 +42,16 @@ class WidgetBridgeModule(reactContext: ReactApplicationContext) :
             val countdownIds = appWidgetManager.getAppWidgetIds(
                 android.content.ComponentName(ctx, UNTILCountdownWidgetProvider::class.java)
             )
+            val dailyTasksIds = appWidgetManager.getAppWidgetIds(
+                android.content.ComponentName(ctx, UNTILDailyTasksWidgetProvider::class.java)
+            )
             val map = WritableNativeMap().apply {
                 putBoolean("dayWidgetAdded", dayIds.isNotEmpty())
                 putBoolean("monthWidgetAdded", monthIds.isNotEmpty())
                 putBoolean("yearWidgetAdded", yearIds.isNotEmpty())
                 putBoolean("counterWidgetAdded", counterIds.isNotEmpty())
                 putBoolean("countdownWidgetAdded", countdownIds.isNotEmpty())
+                putBoolean("dailyTasksWidgetAdded", dailyTasksIds.isNotEmpty())
             }
             promise.resolve(map)
         } catch (e: Exception) {

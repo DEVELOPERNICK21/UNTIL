@@ -32,6 +32,14 @@ export const STORAGE_KEYS = {
 
   // Countdowns (for countdown widget)
   COUNTDOWNS: 'countdowns',
+
+  // Daily tasks (task list + widget payload)
+  DAILY_TASKS: 'daily.tasks',
+  DAILY_TASKS_WIDGET: 'daily.tasks.widget',
+
+  // Monthly goals and repeat-daily rules
+  MONTHLY_GOALS: 'monthly.goals',
+  GOAL_REPEAT_DAILY: 'goal.repeat.daily',
 } as const;
 
 export const DEFAULTS = {

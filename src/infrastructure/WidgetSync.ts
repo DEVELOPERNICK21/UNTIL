@@ -4,9 +4,18 @@
  */
 
 import { NativeModules, Platform } from 'react-native';
-import { syncWidgetUseCase, getCustomCountersUseCase, getCountdownsUseCase } from '../di';
+import {
+  syncWidgetUseCase,
+  getCustomCountersUseCase,
+  getCountdownsUseCase,
+  getDailyTaskStatsUseCase,
+} from '../di';
 import { STORAGE_KEYS } from '../persistence/schema';
 import { setString } from '../persistence/mmkv';
+
+function todayIso(): string {
+  return new Date().toISOString().slice(0, 10);
+}
 
 export function syncWidgetCache(): void {
   const cache = syncWidgetUseCase.execute();
@@ -44,6 +53,21 @@ export function syncCountdowns(): void {
   if (Platform.OS === 'ios') {
     if (WidgetBridge?.setCountdowns) {
       WidgetBridge.setCountdowns(json);
+    }
+  } else if (WidgetBridge?.updateWidgets) {
+    WidgetBridge.updateWidgets();
+  }
+}
+
+/** Push today's task stats to native for the daily tasks widget. */
+export function syncDailyTasksWidget(): void {
+  const payload = getDailyTaskStatsUseCase.getWidgetPayload(todayIso());
+  const json = JSON.stringify(payload);
+  setString(STORAGE_KEYS.DAILY_TASKS_WIDGET, json);
+  const { WidgetBridge } = NativeModules;
+  if (Platform.OS === 'ios') {
+    if (WidgetBridge?.setDailyTasksStats) {
+      WidgetBridge.setDailyTasksStats(json);
     }
   } else if (WidgetBridge?.updateWidgets) {
     WidgetBridge.updateWidgets();

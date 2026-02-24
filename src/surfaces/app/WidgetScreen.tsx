@@ -14,6 +14,7 @@ export type WidgetStatus = {
   yearWidgetAdded: boolean;
   counterWidgetAdded: boolean;
   countdownWidgetAdded: boolean;
+  dailyTasksWidgetAdded?: boolean;
 } | null;
 
 const WIDGETS: { key: keyof NonNullable<WidgetStatus>; title: string; description: string }[] = [
@@ -42,6 +43,11 @@ const WIDGETS: { key: keyof NonNullable<WidgetStatus>; title: string; descriptio
     title: 'Countdown',
     description: 'Shows days left until a deadline. Add deadlines (e.g. Project, Interview) in Countdowns.',
   },
+  {
+    key: 'dailyTasksWidgetAdded',
+    title: 'Daily tasks',
+    description: "Today's task report: completed vs pending. Add tasks in Today's tasks.",
+  },
 ];
 
 export function WidgetScreen() {
@@ -52,7 +58,14 @@ export function WidgetScreen() {
 
   const fetchStatus = useCallback(() => {
     if (!WidgetBridge?.getWidgetStatus) {
-      setStatus({ dayWidgetAdded: false, monthWidgetAdded: false, yearWidgetAdded: false, counterWidgetAdded: false, countdownWidgetAdded: false });
+      setStatus({
+        dayWidgetAdded: false,
+        monthWidgetAdded: false,
+        yearWidgetAdded: false,
+        counterWidgetAdded: false,
+        countdownWidgetAdded: false,
+        dailyTasksWidgetAdded: false,
+      });
       setLoading(false);
       return;
     }
@@ -137,6 +150,20 @@ export function WidgetScreen() {
               >
                 <Text variant="body" color="primary">Countdowns</Text>
                 <Text variant="caption" color="secondary">Deadline countdown (e.g. Project, Interview)</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.customLink}
+                onPress={() => navigation.navigate('DailyTasks')}
+              >
+                <Text variant="body" color="primary">Today&apos;s tasks</Text>
+                <Text variant="caption" color="secondary">Daily task list and day report</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.customLink}
+                onPress={() => navigation.navigate('TaskReport')}
+              >
+                <Text variant="body" color="primary">Task report</Text>
+                <Text variant="caption" color="secondary">Daily, weekly & monthly charts</Text>
               </TouchableOpacity>
               <Text variant="caption" color="secondary" style={styles.hint}>
                 {Platform.OS === 'ios'

@@ -8,6 +8,13 @@ import { LifeScreen } from '../surfaces/app/LifeScreen';
 import { WidgetScreen } from '../surfaces/app/WidgetScreen';
 import { CustomCountersScreen } from '../surfaces/app/CustomCountersScreen';
 import { CountdownsScreen } from '../surfaces/app/CountdownsScreen';
+import { DailyTasksScreen } from '../surfaces/app/DailyTasksScreen';
+import { TaskReportScreen } from '../surfaces/app/TaskReportScreen';
+import { DayDetailScreen } from '../surfaces/app/DayDetailScreen';
+import { MonthDetailScreen } from '../surfaces/app/MonthDetailScreen';
+import { YearDetailScreen } from '../surfaces/app/YearDetailScreen';
+import { MonthlyGoalsScreen } from '../surfaces/app/MonthlyGoalsScreen';
+import { GoalDetailScreen } from '../surfaces/app/GoalDetailScreen';
 import { Text } from '../ui';
 import { Colors, Typography } from '../theme';
 
@@ -18,6 +25,13 @@ export type RootStackParamList = {
   Widget: undefined;
   CustomCounters: undefined;
   Countdowns: undefined;
+  DailyTasks: undefined;
+  TaskReport: undefined;
+  DayDetail: undefined;
+  MonthDetail: undefined;
+  YearDetail: undefined;
+  MonthlyGoals: undefined;
+  GoalDetail: { goalId: string };
 };
 
 const headerStyle = {
@@ -83,6 +97,41 @@ export function RootNavigator() {
           name="Countdowns"
           component={CountdownsScreen}
           options={{ title: 'Countdowns', headerBackTitle: 'Back' }}
+        />
+        <Stack.Screen
+          name="DailyTasks"
+          component={DailyTasksScreen}
+          options={{ title: "Today's tasks", headerBackTitle: 'Back' }}
+        />
+        <Stack.Screen
+          name="TaskReport"
+          component={TaskReportScreen}
+          options={{ title: 'Task report', headerBackTitle: 'Back' }}
+        />
+        <Stack.Screen
+          name="DayDetail"
+          component={DayDetailScreen}
+          options={{ title: 'Today', headerBackTitle: 'Back' }}
+        />
+        <Stack.Screen
+          name="MonthDetail"
+          component={MonthDetailScreen}
+          options={{ title: 'This month', headerBackTitle: 'Back' }}
+        />
+        <Stack.Screen
+          name="YearDetail"
+          component={YearDetailScreen}
+          options={{ title: 'This year', headerBackTitle: 'Back' }}
+        />
+        <Stack.Screen
+          name="MonthlyGoals"
+          component={MonthlyGoalsScreen}
+          options={{ title: 'Monthly goals', headerBackTitle: 'Back' }}
+        />
+        <Stack.Screen
+          name="GoalDetail"
+          component={GoalDetailScreen}
+          options={{ title: 'Goal', headerBackTitle: 'Back' }}
         />
       </Stack.Navigator>
     </NavigationContainer>
