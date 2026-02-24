@@ -17,12 +17,12 @@ export const SITE_CONFIG = {
   appStoreUrl: 'https://apps.apple.com/app/until/id000000000',
   /** Pricing for landing page (SSOT). Add wasPrice & savePercent for intro-offer style. */
   pricing: {
-    introLabel: 'Free to use',
+    introLabel: 'Limited time offer',
     oneTimeLabel: 'Optional Premium — one-time, no subscription',
-    price: '$4.99',
-    wasPrice: '' as string, // e.g. '$9.99' for strikethrough; leave '' to hide
-    savePercent: 0 as number, // e.g. 50; use 0 to hide save badge
-    currencyNote: 'iPhone & Android',
+    price: '₹99',
+    wasPrice: '₹299',
+    savePercent: 67,
+    currencyNote: 'Limited time. iPhone & Android.',
   },
 } as const;
 

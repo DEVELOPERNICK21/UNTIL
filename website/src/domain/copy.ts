@@ -5,7 +5,7 @@
 
 export const LANDING_COPY = {
   /** Top-of-page price/offer line (e.g. "Intro price — Premium ₹99") */
-  introPriceLine: 'Free to use. Optional Premium — one-time, no subscription. iPhone & Android.',
+  introPriceLine: 'Limited time — Premium ₹99 (was ₹299). One-time, no subscription. iPhone & Android.',
 
   hero: {
     title: 'See your time.',
@@ -47,7 +47,7 @@ export const LANDING_COPY = {
   /** Pricing CTA block — checkmarks for premium value props */
   pricingCta: {
     title: 'Get Until on iPhone or Android',
-    subtitle: 'Free to use. Unlock optional Premium once for extra features and to support development.',
+    subtitle: 'Free to use. Unlock optional Premium for ₹99 (limited time — was ₹299) for extra features and to support development.',
     checkmarks: [
       'Day, month, year, life progress',
       'iOS & Android home screen widgets',

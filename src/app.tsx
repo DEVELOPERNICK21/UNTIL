@@ -4,13 +4,13 @@
  */
 
 import React, { useEffect, useRef } from 'react';
-import { StatusBar, AppState, Linking } from 'react-native';
+import { StatusBar, AppState, Linking, NativeModules, Platform } from 'react-native';
 import { Colors } from './theme';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { runMigrations } from './persistence/migration';
 import { RootNavigator } from './navigation/RootNavigator';
 import { syncWidgetCache, syncCustomCounters, syncCountdowns } from './infrastructure';
-import { incrementCustomCounterUseCase } from './di';
+import { incrementCustomCounterUseCase, replaceCustomCountersFromSyncUseCase } from './di';
 
 runMigrations();
 
@@ -51,6 +51,18 @@ function App() {
 
     const subAppState = AppState.addEventListener('change', (state) => {
       if (state === 'active') {
+        if (Platform.OS === 'ios' && NativeModules.WidgetBridge?.getCustomCountersFromAppGroup) {
+          NativeModules.WidgetBridge.getCustomCountersFromAppGroup().then((json: string | null) => {
+            if (json && typeof json === 'string') {
+              try {
+                const counters = JSON.parse(json) as Array<{ id: string; title: string; count: number }>;
+                if (Array.isArray(counters)) {
+                  replaceCustomCountersFromSyncUseCase.execute(counters);
+                }
+              } catch { /* ignore parse errors */ }
+            }
+          });
+        }
         syncWidgetCache();
         syncCustomCounters();
         syncCountdowns();

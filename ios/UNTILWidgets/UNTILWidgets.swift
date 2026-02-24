@@ -5,6 +5,7 @@
 
 import SwiftUI
 import WidgetKit
+import AppIntents
 
 // MARK: - Widget Cache Model (mirrors dataContract.WidgetCache)
 struct WidgetCache: Codable {
@@ -76,8 +77,11 @@ struct UNTILWidgetProvider: TimelineProvider {
     }
 }
 
-/// Day widget only: refreshes every second so passed/left time shows seconds in realtime.
+/// Day widget only: uses multiple timeline entries (one per second) so passed/left time shows seconds in realtime
+/// without relying on the system re-calling getTimeline every second (which is throttled).
 struct DayWidgetProvider: TimelineProvider {
+    private static let entriesPerTimeline = 60
+
     private func loadWidgetCache() -> WidgetCache? {
         guard let json = WidgetCacheReader.loadJSON() else { return nil }
         guard let data = json.data(using: .utf8) else { return nil }
@@ -95,9 +99,15 @@ struct DayWidgetProvider: TimelineProvider {
 
     func getTimeline(in context: Context, completion: @escaping (Timeline<UNTILWidgetEntry>) -> Void) {
         let cache = loadWidgetCache()
-        let entry = UNTILWidgetEntry(date: Date(), cache: cache)
-        let nextUpdate = Calendar.current.date(byAdding: .second, value: 1, to: Date()) ?? Date()
-        let timeline = Timeline(entries: [entry], policy: .after(nextUpdate))
+        let calendar = Calendar.current
+        let now = Date()
+        var entries: [UNTILWidgetEntry] = []
+        for offset in 0..<Self.entriesPerTimeline {
+            guard let date = calendar.date(byAdding: .second, value: offset, to: now) else { continue }
+            entries.append(UNTILWidgetEntry(date: date, cache: cache))
+        }
+        let nextRefresh = calendar.date(byAdding: .second, value: Self.entriesPerTimeline, to: now) ?? now
+        let timeline = Timeline(entries: entries, policy: .after(nextRefresh))
         completion(timeline)
     }
 }
@@ -651,24 +661,59 @@ struct CounterWidgetProvider: TimelineProvider {
     }
 }
 
+// MARK: - Increment Counter App Intent (runs in widget extension; tap increments without opening app)
+struct IncrementCounterIntent: AppIntent {
+    static var title: LocalizedStringResource = "Increment counter"
+    static var openAppWhenRun: Bool { false }
+
+    @Parameter(title: "Counter ID")
+    var counterId: String
+
+    init(counterId: String) {
+        self.counterId = counterId
+    }
+
+    init() {
+        self.counterId = ""
+    }
+
+    func perform() async throws -> some IntentResult {
+        guard let json = WidgetCacheReader.loadCustomCountersJSON(),
+              let data = json.data(using: .utf8),
+              var list = try? JSONDecoder().decode([CustomCounterItem].self, from: data),
+              let idx = list.firstIndex(where: { $0.id == counterId }) else {
+            return .result()
+        }
+        list[idx] = CustomCounterItem(id: list[idx].id, title: list[idx].title, count: list[idx].count + 1)
+        if let encoded = try? JSONEncoder().encode(list),
+           let newJson = String(data: encoded, encoding: .utf8) {
+            WidgetCacheReader.writeCustomCountersJSON(newJson)
+        }
+        WidgetCenter.shared.reloadTimelines(ofKind: "UNTILCounterWidget")
+        return .result()
+    }
+}
+
 private struct CounterWidgetView: View {
     let entry: CounterWidgetEntry
 
     var body: some View {
         Group {
             if let c = entry.counter {
-                VStack(alignment: .leading, spacing: 8) {
-                    Text(c.title)
-                        .font(.system(size: Design.labelSize, weight: .semibold))
-                        .foregroundColor(Design.lightText)
-                    Text("\(c.count)")
-                        .font(.system(size: 28, weight: .bold))
-                        .foregroundColor(Design.passedDot)
-                    Spacer(minLength: 0)
+                Button(intent: IncrementCounterIntent(counterId: c.id)) {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text(c.title)
+                            .font(.system(size: Design.labelSize, weight: .semibold))
+                            .foregroundColor(Design.lightText)
+                        Text("\(c.count)")
+                            .font(.system(size: 28, weight: .bold))
+                            .foregroundColor(Design.passedDot)
+                        Spacer(minLength: 0)
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+                    .padding(16)
                 }
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
-                .padding(16)
-                .widgetURL(URL(string: "until://increment-counter?id=\(c.id.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? c.id)"))
+                .buttonStyle(.plain)
             } else {
                 VStack(spacing: 8) {
                     Text("Add a counter in Until")

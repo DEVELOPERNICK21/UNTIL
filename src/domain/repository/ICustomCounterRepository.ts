@@ -11,5 +11,6 @@ export interface ICustomCounterRepository {
   add(title: string): CustomCounter;
   remove(id: string): void;
   increment(id: string): void;
+  replaceAll(counters: CustomCounter[]): void;
   subscribe(callback: Subscriber): () => void;
 }

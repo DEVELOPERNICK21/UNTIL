@@ -45,6 +45,14 @@ class WidgetBridge: NSObject {
     WidgetCenter.shared.reloadTimelines(ofKind: kindCountdown)
   }
 
+  @objc func getCustomCountersFromAppGroup(_ resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
+    guard let defaults = UserDefaults(suiteName: appGroupID) else {
+      resolve(nil)
+      return
+    }
+    resolve(defaults.string(forKey: customCountersKey))
+  }
+
   @objc func getWidgetStatus(_ resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
     WidgetCenter.shared.getCurrentConfigurations { result in
       switch result {

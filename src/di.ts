@@ -21,6 +21,7 @@ import { GetCustomCountersUseCase } from './domain/useCases/GetCustomCountersUse
 import { AddCustomCounterUseCase } from './domain/useCases/AddCustomCounterUseCase';
 import { RemoveCustomCounterUseCase } from './domain/useCases/RemoveCustomCounterUseCase';
 import { IncrementCustomCounterUseCase } from './domain/useCases/IncrementCustomCounterUseCase';
+import { ReplaceCustomCountersFromSyncUseCase } from './domain/useCases/ReplaceCustomCountersFromSyncUseCase';
 import { GetCountdownsUseCase } from './domain/useCases/GetCountdownsUseCase';
 import { AddCountdownUseCase } from './domain/useCases/AddCountdownUseCase';
 import { RemoveCountdownUseCase } from './domain/useCases/RemoveCountdownUseCase';
@@ -44,6 +45,7 @@ export const getCustomCountersUseCase = new GetCustomCountersUseCase(customCount
 export const addCustomCounterUseCase = new AddCustomCounterUseCase(customCounterRepository);
 export const removeCustomCounterUseCase = new RemoveCustomCounterUseCase(customCounterRepository);
 export const incrementCustomCounterUseCase = new IncrementCustomCounterUseCase(customCounterRepository);
+export const replaceCustomCountersFromSyncUseCase = new ReplaceCustomCountersFromSyncUseCase(customCounterRepository);
 export const getCountdownsUseCase = new GetCountdownsUseCase(countdownRepository);
 export const addCountdownUseCase = new AddCountdownUseCase(countdownRepository);
 export const removeCountdownUseCase = new RemoveCountdownUseCase(countdownRepository);

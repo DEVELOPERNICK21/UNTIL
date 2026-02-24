@@ -26,6 +26,13 @@ enum WidgetCacheReader {
         guard let defaults = UserDefaults(suiteName: appGroupID) else { return nil }
         return defaults.string(forKey: countdownsKey)
     }
+
+    /// Write custom counters JSON (used by widget extension App Intent to persist increment without opening app).
+    static func writeCustomCountersJSON(_ json: String) {
+        guard let defaults = UserDefaults(suiteName: appGroupID) else { return }
+        defaults.set(json, forKey: customCountersKey)
+        defaults.synchronize()
+    }
 }
 
 /// Custom counter model for widget (id, title, count)

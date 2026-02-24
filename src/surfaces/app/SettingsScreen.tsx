@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   View,
   StyleSheet,
@@ -10,11 +10,27 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import { Text, ScreenGradient, Card } from '../../ui';
 import { useObserveTimeState, useUpdateUserProfile } from '../../hooks';
 import { syncWidgetCache } from '../../infrastructure';
 import { Colors, Spacing, Radius } from '../../theme';
 import type { RootStackParamList } from '../../navigation/RootNavigator';
+
+function parseBirthDate(str: string): Date {
+  if (!str || str.length < 10) return new Date(1990, 0, 1);
+  const [y, m, d] = str.split('-').map(Number);
+  if (Number.isNaN(y) || Number.isNaN(m) || Number.isNaN(d)) return new Date(1990, 0, 1);
+  const date = new Date(y, (m ?? 1) - 1, d ?? 1);
+  return isNaN(date.getTime()) ? new Date(1990, 0, 1) : date;
+}
+
+function toBirthDateString(d: Date): string {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
 
 export function SettingsScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList, 'Settings'>>();
@@ -23,6 +39,9 @@ export function SettingsScreen() {
 
   const [birthInput, setBirthInput] = useState(userProfile.birthDate ?? '');
   const [deathInput, setDeathInput] = useState(String(userProfile.deathAge));
+  const [showBirthPicker, setShowBirthPicker] = useState(false);
+
+  const birthDateForPicker = useMemo(() => parseBirthDate(birthInput), [birthInput]);
 
   useEffect(() => {
     setBirthInput(userProfile.birthDate ?? '');
@@ -34,6 +53,7 @@ export function SettingsScreen() {
       const age = parseInt(deathInput, 10);
       updateUserProfile(birthInput, isNaN(age) || age <= 0 ? 80 : age);
       syncWidgetCache();
+      navigation.navigate('Home');
     }
   };
 
@@ -54,16 +74,33 @@ export function SettingsScreen() {
 
             <Card style={styles.card}>
               <Text variant="caption" color="secondary" style={styles.label}>
-                Birth date (YYYY-MM-DD)
+                Birth date
               </Text>
-              <TextInput
+              <TouchableOpacity
                 style={styles.input}
-                value={birthInput}
-                onChangeText={setBirthInput}
-                placeholder="1990-01-15"
-                placeholderTextColor={Colors.textSecondary}
-                autoCapitalize="none"
-              />
+                onPress={() => setShowBirthPicker(true)}
+              >
+                <Text variant="body" color={birthInput ? 'primary' : 'secondary'} style={styles.inputText}>
+                  {birthInput || 'Tap to pick date'}
+                </Text>
+              </TouchableOpacity>
+              {showBirthPicker && (
+                <DateTimePicker
+                  value={birthDateForPicker}
+                  mode="date"
+                  display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                  maximumDate={new Date()}
+                  onChange={(_, d) => {
+                    if (Platform.OS === 'android') setShowBirthPicker(false);
+                    if (d) setBirthInput(toBirthDateString(d));
+                  }}
+                />
+              )}
+              {Platform.OS === 'ios' && showBirthPicker && (
+                <TouchableOpacity style={styles.pickerDone} onPress={() => setShowBirthPicker(false)}>
+                  <Text variant="caption" color="primary">Done</Text>
+                </TouchableOpacity>
+              )}
 
               <Text variant="caption" color="secondary" style={styles.label}>
                 Expected lifespan (years)
@@ -121,8 +158,16 @@ const styles = StyleSheet.create({
     borderRadius: Radius.sm,
     padding: Spacing[3],
     marginBottom: Spacing[3],
-    color: Colors.textPrimary,
+    minHeight: 48,
+    justifyContent: 'center',
+  },
+  inputText: {
     fontSize: 16,
+  },
+  pickerDone: {
+    alignSelf: 'flex-end',
+    paddingVertical: Spacing[1],
+    marginBottom: Spacing[2],
   },
   cta: {
     backgroundColor: Colors.divider,

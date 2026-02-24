@@ -65,6 +65,12 @@ export class MmkvCustomCounterRepository implements ICustomCounterRepository {
     this.notifySubscribers();
   }
 
+  replaceAll(counters: CustomCounter[]): void {
+    const valid = Array.isArray(counters) ? counters : [];
+    saveCounters(valid);
+    this.notifySubscribers();
+  }
+
   subscribe(callback: Subscriber): () => void {
     this.subscribers.add(callback);
     return () => {
