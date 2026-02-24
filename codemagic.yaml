@@ -1,0 +1,21 @@
+workflows:
+
+    android-workflow-id:
+
+        name: Android Sample Workflow
+         max_build_duration: 120
+        instance_type: mac_mini_m2
+
+        # .......    
+
+        # .......
+
+        # .......  
+
+    ios-workflow-id:
+
+        name: iOS Sample Workflow
+         max_build_duration: 120
+        instance_type: mac_mini_m2
+
+        # ......
