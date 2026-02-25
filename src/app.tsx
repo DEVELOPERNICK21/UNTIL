@@ -15,7 +15,11 @@ import {
   syncCountdowns,
   syncDailyTasksWidget,
 } from './infrastructure';
-import { incrementCustomCounterUseCase, replaceCustomCountersFromSyncUseCase } from './di';
+import {
+  incrementCustomCounterUseCase,
+  replaceCustomCountersFromSyncUseCase,
+  checkForAppUpdateUseCase,
+} from './di';
 
 runMigrations();
 
@@ -43,6 +47,7 @@ function App() {
     syncCustomCounters();
     syncCountdowns();
     syncDailyTasksWidget();
+    checkForAppUpdateUseCase.execute();
 
     const processInitialUrl = () => {
       Linking.getInitialURL().then((url) => {
@@ -57,6 +62,7 @@ function App() {
 
     const subAppState = AppState.addEventListener('change', (state) => {
       if (state === 'active') {
+        checkForAppUpdateUseCase.execute();
         if (Platform.OS === 'ios' && NativeModules.WidgetBridge?.getCustomCountersFromAppGroup) {
           NativeModules.WidgetBridge.getCustomCountersFromAppGroup().then((json: string | null) => {
             if (json && typeof json === 'string') {

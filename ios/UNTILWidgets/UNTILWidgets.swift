@@ -408,7 +408,7 @@ struct DailyTasksWidget: Widget {
             DailyTasksWidgetView(entry: entry)
         }
         .configurationDisplayName("Daily tasks")
-        .description("Today's task report: completed vs pending. Add tasks in Until.")
+        .description("Tasks and day in one. Small/medium: tasks. Large: tasks + day. Add tasks in Until.")
         .supportedFamilies([.systemSmall, .systemMedium, .systemLarge])
     }
 }

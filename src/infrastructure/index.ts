@@ -5,3 +5,5 @@ export {
   syncCountdowns,
   syncDailyTasksWidget,
 } from './WidgetSync';
+export { checkForAppUpdate } from './InAppUpdate';
+export { getAppVersion, getBuildNumber } from './AppVersion';

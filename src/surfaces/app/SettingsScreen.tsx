@@ -14,6 +14,7 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { Text, ScreenGradient, Card } from '../../ui';
 import { useObserveTimeState, useUpdateUserProfile } from '../../hooks';
 import { syncWidgetCache } from '../../infrastructure';
+import { getAppVersionUseCase } from '../../di';
 import { Colors, Spacing, Radius } from '../../theme';
 import type { RootStackParamList } from '../../navigation/RootNavigator';
 
@@ -128,6 +129,16 @@ export function SettingsScreen() {
               <Text variant="body" color="secondary">Widgets</Text>
               <Text variant="caption" color="secondary">Info and status</Text>
             </TouchableOpacity>
+
+            <View style={styles.versionRow}>
+              <Text variant="caption" color="secondary">App version</Text>
+              <Text variant="body" color="primary" style={styles.versionValue}>
+                {(() => {
+                  const { version, buildNumber } = getAppVersionUseCase.execute();
+                  return buildNumber ? `${version} (${buildNumber})` : version;
+                })()}
+              </Text>
+            </View>
           </ScrollView>
         </KeyboardAvoidingView>
       </ScreenGradient>
@@ -179,5 +190,14 @@ const styles = StyleSheet.create({
   widgetLink: {
     marginTop: Spacing[4],
     paddingVertical: Spacing[2],
+  },
+  versionRow: {
+    marginTop: Spacing[5],
+    paddingTop: Spacing[4],
+    borderTopWidth: 1,
+    borderTopColor: Colors.divider,
+  },
+  versionValue: {
+    marginTop: Spacing[1],
   },
 });

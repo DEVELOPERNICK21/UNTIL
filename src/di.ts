@@ -10,6 +10,8 @@ import { MmkvCustomCounterRepository } from './infrastructure/repositories/MmkvC
 import { MmkvCountdownRepository } from './infrastructure/repositories/MmkvCountdownRepository';
 import { MmkvTaskRepository } from './infrastructure/repositories/MmkvTaskRepository';
 import { MmkvMonthlyGoalRepository } from './infrastructure/repositories/MmkvMonthlyGoalRepository';
+import { AppUpdateServiceAdapter } from './infrastructure/adapters/AppUpdateServiceAdapter';
+import { AppVersionProviderAdapter } from './infrastructure/adapters/AppVersionProviderAdapter';
 import { ObserveTimeStateUseCase } from './domain/useCases/ObserveTimeStateUseCase';
 import { UpdateUserProfileUseCase } from './domain/useCases/UpdateUserProfileUseCase';
 import { ObserveSubscriptionUseCase } from './domain/useCases/ObserveSubscriptionUseCase';
@@ -48,6 +50,8 @@ import { AddToDailyFromGoalUseCase } from './domain/useCases/AddToDailyFromGoalU
 import { SetRepeatDailyFromGoalUseCase } from './domain/useCases/SetRepeatDailyFromGoalUseCase';
 import { RemoveRepeatDailyFromGoalUseCase } from './domain/useCases/RemoveRepeatDailyFromGoalUseCase';
 import { IsRepeatDailyUseCase } from './domain/useCases/IsRepeatDailyUseCase';
+import { CheckForAppUpdateUseCase } from './domain/useCases/CheckForAppUpdateUseCase';
+import { GetAppVersionUseCase } from './domain/useCases/GetAppVersionUseCase';
 
 const timeRepository = new MmkvTimeRepository();
 const subscriptionRepository = new MmkvSubscriptionRepository();
@@ -56,6 +60,8 @@ const customCounterRepository = new MmkvCustomCounterRepository();
 const countdownRepository = new MmkvCountdownRepository();
 const taskRepository = new MmkvTaskRepository();
 const monthlyGoalRepository = new MmkvMonthlyGoalRepository();
+const appUpdateService = new AppUpdateServiceAdapter();
+const appVersionProvider = new AppVersionProviderAdapter();
 
 export const observeTimeStateUseCase = new ObserveTimeStateUseCase(timeRepository);
 export const updateUserProfileUseCase = new UpdateUserProfileUseCase(timeRepository);
@@ -101,3 +107,5 @@ export const addToDailyFromGoalUseCase = new AddToDailyFromGoalUseCase(taskRepos
 export const setRepeatDailyFromGoalUseCase = new SetRepeatDailyFromGoalUseCase(taskRepository, monthlyGoalRepository);
 export const removeRepeatDailyFromGoalUseCase = new RemoveRepeatDailyFromGoalUseCase(monthlyGoalRepository);
 export const isRepeatDailyUseCase = new IsRepeatDailyUseCase(monthlyGoalRepository);
+export const checkForAppUpdateUseCase = new CheckForAppUpdateUseCase(appUpdateService);
+export const getAppVersionUseCase = new GetAppVersionUseCase(appVersionProvider);
