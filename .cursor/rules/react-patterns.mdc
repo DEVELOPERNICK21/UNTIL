@@ -1,0 +1,28 @@
+---
+description: React component and hook patterns for UNTIL
+globs: "**/*.tsx"
+alwaysApply: false
+---
+
+# React Patterns
+
+## Components
+
+- Use functional components only
+- Use `Text`, `Card`, `ProgressLine`, etc. from `ui/` — not raw RN components for styled text
+- Use `Colors`, `Spacing`, `Typography`, `getProgressColor` from `theme/`
+
+## Data Access
+
+- **Screens**: Call hooks (e.g. `useObserveTimeState()`, `useDailyTasks()`); never import use cases or repositories directly
+- **No direct imports** from `core`, `persistence`, or `infrastructure` in surfaces — except `getDayProgress`, `startOfDay`, etc. for **display formatting only** when timeState doesn't provide it (prefer deriving from timeState when possible)
+
+## Hooks
+
+- Extract reusable logic into custom hooks in `hooks/`
+- Hooks subscribe to use cases via `di`; call `syncWidgetCache()` etc. when data changes if needed
+
+## Forms / Local UI State
+
+- `useState` for form fields, modals, local UI state
+- For server-like or shared data: use hooks that wrap use cases (e.g. `useObserveTimeState`)

@@ -1,6 +1,10 @@
 package app.until.time
 
+import android.content.Intent
+import android.net.Uri
+import android.os.Build
 import android.appwidget.AppWidgetManager
+import android.provider.Settings
 import com.facebook.react.bridge.Promise
 import com.facebook.react.bridge.ReactApplicationContext
 import com.facebook.react.bridge.ReactContextBaseJavaModule
@@ -16,6 +20,47 @@ class WidgetBridgeModule(reactContext: ReactApplicationContext) :
     fun updateWidgets() {
         reactApplicationContext.applicationContext?.let { ctx ->
             UNTILWidgetWorker.updateWidgets(ctx)
+        }
+    }
+
+    @ReactMethod
+    fun startOverlay() {
+        reactApplicationContext.applicationContext?.let { ctx ->
+            UNTILOverlayService.start(ctx)
+        }
+    }
+
+    @ReactMethod
+    fun stopOverlay() {
+        reactApplicationContext.applicationContext?.let { ctx ->
+            UNTILOverlayService.stop(ctx)
+        }
+    }
+
+    @ReactMethod
+    fun updateOverlay() {
+        reactApplicationContext.applicationContext?.let { ctx ->
+            UNTILOverlayService.update(ctx)
+        }
+    }
+
+    @ReactMethod
+    fun canDrawOverlays(promise: Promise) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            promise.resolve(Settings.canDrawOverlays(reactApplicationContext))
+        } else {
+            promise.resolve(true)
+        }
+    }
+
+    @ReactMethod
+    fun requestOverlayPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            val intent = Intent(
+                Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                Uri.parse("package:${reactApplicationContext.packageName}")
+            ).apply { addFlags(Intent.FLAG_ACTIVITY_NEW_TASK) }
+            reactApplicationContext.startActivity(intent)
         }
     }
 
@@ -45,6 +90,9 @@ class WidgetBridgeModule(reactContext: ReactApplicationContext) :
             val dailyTasksIds = appWidgetManager.getAppWidgetIds(
                 android.content.ComponentName(ctx, UNTILDailyTasksWidgetProvider::class.java)
             )
+            val hourCalculationIds = appWidgetManager.getAppWidgetIds(
+                android.content.ComponentName(ctx, UNTILHourCalculationWidgetProvider::class.java)
+            )
             val map = WritableNativeMap().apply {
                 putBoolean("dayWidgetAdded", dayIds.isNotEmpty())
                 putBoolean("monthWidgetAdded", monthIds.isNotEmpty())
@@ -52,6 +100,7 @@ class WidgetBridgeModule(reactContext: ReactApplicationContext) :
                 putBoolean("counterWidgetAdded", counterIds.isNotEmpty())
                 putBoolean("countdownWidgetAdded", countdownIds.isNotEmpty())
                 putBoolean("dailyTasksWidgetAdded", dailyTasksIds.isNotEmpty())
+                putBoolean("hourCalculationWidgetAdded", hourCalculationIds.isNotEmpty())
             }
             promise.resolve(map)
         } catch (e: Exception) {

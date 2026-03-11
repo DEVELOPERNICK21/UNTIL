@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/overlay_root"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:background="@android:color/transparent">
+
+    <!-- Expanded content (shown when expanded) -->
+    <LinearLayout
+        android:id="@+id/overlay_expanded"
+        android:layout_width="280dp"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:background="@drawable/overlay_expanded_bg"
+        android:padding="12dp"
+        android:visibility="gone"
+        android:elevation="8dp">
+
+        <LinearLayout
+            android:id="@+id/overlay_expanded_content"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:minHeight="80dp">
+
+            <TextView
+                android:id="@+id/overlay_expanded_title"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="#EEEEEE"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:text="57% done" />
+
+            <TextView
+                android:id="@+id/overlay_expanded_subtitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:textColor="#34C759"
+                android:textSize="12sp"
+                android:text="43% left" />
+
+            <ProgressBar
+                android:id="@+id/overlay_expanded_progress"
+                style="?android:attr/progressBarStyleHorizontal"
+                android:layout_width="match_parent"
+                android:layout_height="6dp"
+                android:layout_marginTop="8dp"
+                android:max="100"
+                android:progress="57"
+                android:progressTint="#E87C20"
+                android:progressBackgroundTint="#444444" />
+
+            <TextView
+                android:id="@+id/overlay_glance_row"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:textColor="#AAAAAA"
+                android:textSize="10sp"
+                android:text="D57% · M17% · Y9%" />
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/overlay_tap_hint"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:textColor="#666666"
+            android:textSize="9sp"
+            android:text="Tap to open Until" />
+    </LinearLayout>
+
+    <!-- Compact pill (always visible when overlay is shown) -->
+    <LinearLayout
+        android:id="@+id/overlay_compact"
+        android:layout_width="wrap_content"
+        android:layout_height="36dp"
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:background="@drawable/overlay_pill_bg"
+        android:paddingStart="14dp"
+        android:paddingEnd="14dp"
+        android:minWidth="80dp"
+        android:elevation="6dp">
+
+        <TextView
+            android:id="@+id/overlay_compact_leading"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="#BB86FC"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:text="57%" />
+
+        <TextView
+            android:id="@+id/overlay_compact_trailing"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:textColor="#34C759"
+            android:textSize="12sp"
+            android:text="43% left" />
+    </LinearLayout>
+</FrameLayout>

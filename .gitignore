@@ -71,6 +71,9 @@ website/out
 # testing
 /coverage
 
+# Stitch design exports (generated)
+stitch-output/
+
 # Yarn
 .yarn/*
 !.yarn/patches

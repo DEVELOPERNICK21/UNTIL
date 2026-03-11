@@ -3,6 +3,7 @@
   "version": "0.0.1",
   "private": true,
   "scripts": {
+    "stitch:fetch": "node scripts/stitch-fetch.js",
     "android": "react-native run-android",
     "android:release-aab": "cd android && ./gradlew bundleRelease",
     "android:release-apk": "cd android && ./gradlew assembleRelease",

@@ -17,6 +17,10 @@
 		W1D00004A1234567890ABCDEF /* WidgetMMKV.swift in Sources */ = {isa = PBXBuildFile; fileRef = W1D00005A1234567890ABCDEF /* WidgetMMKV.swift */; };
 		W1D00012A1234567890ABCDEF /* WidgetBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = W1D00013A1234567890ABCDEF /* WidgetBridge.m */; };
 		W1D00014A1234567890ABCDEF /* WidgetBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = W1D00015A1234567890ABCDEF /* WidgetBridge.swift */; };
+		W1D00016A1234567890ABCDEF /* LiveActivityBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = W1D00017A1234567890ABCDEF /* LiveActivityBridge.m */; };
+		W1D00018A1234567890ABCDEF /* LiveActivityBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = W1D00019A1234567890ABCDEF /* LiveActivityBridge.swift */; };
+		W1D0001AA1234567890ABCDEF /* UNTILLiveActivityAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = W1D0001BA1234567890ABCDEF /* UNTILLiveActivityAttributes.swift */; };
+		W1D0001CA1234567890ABCDEF /* UNTILLiveActivityAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = W1D0001BA1234567890ABCDEF /* UNTILLiveActivityAttributes.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -61,6 +65,9 @@
 		W1D0000DA1234567890ABCDEF /* UNTILWidgets.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = UNTILWidgets.entitlements; sourceTree = "<group>"; };
 		W1D00013A1234567890ABCDEF /* WidgetBridge.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = WidgetBridge.m; path = UNTIL/WidgetBridge.m; sourceTree = "<group>"; };
 		W1D00015A1234567890ABCDEF /* WidgetBridge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = WidgetBridge.swift; path = UNTIL/WidgetBridge.swift; sourceTree = "<group>"; };
+		W1D00017A1234567890ABCDEF /* LiveActivityBridge.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = LiveActivityBridge.m; path = UNTIL/LiveActivityBridge.m; sourceTree = "<group>"; };
+		W1D00019A1234567890ABCDEF /* LiveActivityBridge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = LiveActivityBridge.swift; path = UNTIL/LiveActivityBridge.swift; sourceTree = "<group>"; };
+		W1D0001BA1234567890ABCDEF /* UNTILLiveActivityAttributes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = UNTILLiveActivityAttributes.swift; path = UNTIL/UNTILLiveActivityAttributes.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -92,6 +99,9 @@
 				13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */,
 				W1D00015A1234567890ABCDEF /* WidgetBridge.swift */,
 				W1D00013A1234567890ABCDEF /* WidgetBridge.m */,
+				W1D00019A1234567890ABCDEF /* LiveActivityBridge.swift */,
+				W1D00017A1234567890ABCDEF /* LiveActivityBridge.m */,
+				W1D0001BA1234567890ABCDEF /* UNTILLiveActivityAttributes.swift */,
 			);
 			name = UNTIL;
 			sourceTree = "<group>";
@@ -337,6 +347,9 @@
 				761780ED2CA45674006654EE /* AppDelegate.swift in Sources */,
 				W1D00012A1234567890ABCDEF /* WidgetBridge.m in Sources */,
 				W1D00014A1234567890ABCDEF /* WidgetBridge.swift in Sources */,
+				W1D00016A1234567890ABCDEF /* LiveActivityBridge.m in Sources */,
+				W1D00018A1234567890ABCDEF /* LiveActivityBridge.swift in Sources */,
+				W1D0001AA1234567890ABCDEF /* UNTILLiveActivityAttributes.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -346,6 +359,7 @@
 			files = (
 				W1D00002A1234567890ABCDEF /* UNTILWidgets.swift in Sources */,
 				W1D00004A1234567890ABCDEF /* WidgetMMKV.swift in Sources */,
+				W1D0001CA1234567890ABCDEF /* UNTILLiveActivityAttributes.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

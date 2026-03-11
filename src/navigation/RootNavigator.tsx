@@ -15,6 +15,9 @@ import { MonthDetailScreen } from '../surfaces/app/MonthDetailScreen';
 import { YearDetailScreen } from '../surfaces/app/YearDetailScreen';
 import { MonthlyGoalsScreen } from '../surfaces/app/MonthlyGoalsScreen';
 import { GoalDetailScreen } from '../surfaces/app/GoalDetailScreen';
+import { HourCalculationScreen } from '../surfaces/app/HourCalculationScreen';
+import { DynamicIslandScreen } from '../surfaces/app/DynamicIslandScreen';
+import { OverlayScreen } from '../surfaces/app/OverlayScreen';
 import { Text } from '../ui';
 import { Colors, Typography } from '../theme';
 
@@ -32,6 +35,9 @@ export type RootStackParamList = {
   YearDetail: undefined;
   MonthlyGoals: undefined;
   GoalDetail: { goalId: string };
+  HourCalculation: undefined;
+  DynamicIsland: undefined;
+  Overlay: undefined;
 };
 
 const headerStyle = {
@@ -132,6 +138,21 @@ export function RootNavigator() {
           name="GoalDetail"
           component={GoalDetailScreen}
           options={{ title: 'Goal', headerBackTitle: 'Back' }}
+        />
+        <Stack.Screen
+          name="HourCalculation"
+          component={HourCalculationScreen}
+          options={{ title: 'Hour calculation', headerBackTitle: 'Back' }}
+        />
+        <Stack.Screen
+          name="DynamicIsland"
+          component={DynamicIslandScreen}
+          options={{ title: 'Dynamic Island', headerBackTitle: 'Back' }}
+        />
+        <Stack.Screen
+          name="Overlay"
+          component={OverlayScreen}
+          options={{ title: 'Floating overlay', headerBackTitle: 'Back' }}
         />
       </Stack.Navigator>
     </NavigationContainer>

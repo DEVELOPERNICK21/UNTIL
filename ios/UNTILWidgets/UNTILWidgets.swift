@@ -6,6 +6,7 @@
 import SwiftUI
 import WidgetKit
 import AppIntents
+import ActivityKit
 
 // MARK: - Widget Cache Model (mirrors dataContract.WidgetCache)
 struct WidgetCache: Codable {
@@ -29,7 +30,39 @@ struct WidgetCache: Codable {
     let yearDaysPassed: Int
     let yearDaysLeft: Int
     let yearPercent: Int
+    /// Life progress 0–1. Present only when birth date is set.
+    let lifeProgress: Double?
+    /// Remaining days until death age.
+    let remainingDaysLife: Int?
+    /// Life percent 0–100.
+    let lifePercent: Int?
     let updatedAt: Int64
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        dayProgress = try c.decode(Double.self, forKey: .dayProgress)
+        dayPercentDone = try c.decode(Int.self, forKey: .dayPercentDone)
+        dayPercentLeft = try c.decode(Int.self, forKey: .dayPercentLeft)
+        dayHoursPassed = try c.decode(Double.self, forKey: .dayHoursPassed)
+        dayHoursLeft = try c.decode(Double.self, forKey: .dayHoursLeft)
+        dayPassedMinutes = try c.decodeIfPresent(Int.self, forKey: .dayPassedMinutes)
+        dayRemainingMinutes = try c.decodeIfPresent(Int.self, forKey: .dayRemainingMinutes)
+        startOfDay = try c.decodeIfPresent(Int64.self, forKey: .startOfDay)
+        endOfDay = try c.decodeIfPresent(Int64.self, forKey: .endOfDay)
+        monthProgress = try c.decode(Double.self, forKey: .monthProgress)
+        monthIndex = try c.decodeIfPresent(Int.self, forKey: .monthIndex)
+        monthDaysPassed = try c.decode(Int.self, forKey: .monthDaysPassed)
+        monthDaysLeft = try c.decode(Int.self, forKey: .monthDaysLeft)
+        monthPercent = try c.decode(Int.self, forKey: .monthPercent)
+        yearProgress = try c.decode(Double.self, forKey: .yearProgress)
+        yearDaysPassed = try c.decode(Int.self, forKey: .yearDaysPassed)
+        yearDaysLeft = try c.decode(Int.self, forKey: .yearDaysLeft)
+        yearPercent = try c.decode(Int.self, forKey: .yearPercent)
+        lifeProgress = try c.decodeIfPresent(Double.self, forKey: .lifeProgress)
+        remainingDaysLife = try c.decodeIfPresent(Int.self, forKey: .remainingDaysLife)
+        lifePercent = try c.decodeIfPresent(Int.self, forKey: .lifePercent)
+        updatedAt = try c.decode(Int64.self, forKey: .updatedAt)
+    }
 }
 
 // MARK: - Design Tokens
@@ -52,6 +85,8 @@ private enum Design {
 }
 
 // MARK: - Widget Provider
+/// Shared provider for widgets that don't need per-second or per-minute updates.
+/// Used when a dedicated provider (Day, MonthYear, etc.) is more appropriate.
 struct UNTILWidgetProvider: TimelineProvider {
     private func loadWidgetCache() -> WidgetCache? {
         guard let json = WidgetCacheReader.loadJSON() else { return nil }
@@ -74,6 +109,33 @@ struct UNTILWidgetProvider: TimelineProvider {
         let nextUpdate = Calendar.current.date(byAdding: .minute, value: 1, to: Date()) ?? Date()
         let timeline = Timeline(entries: [entry], policy: .after(nextUpdate))
         completion(timeline)
+    }
+}
+
+/// Month and Year widgets: refresh at start of next day (midnight) since values change daily.
+struct MonthYearWidgetProvider: TimelineProvider {
+    private func loadWidgetCache() -> WidgetCache? {
+        guard let json = WidgetCacheReader.loadJSON() else { return nil }
+        guard let data = json.data(using: .utf8) else { return nil }
+        return try? JSONDecoder().decode(WidgetCache.self, from: data)
+    }
+
+    func placeholder(in context: Context) -> UNTILWidgetEntry {
+        UNTILWidgetEntry(date: Date(), cache: nil)
+    }
+
+    func getSnapshot(in context: Context, completion: @escaping (UNTILWidgetEntry) -> Void) {
+        let cache = loadWidgetCache()
+        completion(UNTILWidgetEntry(date: Date(), cache: cache))
+    }
+
+    func getTimeline(in context: Context, completion: @escaping (Timeline<UNTILWidgetEntry>) -> Void) {
+        let cache = loadWidgetCache()
+        let entry = UNTILWidgetEntry(date: Date(), cache: cache)
+        let cal = Calendar.current
+        let startOfToday = cal.startOfDay(for: Date())
+        let nextUpdate = cal.date(byAdding: .day, value: 1, to: startOfToday) ?? startOfToday
+        completion(Timeline(entries: [entry], policy: .after(nextUpdate)))
     }
 }
 
@@ -647,17 +709,16 @@ private func dayTimePassedText(_ cache: WidgetCache, now: Date = Date()) -> Stri
         let startSec = Double(start) / 1000
         let nowSec = now.timeIntervalSince1970
         let passedSec = max(0, min(Int(nowSec - startSec), Int(Double(end - start) / 1000)))
-        let passedMin = passedSec / 60
-        let h = passedMin / 60
-        let m = passedMin % 60
-        if m > 0 { return "\(h)h \(m)m" }
-        return "\(h)h"
+        let h = passedSec / 3600
+        let m = (passedSec % 3600) / 60
+        let s = passedSec % 60
+        return "\(h)h \(m)m \(s)s"
     }
     if let pm = cache.dayPassedMinutes {
         let h = pm / 60, m = pm % 60
-        return m > 0 ? "\(h)h \(m)m" : "\(h)h"
+        return "\(h)h \(m)m 0s"
     }
-    return "\(Int(cache.dayHoursPassed))h"
+    return "\(Int(cache.dayHoursPassed))h 0m 0s"
 }
 
 private func dayTimeLeftText(_ cache: WidgetCache, now: Date = Date()) -> String {
@@ -665,17 +726,16 @@ private func dayTimeLeftText(_ cache: WidgetCache, now: Date = Date()) -> String
         let endSec = Double(end) / 1000
         let nowSec = now.timeIntervalSince1970
         let remainingSec = max(0, Int(endSec - nowSec))
-        let remainingMin = remainingSec / 60
-        let h = remainingMin / 60
-        let m = remainingMin % 60
-        if m > 0 { return "\(h)h \(m)m" }
-        return "\(h)h"
+        let h = remainingSec / 3600
+        let m = (remainingSec % 3600) / 60
+        let s = remainingSec % 60
+        return "\(h)h \(m)m \(s)s"
     }
     if let rm = cache.dayRemainingMinutes {
         let h = rm / 60, m = rm % 60
-        return m > 0 ? "\(h)h \(m)m" : "\(h)h"
+        return "\(h)h \(m)m 0s"
     }
-    return "\(Int(cache.dayHoursLeft))h"
+    return "\(Int(cache.dayHoursLeft))h 0m 0s"
 }
 
 // MARK: - Day Metrics View (right side metrics for large layout)
@@ -719,6 +779,186 @@ private struct DayMetricsView: View {
     }
 }
 
+// MARK: - Lock Screen Accessory Views (accessoryInline, accessoryCircular, accessoryRectangular)
+private struct DayAccessoryInlineView: View {
+    let cache: WidgetCache
+    var now: Date = Date()
+
+    var body: some View {
+        Text("\(cache.dayPercentDone)% done · \(dayTimeLeftText(cache, now: now)) left")
+            .font(.system(size: 14, weight: .medium))
+            .foregroundColor(Design.lightText)
+    }
+}
+
+private struct DayAccessoryCircularView: View {
+    let cache: WidgetCache
+
+    var body: some View {
+        ZStack {
+            AccessoryWidgetBackground()
+            VStack(spacing: 2) {
+                Text("\(cache.dayPercentDone)%")
+                    .font(.system(size: 20, weight: .bold))
+                    .foregroundColor(Design.passedDot)
+                Text("day")
+                    .font(.system(size: 10, weight: .medium))
+                    .foregroundColor(Design.grayLabel)
+            }
+        }
+    }
+}
+
+private struct DayAccessoryRectangularView: View {
+    let cache: WidgetCache
+    var now: Date = Date()
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text("Today")
+                .font(.system(size: 12, weight: .semibold))
+                .foregroundColor(Design.grayLabel)
+            HStack {
+                Text("\(cache.dayPercentDone)% done")
+                    .font(.system(size: 16, weight: .bold))
+                    .foregroundColor(Design.passed)
+                Spacer()
+                Text("\(cache.dayPercentLeft)% left")
+                    .font(.system(size: 16, weight: .bold))
+                    .foregroundColor(Design.left)
+            }
+            GeometryReader { geo in
+                ZStack(alignment: .leading) {
+                    RoundedRectangle(cornerRadius: 3)
+                        .fill(Design.progressBg)
+                    RoundedRectangle(cornerRadius: 3)
+                        .fill(Design.progressOrange)
+                        .frame(width: max(0, geo.size.width * CGFloat(cache.dayProgress)))
+                }
+            }
+            .frame(height: 6)
+        }
+    }
+}
+
+private struct MonthAccessoryInlineView: View {
+    let cache: WidgetCache
+
+    var body: some View {
+        Text("Month \(cache.monthPercent)% · \(cache.monthDaysLeft)d left")
+            .font(.system(size: 14, weight: .medium))
+            .foregroundColor(Design.lightText)
+    }
+}
+
+private struct MonthAccessoryCircularView: View {
+    let cache: WidgetCache
+
+    var body: some View {
+        ZStack {
+            AccessoryWidgetBackground()
+            VStack(spacing: 2) {
+                Text("\(cache.monthPercent)%")
+                    .font(.system(size: 20, weight: .bold))
+                    .foregroundColor(Design.percent)
+                Text("month")
+                    .font(.system(size: 10, weight: .medium))
+                    .foregroundColor(Design.grayLabel)
+            }
+        }
+    }
+}
+
+private struct MonthAccessoryRectangularView: View {
+    let cache: WidgetCache
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text("Month")
+                .font(.system(size: 12, weight: .semibold))
+                .foregroundColor(Design.grayLabel)
+            HStack {
+                Text("\(cache.monthDaysPassed)d passed")
+                    .font(.system(size: 14, weight: .bold))
+                    .foregroundColor(Design.passed)
+                Spacer()
+                Text("\(cache.monthDaysLeft)d left")
+                    .font(.system(size: 14, weight: .bold))
+                    .foregroundColor(Design.left)
+            }
+            GeometryReader { geo in
+                ZStack(alignment: .leading) {
+                    RoundedRectangle(cornerRadius: 3)
+                        .fill(Design.progressBg)
+                    RoundedRectangle(cornerRadius: 3)
+                        .fill(Design.progressOrange)
+                        .frame(width: max(0, geo.size.width * CGFloat(cache.monthProgress)))
+                }
+            }
+            .frame(height: 6)
+        }
+    }
+}
+
+private struct YearAccessoryInlineView: View {
+    let cache: WidgetCache
+
+    var body: some View {
+        Text("Year \(cache.yearPercent)% · \(cache.yearDaysLeft)d left")
+            .font(.system(size: 14, weight: .medium))
+            .foregroundColor(Design.lightText)
+    }
+}
+
+private struct YearAccessoryCircularView: View {
+    let cache: WidgetCache
+
+    var body: some View {
+        ZStack {
+            AccessoryWidgetBackground()
+            VStack(spacing: 2) {
+                Text("\(cache.yearPercent)%")
+                    .font(.system(size: 20, weight: .bold))
+                    .foregroundColor(Design.percent)
+                Text("year")
+                    .font(.system(size: 10, weight: .medium))
+                    .foregroundColor(Design.grayLabel)
+            }
+        }
+    }
+}
+
+private struct YearAccessoryRectangularView: View {
+    let cache: WidgetCache
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text("Year")
+                .font(.system(size: 12, weight: .semibold))
+                .foregroundColor(Design.grayLabel)
+            HStack {
+                Text("\(cache.yearDaysPassed)d passed")
+                    .font(.system(size: 14, weight: .bold))
+                    .foregroundColor(Design.passed)
+                Spacer()
+                Text("\(cache.yearDaysLeft)d left")
+                    .font(.system(size: 14, weight: .bold))
+                    .foregroundColor(Design.left)
+            }
+            GeometryReader { geo in
+                ZStack(alignment: .leading) {
+                    RoundedRectangle(cornerRadius: 3)
+                        .fill(Design.progressBg)
+                    RoundedRectangle(cornerRadius: 3)
+                        .fill(Design.progressOrange)
+                        .frame(width: max(0, geo.size.width * CGFloat(cache.yearProgress)))
+                }
+            }
+            .frame(height: 6)
+        }
+    }
+}
+
 // MARK: - Day Widget View
 struct DayWidgetView: View {
     let entry: UNTILWidgetEntry
@@ -728,6 +968,12 @@ struct DayWidgetView: View {
         Group {
             if let cache = entry.cache {
                 switch family {
+                case .accessoryInline:
+                    DayAccessoryInlineView(cache: cache, now: entry.date)
+                case .accessoryCircular:
+                    DayAccessoryCircularView(cache: cache)
+                case .accessoryRectangular:
+                    DayAccessoryRectangularView(cache: cache, now: entry.date)
                 case .systemLarge:
                     HStack(spacing: 24) {
                         DayRingView(progress: cache.dayProgress, size: 140)
@@ -801,49 +1047,63 @@ struct DayWidgetView: View {
 // MARK: - Month Widget View
 struct MonthWidgetView: View {
     let entry: UNTILWidgetEntry
+    @Environment(\.widgetFamily) private var family
 
     var body: some View {
         Group {
             if let cache = entry.cache {
-                VStack(spacing: 12) {
-                    MonthDotsView(progress: cache.monthProgress, monthIndex: cache.monthIndex)
-                        .frame(maxWidth: .infinity)
-                        .layoutPriority(1)
-
-                    HStack(spacing: 8) {
-                        Text("\(cache.monthDaysPassed) Days Passed")
-                            .font(.system(size: 13, weight: .bold))
-                            .foregroundColor(Design.passed)
-                        Text("\(cache.monthDaysLeft) Days Left")
-                            .font(.system(size: 13, weight: .bold))
-                            .foregroundColor(Design.left)
-                    }
-
-                    GeometryReader { geo in
-                        ZStack(alignment: .leading) {
-                            RoundedRectangle(cornerRadius: 4)
-                                .fill(Design.progressBg)
-                            RoundedRectangle(cornerRadius: 4)
-                                .fill(Design.passedDot)
-                                .frame(width: geo.size.width * cache.monthProgress)
-                        }
-                    }
-                    .frame(height: 8)
-
-                    Text("\(cache.monthPercent)%")
-                        .font(.system(size: Design.bigPercentSize, weight: .bold))
-                        .foregroundColor(Design.percent)
-                    Text("of month")
-                        .font(.system(size: Design.smallLabelSize))
-                        .foregroundColor(Design.grayLabel)
+                switch family {
+                case .accessoryInline:
+                    MonthAccessoryInlineView(cache: cache)
+                case .accessoryCircular:
+                    MonthAccessoryCircularView(cache: cache)
+                case .accessoryRectangular:
+                    MonthAccessoryRectangularView(cache: cache)
+                default:
+                    monthContent(cache: cache)
                 }
-                .padding(16)
             } else {
                 placeholderView
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .widgetBackground()
+    }
+
+    private func monthContent(cache: WidgetCache) -> some View {
+        VStack(spacing: 12) {
+            MonthDotsView(progress: cache.monthProgress, monthIndex: cache.monthIndex)
+                .frame(maxWidth: .infinity)
+                .layoutPriority(1)
+
+            HStack(spacing: 8) {
+                Text("\(cache.monthDaysPassed) Days Passed")
+                    .font(.system(size: 13, weight: .bold))
+                    .foregroundColor(Design.passed)
+                Text("\(cache.monthDaysLeft) Days Left")
+                    .font(.system(size: 13, weight: .bold))
+                    .foregroundColor(Design.left)
+            }
+
+            GeometryReader { geo in
+                ZStack(alignment: .leading) {
+                    RoundedRectangle(cornerRadius: 4)
+                        .fill(Design.progressBg)
+                    RoundedRectangle(cornerRadius: 4)
+                        .fill(Design.passedDot)
+                        .frame(width: geo.size.width * cache.monthProgress)
+                }
+            }
+            .frame(height: 8)
+
+            Text("\(cache.monthPercent)%")
+                .font(.system(size: Design.bigPercentSize, weight: .bold))
+                .foregroundColor(Design.percent)
+            Text("of month")
+                .font(.system(size: Design.smallLabelSize))
+                .foregroundColor(Design.grayLabel)
+        }
+        .padding(16)
     }
 
     private var placeholderView: some View {
@@ -857,56 +1117,70 @@ struct MonthWidgetView: View {
 // MARK: - Year Widget View
 struct YearWidgetView: View {
     let entry: UNTILWidgetEntry
+    @Environment(\.widgetFamily) private var family
 
     var body: some View {
         Group {
             if let cache = entry.cache {
-                let consumedPct = Int(cache.yearProgress * 100)
-                let leftPct = 100 - consumedPct
-
-                VStack(spacing: 14) {
-                    GeometryReader { geo in
-                        YearDotsView(progress: cache.yearProgress, yearDaysPassed: cache.yearDaysPassed, availableWidth: geo.size.width, availableHeight: geo.size.height)
-                            .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    }
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 140)
-                    .layoutPriority(1)
-
-                    GeometryReader { geo in
-                        ZStack(alignment: .leading) {
-                            RoundedRectangle(cornerRadius: 4)
-                                .fill(Design.progressBg)
-                            RoundedRectangle(cornerRadius: 4)
-                                .fill(Design.progressOrange)
-                                .frame(width: geo.size.width * cache.yearProgress)
-                        }
-                    }
-                    .frame(height: 10)
-
-                    HStack(spacing: 8) {
-                        Text("\(cache.yearDaysPassed)d passed (\(consumedPct)%)")
-                            .font(.system(size: 15, weight: .bold))
-                            .foregroundColor(Design.passed)
-                        Text("\(cache.yearDaysLeft)d left (\(leftPct)%)")
-                            .font(.system(size: 15, weight: .bold))
-                            .foregroundColor(Design.left)
-                    }
-
-                    Text("\(consumedPct)%")
-                        .font(.system(size: 24, weight: .bold))
-                        .foregroundColor(Design.percent)
-                    Text("of year")
-                        .font(.system(size: 13))
-                        .foregroundColor(Design.grayLabel)
+                switch family {
+                case .accessoryInline:
+                    YearAccessoryInlineView(cache: cache)
+                case .accessoryCircular:
+                    YearAccessoryCircularView(cache: cache)
+                case .accessoryRectangular:
+                    YearAccessoryRectangularView(cache: cache)
+                default:
+                    yearContent(cache: cache)
                 }
-                .padding(20)
             } else {
                 placeholderView
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .widgetBackground()
+    }
+
+    private func yearContent(cache: WidgetCache) -> some View {
+        let consumedPct = Int(cache.yearProgress * 100)
+        let leftPct = 100 - consumedPct
+
+        return VStack(spacing: 14) {
+            GeometryReader { geo in
+                YearDotsView(progress: cache.yearProgress, yearDaysPassed: cache.yearDaysPassed, availableWidth: geo.size.width, availableHeight: geo.size.height)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+            }
+            .frame(maxWidth: .infinity)
+            .frame(height: 140)
+            .layoutPriority(1)
+
+            GeometryReader { geo in
+                ZStack(alignment: .leading) {
+                    RoundedRectangle(cornerRadius: 4)
+                        .fill(Design.progressBg)
+                    RoundedRectangle(cornerRadius: 4)
+                        .fill(Design.progressOrange)
+                        .frame(width: geo.size.width * cache.yearProgress)
+                }
+            }
+            .frame(height: 10)
+
+            HStack(spacing: 8) {
+                Text("\(cache.yearDaysPassed)d passed (\(consumedPct)%)")
+                    .font(.system(size: 15, weight: .bold))
+                    .foregroundColor(Design.passed)
+                Text("\(cache.yearDaysLeft)d left (\(leftPct)%)")
+                    .font(.system(size: 15, weight: .bold))
+                    .foregroundColor(Design.left)
+            }
+
+            Text("\(consumedPct)%")
+                .font(.system(size: 24, weight: .bold))
+                .foregroundColor(Design.percent)
+            Text("of year")
+                .font(.system(size: 13))
+                .foregroundColor(Design.grayLabel)
+        }
+        .padding(20)
     }
 
     private var placeholderView: some View {
@@ -1138,6 +1412,155 @@ struct CountdownWidget: Widget {
     }
 }
 
+// MARK: - Hour Calculation Widget (tap to start/stop stopwatch)
+private func formatHourCalculationElapsed(totalElapsedMs: Int64, startTimeMs: Int64, isRunning: Bool, now: Date) -> String {
+    let nowMs = Int64(now.timeIntervalSince1970 * 1000)
+    let totalMs: Int64 = totalElapsedMs + (isRunning && startTimeMs > 0 ? (nowMs - startTimeMs) : 0)
+    let totalSec = max(0, totalMs / 1000)
+    let h = totalSec / 3600
+    let m = (totalSec % 3600) / 60
+    let s = totalSec % 60
+    return String(format: "%d:%02d:%02d", h, m, s)
+}
+
+struct HourCalculationWidgetEntry: TimelineEntry {
+    let date: Date
+    let state: HourCalculationState?
+}
+
+struct HourCalculationWidgetProvider: TimelineProvider {
+    private static let entriesPerTimeline = 60
+
+    private func loadState() -> HourCalculationState? {
+        guard let json = WidgetCacheReader.loadHourCalculationJSON(),
+              let data = json.data(using: .utf8) else { return nil }
+        return try? JSONDecoder().decode(HourCalculationState.self, from: data)
+    }
+
+    func placeholder(in context: Context) -> HourCalculationWidgetEntry {
+        HourCalculationWidgetEntry(date: Date(), state: nil)
+    }
+
+    func getSnapshot(in context: Context, completion: @escaping (HourCalculationWidgetEntry) -> Void) {
+        completion(HourCalculationWidgetEntry(date: Date(), state: loadState()))
+    }
+
+    func getTimeline(in context: Context, completion: @escaping (Timeline<HourCalculationWidgetEntry>) -> Void) {
+        let state = loadState()
+        let calendar = Calendar.current
+        let now = Date()
+
+        if state?.isRunning == true {
+            var entries: [HourCalculationWidgetEntry] = []
+            for offset in 0..<Self.entriesPerTimeline {
+                if let date = calendar.date(byAdding: .second, value: offset, to: now) {
+                    entries.append(HourCalculationWidgetEntry(date: date, state: state))
+                }
+            }
+            let nextRefresh = calendar.date(byAdding: .second, value: Self.entriesPerTimeline, to: now) ?? now
+            completion(Timeline(entries: entries, policy: .after(nextRefresh)))
+        } else {
+            let entry = HourCalculationWidgetEntry(date: now, state: state)
+            let nextUpdate = calendar.date(byAdding: .minute, value: 1, to: now) ?? now
+            completion(Timeline(entries: [entry], policy: .after(nextUpdate)))
+        }
+    }
+}
+
+struct ToggleHourCalculationIntent: AppIntent {
+    static var title: LocalizedStringResource = "Start or stop hour timer"
+    static var openAppWhenRun: Bool { false }
+
+    func perform() async throws -> some IntentResult {
+        guard let json = WidgetCacheReader.loadHourCalculationJSON(),
+              let data = json.data(using: .utf8),
+              let decoded = try? JSONDecoder().decode(HourCalculationState.self, from: data) else {
+            var newState = HourCalculationState(title: "Hour timer", isRunning: true, startTimeMs: Int64(Date().timeIntervalSince1970 * 1000), totalElapsedMs: 0)
+            if let encoded = try? JSONEncoder().encode(newState), let newJson = String(data: encoded, encoding: .utf8) {
+                WidgetCacheReader.writeHourCalculationJSON(newJson)
+            }
+            WidgetCenter.shared.reloadTimelines(ofKind: "UNTILHourCalculationWidget")
+            return .result()
+        }
+
+        let nowMs = Int64(Date().timeIntervalSince1970 * 1000)
+        let newTotalElapsed: Int64
+        let newStartTimeMs: Int64
+        let newIsRunning: Bool
+        if decoded.isRunning {
+            newTotalElapsed = decoded.totalElapsedMs + (nowMs - decoded.startTimeMs)
+            newStartTimeMs = 0
+            newIsRunning = false
+        } else {
+            newTotalElapsed = decoded.totalElapsedMs
+            newStartTimeMs = nowMs
+            newIsRunning = true
+        }
+        let newState = HourCalculationState(title: decoded.title, isRunning: newIsRunning, startTimeMs: newStartTimeMs, totalElapsedMs: newTotalElapsed)
+        if let encoded = try? JSONEncoder().encode(newState), let newJson = String(data: encoded, encoding: .utf8) {
+            WidgetCacheReader.writeHourCalculationJSON(newJson)
+        }
+        WidgetCenter.shared.reloadTimelines(ofKind: "UNTILHourCalculationWidget")
+        return .result()
+    }
+}
+
+private struct HourCalculationWidgetView: View {
+    let entry: HourCalculationWidgetEntry
+
+    var body: some View {
+        Group {
+            if let state = entry.state {
+                Button(intent: ToggleHourCalculationIntent()) {
+                    VStack(spacing: 8) {
+                        Text(state.title.isEmpty ? "Hour timer" : state.title)
+                            .font(.system(size: Design.labelSize, weight: .semibold))
+                            .foregroundColor(Design.grayLabel)
+                            .lineLimit(1)
+                        Text(formatHourCalculationElapsed(totalElapsedMs: state.totalElapsedMs, startTimeMs: state.startTimeMs, isRunning: state.isRunning, now: entry.date))
+                            .font(.system(size: 26, weight: .bold))
+                            .foregroundColor(Design.passedDot)
+                        Text(state.isRunning ? "Tap to stop" : "Tap to start")
+                            .font(.system(size: Design.smallLabelSize))
+                            .foregroundColor(Design.remainingDot)
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .padding(16)
+                }
+                .buttonStyle(.plain)
+            } else {
+                VStack(spacing: 8) {
+                    Text("Set title in Until")
+                        .font(.system(size: Design.labelSize))
+                        .foregroundColor(Design.grayLabel)
+                    Text("0:00:00")
+                        .font(.system(size: 26, weight: .bold))
+                        .foregroundColor(Design.passedDot)
+                    Text("Tap to start")
+                        .font(.system(size: Design.smallLabelSize))
+                        .foregroundColor(Design.remainingDot)
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .widgetBackground()
+    }
+}
+
+struct HourCalculationWidget: Widget {
+    let kind: String = "UNTILHourCalculationWidget"
+
+    var body: some WidgetConfiguration {
+        StaticConfiguration(kind: kind, provider: HourCalculationWidgetProvider()) { entry in
+            HourCalculationWidgetView(entry: entry)
+        }
+        .configurationDisplayName("Hour calculation")
+        .description("Tap to start/stop. One timer. Set title (e.g. Office hour) in Until.")
+        .supportedFamilies([.systemSmall])
+    }
+}
+
 // MARK: - Widget Configurations
 struct DayWidget: Widget {
     let kind: String = "UNTILDayWidget"
@@ -1147,8 +1570,8 @@ struct DayWidget: Widget {
             DayWidgetView(entry: entry)
         }
         .configurationDisplayName("Until Day")
-        .description("See your day progress.")
-        .supportedFamilies([.systemSmall, .systemMedium, .systemLarge])
+        .description("See your day progress. Home screen and Lock Screen.")
+        .supportedFamilies([.systemSmall, .systemMedium, .systemLarge, .accessoryInline, .accessoryCircular, .accessoryRectangular])
     }
 }
 
@@ -1156,12 +1579,12 @@ struct MonthWidget: Widget {
     let kind: String = "UNTILMonthWidget"
 
     var body: some WidgetConfiguration {
-        StaticConfiguration(kind: kind, provider: UNTILWidgetProvider()) { entry in
+        StaticConfiguration(kind: kind, provider: MonthYearWidgetProvider()) { entry in
             MonthWidgetView(entry: entry)
         }
         .configurationDisplayName("Until Month")
-        .description("See your month progress.")
-        .supportedFamilies([.systemMedium])
+        .description("See your month progress. Home screen and Lock Screen.")
+        .supportedFamilies([.systemMedium, .accessoryInline, .accessoryCircular, .accessoryRectangular])
     }
 }
 
@@ -1169,12 +1592,415 @@ struct YearWidget: Widget {
     let kind: String = "UNTILYearWidget"
 
     var body: some WidgetConfiguration {
-        StaticConfiguration(kind: kind, provider: UNTILWidgetProvider()) { entry in
+        StaticConfiguration(kind: kind, provider: MonthYearWidgetProvider()) { entry in
             YearWidgetView(entry: entry)
         }
         .configurationDisplayName("Until Year")
-        .description("See your year and day progress.")
-        .supportedFamilies([.systemLarge])
+        .description("See your year progress. Home screen and Lock Screen.")
+        .supportedFamilies([.systemLarge, .accessoryInline, .accessoryCircular, .accessoryRectangular])
+    }
+}
+
+// MARK: - Live Activity (Dynamic Island + Lock Screen)
+// UNTILLiveActivityAttributes is defined in UNTIL/UNTILLiveActivityAttributes.swift (shared target)
+
+private let monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+
+private func liveActivityDayLeftText(_ context: ActivityViewContext<UNTILLiveActivityAttributes>) -> String {
+    guard let start = context.state.startOfDay, let end = context.state.endOfDay else {
+        return "\(Int(context.state.dayHoursLeft))h left"
+    }
+    let nowMs = Int64(Date().timeIntervalSince1970 * 1000)
+    let remainingMs = max(0, end - nowMs)
+    let h = remainingMs / 3600000
+    let m = (remainingMs % 3600000) / 60000
+    return "\(h)h \(m)m"
+}
+
+private func liveActivityHourCalcText(_ context: ActivityViewContext<UNTILLiveActivityAttributes>) -> String {
+    let totalMs = context.state.hourCalcElapsedMs
+    let totalSec = max(0, totalMs / 1000)
+    let h = totalSec / 3600
+    let m = (totalSec % 3600) / 60
+    let s = totalSec % 60
+    return String(format: "%d:%02d:%02d", h, m, s)
+}
+
+private struct LiveActivityLockScreenView: View {
+    let context: ActivityViewContext<UNTILLiveActivityAttributes>
+
+    var body: some View {
+        Group {
+            switch context.attributes.activeWidget {
+            case "day":
+                liveActivityDayLockScreen
+            case "month":
+                liveActivityMonthLockScreen
+            case "year":
+                liveActivityYearLockScreen
+            case "life":
+                liveActivityLifeLockScreen
+            case "dailyTasks":
+                liveActivityDailyTasksLockScreen
+            case "hourCalc":
+                liveActivityHourCalcLockScreen
+            default:
+                liveActivityDayLockScreen
+            }
+        }
+        .padding(16)
+        .activityBackgroundTint(Design.background.opacity(0.9))
+    }
+
+    private var liveActivityDayLockScreen: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Text("Today").font(.headline).foregroundColor(Design.lightText)
+                Spacer()
+                Text("\(context.state.dayPercentDone)% done").font(.subheadline).foregroundColor(Design.passed)
+            }
+            HStack(spacing: 24) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("\(context.state.dayPercentDone)%").font(.title2.weight(.bold)).foregroundColor(Design.passed)
+                    Text("day done").font(.caption).foregroundColor(Design.grayLabel)
+                }
+                VStack(alignment: .trailing, spacing: 2) {
+                    Text("\(context.state.dayPercentLeft)%").font(.title2.weight(.bold)).foregroundColor(Design.left)
+                    Text("left today").font(.caption).foregroundColor(Design.grayLabel)
+                }
+            }
+            progressBar(context.state.dayProgress)
+            Text("Day progress").font(.caption).foregroundColor(Design.grayLabel)
+        }
+    }
+
+    private var liveActivityMonthLockScreen: some View {
+        let monthIdx = Calendar.current.component(.month, from: Date()) - 1
+        let monthName = monthNames[monthIdx]
+        return VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Month").font(.caption).foregroundColor(Design.grayLabel)
+                    Text(monthName).font(.headline).foregroundColor(Design.lightText)
+                    Text("\(context.state.monthDaysPassed)d passed").font(.caption).foregroundColor(Design.passed)
+                }
+                Spacer()
+                VStack(alignment: .trailing, spacing: 2) {
+                    Text("Progress").font(.caption).foregroundColor(Design.grayLabel)
+                    Text("\(context.state.monthPercent)%").font(.headline).foregroundColor(Design.percent)
+                    Text("\(context.state.monthDaysLeft)d left").font(.caption).foregroundColor(Design.left)
+                }
+            }
+            progressBar(context.state.monthProgress)
+            Text("\(context.state.monthDaysPassed)d passed • \(context.state.monthDaysLeft)d left")
+                .font(.caption).foregroundColor(Design.grayLabel)
+        }
+    }
+
+    private var liveActivityYearLockScreen: some View {
+        let year = Calendar.current.component(.year, from: Date())
+        return VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Year").font(.caption).foregroundColor(Design.grayLabel)
+                    Text("\(year)").font(.headline).foregroundColor(Design.lightText)
+                    Text("\(context.state.yearDaysPassed)d passed").font(.caption).foregroundColor(Design.passed)
+                }
+                Spacer()
+                VStack(alignment: .trailing, spacing: 2) {
+                    Text("Progress").font(.caption).foregroundColor(Design.grayLabel)
+                    Text("\(context.state.yearPercent)%").font(.headline).foregroundColor(Design.percent)
+                    Text("\(context.state.yearDaysLeft)d left").font(.caption).foregroundColor(Design.left)
+                }
+            }
+            progressBar(context.state.yearProgress)
+            Text("Year progress").font(.caption).foregroundColor(Design.grayLabel)
+        }
+    }
+
+    private var liveActivityLifeLockScreen: some View {
+        let lifePct = context.state.lifePercent ?? 0
+        let daysLeft = context.state.remainingDaysLife ?? 0
+        return VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Text("Your life").font(.headline).foregroundColor(Design.lightText)
+                Spacer()
+                Text("\(lifePct)%").font(.headline).foregroundColor(Design.percent)
+            }
+            Text("\(daysLeft)d left").font(.subheadline).foregroundColor(Design.left)
+            if lifePct > 0 {
+                progressBar(Double(lifePct) / 100.0)
+            }
+        }
+    }
+
+    private var liveActivityDailyTasksLockScreen: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Text("Today's tasks").font(.headline).foregroundColor(Design.lightText)
+                Spacer()
+                Text("\(context.state.dailyTasksCompleted)/\(context.state.dailyTasksTotal) done")
+                    .font(.subheadline).foregroundColor(Design.left)
+            }
+            if context.state.dailyTasksTotal > 0 {
+                progressBar(Double(context.state.dailyTasksCompleted) / Double(context.state.dailyTasksTotal))
+            }
+        }
+    }
+
+    private var liveActivityHourCalcLockScreen: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Text(context.state.hourCalcTitle.isEmpty ? "Hour timer" : context.state.hourCalcTitle)
+                    .font(.headline).foregroundColor(Design.lightText)
+                Spacer()
+                Text(liveActivityHourCalcText(context)).font(.title2.weight(.bold)).foregroundColor(Design.passedDot)
+            }
+            Text(context.state.hourCalcIsRunning ? "Running" : "Tap to start").font(.caption).foregroundColor(Design.grayLabel)
+        }
+    }
+
+    private func progressBar(_ progress: Double) -> some View {
+        GeometryReader { geo in
+            ZStack(alignment: .leading) {
+                RoundedRectangle(cornerRadius: 4).fill(Design.progressBg)
+                RoundedRectangle(cornerRadius: 4)
+                    .fill(Design.progressOrange)
+                    .frame(width: max(0, geo.size.width * CGFloat(min(progress, 1))))
+            }
+        }
+        .frame(height: 8)
+    }
+}
+
+private struct LiveActivityCompactLeadingView: View {
+    let context: ActivityViewContext<UNTILLiveActivityAttributes>
+
+    var body: some View {
+        Group {
+            switch context.attributes.activeWidget {
+            case "day":
+                Text("\(context.state.dayPercentDone)%").font(.system(size: 14, weight: .semibold)).foregroundColor(Design.passed)
+            case "month":
+                Text("\(context.state.monthPercent)%").font(.system(size: 14, weight: .semibold)).foregroundColor(Design.percent)
+            case "year":
+                Text("\(context.state.yearPercent)%").font(.system(size: 14, weight: .semibold)).foregroundColor(Design.progressOrange)
+            case "life":
+                Text("\(context.state.lifePercent ?? 0)%").font(.system(size: 14, weight: .semibold)).foregroundColor(Design.percent)
+            case "dailyTasks":
+                Text("\(context.state.dailyTasksCompleted)/\(context.state.dailyTasksTotal)").font(.system(size: 14, weight: .semibold)).foregroundColor(Design.left)
+            case "hourCalc":
+                Text(liveActivityHourCalcText(context)).font(.system(size: 13, weight: .semibold)).foregroundColor(Design.passedDot)
+            default:
+                Text("\(context.state.dayPercentDone)%").font(.system(size: 14, weight: .semibold)).foregroundColor(Design.passed)
+            }
+        }
+    }
+}
+
+private struct LiveActivityCompactTrailingView: View {
+    let context: ActivityViewContext<UNTILLiveActivityAttributes>
+
+    var body: some View {
+        Group {
+            switch context.attributes.activeWidget {
+            case "day":
+                Text("\(context.state.dayPercentLeft)% left").font(.system(size: 13, weight: .medium)).foregroundColor(Design.left)
+            case "month":
+                Text("\(context.state.monthDaysLeft)d left").font(.system(size: 13, weight: .medium)).foregroundColor(Design.left)
+            case "year":
+                Text("\(context.state.yearDaysLeft)d left").font(.system(size: 13, weight: .medium)).foregroundColor(Design.left)
+            case "life":
+                Text("\(context.state.remainingDaysLife ?? 0)d left").font(.system(size: 13, weight: .medium)).foregroundColor(Design.left)
+            case "dailyTasks":
+                Text("done").font(.system(size: 13, weight: .medium)).foregroundColor(Design.grayLabel)
+            case "hourCalc":
+                Text(context.state.hourCalcIsRunning ? "Running" : "Stopped").font(.system(size: 12, weight: .medium)).foregroundColor(Design.grayLabel)
+            default:
+                Text(liveActivityDayLeftText(context)).font(.system(size: 13, weight: .medium)).foregroundColor(Design.left)
+            }
+        }
+    }
+}
+
+private struct LiveActivityExpandedContentView: View {
+    let context: ActivityViewContext<UNTILLiveActivityAttributes>
+
+    var body: some View {
+        VStack(spacing: 3) {
+            switch context.attributes.activeWidget {
+            case "day":
+                expandedDayContent
+            case "month":
+                expandedMonthContent
+            case "year":
+                expandedYearContent
+            case "life":
+                expandedLifeContent
+            case "dailyTasks":
+                expandedDailyTasksContent
+            case "hourCalc":
+                expandedHourCalcContent
+            default:
+                expandedDayContent
+            }
+            expandedGlanceRow
+            Text("Tap to open Until").font(.system(size: 8)).foregroundColor(Design.grayLabel.opacity(0.8))
+        }
+    }
+
+    private var expandedDayContent: some View {
+        VStack(spacing: 3) {
+            HStack(spacing: 4) {
+                Text("\(context.state.dayPercentDone)% done").font(.system(size: 12, weight: .bold)).foregroundColor(Design.passed)
+                    .lineLimit(1).minimumScaleFactor(0.7)
+                Spacer(minLength: 4)
+                Text(liveActivityDayLeftText(context) + " left").font(.system(size: 12, weight: .bold)).foregroundColor(Design.left)
+                    .lineLimit(1).minimumScaleFactor(0.7)
+            }
+            expandedProgressBar(context.state.dayProgress)
+        }
+    }
+
+    private var expandedMonthContent: some View {
+        let monthIdx = Calendar.current.component(.month, from: Date()) - 1
+        let monthName = monthNames[monthIdx]
+        return VStack(spacing: 3) {
+            HStack(spacing: 4) {
+                Text("\(monthName) \(context.state.monthDaysPassed)d").font(.system(size: 12, weight: .semibold)).foregroundColor(Design.passed)
+                    .lineLimit(1).minimumScaleFactor(0.7)
+                Spacer(minLength: 4)
+                Text("\(context.state.monthPercent)% \(context.state.monthDaysLeft)d left").font(.system(size: 12, weight: .semibold)).foregroundColor(Design.left)
+                    .lineLimit(1).minimumScaleFactor(0.7)
+            }
+            expandedProgressBar(context.state.monthProgress)
+        }
+    }
+
+    private var expandedYearContent: some View {
+        let year = Calendar.current.component(.year, from: Date())
+        return VStack(spacing: 3) {
+            HStack(spacing: 4) {
+                Text("\(year) \(context.state.yearDaysPassed)d").font(.system(size: 12, weight: .semibold)).foregroundColor(Design.passed)
+                    .lineLimit(1).minimumScaleFactor(0.7)
+                Spacer(minLength: 4)
+                Text("\(context.state.yearPercent)% \(context.state.yearDaysLeft)d left").font(.system(size: 12, weight: .semibold)).foregroundColor(Design.left)
+                    .lineLimit(1).minimumScaleFactor(0.7)
+            }
+            expandedProgressBar(context.state.yearProgress)
+        }
+    }
+
+    private var expandedLifeContent: some View {
+        let lifePct = context.state.lifePercent ?? 0
+        let daysLeft = context.state.remainingDaysLife ?? 0
+        return VStack(spacing: 3) {
+            HStack(spacing: 4) {
+                Text("\(lifePct)% lived").font(.system(size: 12, weight: .bold)).foregroundColor(Design.percent)
+                    .lineLimit(1).minimumScaleFactor(0.7)
+                Spacer(minLength: 4)
+                Text("\(daysLeft)d left").font(.system(size: 12, weight: .bold)).foregroundColor(Design.left)
+                    .lineLimit(1).minimumScaleFactor(0.7)
+            }
+            if lifePct > 0 {
+                expandedProgressBar(Double(lifePct) / 100.0)
+            }
+        }
+    }
+
+    private var expandedDailyTasksContent: some View {
+        let total = context.state.dailyTasksTotal
+        let done = context.state.dailyTasksCompleted
+        let progress = total > 0 ? Double(done) / Double(total) : 0.0
+        return VStack(spacing: 3) {
+            HStack(spacing: 4) {
+                Text("\(done)/\(total) done").font(.system(size: 12, weight: .bold)).foregroundColor(Design.left)
+                    .lineLimit(1).minimumScaleFactor(0.7)
+                Spacer(minLength: 4)
+                if total > 0 {
+                    Text("\(Int(progress * 100))%").font(.system(size: 12, weight: .bold)).foregroundColor(Design.percent)
+                        .lineLimit(1).minimumScaleFactor(0.7)
+                }
+            }
+            if total > 0 {
+                expandedProgressBar(progress)
+            }
+        }
+    }
+
+    private var expandedHourCalcContent: some View {
+        HStack(spacing: 4) {
+            Text(liveActivityHourCalcText(context)).font(.system(size: 14, weight: .bold)).foregroundColor(Design.passedDot)
+                .lineLimit(1).minimumScaleFactor(0.7)
+            Spacer(minLength: 4)
+            Text(context.state.hourCalcIsRunning ? "Running" : "Stopped")
+                .font(.system(size: 10, weight: .semibold))
+                .foregroundColor(context.state.hourCalcIsRunning ? Design.left : Design.grayLabel)
+        }
+    }
+
+    private var expandedGlanceRow: some View {
+        HStack(spacing: 8) {
+            Text("D\(context.state.dayPercentDone)%").font(.system(size: 9)).foregroundColor(Design.passed)
+            Text("M\(context.state.monthPercent)%").font(.system(size: 9)).foregroundColor(Design.percent)
+            Text("Y\(context.state.yearPercent)%").font(.system(size: 9)).foregroundColor(Design.progressOrange)
+            if let life = context.state.lifePercent, life > 0 {
+                Text("L\(life)%").font(.system(size: 9)).foregroundColor(Design.left)
+            }
+            if context.state.dailyTasksTotal > 0 {
+                Text("T\(context.state.dailyTasksCompleted)/\(context.state.dailyTasksTotal)").font(.system(size: 9)).foregroundColor(Design.left)
+            }
+        }
+    }
+
+    private func expandedProgressBar(_ progress: Double) -> some View {
+        GeometryReader { geo in
+            ZStack(alignment: .leading) {
+                RoundedRectangle(cornerRadius: 3).fill(Design.progressBg)
+                RoundedRectangle(cornerRadius: 3)
+                    .fill(Design.progressOrange)
+                    .frame(width: max(0, geo.size.width * CGFloat(min(progress, 1))))
+            }
+        }
+        .frame(height: 5)
+    }
+}
+
+struct UNTILLiveActivityWidget: Widget {
+    private static let appURL = URL(string: "until://")!
+
+    var body: some WidgetConfiguration {
+        ActivityConfiguration(for: UNTILLiveActivityAttributes.self) { context in
+            LiveActivityLockScreenView(context: context)
+        } dynamicIsland: { context in
+            DynamicIsland {
+                DynamicIslandExpandedRegion(.leading, priority: 0.5) {
+                    Link(destination: Self.appURL) {
+                        LiveActivityCompactLeadingView(context: context)
+                    }
+                    .buttonStyle(.plain)
+                }
+                DynamicIslandExpandedRegion(.trailing, priority: 0.5) {
+                    Link(destination: Self.appURL) {
+                        LiveActivityCompactTrailingView(context: context)
+                    }
+                    .buttonStyle(.plain)
+                }
+                DynamicIslandExpandedRegion(.center, priority: 1) {
+                    Link(destination: Self.appURL) {
+                        LiveActivityExpandedContentView(context: context)
+                    }
+                    .buttonStyle(.plain)
+                }
+            } compactLeading: {
+                LiveActivityCompactLeadingView(context: context)
+            } compactTrailing: {
+                LiveActivityCompactTrailingView(context: context)
+            } minimal: {
+                Image(systemName: "clock.fill")
+                    .foregroundColor(Design.passedDot)
+            }
+        }
     }
 }
 
@@ -1188,5 +2014,7 @@ struct UNTILWidgetsBundle: WidgetBundle {
         CounterWidget()
         CountdownWidget()
         DailyTasksWidget()
+        HourCalculationWidget()
+        UNTILLiveActivityWidget()
     }
 }

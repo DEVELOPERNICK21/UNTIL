@@ -12,6 +12,13 @@ enum WidgetCacheReader {
     static let customCountersKey = "custom.counters"
     static let countdownsKey = "countdowns"
     static let dailyTasksWidgetKey = "daily.tasks.widget"
+    static let hourCalculationWidgetKey = "hour.calculation.widget"
+    static let premiumKey = "premium.isActive"
+
+    static var isPremium: Bool {
+        guard let defaults = UserDefaults(suiteName: appGroupID) else { return false }
+        return defaults.bool(forKey: premiumKey)
+    }
 
     static func loadJSON() -> String? {
         guard let defaults = UserDefaults(suiteName: appGroupID) else { return nil }
@@ -31,6 +38,18 @@ enum WidgetCacheReader {
     static func loadDailyTasksStatsJSON() -> String? {
         guard let defaults = UserDefaults(suiteName: appGroupID) else { return nil }
         return defaults.string(forKey: dailyTasksWidgetKey)
+    }
+
+    static func loadHourCalculationJSON() -> String? {
+        guard let defaults = UserDefaults(suiteName: appGroupID) else { return nil }
+        return defaults.string(forKey: hourCalculationWidgetKey)
+    }
+
+    /// Write hour calculation state (used by widget App Intent to toggle start/stop without opening app).
+    static func writeHourCalculationJSON(_ json: String) {
+        guard let defaults = UserDefaults(suiteName: appGroupID) else { return }
+        defaults.set(json, forKey: hourCalculationWidgetKey)
+        defaults.synchronize()
     }
 
     /// Write custom counters JSON (used by widget extension App Intent to persist increment without opening app).
@@ -53,4 +72,12 @@ struct CountdownItem: Codable {
     let id: String
     let title: String
     let date: String
+}
+
+/// Hour calculation (stopwatch) widget state — same key/format as Android
+struct HourCalculationState: Codable {
+    let title: String
+    let isRunning: Bool
+    let startTimeMs: Int64
+    let totalElapsedMs: Int64
 }

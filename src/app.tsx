@@ -14,11 +14,15 @@ import {
   syncCustomCounters,
   syncCountdowns,
   syncDailyTasksWidget,
+  updateLiveActivity,
+  updateOverlay,
+  syncPremiumStatus,
 } from './infrastructure';
 import {
   incrementCustomCounterUseCase,
   replaceCustomCountersFromSyncUseCase,
   checkForAppUpdateUseCase,
+  verifySubscriptionUseCase,
 } from './di';
 
 runMigrations();
@@ -43,10 +47,15 @@ function App() {
   const handledInitialUrl = useRef(false);
 
   useEffect(() => {
+    verifySubscriptionUseCase.execute().then(() => {
+      syncPremiumStatus();
+    });
     syncWidgetCache();
     syncCustomCounters();
     syncCountdowns();
     syncDailyTasksWidget();
+    updateLiveActivity();
+    if (Platform.OS === 'android') updateOverlay();
     checkForAppUpdateUseCase.execute();
 
     const processInitialUrl = () => {
@@ -62,6 +71,7 @@ function App() {
 
     const subAppState = AppState.addEventListener('change', (state) => {
       if (state === 'active') {
+        verifySubscriptionUseCase.execute().then(() => syncPremiumStatus());
         checkForAppUpdateUseCase.execute();
         if (Platform.OS === 'ios' && NativeModules.WidgetBridge?.getCustomCountersFromAppGroup) {
           NativeModules.WidgetBridge.getCustomCountersFromAppGroup().then((json: string | null) => {
@@ -75,10 +85,13 @@ function App() {
             }
           });
         }
+        syncPremiumStatus();
         syncWidgetCache();
         syncCustomCounters();
         syncCountdowns();
         syncDailyTasksWidget();
+        updateLiveActivity();
+        if (Platform.OS === 'android') updateOverlay();
         processInitialUrl();
       }
     });

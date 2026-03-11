@@ -12,17 +12,27 @@ private let widgetCacheKey = "widget.cache"
 private let customCountersKey = "custom.counters"
 private let countdownsKey = "countdowns"
 private let dailyTasksWidgetKey = "daily.tasks.widget"
+private let hourCalculationWidgetKey = "hour.calculation.widget"
 
+private let premiumKey = "premium.isActive"
 private let kindDay = "UNTILDayWidget"
 private let kindMonth = "UNTILMonthWidget"
 private let kindYear = "UNTILYearWidget"
 private let kindCounter = "UNTILCounterWidget"
 private let kindCountdown = "UNTILCountdownWidget"
 private let kindDailyTasks = "UNTILDailyTasksWidget"
+private let kindHourCalculation = "UNTILHourCalculationWidget"
 
 @objc(WidgetBridge)
 class WidgetBridge: NSObject {
   @objc static func requiresMainQueueSetup() -> Bool { false }
+
+  @objc func setPremiumStatus(_ isPremium: Bool) {
+    guard let defaults = UserDefaults(suiteName: appGroupID) else { return }
+    defaults.set(isPremium, forKey: premiumKey)
+    defaults.synchronize()
+    WidgetCenter.shared.reloadAllTimelines()
+  }
 
   @objc func setWidgetCache(_ json: String) {
     guard let defaults = UserDefaults(suiteName: appGroupID) else { return }
@@ -54,6 +64,13 @@ class WidgetBridge: NSObject {
     WidgetCenter.shared.reloadTimelines(ofKind: kindDailyTasks)
   }
 
+  @objc func setHourCalculationState(_ json: String) {
+    guard let defaults = UserDefaults(suiteName: appGroupID) else { return }
+    defaults.set(json, forKey: hourCalculationWidgetKey)
+    defaults.synchronize()
+    WidgetCenter.shared.reloadTimelines(ofKind: kindHourCalculation)
+  }
+
   @objc func getCustomCountersFromAppGroup(_ resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
     guard let defaults = UserDefaults(suiteName: appGroupID) else {
       resolve(nil)
@@ -74,6 +91,7 @@ class WidgetBridge: NSObject {
           "counterWidgetAdded": kinds.contains(kindCounter),
           "countdownWidgetAdded": kinds.contains(kindCountdown),
           "dailyTasksWidgetAdded": kinds.contains(kindDailyTasks),
+          "hourCalculationWidgetAdded": kinds.contains(kindHourCalculation),
         ]
         resolve(payload)
       case .failure(let error):

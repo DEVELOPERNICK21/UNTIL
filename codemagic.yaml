@@ -42,10 +42,10 @@ workflows:
           success: true
           failure: true
       # Uncomment and set up for Play Store:
-      # google_play:
-      #     credentials: $GOOGLE_PLAY_SERVICE_ACCOUNT_CREDENTIALS
-      #     track: internal
-      #     submit_as_draft: true
+      google_play:
+        credentials: $GOOGLE_PLAY_SERVICE_ACCOUNT_CREDENTIALS
+        track: internal
+        submit_as_draft: false
 
   ios-workflow:
     name: UNTIL iOS

@@ -4,6 +4,12 @@
 
 export type ThemeMode = 'light' | 'dark' | 'system';
 
+export type {
+  ActivationResult,
+  VerificationResult,
+  SubscriptionState,
+} from './subscription';
+
 export interface UserProfile {
   birthDate: string; // ISO date string YYYY-MM-DD
   deathAge?: number; // Expected lifespan in years, e.g. 80
@@ -93,6 +99,12 @@ export interface WidgetCache {
   yearDaysPassed: number;
   yearDaysLeft: number;
   yearPercent: number;
+  /** Life progress 0–1. Present only when birth date is set. */
+  lifeProgress?: number;
+  /** Remaining days until death age. Present only when birth date is set. */
+  remainingDaysLife?: number;
+  /** Life percent 0–100. Present only when birth date is set. */
+  lifePercent?: number;
   updatedAt: number;
 }
 

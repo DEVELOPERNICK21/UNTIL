@@ -112,7 +112,7 @@ function TaskRow({ task, goalTitle, onToggle, onEdit, onRemove }: TaskRowProps) 
                 variant="body"
                 color="primary"
                 style={[styles.taskTitle, task.completed && styles.taskTitleDone]}
-                numberOfLines={2}
+                numberOfLines={3}
               >
                 {task.title}
               </Text>
@@ -293,14 +293,25 @@ export function DailyTasksScreen() {
           </TouchableOpacity>
 
           <View style={styles.addSection}>
+            <Text variant="caption" color="secondary" style={styles.addSectionLabel}>
+              New task
+            </Text>
             <TextInput
               style={styles.input}
               value={newTitle}
               onChangeText={setNewTitle}
-              placeholder="Task title"
+              placeholder="What do you want to do?"
               placeholderTextColor={Colors.textSecondary}
               autoCapitalize="sentences"
+              returnKeyType="done"
+              onSubmitEditing={handleAdd}
+              blurOnSubmit
+              multiline
+              maxLength={200}
             />
+            <Text variant="caption" color="secondary" style={styles.categorySectionLabel}>
+              Category
+            </Text>
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
@@ -331,7 +342,7 @@ export function DailyTasksScreen() {
               onPress={handleAdd}
               disabled={!newTitle.trim()}
             >
-              <Text variant="caption" style={styles.addButtonText}>
+              <Text variant="body" style={styles.addButtonText}>
                 Add task
               </Text>
             </TouchableOpacity>
@@ -365,13 +376,21 @@ export function DailyTasksScreen() {
                 <Text variant="sectionTitle" color="primary" style={styles.modalTitle}>
                   Edit task
                 </Text>
+                <Text variant="caption" color="secondary" style={styles.modalInputLabel}>
+                  Task title
+                </Text>
                 <TextInput
-                  style={styles.input}
+                  style={styles.modalInput}
                   value={editTitle}
                   onChangeText={setEditTitle}
-                  placeholder="Task title"
+                  placeholder="What do you want to do?"
                   placeholderTextColor={Colors.textSecondary}
                   autoCapitalize="sentences"
+                  returnKeyType="done"
+                  onSubmitEditing={handleSaveEdit}
+                  blurOnSubmit
+                  multiline
+                  maxLength={200}
                 />
                 <Text variant="caption" color="secondary" style={styles.categoryLabel}>
                   Category
@@ -447,16 +466,36 @@ const styles = StyleSheet.create({
   reportRow: { marginBottom: Spacing[2] },
   progress: { marginTop: Spacing[1] },
   reportLink: { marginTop: Spacing[2], textDecorationLine: 'underline' },
-  addSection: { marginBottom: Spacing[4] },
+  addSection: {
+    marginBottom: Spacing[4],
+    padding: Spacing[4],
+    backgroundColor: Colors.cardLighter,
+    borderRadius: Radius.md,
+    borderWidth: 1,
+    borderColor: Colors.divider,
+  },
+  addSectionLabel: {
+    marginBottom: Spacing[2],
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+  },
+  categorySectionLabel: {
+    marginBottom: Spacing[1],
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+  },
   input: {
     borderWidth: 1,
     borderColor: Colors.divider,
-    borderRadius: Radius.sm,
-    paddingVertical: Spacing[2],
-    paddingHorizontal: Spacing[3],
+    borderRadius: Radius.md,
+    paddingVertical: Spacing[3],
+    paddingHorizontal: Spacing[4],
     color: Colors.textPrimary,
-    fontSize: 16,
-    marginBottom: Spacing[2],
+    fontSize: 18,
+    lineHeight: 24,
+    minHeight: 56,
+    marginBottom: Spacing[3],
+    textAlignVertical: 'top',
   },
   chipScroll: { marginBottom: Spacing[2] },
   chipContainer: { flexDirection: 'row', gap: Spacing[2] },
@@ -509,7 +548,11 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   taskContent: { flex: 1 },
-  taskTitle: { marginBottom: 2 },
+  taskTitle: {
+    marginBottom: 2,
+    fontSize: 17,
+    lineHeight: 22,
+  },
   taskTitleDone: {
     textDecorationLine: 'line-through',
     opacity: 0.7,
@@ -531,6 +574,24 @@ const styles = StyleSheet.create({
     padding: Spacing[4],
   },
   modalTitle: { marginBottom: Spacing[3] },
+  modalInputLabel: {
+    marginBottom: Spacing[1],
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+  },
+  modalInput: {
+    borderWidth: 1,
+    borderColor: Colors.divider,
+    borderRadius: Radius.md,
+    paddingVertical: Spacing[3],
+    paddingHorizontal: Spacing[4],
+    color: Colors.textPrimary,
+    fontSize: 18,
+    lineHeight: 24,
+    minHeight: 56,
+    marginBottom: Spacing[3],
+    textAlignVertical: 'top',
+  },
   categoryLabel: { marginBottom: Spacing[1] },
   modalActions: {
     flexDirection: 'row',

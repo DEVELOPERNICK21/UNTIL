@@ -2,6 +2,8 @@
 
 How to add or modify widgets for iOS and Android. Use this doc when creating a new widget.
 
+**Related:** [Dynamic Island Live Activity](DynamicIslandLiveActivity.md) – design for iOS Live Activity / Dynamic Island (day, month, year, daily tasks, hour calc, life).
+
 ---
 
 ## Overview
@@ -23,6 +25,19 @@ How to add or modify widgets for iOS and Android. Use this doc when creating a n
 - All time logic lives in `core/time` – widgets only read cached JSON
 - Shared data contract: `surfaces/widgets/dataContract.ts`
 - Storage key: `widget.cache` (from `persistence/schema.ts`)
+
+---
+
+## Lock Screen Widgets (SSOT)
+
+Lock screen widgets use the **same data** as home screen widgets. No new cache keys or use cases.
+
+| Platform | Implementation |
+|----------|----------------|
+| **iOS** | Day, Month, Year widgets support accessory families: `.accessoryInline`, `.accessoryCircular`, `.accessoryRectangular`. Add to Lock Screen via the widget picker. |
+| **Android** | Day, Month, Year have `widgetCategory="home_screen\|keyguard"` so they can be placed on lock screen (Android 15+ on supported devices). Same layout as home. |
+
+**Architecture:** SyncWidgetUseCase → WidgetCache → WidgetSync → MMKV/UserDefaults. Lock screen views are presentation-only; they read the same cached JSON.
 
 ---
 
@@ -55,8 +70,8 @@ How to add or modify widgets for iOS and Android. Use this doc when creating a n
 | File | Purpose |
 |------|---------|
 | `ios/UNTIL/WidgetBridge.swift` | Writes JSON to UserDefaults App Group (no edits for new widgets) |
-| `ios/UNTILWidgets/WidgetCacheReader.swift` | Reads JSON from App Group (no edits for new widgets) |
-| `ios/UNTILWidgets/UNTILWidgets.swift` | Model, views, providers, bundle – **edit for new widget** |
+| `ios/UNTILWidgets/WidgetMMKV.swift` | Reads JSON from App Group (no edits for new widgets) |
+| `ios/UNTILWidgets/UNTILWidgets.swift` | Model, views, providers, bundle, lock screen accessory views – **edit for new widget** |
 
 ### Android
 
@@ -380,12 +395,46 @@ weekDaysLeft = obj.optInt("weekDaysLeft", 0),
 
 ---
 
+## Widget Update Policies (SSOT)
+
+All time logic lives in `core/time`; widgets read cached JSON. Update frequency per widget:
+
+| Widget | Update frequency | Rationale |
+|--------|------------------|------------|
+| **Day** | Every second | Shows passed/left time with seconds |
+| **Month** | Every day (midnight) | Values change daily |
+| **Year** | Every day (midnight) | Values change daily |
+| **Hour calculation** | Every second when running, else 1 min | Stopwatch needs per-second tick |
+| **Daily tasks** | On task change + 1 min fallback | Event-driven; minute keeps day time in sync |
+| **Counter** | On tap + on app sync | Event-driven; fallback when app opens |
+| **Countdown** | Every day (midnight) | Days left change at midnight |
+
+**iOS:** Timeline policy per provider (DayWidgetProvider, MonthYearWidgetProvider, etc.).  
+**Android:** DayWidgetTickWorker (1s), StopwatchTickWorker (1s when running), DailyMidnightWorker (midnight), WorkManager (15 min fallback).
+
+**Stale cache fallback (Android):** When app hasn't run today, month/year widgets recompute from `Calendar` so display stays correct.
+
+---
+
+## Android Floating Overlay (Dynamic Island–like)
+
+Android-only floating pill that appears over other apps. Similar to iOS Dynamic Island.
+
+- **Location:** Widgets screen → Floating overlay
+- **Permission:** "Display over other apps" (SYSTEM_ALERT_WINDOW)
+- **Data:** Reads from MMKV (same as widgets) – `widget.cache`, `daily.tasks.widget`, `hour.calculation.widget`, `overlay.widgetType`
+- **Behavior:** Tap pill to expand, tap expanded to open app, long-press pill to open app, drag to move
+- **Update:** Every 1 second (same as day widget)
+
+---
+
 ## Quick Reference
 
 | Platform | Data source | Update mechanism |
 |----------|-------------|------------------|
-| iOS | UserDefaults (App Group) | TimelineProvider ~15 min |
-| Android | MMKV | WorkManager 30 min + on app start |
+| iOS | UserDefaults (App Group) | TimelineProvider per widget type |
+| Android | MMKV | WorkManager 15 min + per-widget tick workers |
+| Android overlay | MMKV | UNTILOverlayService every 1s |
 
 | Constant | Value |
 |----------|-------|

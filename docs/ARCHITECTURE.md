@@ -98,7 +98,7 @@ A **clean architecture** with **Single Source of Truth (SSOT)** for a time-progr
 ```
 src/
 │
-├── app.tsx                    # Root: migrations, Redux Provider, navigation
+├── app.tsx                    # Root: migrations, SafeAreaProvider, navigation
 │
 ├── core/                      # DOMAIN: Pure business logic (no React, no storage)
 │   └── time/
@@ -127,8 +127,7 @@ src/
 ├── hooks/                     # React bindings to use cases
 │   ├── useObserveTimeState.ts # Subscribes to TimeRepository, returns { userProfile, timeState }
 │   ├── useUpdateUserProfile.ts# Returns updateUserProfile(birthDate, deathAge)
-│   ├── useAppDispatch.ts      # Typed Redux dispatch (for premium)
-│   └── useAppSelector.ts      # Typed Redux selector (for premium)
+│   └── …                      # See docs/STATE_MANAGEMENT.md
 │
 ├── surfaces/                  # UI: Screens and render targets
 │   ├── app/
@@ -143,10 +142,7 @@ src/
 │   ├── ProgressBar.tsx        # progress 0-1, height, color
 │   └── DotsGrid.tsx           # rows x cols grid of dots
 │
-├── redux/                     # Runtime state (premium only)
-│   ├── store.ts               # Root store
-│   ├── slices/premium.slice.ts
-│   └── middleware/mmkvSync.ts
+├── infrastructure/             # Repository implementations, WidgetSync, adapters
 │
 ├── platform/                  # Native bridges (widgets, Live Activity)
 │   ├── ios/bridge.ts
@@ -199,3 +195,13 @@ src/
 | Add a use case                    | `domain/useCases/*.ts`, `hooks/*.ts`                         |
 | Add a reusable component          | `ui/*.tsx`                                                   |
 | Native widget data                | `surfaces/widgets/dataContract.ts`, `persistence/schema.ts`  |
+
+---
+
+## Related Documentation
+
+- **FOLDER_STRUCTURE.md** — Directory layout, naming, where to put new code
+- **CODING_STANDARDS.md** — TypeScript, React, naming conventions
+- **STATE_MANAGEMENT.md** — Use cases, hooks, subscriptions, local state
+- **DECISIONS.md** — Architecture Decision Records (ADRs)
+- **WIDGETS.md** — Widget implementation guide

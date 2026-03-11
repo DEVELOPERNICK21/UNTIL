@@ -23,6 +23,8 @@
 		<key>NSExtensionPointIdentifier</key>
 		<string>com.apple.widgetkit-extension</string>
 	</dict>
+	<key>NSSupportsLiveActivities</key>
+	<true/>
 	<key>RCTNewArchEnabled</key>
 	<true/>
 </dict>

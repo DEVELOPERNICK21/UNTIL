@@ -3,8 +3,6 @@
  * Pure functions - no side effects
  */
 
-import type { ActivityCategory } from '../../types';
-
 export interface InterventionResult {
   shouldShowRed: boolean;
   limitCrossed: boolean;
@@ -16,7 +14,7 @@ export interface InterventionResult {
  */
 export function shouldIntervene(
   nothingHoursToday: number,
-  dailyLimitHours: number
+  dailyLimitHours: number,
 ): InterventionResult {
   const limitCrossed = nothingHoursToday >= dailyLimitHours;
   return {

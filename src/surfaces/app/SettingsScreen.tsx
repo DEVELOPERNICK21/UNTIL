@@ -7,14 +7,15 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  Linking,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Text, ScreenGradient, Card } from '../../ui';
-import { useObserveTimeState, useUpdateUserProfile } from '../../hooks';
-import { syncWidgetCache } from '../../infrastructure';
-import { getAppVersionUseCase } from '../../di';
+import { useObserveTimeState, useUpdateUserProfile, useObserveSubscription } from '../../hooks';
+import { syncWidgetCache, syncPremiumStatus } from '../../infrastructure';
+import { getAppVersionUseCase, activateLicenseUseCase } from '../../di';
 import { Colors, Spacing, Radius } from '../../theme';
 import type { RootStackParamList } from '../../navigation/RootNavigator';
 
@@ -33,14 +34,20 @@ function toBirthDateString(d: Date): string {
   return `${y}-${m}-${day}`;
 }
 
+const PURCHASE_URL = 'https://until-days-left.vercel.app'; // Update to your website
+
 export function SettingsScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList, 'Settings'>>();
   const { userProfile } = useObserveTimeState();
   const updateUserProfile = useUpdateUserProfile();
+  const { isPremium } = useObserveSubscription();
 
   const [birthInput, setBirthInput] = useState(userProfile.birthDate ?? '');
   const [deathInput, setDeathInput] = useState(String(userProfile.deathAge));
   const [showBirthPicker, setShowBirthPicker] = useState(false);
+  const [licenseInput, setLicenseInput] = useState('');
+  const [licenseError, setLicenseError] = useState<string | null>(null);
+  const [activating, setActivating] = useState(false);
 
   const birthDateForPicker = useMemo(() => parseBirthDate(birthInput), [birthInput]);
 
@@ -55,6 +62,29 @@ export function SettingsScreen() {
       updateUserProfile(birthInput, isNaN(age) || age <= 0 ? 80 : age);
       syncWidgetCache();
       navigation.navigate('Home');
+    }
+  };
+
+  const handleActivateLicense = async () => {
+    const key = licenseInput.trim();
+    if (!key) {
+      setLicenseError('Enter your license key');
+      return;
+    }
+    setLicenseError(null);
+    setActivating(true);
+    try {
+      const result = await activateLicenseUseCase.execute(key);
+      if (result.success) {
+        syncPremiumStatus();
+        setLicenseInput('');
+      } else {
+        setLicenseError(result.message ?? 'Activation failed');
+      }
+    } catch {
+      setLicenseError('Activation failed');
+    } finally {
+      setActivating(false);
     }
   };
 
@@ -122,6 +152,54 @@ export function SettingsScreen() {
               </Text>
             </TouchableOpacity>
 
+            <Card style={styles.card}>
+              <Text variant="sectionTitle" color="primary" style={styles.label}>
+                Premium
+              </Text>
+              <View style={styles.premiumStatus}>
+                <Text variant="body" color="primary">
+                  {isPremium ? 'Active — bound to this device' : 'Not active'}
+                </Text>
+              </View>
+              {!isPremium && (
+                <>
+                  <Text variant="caption" color="secondary" style={styles.label}>
+                    Purchase on our website, then enter your license key below. One device only.
+                  </Text>
+                  <TextInput
+                    style={styles.input}
+                    value={licenseInput}
+                    onChangeText={(t) => { setLicenseInput(t); setLicenseError(null); }}
+                    placeholder="XXXX-XXXX-XXXX-XXXX"
+                    placeholderTextColor={Colors.textSecondary}
+                    autoCapitalize="characters"
+                    autoCorrect={false}
+                  />
+                  {licenseError && (
+                    <Text variant="caption" style={{ color: Colors.percent, marginBottom: Spacing[2] }}>
+                      {licenseError}
+                    </Text>
+                  )}
+                  <TouchableOpacity
+                    style={[styles.cta, activating && styles.ctaDisabled]}
+                    onPress={handleActivateLicense}
+                    disabled={activating}
+                  >
+                    <Text variant="sectionTitle" color="primary">
+                      {activating ? 'Activating…' : 'Activate'}
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.widgetLink}
+                    onPress={() => Linking.openURL(PURCHASE_URL)}
+                  >
+                    <Text variant="body" color="secondary">Buy Premium</Text>
+                    <Text variant="caption" color="secondary">{PURCHASE_URL}</Text>
+                  </TouchableOpacity>
+                </>
+              )}
+            </Card>
+
             <TouchableOpacity
               style={styles.widgetLink}
               onPress={() => navigation.navigate('Widget')}
@@ -186,6 +264,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing[4],
     borderRadius: Radius.md,
     alignItems: 'center',
+  },
+  ctaDisabled: { opacity: 0.6 },
+  premiumStatus: {
+    marginBottom: Spacing[2],
   },
   widgetLink: {
     marginTop: Spacing[4],

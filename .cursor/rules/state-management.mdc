@@ -1,0 +1,37 @@
+---
+description: State management via use cases and hooks
+globs: "**/hooks/**/*.ts"
+alwaysApply: false
+---
+
+# State Management
+
+## Pattern
+
+1. **Use Case** — Orchestrates repository; exposes `observe()` and/or `subscribe()`
+2. **Hook** — Subscribes to use case, holds React state, returns data + optional mutators
+3. **Screen** — Uses hook; no direct use case or repository access
+
+## Hook Template
+
+```typescript
+export function useObserveXxx() {
+  const [state, setState] = useState(() => xxxUseCase.observe());
+  const refresh = useCallback(() => {
+    setState(xxxUseCase.observe());
+    syncXxx(); // if widget/native needs update
+  }, []);
+  useEffect(() => {
+    const unsub = xxxUseCase.subscribe(refresh);
+    return () => unsub();
+  }, [refresh]);
+  return state;
+}
+```
+
+## When to Use What
+
+- **Observable data** (time, tasks, counters): Use case + hook with subscribe
+- **One-shot reads**: Use case `execute()` in hook initial state or callback
+- **Local UI state** (modals, form inputs): `useState` in component
+- **Redux**: Reserved for premium/subscription if needed; not currently used in main flows

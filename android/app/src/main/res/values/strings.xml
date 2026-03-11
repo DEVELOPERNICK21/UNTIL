@@ -6,6 +6,7 @@
     <string name="widget_counter_description">Tap to add +1. Create counters in Until.</string>
     <string name="widget_countdown_description">Days left until a deadline. Add in Until → Countdowns.</string>
     <string name="widget_daily_tasks_description">Tasks and day in one. Tap to switch views. Add tasks in Until.</string>
+    <string name="widget_hour_calculation_description">Tap to start/stop. One timer per widget. Set title in Until.</string>
     <!-- Widget content format strings (single source for labels; supports future i18n) -->
     <string name="widget_day_done_format">%1$d%% Done</string>
     <string name="widget_day_left_format">%1$d%% Left</string>

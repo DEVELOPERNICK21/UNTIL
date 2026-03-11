@@ -1,6 +1,11 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
 
     <application
       android:name=".MainApplication"
@@ -110,5 +115,27 @@
           <action android:name="app.until.time.TOGGLE_DAILY_TASKS_PAGE" />
         </intent-filter>
       </receiver>
+      <receiver
+        android:name=".UNTILHourCalculationWidgetProvider"
+        android:exported="true"
+        android:label="Until Hour calculation">
+        <intent-filter>
+          <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+        </intent-filter>
+        <meta-data
+          android:name="android.appwidget.provider"
+          android:resource="@xml/widget_hour_calculation_info" />
+      </receiver>
+      <receiver
+        android:name=".HourCalculationTapReceiver"
+        android:exported="true">
+        <intent-filter>
+          <action android:name="app.until.time.TOGGLE_HOUR_CALCULATION" />
+        </intent-filter>
+      </receiver>
+      <service
+        android:name=".UNTILOverlayService"
+        android:exported="false"
+        android:foregroundServiceType="dataSync" />
     </application>
 </manifest>

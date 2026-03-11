@@ -1,0 +1,43 @@
+---
+description: TypeScript conventions for UNTIL
+globs: "**/*.ts"
+alwaysApply: false
+---
+
+# TypeScript Standards
+
+## Imports
+
+- Use `type` for type-only imports: `import type { X } from '...'`
+- Prefer named exports over default exports
+- Order: external libs first, then internal (di, hooks, ui, theme, types)
+
+## Types
+
+- Define shared DTOs in `src/types/index.ts`
+- Use `interface` for object shapes; `type` for unions/aliases
+- Avoid `any`; use `unknown` and narrow if needed
+
+## Error Handling
+
+```typescript
+// ❌ BAD
+try {
+  await fetchData();
+} catch (e) {}
+
+// ✅ GOOD
+try {
+  await fetchData();
+} catch (e) {
+  // Log or rethrow with context
+  throw new Error('Failed to fetch', { cause: e });
+}
+```
+
+## Naming
+
+- Use cases: `XxxUseCase` (e.g. `ObserveTimeStateUseCase`)
+- Repositories: `IxxxRepository` (interface), `MmkvXxxRepository` (impl)
+- Hooks: `useXxx` (e.g. `useObserveTimeState`)
+- Screens: `XxxScreen` (e.g. `HomeScreen`)

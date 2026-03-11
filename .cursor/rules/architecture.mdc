@@ -1,0 +1,35 @@
+---
+description: Clean architecture, SSOT, and layer boundaries for UNTIL
+alwaysApply: true
+---
+
+# Architecture Rules
+
+## Layer Boundaries
+
+| Layer | Can Import | Must NOT Import |
+|-------|------------|-----------------|
+| **Surfaces (UI)** | `hooks`, `di`, `ui`, `theme`, `types`, `navigation` | `core`, `persistence`, `domain/repository`, `infrastructure` |
+| **Hooks** | `di`, `infrastructure` (WidgetSync only for sync calls) | `core` directly for business logic |
+| **Use Cases** | `domain/repository` (interfaces), `types` | `persistence`, `core` (repos call core) |
+| **Repositories** | `core`, `persistence`, `types` | React, UI |
+| **Core** | Nothing (pure TS) | React, storage, I/O |
+
+## SSOT (Single Source of Truth)
+
+- **Time/profile data**: `TimeRepository` (via `MmkvTimeRepository`) — only place that reads/writes user/time to MMKV
+- **Widget cache**: `TimeRepository.getWidgetCache()` — same time logic as `getTimeState()`
+- **Progress colors**: `theme/progressColor.ts` — `getProgressColor(progress)`; UI consumes, no duplicate logic
+- **Types/DTOs**: `types/index.ts` — `WidgetCache`, `UserProfile`, `TimeProgress`, etc.
+- **Storage keys**: `persistence/schema.ts` — shared with native widgets
+
+## Composition Root
+
+- All repository → use case wiring in `di.ts`
+- Add new use case: implement in `domain/useCases/`, instantiate in `di.ts`, export
+
+## Data Flow
+
+1. **Read**: Screen → Hook → Use Case → Repository → MMKV / Core
+2. **Write**: Screen → Hook → Use Case → Repository.setX() → MMKV → subscribe() notifies
+3. **Widget sync**: `syncWidgetCache()` calls `SyncWidgetUseCase.execute()` → `TimeRepository.getWidgetCache()` → MMKV → native bridge

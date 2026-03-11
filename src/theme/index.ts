@@ -22,6 +22,8 @@ export const Colors = {
   cardBaseAlpha: 'rgba(17, 17, 17, 0.95)',
   cardLighter: '#1A1A1A',
   accent: '#EDEDED',
+  success: '#22AA22',
+  percent: '#E87C20',
 } as const;
 
 export const Typography = {

@@ -22,6 +22,43 @@ export const LANDING_COPY = {
     { category: 'Widgets', title: 'Widgets & countdowns', description: 'Home screen widgets and countdowns to what matters.' },
   ],
 
+  /** Value prop bullets — "That's why Until exists" (ChatPal-style) */
+  valueProps: {
+    tagline: "That's why Until exists",
+    items: [
+      { label: 'Less time blindness', desc: 'See what’s left, not just what’s passed.' },
+      { label: 'More awareness', desc: 'Day, month, year, life — one glance.' },
+      { label: 'More intentional choices', desc: 'Widgets and countdowns keep what matters in view.' },
+    ],
+  },
+
+  /** FAQ — reduces friction, answers common questions */
+  faq: {
+    title: 'FAQ',
+    items: [
+      {
+        question: 'What is Until?',
+        answer: 'Until is a time-awareness app that shows how much of your day, month, year, and life has passed — and how much is left. Home screen widgets let you see progress at a glance without opening the app.',
+      },
+      {
+        question: 'How does it work?',
+        answer: 'Set your birth date (optional) for life progress. Add countdowns to deadlines. Use custom counters for habits. Add daily tasks and monthly goals. Widgets on your home screen show everything at a glance.',
+      },
+      {
+        question: 'Is Until free?',
+        answer: 'Yes. Until is free to use. Optional Premium (one-time, no subscription) unlocks extra features and supports development. Limited-time intro price available.',
+      },
+      {
+        question: 'Who is Until for?',
+        answer: 'Anyone who wants to see time clearly — day progress, month and year left, life in perspective. Great for people who use countdowns, track habits, or want a sobering view of time.',
+      },
+      {
+        question: 'How do I get started?',
+        answer: 'Download on Google Play (Android) or wait for the App Store release (iOS coming soon). Add a widget to your home screen. Optionally set your birth date and add countdowns or daily tasks.',
+      },
+    ],
+  },
+
   /** "Why people choose Until" — benefit bullets */
   whyChoose: {
     title: 'Why people choose Until',
@@ -70,6 +107,11 @@ export const LANDING_COPY = {
       terms: 'Terms of Service',
       privacy: 'Privacy Policy',
       contact: 'Contact',
+    },
+    community: {
+      title: 'Join the community',
+      subtitle: 'Share feedback, get updates, and connect with others who care about time.',
+      cta: 'Coming soon',
     },
   },
 } as const;

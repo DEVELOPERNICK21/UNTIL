@@ -4,17 +4,11 @@
 
 import type { ISubscriptionRepository } from '../repository/SubscriptionRepository';
 
-export interface SubscriptionState {
-  isPremium: boolean;
-}
-
 export class ObserveSubscriptionUseCase {
   constructor(private readonly repository: ISubscriptionRepository) {}
 
-  observe(): SubscriptionState {
-    return {
-      isPremium: this.repository.getIsPremium(),
-    };
+  observe() {
+    return this.repository.getState();
   }
 
   subscribe(callback: () => void): () => void {

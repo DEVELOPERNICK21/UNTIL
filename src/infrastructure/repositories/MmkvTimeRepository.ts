@@ -51,12 +51,19 @@ function computeTimeState(birthDate: string | null, deathAge: number): TimeProgr
 
 function computeWidgetCache(): WidgetCache {
   const date = now();
+  const profile = { birthDate: getString(STORAGE_KEYS.USER_BIRTH_DATE) ?? null, deathAge: getNumber(STORAGE_KEYS.USER_DEATH_AGE) ?? DEFAULTS.USER_DEATH_AGE };
   const day = getDayProgress(date);
   const month = getMonthProgress(date);
   const year = getYearProgress(date);
   const totalMinutesInDay = 24 * 60;
   const passedMinutes = Math.floor(day.progress * totalMinutesInDay);
   const remainingMinutes = totalMinutesInDay - passedMinutes;
+
+  const life = profile.birthDate ? getLifeProgress(profile.birthDate, profile.deathAge, date) : null;
+  const lifeProgress = life?.progress;
+  const remainingDaysLife = life ? Math.round(life.yearsRemaining * 365.25) : undefined;
+  const lifePercent = life ? Math.round(life.progress * 100) : undefined;
+
   return {
     dayProgress: day.progress,
     dayPercentDone: Math.round(day.progress * 100),
@@ -76,6 +83,9 @@ function computeWidgetCache(): WidgetCache {
     yearDaysPassed: year.dayOfYear,
     yearDaysLeft: year.remainingDays,
     yearPercent: Math.round(year.progress * 100),
+    ...(lifeProgress !== undefined && { lifeProgress }),
+    ...(remainingDaysLife !== undefined && { remainingDaysLife }),
+    ...(lifePercent !== undefined && { lifePercent }),
     updatedAt: Date.now(),
   };
 }

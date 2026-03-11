@@ -29,9 +29,12 @@ private const val WIDGET_CACHE_KEY = "widget.cache"
 private const val CUSTOM_COUNTERS_KEY = "custom.counters"
 private const val COUNTDOWNS_KEY = "countdowns"
 private const val DAILY_TASKS_WIDGET_KEY = "daily.tasks.widget"
+private const val HOUR_CALCULATION_WIDGET_KEY = "hour.calculation.widget"
 private const val MMKV_ID = "until-storage"
 private const val WORK_NAME = "UNTILWidgetUpdate"
 private const val DAY_TICK_WORK_NAME = "UNTILDayWidgetTick"
+private const val STOPWATCH_TICK_WORK_NAME = "UNTILStopwatchTick"
+private const val DAILY_MIDNIGHT_WORK_NAME = "UNTILDailyMidnight"
 
 /** Request codes for widget tap PendingIntents; distinct to avoid reuse across types. */
 private const val PENDING_INTENT_DAY = 100
@@ -39,6 +42,7 @@ private const val PENDING_INTENT_MONTH = 101
 private const val PENDING_INTENT_YEAR = 102
 private const val PENDING_INTENT_COUNTER_BASE = 200
 private const val PENDING_INTENT_DAILY_TASKS = 103
+private const val PENDING_INTENT_HOUR_CALCULATION = 104
 
 class UNTILWidgetWorker(
     context: Context,
@@ -79,8 +83,58 @@ class UNTILWidgetWorker(
             monthIndex = 1,
             monthDaysPassed = 0, monthDaysLeft = 31, monthPercent = 0,
             yearDaysPassed = 0, yearDaysLeft = 365, yearPercent = 0,
-            dayProgress = 0.0, monthProgress = 0.0, yearProgress = 0.0
+            dayProgress = 0.0, monthProgress = 0.0, yearProgress = 0.0,
+            updatedAt = 0L
         )
+
+        /** Recompute month/year from current date when cache is stale (app hasn't run today). SSOT: core/time in JS; this is a fallback for widget display when app is killed. */
+        private fun cacheWithFreshMonthYear(context: Context, cache: WidgetCache): WidgetCache {
+            val cal = Calendar.getInstance()
+            cal.set(Calendar.HOUR_OF_DAY, 0)
+            cal.set(Calendar.MINUTE, 0)
+            cal.set(Calendar.SECOND, 0)
+            cal.set(Calendar.MILLISECOND, 0)
+            val startOfTodayMs = cal.timeInMillis
+            if (cache.updatedAt >= startOfTodayMs) return cache
+            val now = Calendar.getInstance()
+            val dayOfMonth = now.get(Calendar.DAY_OF_MONTH)
+            val daysInMonth = now.getActualMaximum(Calendar.DAY_OF_MONTH)
+            val monthLeft = daysInMonth - dayOfMonth
+            val monthProgress = if (daysInMonth > 0) dayOfMonth.toDouble() / daysInMonth else 0.0
+            val dayOfYear = now.get(Calendar.DAY_OF_YEAR)
+            val daysInYear = now.getActualMaximum(Calendar.DAY_OF_YEAR)
+            val yearLeft = daysInYear - dayOfYear
+            val yearProgress = if (daysInYear > 0) dayOfYear.toDouble() / daysInYear else 0.0
+            return cache.copy(
+                monthIndex = now.get(Calendar.MONTH) + 1,
+                monthDaysPassed = dayOfMonth,
+                monthDaysLeft = monthLeft,
+                monthPercent = (monthProgress * 100).toInt().coerceIn(0, 100),
+                monthProgress = monthProgress,
+                yearDaysPassed = dayOfYear,
+                yearDaysLeft = yearLeft,
+                yearPercent = (yearProgress * 100).toInt().coerceIn(0, 100),
+                yearProgress = yearProgress
+            )
+        }
+
+        fun scheduleDailyMidnight(context: Context) {
+            val cal = Calendar.getInstance()
+            cal.add(Calendar.DAY_OF_MONTH, 1)
+            cal.set(Calendar.HOUR_OF_DAY, 0)
+            cal.set(Calendar.MINUTE, 0)
+            cal.set(Calendar.SECOND, 0)
+            cal.set(Calendar.MILLISECOND, 0)
+            val delayMs = cal.timeInMillis - System.currentTimeMillis()
+            val request = OneTimeWorkRequestBuilder<DailyMidnightWorker>()
+                .setInitialDelay(maxOf(1, delayMs), java.util.concurrent.TimeUnit.MILLISECONDS)
+                .build()
+            WorkManager.getInstance(context).enqueueUniqueWork(
+                DAILY_MIDNIGHT_WORK_NAME,
+                ExistingWorkPolicy.REPLACE,
+                request
+            )
+        }
 
         fun updateWidgets(context: Context) {
             val cache = loadWidgetCache(context) ?: defaultCache
@@ -91,28 +145,36 @@ class UNTILWidgetWorker(
             val counterProvider = ComponentName(context, UNTILCounterWidgetProvider::class.java)
             val countdownProvider = ComponentName(context, UNTILCountdownWidgetProvider::class.java)
             val dailyTasksProvider = ComponentName(context, UNTILDailyTasksWidgetProvider::class.java)
+            val hourCalculationProvider = ComponentName(context, UNTILHourCalculationWidgetProvider::class.java)
             val counters = loadCustomCounters(context)
             val countdowns = loadCountdowns(context)
             val dailyTasksPayload = loadDailyTasksPayload(context)
 
             val dayIds = appWidgetManager.getAppWidgetIds(dayProvider)
+            val monthYearCache = cacheWithFreshMonthYear(context, cache)
             listOf(
-                Triple(dayIds, R.layout.widget_day, "day"),
-                Triple(appWidgetManager.getAppWidgetIds(monthProvider), R.layout.widget_month, "month"),
-                Triple(appWidgetManager.getAppWidgetIds(yearProvider), R.layout.widget_year, "year"),
-            ).forEach { (ids, layoutId, type) ->
+                Triple(dayIds, R.layout.widget_day, cache),
+                Triple(appWidgetManager.getAppWidgetIds(monthProvider), R.layout.widget_month, monthYearCache),
+                Triple(appWidgetManager.getAppWidgetIds(yearProvider), R.layout.widget_year, monthYearCache),
+            ).forEach { (ids, layoutId, cacheForLayout) ->
                 if (ids.isEmpty()) return@forEach
                 for (id in ids) {
                     try {
-                        val views = buildRemoteViews(context, layoutId, cache)
+                        val views = buildRemoteViews(context, layoutId, cacheForLayout)
                         appWidgetManager.updateAppWidget(id, views)
                     } catch (e: Exception) {
-                        val views = buildRemoteViews(context, layoutId, defaultCache)
+                        val fallbackCache = if (layoutId == R.layout.widget_month || layoutId == R.layout.widget_year) cacheWithFreshMonthYear(context, defaultCache) else defaultCache
+                        val views = buildRemoteViews(context, layoutId, fallbackCache)
                         appWidgetManager.updateAppWidget(id, views)
                     }
                 }
             }
             if (dayIds.isNotEmpty()) scheduleDayTick(context)
+            if (appWidgetManager.getAppWidgetIds(monthProvider).isNotEmpty() ||
+                appWidgetManager.getAppWidgetIds(yearProvider).isNotEmpty() ||
+                appWidgetManager.getAppWidgetIds(countdownProvider).isNotEmpty()) {
+                scheduleDailyMidnight(context)
+            }
 
             val counterIds = appWidgetManager.getAppWidgetIds(counterProvider)
             if (counterIds.isNotEmpty()) {
@@ -150,6 +212,22 @@ class UNTILWidgetWorker(
                         val views = buildDailyTasksRemoteViews(context, null, defaultCache)
                         appWidgetManager.updateAppWidget(id, views)
                     }
+                }
+            }
+            val hourCalculationIds = appWidgetManager.getAppWidgetIds(hourCalculationProvider)
+            val hourState = loadHourCalculationState(context)
+            if (hourCalculationIds.isNotEmpty()) {
+                for (id in hourCalculationIds) {
+                    try {
+                        val views = buildHourCalculationRemoteViews(context, hourState, id)
+                        appWidgetManager.updateAppWidget(id, views)
+                    } catch (e: Exception) {
+                        val views = buildHourCalculationRemoteViews(context, null, id)
+                        appWidgetManager.updateAppWidget(id, views)
+                    }
+                }
+                if (hourState?.isRunning == true) {
+                    scheduleStopwatchTick(context)
                 }
             }
         }
@@ -474,6 +552,77 @@ class UNTILWidgetWorker(
             return views
         }
 
+        internal data class HourCalculationState(
+            val title: String,
+            val isRunning: Boolean,
+            val startTimeMs: Long,
+            val totalElapsedMs: Long
+        )
+
+        private fun loadHourCalculationState(context: Context): HourCalculationState? {
+            return try {
+                MMKV.initialize(context)
+                val mmkv = MMKV.mmkvWithID(MMKV_ID) ?: return null
+                val json = mmkv.decodeString(HOUR_CALCULATION_WIDGET_KEY) ?: return null
+                val obj = JSONObject(json)
+                HourCalculationState(
+                    title = obj.optString("title", "Hour timer"),
+                    isRunning = obj.optBoolean("isRunning", false),
+                    startTimeMs = obj.optLong("startTimeMs", 0L),
+                    totalElapsedMs = obj.optLong("totalElapsedMs", 0L)
+                )
+            } catch (e: Exception) {
+                null
+            }
+        }
+
+        private fun formatElapsedMs(totalElapsedMs: Long, startTimeMs: Long, isRunning: Boolean): String {
+            val now = System.currentTimeMillis()
+            val totalMs = totalElapsedMs + if (isRunning && startTimeMs > 0) (now - startTimeMs) else 0L
+            val totalSec = (totalMs / 1000).coerceAtLeast(0L)
+            val h = totalSec / 3600
+            val m = (totalSec % 3600) / 60
+            val s = totalSec % 60
+            return "%d:%02d:%02d".format(h, m, s)
+        }
+
+        private fun buildHourCalculationRemoteViews(context: Context, state: HourCalculationState?, appWidgetId: Int): RemoteViews {
+            val views = RemoteViews(context.packageName, R.layout.widget_hour_calculation)
+            val title = state?.title?.takeIf { it.isNotBlank() } ?: "Hour timer"
+            val isRunning = state?.isRunning ?: false
+            val startTimeMs = state?.startTimeMs ?: 0L
+            val totalElapsedMs = state?.totalElapsedMs ?: 0L
+            views.setTextViewText(R.id.widget_hour_calc_title, title)
+            views.setTextViewText(R.id.widget_hour_calc_time, formatElapsedMs(totalElapsedMs, startTimeMs, isRunning))
+            views.setTextViewText(R.id.widget_hour_calc_hint, if (isRunning) "Tap to stop" else "Tap to start")
+            val toggleIntent = Intent(context, HourCalculationTapReceiver::class.java).apply {
+                action = HourCalculationTapReceiver.ACTION_TOGGLE
+            }
+            val togglePending = PendingIntent.getBroadcast(
+                context,
+                PENDING_INTENT_HOUR_CALCULATION + (appWidgetId and 0x7FFF),
+                toggleIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+            views.setOnClickPendingIntent(R.id.widget_root, togglePending)
+            return views
+        }
+
+        fun scheduleStopwatchTick(context: Context) {
+            val request = OneTimeWorkRequestBuilder<StopwatchTickWorker>()
+                .setInitialDelay(1, TimeUnit.SECONDS)
+                .build()
+            WorkManager.getInstance(context).enqueueUniqueWork(
+                STOPWATCH_TICK_WORK_NAME,
+                ExistingWorkPolicy.REPLACE,
+                request
+            )
+        }
+
+        /** Used by StopwatchTickWorker to decide whether to reschedule. */
+        internal fun loadHourCalculationStatePublic(context: Context): HourCalculationState? =
+            loadHourCalculationState(context)
+
         private fun dayTimeTexts(context: Context, cache: WidgetCache, dProgress: Double): Pair<String, String> {
             val start = cache.startOfDay
             val end = cache.endOfDay
@@ -483,33 +632,33 @@ class UNTILWidgetWorker(
                 val remainingSec = ((end - nowMs) / 1000).toInt().coerceIn(0, Int.MAX_VALUE)
                 val passedH = passedSec / 3600
                 val passedM = (passedSec % 3600) / 60
+                val passedS = passedSec % 60
                 val leftH = remainingSec / 3600
                 val leftM = (remainingSec % 3600) / 60
-                val passedText = if (passedM > 0) {
-                    context.getString(R.string.widget_day_time_passed_format, passedH, passedM)
-                } else {
-                    context.getString(R.string.widget_day_hours_passed_format, passedH)
-                }
-                val leftText = if (leftM > 0) {
-                    context.getString(R.string.widget_day_time_left_format, leftH, leftM)
-                } else {
-                    context.getString(R.string.widget_day_hours_left_format, leftH)
-                }
+                val leftS = remainingSec % 60
+                val passedText = context.getString(R.string.widget_day_time_passed_sec_format, passedH, passedM, passedS)
+                val leftText = context.getString(R.string.widget_day_time_left_sec_format, leftH, leftM, leftS)
                 return passedText to leftText
             }
             val pm = cache.dayPassedMinutes
             val rm = cache.dayRemainingMinutes
-            val passedText = if (pm != null && pm % 60 != 0) {
-                context.getString(R.string.widget_day_time_passed_format, pm / 60, pm % 60)
+            val passedText = if (pm != null) {
+                val h = pm / 60
+                val m = pm % 60
+                val s = 0
+                context.getString(R.string.widget_day_time_passed_sec_format, h, m, s)
             } else {
-                val h = pm?.let { it / 60 } ?: (dProgress * 24.0).toInt().coerceIn(0, 24)
-                context.getString(R.string.widget_day_hours_passed_format, h)
+                val h = (dProgress * 24.0).toInt().coerceIn(0, 24)
+                context.getString(R.string.widget_day_time_passed_sec_format, h, 0, 0)
             }
-            val leftText = if (rm != null && rm % 60 != 0) {
-                context.getString(R.string.widget_day_time_left_format, rm / 60, rm % 60)
+            val leftText = if (rm != null) {
+                val h = rm / 60
+                val m = rm % 60
+                val s = 0
+                context.getString(R.string.widget_day_time_left_sec_format, h, m, s)
             } else {
-                val h = rm?.let { it / 60 } ?: (24 - (dProgress * 24.0).toInt().coerceIn(0, 24)).coerceIn(0, 24)
-                context.getString(R.string.widget_day_hours_left_format, h)
+                val h = (24 - (dProgress * 24.0).toInt().coerceIn(0, 24)).coerceIn(0, 24)
+                context.getString(R.string.widget_day_time_left_sec_format, h, 0, 0)
             }
             return passedText to leftText
         }
@@ -533,7 +682,8 @@ class UNTILWidgetWorker(
                     yearPercent = obj.optInt("yearPercent", 0),
                     dayProgress = obj.optDouble("dayProgress", 0.0),
                     monthProgress = obj.optDouble("monthProgress", 0.0),
-                    yearProgress = obj.optDouble("yearProgress", 0.0)
+                    yearProgress = obj.optDouble("yearProgress", 0.0),
+                    updatedAt = obj.optLong("updatedAt", 0L)
                 )
             } catch (e: Exception) {
                 null
@@ -869,6 +1019,38 @@ class DayWidgetTickWorker(
     }
 }
 
+class StopwatchTickWorker(
+    context: Context,
+    params: WorkerParameters
+) : CoroutineWorker(context, params) {
+
+    override suspend fun doWork(): Result {
+        UNTILWidgetWorker.updateWidgets(applicationContext)
+        val hourIds = AppWidgetManager.getInstance(applicationContext)
+            .getAppWidgetIds(ComponentName(applicationContext, UNTILHourCalculationWidgetProvider::class.java))
+        if (hourIds.isNotEmpty()) {
+            val state = UNTILWidgetWorker.loadHourCalculationStatePublic(applicationContext)
+            if (state?.isRunning == true) {
+                UNTILWidgetWorker.scheduleStopwatchTick(applicationContext)
+            }
+        }
+        return Result.success()
+    }
+}
+
+/** Runs at midnight to refresh month/year/countdown widgets (values change daily). Reschedules for next midnight. */
+class DailyMidnightWorker(
+    context: Context,
+    params: WorkerParameters
+) : CoroutineWorker(context, params) {
+
+    override suspend fun doWork(): Result {
+        UNTILWidgetWorker.updateWidgets(applicationContext)
+        UNTILWidgetWorker.scheduleDailyMidnight(applicationContext)
+        return Result.success()
+    }
+}
+
 private data class WidgetCache(
     val dayPercentDone: Int,
     val dayPercentLeft: Int,
@@ -885,5 +1067,6 @@ private data class WidgetCache(
     val yearPercent: Int,
     val dayProgress: Double,
     val monthProgress: Double,
-    val yearProgress: Double
+    val yearProgress: Double,
+    val updatedAt: Long = 0L
 )

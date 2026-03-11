@@ -7,5 +7,5 @@
     android:updatePeriodMillis="900000"
     android:initialLayout="@layout/widget_day"
     android:resizeMode="horizontal|vertical"
-    android:widgetCategory="home_screen"
+    android:widgetCategory="home_screen|keyguard"
     android:description="@string/widget_day_description" />

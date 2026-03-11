@@ -52,6 +52,10 @@ import { RemoveRepeatDailyFromGoalUseCase } from './domain/useCases/RemoveRepeat
 import { IsRepeatDailyUseCase } from './domain/useCases/IsRepeatDailyUseCase';
 import { CheckForAppUpdateUseCase } from './domain/useCases/CheckForAppUpdateUseCase';
 import { GetAppVersionUseCase } from './domain/useCases/GetAppVersionUseCase';
+import { ActivateLicenseUseCase } from './domain/useCases/ActivateLicenseUseCase';
+import { VerifySubscriptionUseCase } from './domain/useCases/VerifySubscriptionUseCase';
+import { DeviceIdProviderAdapter } from './infrastructure/adapters/DeviceIdProviderAdapter';
+import { LicenseVerificationServiceAdapter } from './infrastructure/adapters/LicenseVerificationServiceAdapter';
 
 const timeRepository = new MmkvTimeRepository();
 const subscriptionRepository = new MmkvSubscriptionRepository();
@@ -62,6 +66,8 @@ const taskRepository = new MmkvTaskRepository();
 const monthlyGoalRepository = new MmkvMonthlyGoalRepository();
 const appUpdateService = new AppUpdateServiceAdapter();
 const appVersionProvider = new AppVersionProviderAdapter();
+const deviceIdProvider = new DeviceIdProviderAdapter();
+const licenseVerificationService = new LicenseVerificationServiceAdapter();
 
 export const observeTimeStateUseCase = new ObserveTimeStateUseCase(timeRepository);
 export const updateUserProfileUseCase = new UpdateUserProfileUseCase(timeRepository);
@@ -109,3 +115,13 @@ export const removeRepeatDailyFromGoalUseCase = new RemoveRepeatDailyFromGoalUse
 export const isRepeatDailyUseCase = new IsRepeatDailyUseCase(monthlyGoalRepository);
 export const checkForAppUpdateUseCase = new CheckForAppUpdateUseCase(appUpdateService);
 export const getAppVersionUseCase = new GetAppVersionUseCase(appVersionProvider);
+export const activateLicenseUseCase = new ActivateLicenseUseCase(
+  subscriptionRepository,
+  deviceIdProvider,
+  licenseVerificationService
+);
+export const verifySubscriptionUseCase = new VerifySubscriptionUseCase(
+  subscriptionRepository,
+  deviceIdProvider,
+  licenseVerificationService
+);

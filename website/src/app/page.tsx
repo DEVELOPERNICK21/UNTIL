@@ -6,9 +6,11 @@ export default function HomePage() {
   const {
     introPriceLine,
     hero,
+    valueProps,
     features,
     whyChoose,
     testimonials,
+    faq,
     pricingCta,
     cta,
   } = LANDING_COPY;
@@ -101,6 +103,48 @@ export default function HomePage() {
           </a>
         </div>
         <HeroScreenshotShowcase />
+      </section>
+
+      {/* Value props — "That's why Until exists" (ChatPal-style) */}
+      <section style={{ borderTop: '1px solid var(--divider)' }}>
+        <p
+          style={{
+            textAlign: 'center',
+            fontSize: '0.9rem',
+            color: 'var(--text-secondary)',
+            marginBottom: '1.5rem',
+            textTransform: 'uppercase',
+            letterSpacing: '0.1em',
+          }}
+        >
+          {valueProps.tagline}
+        </p>
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+            gap: '1.5rem',
+            maxWidth: 720,
+            margin: '0 auto',
+          }}
+        >
+          {valueProps.items.map(item => (
+            <div key={item.label} style={{ textAlign: 'center' }}>
+              <h3
+                style={{
+                  fontSize: '1.1rem',
+                  fontWeight: 600,
+                  marginBottom: '0.35rem',
+                }}
+              >
+                {item.label}
+              </h3>
+              <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
+                {item.desc}
+              </p>
+            </div>
+          ))}
+        </div>
       </section>
 
       {/* App screenshots — iOS & Android */}
@@ -212,18 +256,28 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Testimonials */}
+      {/* Testimonials — social proof (ChatPal-style) */}
       <section style={{ borderTop: '1px solid var(--divider)' }}>
         <h2
           style={{
             fontSize: '1.5rem',
             fontWeight: 600,
-            marginBottom: '1.5rem',
+            marginBottom: '0.35rem',
             textAlign: 'center',
           }}
         >
           {testimonials.title}
         </h2>
+        <p
+          style={{
+            textAlign: 'center',
+            color: 'var(--text-secondary)',
+            fontSize: '0.9rem',
+            marginBottom: '1.5rem',
+          }}
+        >
+          Trusted by people who care about time
+        </p>
         <div
           style={{
             display: 'grid',
@@ -246,6 +300,52 @@ export default function HomePage() {
                 {t.role}
               </div>
             </div>
+          ))}
+        </div>
+      </section>
+
+      {/* FAQ — reduces friction, answers common questions */}
+      <section style={{ borderTop: '1px solid var(--divider)' }}>
+        <h2
+          style={{
+            fontSize: '1.5rem',
+            fontWeight: 600,
+            marginBottom: '1.5rem',
+            textAlign: 'center',
+          }}
+        >
+          {faq.title}
+        </h2>
+        <div style={{ maxWidth: 640, margin: '0 auto' }}>
+          {faq.items.map((item, i) => (
+            <details
+              key={i}
+              style={{
+                borderBottom: '1px solid var(--divider)',
+                padding: '1rem 0',
+              }}
+            >
+              <summary
+                style={{
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  fontSize: '1rem',
+                }}
+              >
+                {item.question}
+              </summary>
+              <p
+                style={{
+                  marginTop: '0.75rem',
+                  marginLeft: '1.25rem',
+                  fontSize: '0.95rem',
+                  color: 'var(--text-secondary)',
+                  lineHeight: 1.6,
+                }}
+              >
+                {item.answer}
+              </p>
+            </details>
           ))}
         </div>
       </section>
