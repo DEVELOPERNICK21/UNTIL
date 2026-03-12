@@ -70,10 +70,10 @@ export function RootNavigator() {
             headerRight: () => (
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                 <TouchableOpacity onPress={() => navigation.navigate('Widget')} style={{ padding: 8 }}>
-                  <Text variant="caption" color="secondary">Widgets</Text>
+                  <Text variant="caption" color="secondary">Settings</Text>
                 </TouchableOpacity>
                 <TouchableOpacity onPress={() => navigation.navigate('Settings')} style={{ padding: 8 }}>
-                  <Text variant="caption" color="secondary">Settings</Text>
+                  <Text variant="caption" color="secondary">Profile</Text>
                 </TouchableOpacity>
               </View>
             ),
@@ -82,7 +82,7 @@ export function RootNavigator() {
         <Stack.Screen
           name="Settings"
           component={SettingsScreen}
-          options={{ title: 'Settings' }}
+          options={{ title: 'Profile' }}
         />
         <Stack.Screen
           name="Life"
@@ -92,7 +92,7 @@ export function RootNavigator() {
         <Stack.Screen
           name="Widget"
           component={WidgetScreen}
-          options={{ title: 'Widgets', headerBackTitle: 'Back' }}
+          options={{ title: 'Settings', headerBackTitle: 'Back' }}
         />
         <Stack.Screen
           name="CustomCounters"

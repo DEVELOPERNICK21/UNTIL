@@ -24,6 +24,11 @@ export const Colors = {
   accent: '#EDEDED',
   success: '#22AA22',
   percent: '#E87C20',
+
+  // Glassmorphism (semi-transparent surfaces)
+  glassBg: 'rgba(42, 42, 42, 0.5)',
+  glassBorder: 'rgba(255, 255, 255, 0.08)',
+  glassHighlight: 'rgba(255, 255, 255, 0.04)',
 } as const;
 
 export const Typography = {

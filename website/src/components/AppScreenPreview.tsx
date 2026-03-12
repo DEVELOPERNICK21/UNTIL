@@ -61,7 +61,7 @@ export function AppScreenPreview() {
           textAlign: 'center',
         }}
       >
-        Widgets · Settings
+        Settings · Profile
       </div>
     </div>
   );

@@ -100,7 +100,7 @@ export function SettingsScreen() {
             showsVerticalScrollIndicator={false}
           >
             <Text variant="sectionTitle" color="primary" style={styles.title}>
-              Settings
+              Profile
             </Text>
 
             <Card style={styles.card}>
@@ -204,8 +204,8 @@ export function SettingsScreen() {
               style={styles.widgetLink}
               onPress={() => navigation.navigate('Widget')}
             >
-              <Text variant="body" color="secondary">Widgets</Text>
-              <Text variant="caption" color="secondary">Info and status</Text>
+              <Text variant="body" color="secondary">Settings</Text>
+              <Text variant="caption" color="secondary">Widgets, Dynamic Island, overlay</Text>
             </TouchableOpacity>
 
             <View style={styles.versionRow}>
