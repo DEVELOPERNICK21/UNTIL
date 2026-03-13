@@ -28,18 +28,48 @@ import type { OverlayWidgetType } from '../../infrastructure';
 import { useObserveSubscription } from '../../hooks';
 import { isPremiumLiveActivityType } from '../../domain/premium';
 
-const WIDGET_OPTIONS: { type: OverlayWidgetType; title: string; description: string }[] = [
-  { type: 'day', title: 'Today', description: '57% done · 42% left. Day progress with hours.' },
-  { type: 'month', title: 'This month', description: 'Feb 17% · 23d left. Month progress.' },
-  { type: 'year', title: 'This year', description: '9% · 329d left. Year progress.' },
-  { type: 'life', title: 'Your life', description: 'Life progress. Set birth date in Settings.' },
-  { type: 'dailyTasks', title: 'Daily tasks', description: "3/5 done. Today's task report." },
-  { type: 'hourCalc', title: 'Hour timer', description: '0:12:34. Tap to start/stop.' },
+const WIDGET_OPTIONS: {
+  type: OverlayWidgetType;
+  title: string;
+  description: string;
+}[] = [
+  {
+    type: 'day',
+    title: 'Today',
+    description: '57% done · 42% left. Day progress with hours.',
+  },
+  {
+    type: 'month',
+    title: 'This month',
+    description: 'Feb 17% · 23d left. Month progress.',
+  },
+  {
+    type: 'year',
+    title: 'This year',
+    description: '9% · 329d left. Year progress.',
+  },
+  {
+    type: 'life',
+    title: 'Your life',
+    description: 'Life progress. Set birth date in Settings.',
+  },
+  {
+    type: 'dailyTasks',
+    title: 'Daily tasks',
+    description: "3/5 done. Today's task report.",
+  },
+  {
+    type: 'hourCalc',
+    title: 'Hour timer',
+    description: '0:12:34. Tap to start/stop.',
+  },
 ];
 
 export function OverlayScreen() {
   const { isPremium } = useObserveSubscription();
-  const [activeWidget, setActiveWidget] = useState<OverlayWidgetType>(getOverlayWidgetType());
+  const [activeWidget, setActiveWidget] = useState<OverlayWidgetType>(
+    getOverlayWidgetType(),
+  );
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
   const [overlayActive, setOverlayActive] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -56,15 +86,18 @@ export function OverlayScreen() {
   useFocusEffect(
     useCallback(() => {
       refreshStatus();
-    }, [refreshStatus])
+    }, [refreshStatus]),
   );
 
-  const handleSelectWidget = useCallback((type: OverlayWidgetType) => {
-    if (isPremiumLiveActivityType(type) && !isPremium) return;
-    setOverlayWidgetType(type);
-    setActiveWidget(type);
-    updateOverlay();
-  }, [isPremium]);
+  const handleSelectWidget = useCallback(
+    (type: OverlayWidgetType) => {
+      if (isPremiumLiveActivityType(type) && !isPremium) return;
+      setOverlayWidgetType(type);
+      setActiveWidget(type);
+      updateOverlay();
+    },
+    [isPremium],
+  );
 
   const handleStart = useCallback(() => {
     if (hasPermission === false) {
@@ -76,7 +109,9 @@ export function OverlayScreen() {
       setOverlayActive(true);
       setError(null);
     } catch (e) {
-      setError('Could not start overlay. Grant "Display over other apps" permission.');
+      setError(
+        'Could not start overlay. Grant "Display over other apps" permission.',
+      );
     }
   }, [hasPermission]);
 
@@ -112,34 +147,60 @@ export function OverlayScreen() {
             Floating overlay
           </Text>
           <Text variant="body" color="secondary" style={styles.subtitle}>
-            Dynamic Island–like pill that floats over other apps. Tap to expand, drag to move, long-press to open Until.
+            Dynamic Island–like pill that floats over other apps. Tap to expand,
+            drag to move, long-press to open Until.
           </Text>
 
           {error && (
             <View style={styles.permissionCard}>
-              <Text variant="body" color="primary" style={styles.permissionText}>
+              <Text
+                variant="body"
+                color="primary"
+                style={styles.permissionText}
+              >
                 {error}
               </Text>
-              <TouchableOpacity style={styles.permissionButton} onPress={handleOpenSettings}>
-                <Text variant="body" color="primary">Open settings</Text>
+              <TouchableOpacity
+                style={styles.permissionButton}
+                onPress={handleOpenSettings}
+              >
+                <Text variant="body" color="primary">
+                  Open settings
+                </Text>
               </TouchableOpacity>
             </View>
           )}
           {hasPermission === false && !error && (
             <View style={styles.permissionCard}>
-              <Text variant="body" color="primary" style={styles.permissionText}>
+              <Text
+                variant="body"
+                color="primary"
+                style={styles.permissionText}
+              >
                 Allow &quot;Display over other apps&quot; to show the overlay.
               </Text>
-              <TouchableOpacity style={styles.permissionButton} onPress={handleOpenSettings}>
-                <Text variant="body" color="primary">Open settings</Text>
+              <TouchableOpacity
+                style={styles.permissionButton}
+                onPress={handleOpenSettings}
+              >
+                <Text variant="body" color="primary">
+                  Open settings
+                </Text>
               </TouchableOpacity>
             </View>
           )}
 
-            <View style={styles.statusCard}>
+          <View style={styles.statusCard}>
             <View style={styles.statusRow}>
-              <Text variant="title" color="primary">Status</Text>
-              <View style={[styles.badge, overlayActive ? styles.badgeActive : styles.badgeInactive]}>
+              <Text variant="title" color="primary">
+                Status
+              </Text>
+              <View
+                style={[
+                  styles.badge,
+                  overlayActive ? styles.badgeActive : styles.badgeInactive,
+                ]}
+              >
                 <Text variant="caption" style={styles.badgeText}>
                   {overlayActive ? 'Active' : 'Inactive'}
                 </Text>
@@ -147,18 +208,26 @@ export function OverlayScreen() {
             </View>
             <View style={styles.actions}>
               <TouchableOpacity
-                style={[styles.button, (overlayActive || hasPermission !== true) && styles.buttonDisabled]}
+                style={[
+                  styles.button,
+                  (overlayActive || hasPermission !== true) &&
+                    styles.buttonDisabled,
+                ]}
                 onPress={handleStart}
                 disabled={overlayActive || hasPermission !== true}
               >
-                <Text variant="body" color="primary">Start</Text>
+                <Text variant="body" color="primary">
+                  Start
+                </Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.button, !overlayActive && styles.buttonDisabled]}
                 onPress={handleStop}
                 disabled={!overlayActive}
               >
-                <Text variant="body" color="primary">Stop</Text>
+                <Text variant="body" color="primary">
+                  Stop
+                </Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -166,7 +235,11 @@ export function OverlayScreen() {
           <Text variant="title" color="primary" style={styles.sectionTitle}>
             Show in overlay
           </Text>
-          <Text variant="caption" color="secondary" style={styles.sectionSubtitle}>
+          <Text
+            variant="caption"
+            color="secondary"
+            style={styles.sectionSubtitle}
+          >
             Tap to select. Compact pill shows key metric; tap to expand.
           </Text>
 
@@ -184,17 +257,25 @@ export function OverlayScreen() {
                 activeOpacity={locked ? 1 : 0.7}
               >
                 <View style={styles.optionHeader}>
-                  <Text variant="title" color="primary">{title}</Text>
+                  <Text variant="title" color="primary">
+                    {title}
+                  </Text>
                   {locked && (
                     <View style={styles.premiumBadge}>
-                      <Text variant="caption" style={styles.premiumBadgeText}>Premium</Text>
+                      <Text variant="caption" style={styles.premiumBadgeText}>
+                        Premium
+                      </Text>
                     </View>
                   )}
                   {activeWidget === type && !locked && (
                     <View style={styles.selectedDot} />
                   )}
                 </View>
-                <Text variant="caption" color="secondary" style={styles.optionDescription}>
+                <Text
+                  variant="caption"
+                  color="secondary"
+                  style={styles.optionDescription}
+                >
                   {locked ? 'Upgrade to Premium to use this' : description}
                 </Text>
               </TouchableOpacity>
@@ -202,7 +283,8 @@ export function OverlayScreen() {
           })}
 
           <Text variant="caption" color="secondary" style={styles.hint}>
-            Data updates when you open the app. Drag the pill to reposition. A notification keeps the overlay running.
+            Data updates when you open the app. Drag the pill to reposition. A
+            notification keeps the overlay running.
           </Text>
         </ScrollView>
       </ScreenGradient>

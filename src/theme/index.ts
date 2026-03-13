@@ -97,7 +97,12 @@ export const Gradient = {
   screenBackground: [Colors.background, Colors.background] as const,
 } as const;
 
-export { getProgressColor, PROGRESS_COLOR_START, PROGRESS_COLOR_MID, PROGRESS_COLOR_END } from './progressColor';
+export {
+  getProgressColor,
+  PROGRESS_COLOR_START,
+  PROGRESS_COLOR_MID,
+  PROGRESS_COLOR_END,
+} from './progressColor';
 
 export const spacing = Spacing;
 export const typography = {} as const;

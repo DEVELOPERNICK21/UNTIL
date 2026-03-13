@@ -1,6 +1,12 @@
 import React from 'react';
 import { View, StyleSheet, ScrollView, Dimensions } from 'react-native';
-import { Text, ScreenGradient, Card, ProgressLine, CircularProgress } from '../../ui';
+import {
+  Text,
+  ScreenGradient,
+  Card,
+  ProgressLine,
+  CircularProgress,
+} from '../../ui';
 import { useObserveTimeState } from '../../hooks';
 import { Spacing, Colors, getProgressColor } from '../../theme';
 
@@ -9,7 +15,10 @@ function getDaysInYear(): number {
   return (y % 4 === 0 && y % 100 !== 0) || y % 400 === 0 ? 366 : 365;
 }
 
-const RING_SIZE = Math.min(200, Dimensions.get('window').width - Spacing[4] * 2 - 32);
+const RING_SIZE = Math.min(
+  200,
+  Dimensions.get('window').width - Spacing[4] * 2 - 32,
+);
 
 export function YearDetailScreen() {
   const { timeState } = useObserveTimeState();
@@ -28,7 +37,11 @@ export function YearDetailScreen() {
           contentContainerStyle={styles.content}
           showsVerticalScrollIndicator={false}
         >
-          <Text variant="sectionTitle" color="secondary" style={styles.overhead}>
+          <Text
+            variant="sectionTitle"
+            color="secondary"
+            style={styles.overhead}
+          >
             This year
           </Text>
 
@@ -43,7 +56,11 @@ export function YearDetailScreen() {
 
           <View style={styles.statsRow}>
             <View style={styles.statBox}>
-              <Text variant="caption" color="secondary" style={styles.statLabel}>
+              <Text
+                variant="caption"
+                color="secondary"
+                style={styles.statLabel}
+              >
                 DAYS PASSED
               </Text>
               <Text variant="title" color="primary" style={styles.bigValue}>
@@ -51,10 +68,18 @@ export function YearDetailScreen() {
               </Text>
             </View>
             <View style={styles.statBox}>
-              <Text variant="caption" color="secondary" style={styles.statLabel}>
+              <Text
+                variant="caption"
+                color="secondary"
+                style={styles.statLabel}
+              >
                 DAYS LEFT
               </Text>
-              <Text variant="title" color="primary" style={[styles.bigValue, { color: progressColor }]}>
+              <Text
+                variant="title"
+                color="primary"
+                style={[styles.bigValue, { color: progressColor }]}
+              >
                 {remainingDaysYear}
               </Text>
             </View>
@@ -64,12 +89,17 @@ export function YearDetailScreen() {
             <Text variant="body" color="secondary" style={styles.cardText}>
               {passedDays} of {daysInYear} days · {100 - pct}% of year remaining
             </Text>
-            <ProgressLine progress={progress} fillColor={progressColor} style={styles.progress} />
+            <ProgressLine
+              progress={progress}
+              fillColor={progressColor}
+              style={styles.progress}
+            />
           </Card>
 
           <View style={styles.dotsHint}>
             <Text variant="caption" color="secondary">
-              The Year widget shows all 365 days at a glance. Add it from Widgets.
+              The Year widget shows all 365 days at a glance. Add it from
+              Widgets.
             </Text>
           </View>
         </ScrollView>

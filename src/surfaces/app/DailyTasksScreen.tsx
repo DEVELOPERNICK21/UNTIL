@@ -41,7 +41,7 @@ function todayIso(): string {
 }
 
 function categoryLabel(cat: TaskCategory): string {
-  return TASK_CATEGORIES.find((c) => c.value === cat)?.label ?? cat;
+  return TASK_CATEGORIES.find(c => c.value === cat)?.label ?? cat;
 }
 
 interface TaskRowProps {
@@ -52,7 +52,13 @@ interface TaskRowProps {
   onRemove: () => void;
 }
 
-function TaskRow({ task, goalTitle, onToggle, onEdit, onRemove }: TaskRowProps) {
+function TaskRow({
+  task,
+  goalTitle,
+  onToggle,
+  onEdit,
+  onRemove,
+}: TaskRowProps) {
   const scaleAnim = useRef(new Animated.Value(1)).current;
   const opacityAnim = useRef(new Animated.Value(1)).current;
 
@@ -99,10 +105,18 @@ function TaskRow({ task, goalTitle, onToggle, onEdit, onRemove }: TaskRowProps) 
         <Card style={styles.taskCard}>
           <View style={styles.taskRow}>
             <View
-              style={[styles.checkbox, task.completed && styles.checkboxChecked]}
+              style={[
+                styles.checkbox,
+                task.completed && styles.checkboxChecked,
+              ]}
             >
               {task.completed && (
-                <Animated.Text style={[styles.checkmark, { transform: [{ scale: scaleAnim }] }]}>
+                <Animated.Text
+                  style={[
+                    styles.checkmark,
+                    { transform: [{ scale: scaleAnim }] },
+                  ]}
+                >
                   ✓
                 </Animated.Text>
               )}
@@ -111,7 +125,10 @@ function TaskRow({ task, goalTitle, onToggle, onEdit, onRemove }: TaskRowProps) 
               <Text
                 variant="body"
                 color="primary"
-                style={[styles.taskTitle, task.completed && styles.taskTitleDone]}
+                style={[
+                  styles.taskTitle,
+                  task.completed && styles.taskTitleDone,
+                ]}
                 numberOfLines={3}
               >
                 {task.title}
@@ -119,14 +136,19 @@ function TaskRow({ task, goalTitle, onToggle, onEdit, onRemove }: TaskRowProps) 
               <Text variant="caption" color="secondary">
                 {categoryLabel(task.category)}
                 {task.sourceGoalId != null && (
-                  <Text variant="caption" color="secondary" style={styles.fromGoal}>
-                    {' · '}{goalTitle ?? 'From goal'}
+                  <Text
+                    variant="caption"
+                    color="secondary"
+                    style={styles.fromGoal}
+                  >
+                    {' · '}
+                    {goalTitle ?? 'From goal'}
                   </Text>
                 )}
               </Text>
             </View>
             <TouchableOpacity
-              onPress={(e) => {
+              onPress={e => {
                 e?.stopPropagation?.();
                 onEdit();
               }}
@@ -138,7 +160,7 @@ function TaskRow({ task, goalTitle, onToggle, onEdit, onRemove }: TaskRowProps) 
               </Text>
             </TouchableOpacity>
             <TouchableOpacity
-              onPress={(e) => {
+              onPress={e => {
                 e?.stopPropagation?.();
                 onRemove();
               }}
@@ -157,11 +179,15 @@ function TaskRow({ task, goalTitle, onToggle, onEdit, onRemove }: TaskRowProps) 
 }
 
 export function DailyTasksScreen() {
-  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList, 'DailyTasks'>>();
+  const navigation =
+    useNavigation<
+      NativeStackNavigationProp<RootStackParamList, 'DailyTasks'>
+    >();
   const today = todayIso();
   const { tasks, stats, refresh } = useDailyTasks(today);
   const [newTitle, setNewTitle] = React.useState('');
-  const [selectedCategory, setSelectedCategory] = React.useState<TaskCategory>('other');
+  const [selectedCategory, setSelectedCategory] =
+    React.useState<TaskCategory>('other');
   const [refreshing, setRefreshing] = React.useState(false);
   const [editingTask, setEditingTask] = React.useState<DailyTask | null>(null);
   const [editTitle, setEditTitle] = React.useState('');
@@ -193,7 +219,7 @@ export function DailyTasksScreen() {
       refresh();
       syncDailyTasksWidget();
     },
-    [refresh]
+    [refresh],
   );
 
   const openEdit = useCallback((task: DailyTask) => {
@@ -210,7 +236,10 @@ export function DailyTasksScreen() {
     if (!editingTask) return;
     const title = editTitle.trim();
     if (!title) return;
-    updateTaskUseCase.execute(editingTask.id, { title, category: editCategory });
+    updateTaskUseCase.execute(editingTask.id, {
+      title,
+      category: editCategory,
+    });
     refresh();
     syncDailyTasksWidget();
     closeEdit();
@@ -218,24 +247,20 @@ export function DailyTasksScreen() {
 
   const handleRemove = useCallback(
     (task: DailyTask) => {
-      Alert.alert(
-        'Remove task',
-        `Remove "${task.title}"?`,
-        [
-          { text: 'Cancel', style: 'cancel' },
-          {
-            text: 'Remove',
-            style: 'destructive',
-            onPress: () => {
-              removeTaskUseCase.execute(task.id);
-              refresh();
-              syncDailyTasksWidget();
-            },
+      Alert.alert('Remove task', `Remove "${task.title}"?`, [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Remove',
+          style: 'destructive',
+          onPress: () => {
+            removeTaskUseCase.execute(task.id);
+            refresh();
+            syncDailyTasksWidget();
           },
-        ]
-      );
+        },
+      ]);
     },
-    [refresh]
+    [refresh],
   );
 
   const progress = stats.total > 0 ? stats.completed / stats.total : 0;
@@ -260,10 +285,16 @@ export function DailyTasksScreen() {
           </Text>
           <Text variant="body" color="secondary" style={styles.subtitle}>
             Add tasks and tick them when done. Use{' '}
-            <Text variant="body" color="primary" style={styles.inlineLink} onPress={() => navigation.navigate('MonthlyGoals')}>
+            <Text
+              variant="body"
+              color="primary"
+              style={styles.inlineLink}
+              onPress={() => navigation.navigate('MonthlyGoals')}
+            >
               monthly goals
-            </Text>
-            {' '}to add tasks that repeat daily. Your progress appears on the home screen and in the Daily tasks widget.
+            </Text>{' '}
+            to add tasks that repeat daily. Your progress appears on the home
+            screen and in the Daily tasks widget.
           </Text>
 
           <TouchableOpacity
@@ -271,7 +302,11 @@ export function DailyTasksScreen() {
             onPress={() => navigation.navigate('TaskReport')}
           >
             <Card style={styles.reportCard}>
-              <Text variant="sectionTitle" color="secondary" style={styles.blockTitle}>
+              <Text
+                variant="sectionTitle"
+                color="secondary"
+                style={styles.blockTitle}
+              >
                 Report
               </Text>
               <View style={styles.reportRow}>
@@ -286,14 +321,22 @@ export function DailyTasksScreen() {
                   style={styles.progress}
                 />
               )}
-              <Text variant="caption" color="secondary" style={styles.reportLink}>
+              <Text
+                variant="caption"
+                color="secondary"
+                style={styles.reportLink}
+              >
                 View daily, weekly & monthly report →
               </Text>
             </Card>
           </TouchableOpacity>
 
           <View style={styles.addSection}>
-            <Text variant="caption" color="secondary" style={styles.addSectionLabel}>
+            <Text
+              variant="caption"
+              color="secondary"
+              style={styles.addSectionLabel}
+            >
               New task
             </Text>
             <TextInput
@@ -309,7 +352,11 @@ export function DailyTasksScreen() {
               multiline
               maxLength={200}
             />
-            <Text variant="caption" color="secondary" style={styles.categorySectionLabel}>
+            <Text
+              variant="caption"
+              color="secondary"
+              style={styles.categorySectionLabel}
+            >
               Category
             </Text>
             <ScrollView
@@ -330,7 +377,9 @@ export function DailyTasksScreen() {
                   <Text
                     variant="caption"
                     color={selectedCategory === value ? 'primary' : 'secondary'}
-                    style={selectedCategory === value && styles.chipTextSelected}
+                    style={
+                      selectedCategory === value && styles.chipTextSelected
+                    }
                   >
                     {label}
                   </Text>
@@ -338,7 +387,10 @@ export function DailyTasksScreen() {
               ))}
             </ScrollView>
             <TouchableOpacity
-              style={[styles.addButton, !newTitle.trim() && styles.addButtonDisabled]}
+              style={[
+                styles.addButton,
+                !newTitle.trim() && styles.addButtonDisabled,
+              ]}
               onPress={handleAdd}
               disabled={!newTitle.trim()}
             >
@@ -353,11 +405,15 @@ export function DailyTasksScreen() {
               No tasks for today. Add one above.
             </Text>
           ) : (
-            tasks.map((task) => (
+            tasks.map(task => (
               <TaskRow
                 key={task.id}
                 task={task}
-                goalTitle={task.sourceGoalId ? getGoalUseCase.execute(task.sourceGoalId)?.title ?? null : undefined}
+                goalTitle={
+                  task.sourceGoalId
+                    ? getGoalUseCase.execute(task.sourceGoalId)?.title ?? null
+                    : undefined
+                }
                 onToggle={() => handleToggle(task.id)}
                 onEdit={() => openEdit(task)}
                 onRemove={() => handleRemove(task)}
@@ -372,11 +428,22 @@ export function DailyTasksScreen() {
             onRequestClose={closeEdit}
           >
             <Pressable style={styles.modalOverlay} onPress={closeEdit}>
-              <Pressable style={styles.modalContent} onPress={(e) => e.stopPropagation()}>
-                <Text variant="sectionTitle" color="primary" style={styles.modalTitle}>
+              <Pressable
+                style={styles.modalContent}
+                onPress={e => e.stopPropagation()}
+              >
+                <Text
+                  variant="sectionTitle"
+                  color="primary"
+                  style={styles.modalTitle}
+                >
                   Edit task
                 </Text>
-                <Text variant="caption" color="secondary" style={styles.modalInputLabel}>
+                <Text
+                  variant="caption"
+                  color="secondary"
+                  style={styles.modalInputLabel}
+                >
                   Task title
                 </Text>
                 <TextInput
@@ -392,7 +459,11 @@ export function DailyTasksScreen() {
                   multiline
                   maxLength={200}
                 />
-                <Text variant="caption" color="secondary" style={styles.categoryLabel}>
+                <Text
+                  variant="caption"
+                  color="secondary"
+                  style={styles.categoryLabel}
+                >
                   Category
                 </Text>
                 <ScrollView
@@ -413,7 +484,9 @@ export function DailyTasksScreen() {
                       <Text
                         variant="caption"
                         color={editCategory === value ? 'primary' : 'secondary'}
-                        style={editCategory === value && styles.chipTextSelected}
+                        style={
+                          editCategory === value && styles.chipTextSelected
+                        }
                       >
                         {label}
                       </Text>
@@ -421,15 +494,22 @@ export function DailyTasksScreen() {
                   ))}
                 </ScrollView>
                 <View style={styles.modalActions}>
-                  <TouchableOpacity style={styles.modalButton} onPress={closeEdit}>
-                    <Text variant="body" color="secondary">Cancel</Text>
+                  <TouchableOpacity
+                    style={styles.modalButton}
+                    onPress={closeEdit}
+                  >
+                    <Text variant="body" color="secondary">
+                      Cancel
+                    </Text>
                   </TouchableOpacity>
                   <TouchableOpacity
                     style={[styles.modalButton, styles.modalButtonPrimary]}
                     onPress={handleSaveEdit}
                     disabled={!editTitle.trim()}
                   >
-                    <Text variant="body" style={styles.modalButtonPrimaryText}>Save</Text>
+                    <Text variant="body" style={styles.modalButtonPrimaryText}>
+                      Save
+                    </Text>
                   </TouchableOpacity>
                 </View>
               </Pressable>
@@ -437,7 +517,11 @@ export function DailyTasksScreen() {
           </Modal>
 
           {stats.total > 0 && stats.completed === stats.total && (
-            <Text variant="caption" color="secondary" style={styles.celebration}>
+            <Text
+              variant="caption"
+              color="secondary"
+              style={styles.celebration}
+            >
               All done for today.
             </Text>
           )}
@@ -561,7 +645,11 @@ const styles = StyleSheet.create({
   actionBtn: { paddingVertical: Spacing[1], paddingHorizontal: Spacing[2] },
   actionText: { color: Colors.textSecondary, textDecorationLine: 'underline' },
   removeText: { color: Colors.textSecondary, textDecorationLine: 'underline' },
-  celebration: { marginTop: Spacing[2], fontStyle: 'italic', textAlign: 'center' },
+  celebration: {
+    marginTop: Spacing[2],
+    fontStyle: 'italic',
+    textAlign: 'center',
+  },
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.5)',
@@ -600,6 +688,9 @@ const styles = StyleSheet.create({
     marginTop: Spacing[4],
   },
   modalButton: { paddingVertical: Spacing[2], paddingHorizontal: Spacing[3] },
-  modalButtonPrimary: { backgroundColor: Colors.divider, borderRadius: Radius.sm },
+  modalButtonPrimary: {
+    backgroundColor: Colors.divider,
+    borderRadius: Radius.sm,
+  },
   modalButtonPrimaryText: { color: Colors.textPrimary },
 });

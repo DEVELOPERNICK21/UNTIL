@@ -1,5 +1,12 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, StyleSheet, ScrollView, Animated, Easing, TouchableOpacity } from 'react-native';
+import {
+  View,
+  StyleSheet,
+  ScrollView,
+  Animated,
+  Easing,
+  TouchableOpacity,
+} from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Text, ScreenGradient, Card, ProgressLine } from '../../ui';
@@ -69,7 +76,7 @@ function formatYearPassedLeft(remainingDaysYear: number) {
 function formatLifePassedLeft(
   lifeProgress: number,
   remainingDaysLife: number | undefined,
-  deathAge: number
+  deathAge: number,
 ) {
   const totalLifeDays = Math.round(deathAge * 365.25);
   const remaining = remainingDaysLife ?? 0;
@@ -107,7 +114,16 @@ function leftValueGlowStyle(hexColor: string) {
   };
 }
 
-function TimeBlock({ title, passedLabel, leftLabel, progress, passedPct, leftPct, index = 0, onPress }: BlockProps) {
+function TimeBlock({
+  title,
+  passedLabel,
+  leftLabel,
+  progress,
+  passedPct,
+  leftPct,
+  index = 0,
+  onPress,
+}: BlockProps) {
   const progressColor = getProgressColor(progress);
   const leftColor = getProgressColor(progress);
   const opacity = useRef(new Animated.Value(0)).current;
@@ -138,7 +154,7 @@ function TimeBlock({ title, passedLabel, leftLabel, progress, passedPct, leftPct
           easing: Easing.inOut(Easing.ease),
           useNativeDriver: true,
         }),
-      ])
+      ]),
     );
     loop.start();
     return () => loop.stop();
@@ -146,37 +162,48 @@ function TimeBlock({ title, passedLabel, leftLabel, progress, passedPct, leftPct
 
   const content = (
     <Card style={styles.block}>
-        <Text variant="sectionTitle" color="secondary" style={styles.blockTitle}>
-          {title}
-        </Text>
-        <View style={styles.row}>
-          <View style={styles.half}>
-            <Text variant="title" color="primary" style={styles.value}>
-              {passedLabel}
+      <Text variant="sectionTitle" color="secondary" style={styles.blockTitle}>
+        {title}
+      </Text>
+      <View style={styles.row}>
+        <View style={styles.half}>
+          <Text variant="title" color="primary" style={styles.value}>
+            {passedLabel}
+          </Text>
+          <Text variant="caption" color="secondary">
+            passed
+          </Text>
+        </View>
+        <View style={[styles.half, styles.halfRight]}>
+          <Animated.View style={{ opacity: blinkOpacity }}>
+            <Text
+              variant="title"
+              style={[styles.value, leftValueGlowStyle(leftColor)]}
+            >
+              {leftLabel}
             </Text>
-            <Text variant="caption" color="secondary">passed</Text>
-          </View>
-          <View style={[styles.half, styles.halfRight]}>
-            <Animated.View style={{ opacity: blinkOpacity }}>
-              <Text variant="title" style={[styles.value, leftValueGlowStyle(leftColor)]}>
-                {leftLabel}
-              </Text>
-            </Animated.View>
-            <Text variant="caption" color="secondary">left</Text>
-          </View>
-        </View>
-        <View style={styles.percentRow}>
-          <Text variant="caption" color="secondary" style={styles.percentLine}>
-            {passedPct}% passed · {leftPct}% left
+          </Animated.View>
+          <Text variant="caption" color="secondary">
+            left
           </Text>
         </View>
-        <ProgressLine progress={progress} fillColor={progressColor} style={styles.progress} />
-        {onPress && (
-          <Text variant="caption" color="secondary" style={styles.tapHint}>
-            Tap for details →
-          </Text>
-        )}
-      </Card>
+      </View>
+      <View style={styles.percentRow}>
+        <Text variant="caption" color="secondary" style={styles.percentLine}>
+          {passedPct}% passed · {leftPct}% left
+        </Text>
+      </View>
+      <ProgressLine
+        progress={progress}
+        fillColor={progressColor}
+        style={styles.progress}
+      />
+      {onPress && (
+        <Text variant="caption" color="secondary" style={styles.tapHint}>
+          Tap for details →
+        </Text>
+      )}
+    </Card>
   );
 
   return (
@@ -197,7 +224,8 @@ function todayIso(): string {
 }
 
 export function HomeScreen() {
-  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList, 'Home'>>();
+  const navigation =
+    useNavigation<NativeStackNavigationProp<RootStackParamList, 'Home'>>();
   const { userProfile, timeState } = useObserveTimeState();
   const { stats } = useDailyTasks(todayIso());
   const [liveNow, setLiveNow] = useState(() => new Date());
@@ -217,7 +245,7 @@ export function HomeScreen() {
   const life = formatLifePassedLeft(
     timeState.life,
     timeState.remainingDaysLife,
-    userProfile.deathAge ?? 80
+    userProfile.deathAge ?? 80,
   );
   const hasBirthDate = !!userProfile.birthDate;
 
@@ -282,11 +310,16 @@ export function HomeScreen() {
             />
           ) : (
             <Card style={styles.block}>
-              <Text variant="sectionTitle" color="secondary" style={styles.blockTitle}>
+              <Text
+                variant="sectionTitle"
+                color="secondary"
+                style={styles.blockTitle}
+              >
                 Your life
               </Text>
               <Text variant="body" color="secondary" style={styles.lifePrompt}>
-                Set birth date in Settings to see how much life has passed and how much is left.
+                Set birth date in Settings to see how much life has passed and
+                how much is left.
               </Text>
               <Text
                 variant="caption"
@@ -300,7 +333,11 @@ export function HomeScreen() {
           )}
 
           <Card style={styles.block}>
-            <Text variant="sectionTitle" color="secondary" style={styles.blockTitle}>
+            <Text
+              variant="sectionTitle"
+              color="secondary"
+              style={styles.blockTitle}
+            >
               Today&apos;s tasks
             </Text>
             {stats.total === 0 ? (
@@ -321,7 +358,9 @@ export function HomeScreen() {
                 </View>
                 <ProgressLine
                   progress={stats.total > 0 ? stats.completed / stats.total : 0}
-                  fillColor={getProgressColor(stats.total > 0 ? stats.completed / stats.total : 0)}
+                  fillColor={getProgressColor(
+                    stats.total > 0 ? stats.completed / stats.total : 0,
+                  )}
                   style={styles.progress}
                 />
               </>
@@ -331,7 +370,11 @@ export function HomeScreen() {
                 style={styles.tasksCta}
                 onPress={() => navigation.navigate('DailyTasks')}
               >
-                <Text variant="caption" color="primary" style={styles.settingsLink}>
+                <Text
+                  variant="caption"
+                  color="primary"
+                  style={styles.settingsLink}
+                >
                   {stats.total === 0 ? 'Add tasks' : 'See all'}
                 </Text>
               </TouchableOpacity>
@@ -339,7 +382,11 @@ export function HomeScreen() {
                 style={styles.tasksCta}
                 onPress={() => navigation.navigate('MonthlyGoals')}
               >
-                <Text variant="caption" color="primary" style={styles.settingsLink}>
+                <Text
+                  variant="caption"
+                  color="primary"
+                  style={styles.settingsLink}
+                >
                   Monthly goals
                 </Text>
               </TouchableOpacity>
@@ -347,7 +394,11 @@ export function HomeScreen() {
                 style={styles.tasksCta}
                 onPress={() => navigation.navigate('TaskReport')}
               >
-                <Text variant="caption" color="primary" style={styles.settingsLink}>
+                <Text
+                  variant="caption"
+                  color="primary"
+                  style={styles.settingsLink}
+                >
                   Report
                 </Text>
               </TouchableOpacity>

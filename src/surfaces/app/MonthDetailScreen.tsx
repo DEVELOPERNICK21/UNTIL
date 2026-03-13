@@ -1,6 +1,12 @@
 import React from 'react';
 import { View, StyleSheet, ScrollView, Dimensions } from 'react-native';
-import { Text, ScreenGradient, Card, ProgressLine, CircularProgress } from '../../ui';
+import {
+  Text,
+  ScreenGradient,
+  Card,
+  ProgressLine,
+  CircularProgress,
+} from '../../ui';
 import { useObserveTimeState } from '../../hooks';
 import { Spacing, Colors, getProgressColor } from '../../theme';
 
@@ -9,7 +15,10 @@ function getDaysInMonth(): number {
   return new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
 }
 
-const RING_SIZE = Math.min(200, Dimensions.get('window').width - Spacing[4] * 2 - 32);
+const RING_SIZE = Math.min(
+  200,
+  Dimensions.get('window').width - Spacing[4] * 2 - 32,
+);
 
 export function MonthDetailScreen() {
   const { timeState } = useObserveTimeState();
@@ -28,7 +37,11 @@ export function MonthDetailScreen() {
           contentContainerStyle={styles.content}
           showsVerticalScrollIndicator={false}
         >
-          <Text variant="sectionTitle" color="secondary" style={styles.overhead}>
+          <Text
+            variant="sectionTitle"
+            color="secondary"
+            style={styles.overhead}
+          >
             This month
           </Text>
 
@@ -43,7 +56,11 @@ export function MonthDetailScreen() {
 
           <View style={styles.statsRow}>
             <View style={styles.statBox}>
-              <Text variant="caption" color="secondary" style={styles.statLabel}>
+              <Text
+                variant="caption"
+                color="secondary"
+                style={styles.statLabel}
+              >
                 DAYS PASSED
               </Text>
               <Text variant="title" color="primary" style={styles.bigValue}>
@@ -51,10 +68,18 @@ export function MonthDetailScreen() {
               </Text>
             </View>
             <View style={styles.statBox}>
-              <Text variant="caption" color="secondary" style={styles.statLabel}>
+              <Text
+                variant="caption"
+                color="secondary"
+                style={styles.statLabel}
+              >
                 DAYS LEFT
               </Text>
-              <Text variant="title" color="primary" style={[styles.bigValue, { color: progressColor }]}>
+              <Text
+                variant="title"
+                color="primary"
+                style={[styles.bigValue, { color: progressColor }]}
+              >
                 {remainingDaysMonth}
               </Text>
             </View>
@@ -62,14 +87,20 @@ export function MonthDetailScreen() {
 
           <Card style={styles.card}>
             <Text variant="body" color="secondary" style={styles.cardText}>
-              {passedDays} of {daysInMonth} days · {100 - pct}% of month remaining
+              {passedDays} of {daysInMonth} days · {100 - pct}% of month
+              remaining
             </Text>
-            <ProgressLine progress={progress} fillColor={progressColor} style={styles.progress} />
+            <ProgressLine
+              progress={progress}
+              fillColor={progressColor}
+              style={styles.progress}
+            />
           </Card>
 
           <View style={styles.dotsHint}>
             <Text variant="caption" color="secondary">
-              Each day adds to the month. Use the Month widget to see progress at a glance.
+              Each day adds to the month. Use the Month widget to see progress
+              at a glance.
             </Text>
           </View>
         </ScrollView>

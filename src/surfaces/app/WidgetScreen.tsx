@@ -1,5 +1,12 @@
 import React, { useState, useCallback } from 'react';
-import { View, StyleSheet, ScrollView, TouchableOpacity, NativeModules, Platform } from 'react-native';
+import {
+  View,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  NativeModules,
+  Platform,
+} from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { isOverlayEnabled } from '../../infrastructure';
 import { useObserveSubscription } from '../../hooks';
@@ -13,9 +20,11 @@ const { WidgetBridge, LiveActivityBridge } = NativeModules;
 
 function useOverlayStatus() {
   const [active, setActive] = useState(false);
-  useFocusEffect(useCallback(() => {
-    if (Platform.OS === 'android') setActive(isOverlayEnabled());
-  }, []));
+  useFocusEffect(
+    useCallback(() => {
+      if (Platform.OS === 'android') setActive(isOverlayEnabled());
+    }, []),
+  );
   return active;
 }
 
@@ -29,14 +38,68 @@ export type WidgetStatus = {
   hourCalculationWidgetAdded?: boolean;
 } | null;
 
-const WIDGETS: { key: keyof NonNullable<WidgetStatus>; kind: 'day' | 'month' | 'year' | 'counter' | 'countdown' | 'dailyTasks' | 'hourCalc'; title: string; description: string }[] = [
-  { key: 'dayWidgetAdded', kind: 'day', title: 'Today', description: 'Day progress with hours and minutes. Small, medium, and large sizes.' },
-  { key: 'monthWidgetAdded', kind: 'month', title: 'This month', description: 'Month progress with 12 dots and days passed/left. Medium size.' },
-  { key: 'yearWidgetAdded', kind: 'year', title: 'This year', description: 'Year progress with 365 dots and days passed/left. Large size.' },
-  { key: 'counterWidgetAdded', kind: 'counter', title: 'Counter', description: 'Tap to add +1. Create counters in Custom counters, then add this widget.' },
-  { key: 'countdownWidgetAdded', kind: 'countdown', title: 'Countdown', description: 'Shows days left until a deadline. Add deadlines in Countdowns.' },
-  { key: 'dailyTasksWidgetAdded', kind: 'dailyTasks', title: 'Daily tasks', description: "Today's task report: completed vs pending. Add tasks in Today's tasks." },
-  { key: 'hourCalculationWidgetAdded', kind: 'hourCalc', title: 'Hour calculation', description: 'Tap to start/stop. One timer. Set title (e.g. Office hour) in Until.' },
+const WIDGETS: {
+  key: keyof NonNullable<WidgetStatus>;
+  kind:
+    | 'day'
+    | 'month'
+    | 'year'
+    | 'counter'
+    | 'countdown'
+    | 'dailyTasks'
+    | 'hourCalc';
+  title: string;
+  description: string;
+}[] = [
+  {
+    key: 'dayWidgetAdded',
+    kind: 'day',
+    title: 'Today',
+    description:
+      'Day progress with hours and minutes. Small, medium, and large sizes.',
+  },
+  {
+    key: 'monthWidgetAdded',
+    kind: 'month',
+    title: 'This month',
+    description:
+      'Month progress with 12 dots and days passed/left. Medium size.',
+  },
+  {
+    key: 'yearWidgetAdded',
+    kind: 'year',
+    title: 'This year',
+    description:
+      'Year progress with 365 dots and days passed/left. Large size.',
+  },
+  {
+    key: 'counterWidgetAdded',
+    kind: 'counter',
+    title: 'Counter',
+    description:
+      'Tap to add +1. Create counters in Custom counters, then add this widget.',
+  },
+  {
+    key: 'countdownWidgetAdded',
+    kind: 'countdown',
+    title: 'Countdown',
+    description:
+      'Shows days left until a deadline. Add deadlines in Countdowns.',
+  },
+  {
+    key: 'dailyTasksWidgetAdded',
+    kind: 'dailyTasks',
+    title: 'Daily tasks',
+    description:
+      "Today's task report: completed vs pending. Add tasks in Today's tasks.",
+  },
+  {
+    key: 'hourCalculationWidgetAdded',
+    kind: 'hourCalc',
+    title: 'Hour calculation',
+    description:
+      'Tap to start/stop. One timer. Set title (e.g. Office hour) in Until.',
+  },
 ];
 
 function SectionHeader({ label }: { label: string }) {
@@ -47,7 +110,13 @@ function SectionHeader({ label }: { label: string }) {
   );
 }
 
-function GlassSection({ children, style }: { children: React.ReactNode; style?: object }) {
+function GlassSection({
+  children,
+  style,
+}: {
+  children: React.ReactNode;
+  style?: object;
+}) {
   return <View style={[styles.glassSection, style]}>{children}</View>;
 }
 
@@ -61,25 +130,54 @@ interface SettingTileProps {
   children?: React.ReactNode;
 }
 
-function SettingTile({ title, description, status, statusLabel, locked, onPress, children }: SettingTileProps) {
+function SettingTile({
+  title,
+  description,
+  status,
+  statusLabel,
+  locked,
+  onPress,
+  children,
+}: SettingTileProps) {
   const content = (
     <View style={styles.tileInner}>
       <View style={styles.tileMain}>
-        <Text variant="title" color="primary" style={styles.tileTitle} numberOfLines={1}>
+        <Text
+          variant="title"
+          color="primary"
+          style={styles.tileTitle}
+          numberOfLines={1}
+        >
           {title}
         </Text>
         {status !== undefined && statusLabel !== undefined && (
-          <View style={[styles.statusPill, status === 'on' || status === 'active' ? styles.statusPillOn : styles.statusPillOff]}>
-            <Text variant="caption" style={styles.statusPillText}>{statusLabel}</Text>
+          <View
+            style={[
+              styles.statusPill,
+              status === 'on' || status === 'active'
+                ? styles.statusPillOn
+                : styles.statusPillOff,
+            ]}
+          >
+            <Text variant="caption" style={styles.statusPillText}>
+              {statusLabel}
+            </Text>
           </View>
         )}
         {locked && (
           <View style={styles.premiumPill}>
-            <Text variant="caption" style={styles.premiumPillText}>Premium</Text>
+            <Text variant="caption" style={styles.premiumPillText}>
+              Premium
+            </Text>
           </View>
         )}
       </View>
-      <Text variant="body" color="secondary" style={styles.tileDescription} numberOfLines={2}>
+      <Text
+        variant="body"
+        color="secondary"
+        style={styles.tileDescription}
+        numberOfLines={2}
+      >
         {locked ? 'Upgrade to Premium to add this widget.' : description}
       </Text>
       {children}
@@ -88,10 +186,16 @@ function SettingTile({ title, description, status, statusLabel, locked, onPress,
 
   if (onPress) {
     return (
-      <TouchableOpacity activeOpacity={0.7} onPress={onPress} style={styles.tileWrapper}>
+      <TouchableOpacity
+        activeOpacity={0.7}
+        onPress={onPress}
+        style={styles.tileWrapper}
+      >
         <View style={[styles.glassTile, locked && styles.tileLocked]}>
           {content}
-          <Text variant="caption" color="secondary" style={styles.tileChevron}>Open →</Text>
+          <Text variant="caption" color="secondary" style={styles.tileChevron}>
+            Open →
+          </Text>
         </View>
       </TouchableOpacity>
     );
@@ -103,22 +207,41 @@ function SettingTile({ title, description, status, statusLabel, locked, onPress,
   );
 }
 
-function QuickLinkTile({ title, subtitle, onPress }: { title: string; subtitle: string; onPress: () => void }) {
+function QuickLinkTile({
+  title,
+  subtitle,
+  onPress,
+}: {
+  title: string;
+  subtitle: string;
+  onPress: () => void;
+}) {
   return (
-    <TouchableOpacity activeOpacity={0.7} onPress={onPress} style={styles.quickLinkTouch}>
+    <TouchableOpacity
+      activeOpacity={0.7}
+      onPress={onPress}
+      style={styles.quickLinkTouch}
+    >
       <View style={styles.quickLinkTile}>
         <View>
-          <Text variant="body" color="primary" style={styles.quickLinkTitle}>{title}</Text>
-          <Text variant="caption" color="secondary">{subtitle}</Text>
+          <Text variant="body" color="primary" style={styles.quickLinkTitle}>
+            {title}
+          </Text>
+          <Text variant="caption" color="secondary">
+            {subtitle}
+          </Text>
         </View>
-        <Text variant="caption" color="secondary">→</Text>
+        <Text variant="caption" color="secondary">
+          →
+        </Text>
       </View>
     </TouchableOpacity>
   );
 }
 
 export function WidgetScreen() {
-  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList, 'Widget'>>();
+  const navigation =
+    useNavigation<NativeStackNavigationProp<RootStackParamList, 'Widget'>>();
   const { isPremium } = useObserveSubscription();
   const [status, setStatus] = useState<WidgetStatus>(null);
   const [loading, setLoading] = useState(true);
@@ -166,7 +289,7 @@ export function WidgetScreen() {
     useCallback(() => {
       fetchStatus();
       refreshLiveActivityStatus();
-    }, [fetchStatus, refreshLiveActivityStatus])
+    }, [fetchStatus, refreshLiveActivityStatus]),
   );
 
   return (
@@ -180,7 +303,8 @@ export function WidgetScreen() {
             Settings
           </Text>
           <Text variant="body" color="secondary" style={styles.subtitle}>
-            Widgets, Dynamic Island, and floating overlay. Add home screen widgets and configure what appears in Dynamic Island or overlay.
+            Widgets, Dynamic Island, and floating overlay. Add home screen
+            widgets and configure what appears in Dynamic Island or overlay.
           </Text>
 
           {loading && (
@@ -189,7 +313,10 @@ export function WidgetScreen() {
             </Text>
           )}
           {error && (
-            <Text variant="caption" style={[styles.statusText, { color: Colors.textSecondary }]}>
+            <Text
+              variant="caption"
+              style={[styles.statusText, { color: Colors.textSecondary }]}
+            >
               {error}
             </Text>
           )}
@@ -304,6 +431,7 @@ const styles = StyleSheet.create({
     borderColor: Colors.glassBorder,
     overflow: 'hidden',
     padding: Spacing[2],
+    gap: Spacing[2],
   },
   sectionSpacing: {
     marginBottom: Spacing[2],

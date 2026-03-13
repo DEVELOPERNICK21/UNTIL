@@ -13,16 +13,21 @@ import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Text, ScreenGradient, Card } from '../../ui';
-import { useObserveTimeState, useUpdateUserProfile, useObserveSubscription } from '../../hooks';
-import { syncWidgetCache, syncPremiumStatus } from '../../infrastructure';
-import { getAppVersionUseCase, activateLicenseUseCase } from '../../di';
+import {
+  useObserveTimeState,
+  useUpdateUserProfile,
+  useObserveSubscription,
+} from '../../hooks';
+import { syncWidgetCache } from '../../infrastructure';
+import { getAppVersionUseCase } from '../../di';
 import { Colors, Spacing, Radius } from '../../theme';
 import type { RootStackParamList } from '../../navigation/RootNavigator';
 
 function parseBirthDate(str: string): Date {
   if (!str || str.length < 10) return new Date(1990, 0, 1);
   const [y, m, d] = str.split('-').map(Number);
-  if (Number.isNaN(y) || Number.isNaN(m) || Number.isNaN(d)) return new Date(1990, 0, 1);
+  if (Number.isNaN(y) || Number.isNaN(m) || Number.isNaN(d))
+    return new Date(1990, 0, 1);
   const date = new Date(y, (m ?? 1) - 1, d ?? 1);
   return isNaN(date.getTime()) ? new Date(1990, 0, 1) : date;
 }
@@ -33,11 +38,11 @@ function toBirthDateString(d: Date): string {
   const day = String(d.getDate()).padStart(2, '0');
   return `${y}-${m}-${day}`;
 }
-
-const PURCHASE_URL = 'https://until-days-left.vercel.app'; // Update to your website
+const PLAY_STORE_URL = 'https://play.google.com/store/apps/details?id=app.until.time';
 
 export function SettingsScreen() {
-  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList, 'Settings'>>();
+  const navigation =
+    useNavigation<NativeStackNavigationProp<RootStackParamList, 'Settings'>>();
   const { userProfile } = useObserveTimeState();
   const updateUserProfile = useUpdateUserProfile();
   const { isPremium } = useObserveSubscription();
@@ -45,11 +50,11 @@ export function SettingsScreen() {
   const [birthInput, setBirthInput] = useState(userProfile.birthDate ?? '');
   const [deathInput, setDeathInput] = useState(String(userProfile.deathAge));
   const [showBirthPicker, setShowBirthPicker] = useState(false);
-  const [licenseInput, setLicenseInput] = useState('');
-  const [licenseError, setLicenseError] = useState<string | null>(null);
-  const [activating, setActivating] = useState(false);
 
-  const birthDateForPicker = useMemo(() => parseBirthDate(birthInput), [birthInput]);
+  const birthDateForPicker = useMemo(
+    () => parseBirthDate(birthInput),
+    [birthInput],
+  );
 
   useEffect(() => {
     setBirthInput(userProfile.birthDate ?? '');
@@ -62,29 +67,6 @@ export function SettingsScreen() {
       updateUserProfile(birthInput, isNaN(age) || age <= 0 ? 80 : age);
       syncWidgetCache();
       navigation.navigate('Home');
-    }
-  };
-
-  const handleActivateLicense = async () => {
-    const key = licenseInput.trim();
-    if (!key) {
-      setLicenseError('Enter your license key');
-      return;
-    }
-    setLicenseError(null);
-    setActivating(true);
-    try {
-      const result = await activateLicenseUseCase.execute(key);
-      if (result.success) {
-        syncPremiumStatus();
-        setLicenseInput('');
-      } else {
-        setLicenseError(result.message ?? 'Activation failed');
-      }
-    } catch {
-      setLicenseError('Activation failed');
-    } finally {
-      setActivating(false);
     }
   };
 
@@ -111,7 +93,11 @@ export function SettingsScreen() {
                 style={styles.input}
                 onPress={() => setShowBirthPicker(true)}
               >
-                <Text variant="body" color={birthInput ? 'primary' : 'secondary'} style={styles.inputText}>
+                <Text
+                  variant="body"
+                  color={birthInput ? 'primary' : 'secondary'}
+                  style={styles.inputText}
+                >
                   {birthInput || 'Tap to pick date'}
                 </Text>
               </TouchableOpacity>
@@ -128,8 +114,13 @@ export function SettingsScreen() {
                 />
               )}
               {Platform.OS === 'ios' && showBirthPicker && (
-                <TouchableOpacity style={styles.pickerDone} onPress={() => setShowBirthPicker(false)}>
-                  <Text variant="caption" color="primary">Done</Text>
+                <TouchableOpacity
+                  style={styles.pickerDone}
+                  onPress={() => setShowBirthPicker(false)}
+                >
+                  <Text variant="caption" color="primary">
+                    Done
+                  </Text>
                 </TouchableOpacity>
               )}
 
@@ -158,43 +149,35 @@ export function SettingsScreen() {
               </Text>
               <View style={styles.premiumStatus}>
                 <Text variant="body" color="primary">
-                  {isPremium ? 'Active — bound to this device' : 'Not active'}
+                  {isPremium
+                    ? 'Active — managed via your store account'
+                    : 'Not active'}
                 </Text>
               </View>
               {!isPremium && (
                 <>
-                  <Text variant="caption" color="secondary" style={styles.label}>
-                    Purchase on our website, then enter your license key below. One device only.
-                  </Text>
-                  <TextInput
-                    style={styles.input}
-                    value={licenseInput}
-                    onChangeText={(t) => { setLicenseInput(t); setLicenseError(null); }}
-                    placeholder="XXXX-XXXX-XXXX-XXXX"
-                    placeholderTextColor={Colors.textSecondary}
-                    autoCapitalize="characters"
-                    autoCorrect={false}
-                  />
-                  {licenseError && (
-                    <Text variant="caption" style={{ color: Colors.percent, marginBottom: Spacing[2] }}>
-                      {licenseError}
-                    </Text>
-                  )}
-                  <TouchableOpacity
-                    style={[styles.cta, activating && styles.ctaDisabled]}
-                    onPress={handleActivateLicense}
-                    disabled={activating}
+                  <Text
+                    variant="caption"
+                    color="secondary"
+                    style={styles.label}
                   >
-                    <Text variant="sectionTitle" color="primary">
-                      {activating ? 'Activating…' : 'Activate'}
-                    </Text>
-                  </TouchableOpacity>
+                    On Android, buy Premium from Google Play. Make sure you are
+                    signed in with the same Google account on this device.
+                  </Text>
                   <TouchableOpacity
                     style={styles.widgetLink}
-                    onPress={() => Linking.openURL(PURCHASE_URL)}
+                    onPress={() => {
+                      if (Platform.OS === 'android') {
+                        Linking.openURL(PLAY_STORE_URL);
+                      }
+                    }}
                   >
-                    <Text variant="body" color="secondary">Buy Premium</Text>
-                    <Text variant="caption" color="secondary">{PURCHASE_URL}</Text>
+                    <Text variant="body" color="secondary">
+                      Open in Google Play
+                    </Text>
+                    <Text variant="caption" color="secondary">
+                      {Platform.OS === 'android' ? PLAY_STORE_URL : ''}
+                    </Text>
                   </TouchableOpacity>
                 </>
               )}
@@ -204,15 +187,22 @@ export function SettingsScreen() {
               style={styles.widgetLink}
               onPress={() => navigation.navigate('Widget')}
             >
-              <Text variant="body" color="secondary">Settings</Text>
-              <Text variant="caption" color="secondary">Widgets, Dynamic Island, overlay</Text>
+              <Text variant="body" color="secondary">
+                Settings
+              </Text>
+              <Text variant="caption" color="secondary">
+                Widgets, Dynamic Island, overlay
+              </Text>
             </TouchableOpacity>
 
             <View style={styles.versionRow}>
-              <Text variant="caption" color="secondary">App version</Text>
+              <Text variant="caption" color="secondary">
+                App version
+              </Text>
               <Text variant="body" color="primary" style={styles.versionValue}>
                 {(() => {
-                  const { version, buildNumber } = getAppVersionUseCase.execute();
+                  const { version, buildNumber } =
+                    getAppVersionUseCase.execute();
                   return buildNumber ? `${version} (${buildNumber})` : version;
                 })()}
               </Text>

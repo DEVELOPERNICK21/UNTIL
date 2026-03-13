@@ -1,16 +1,32 @@
 import React from 'react';
-import { View, StyleSheet, ScrollView, TouchableOpacity, Dimensions } from 'react-native';
+import {
+  View,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  Dimensions,
+} from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { Text, ScreenGradient, Card, ProgressLine, CircularProgress } from '../../ui';
+import {
+  Text,
+  ScreenGradient,
+  Card,
+  ProgressLine,
+  CircularProgress,
+} from '../../ui';
 import { useObserveTimeState } from '../../hooks';
 import { Spacing, Colors, getProgressColor } from '../../theme';
 import type { RootStackParamList } from '../../navigation/RootNavigator';
 
-const RING_SIZE = Math.min(200, Dimensions.get('window').width - Spacing[4] * 2 - 32);
+const RING_SIZE = Math.min(
+  200,
+  Dimensions.get('window').width - Spacing[4] * 2 - 32,
+);
 
 export function LifeScreen() {
-  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList, 'Life'>>();
+  const navigation =
+    useNavigation<NativeStackNavigationProp<RootStackParamList, 'Life'>>();
   const { userProfile, timeState } = useObserveTimeState();
   const hasBirthDate = !!userProfile.birthDate;
 
@@ -29,7 +45,11 @@ export function LifeScreen() {
           contentContainerStyle={styles.content}
           showsVerticalScrollIndicator={false}
         >
-          <Text variant="sectionTitle" color="secondary" style={styles.overhead}>
+          <Text
+            variant="sectionTitle"
+            color="secondary"
+            style={styles.overhead}
+          >
             Your life
           </Text>
 
@@ -46,7 +66,11 @@ export function LifeScreen() {
 
               <View style={styles.statsRow}>
                 <View style={styles.statBox}>
-                  <Text variant="caption" color="secondary" style={styles.statLabel}>
+                  <Text
+                    variant="caption"
+                    color="secondary"
+                    style={styles.statLabel}
+                  >
                     DAYS LIVED
                   </Text>
                   <Text variant="title" color="primary" style={styles.bigValue}>
@@ -54,10 +78,18 @@ export function LifeScreen() {
                   </Text>
                 </View>
                 <View style={styles.statBox}>
-                  <Text variant="caption" color="secondary" style={styles.statLabel}>
+                  <Text
+                    variant="caption"
+                    color="secondary"
+                    style={styles.statLabel}
+                  >
                     DAYS LEFT
                   </Text>
-                  <Text variant="title" color="primary" style={[styles.bigValue, { color: progressColor }]}>
+                  <Text
+                    variant="title"
+                    color="primary"
+                    style={[styles.bigValue, { color: progressColor }]}
+                  >
                     {remainingDays.toLocaleString()}
                   </Text>
                 </View>
@@ -65,15 +97,21 @@ export function LifeScreen() {
 
               <Card style={styles.card}>
                 <Text variant="body" color="secondary" style={styles.cardText}>
-                  Based on {deathAge} years. {percentUsed}% used · {100 - percentUsed}% remaining.
+                  Based on {deathAge} years. {percentUsed}% used ·{' '}
+                  {100 - percentUsed}% remaining.
                 </Text>
-                <ProgressLine progress={progress} fillColor={progressColor} style={styles.progress} />
+                <ProgressLine
+                  progress={progress}
+                  fillColor={progressColor}
+                  style={styles.progress}
+                />
               </Card>
             </>
           ) : (
             <Card style={styles.card}>
               <Text variant="body" color="secondary" style={styles.cardText}>
-                Set your birth date in Settings to see how much of your life has passed and how much is left.
+                Set your birth date in Settings to see how much of your life has
+                passed and how much is left.
               </Text>
               <TouchableOpacity
                 style={styles.settingsCta}

@@ -68,12 +68,24 @@ export function RootNavigator() {
           options={({ navigation }) => ({
             title: 'Until: Days left',
             headerRight: () => (
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                <TouchableOpacity onPress={() => navigation.navigate('Widget')} style={{ padding: 8 }}>
-                  <Text variant="caption" color="secondary">Settings</Text>
+              <View
+                style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}
+              >
+                <TouchableOpacity
+                  onPress={() => navigation.navigate('Widget')}
+                  style={{ padding: 8 }}
+                >
+                  <Text variant="caption" color="secondary">
+                    Settings
+                  </Text>
                 </TouchableOpacity>
-                <TouchableOpacity onPress={() => navigation.navigate('Settings')} style={{ padding: 8 }}>
-                  <Text variant="caption" color="secondary">Profile</Text>
+                <TouchableOpacity
+                  onPress={() => navigation.navigate('Settings')}
+                  style={{ padding: 8 }}
+                >
+                  <Text variant="caption" color="secondary">
+                    Profile
+                  </Text>
                 </TouchableOpacity>
               </View>
             ),
