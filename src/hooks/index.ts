@@ -7,3 +7,5 @@ export { useObserveCategoryTotals } from './useObserveCategoryTotals';
 export { useRegretProjection } from './useRegretProjection';
 export { useInterventionState } from './useInterventionState';
 export { useDailyTasks } from './useDailyTasks';
+export { useOnboardingState } from './useOnboardingState';
+export { useAppUpdateCheck } from './useAppUpdateCheck';

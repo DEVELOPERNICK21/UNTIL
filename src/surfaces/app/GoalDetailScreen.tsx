@@ -26,7 +26,7 @@ import {
   isRepeatDailyUseCase,
 } from '../../di';
 import { syncDailyTasksWidget } from '../../infrastructure';
-import { Spacing, Colors, Radius } from '../../theme';
+import { Spacing, Colors, Radius, Typography } from '../../theme';
 import type { RootStackParamList } from '../../navigation/RootNavigator';
 import type { GoalTask, TaskCategory } from '../../types';
 
@@ -386,7 +386,7 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing[2],
     paddingHorizontal: Spacing[3],
     color: Colors.textPrimary,
-    fontSize: 16,
+    fontSize: Typography.label,
     marginBottom: Spacing[2],
   },
   categoryLabel: { marginBottom: Spacing[1] },

@@ -3,3 +3,4 @@ export { MmkvSubscriptionRepository } from './MmkvSubscriptionRepository';
 export { MmkvActivityRepository } from './MmkvActivityRepository';
 export { MmkvTaskRepository } from './MmkvTaskRepository';
 export { MmkvMonthlyGoalRepository } from './MmkvMonthlyGoalRepository';
+export { MmkvOnboardingRepository } from './MmkvOnboardingRepository';

@@ -9,4 +9,5 @@ module.exports = {
       packageName: 'app.until.time',
     },
   },
+  assets: ['./src/assets/fonts/'],
 };

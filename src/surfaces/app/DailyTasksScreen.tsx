@@ -25,7 +25,7 @@ import {
   getGoalUseCase,
 } from '../../di';
 import { syncDailyTasksWidget } from '../../infrastructure';
-import { Spacing, Colors, Radius } from '../../theme';
+import { Spacing, Colors, Radius, Typography, FontFamily } from '../../theme';
 import type { DailyTask, TaskCategory } from '../../types';
 
 const TASK_CATEGORIES: { value: TaskCategory; label: string }[] = [
@@ -575,7 +575,7 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing[3],
     paddingHorizontal: Spacing[4],
     color: Colors.textPrimary,
-    fontSize: 18,
+    fontSize: Typography.greeting,
     lineHeight: 24,
     minHeight: 56,
     marginBottom: Spacing[3],
@@ -628,13 +628,13 @@ const styles = StyleSheet.create({
   },
   checkmark: {
     color: '#fff',
-    fontSize: 14,
-    fontWeight: '700',
+    fontSize: Typography.subtitle,
+    fontFamily: FontFamily.bold,
   },
   taskContent: { flex: 1 },
   taskTitle: {
     marginBottom: 2,
-    fontSize: 17,
+    fontSize: Typography.lead,
     lineHeight: 22,
   },
   taskTitleDone: {
@@ -674,7 +674,7 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing[3],
     paddingHorizontal: Spacing[4],
     color: Colors.textPrimary,
-    fontSize: 18,
+    fontSize: Typography.greeting,
     lineHeight: 24,
     minHeight: 56,
     marginBottom: Spacing[3],

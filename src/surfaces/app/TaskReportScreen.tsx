@@ -22,7 +22,7 @@ import {
   type PieSegment,
   type BarDataPoint,
 } from '../../ui';
-import { Spacing, Colors, Typography } from '../../theme';
+import { Spacing, Colors, Typography, FontFamily } from '../../theme';
 import type { TaskCategory } from '../../types';
 
 const CATEGORY_LABELS: Record<TaskCategory, string> = {
@@ -350,7 +350,7 @@ const styles = StyleSheet.create({
   },
   title: {
     marginBottom: Spacing[1],
-    fontWeight: '600',
+    fontFamily: FontFamily.medium,
   },
   subtitle: {
     marginBottom: Spacing[4],
@@ -396,11 +396,11 @@ const styles = StyleSheet.create({
   statLabel: {
     letterSpacing: 0.8,
     marginBottom: 4,
-    fontSize: 11,
+    fontSize: Typography.badge,
   },
   statValue: {
-    fontSize: 26,
-    fontWeight: '700',
+    fontSize: Typography.headline,
+    fontFamily: FontFamily.bold,
   },
   card: {
     marginBottom: Spacing[4],
@@ -411,14 +411,14 @@ const styles = StyleSheet.create({
     marginBottom: Spacing[3],
     textTransform: 'uppercase',
     letterSpacing: 1.2,
-    fontSize: 12,
+    fontSize: Typography.small,
   },
   categoryTitle: {
     marginTop: Spacing[4],
     marginBottom: Spacing[2],
     textTransform: 'uppercase',
     letterSpacing: 1.2,
-    fontSize: 12,
+    fontSize: Typography.small,
   },
   chartSection: {
     alignItems: 'center',

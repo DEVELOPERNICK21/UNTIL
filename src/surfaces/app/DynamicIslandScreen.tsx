@@ -7,7 +7,7 @@ import React, { useState, useCallback } from 'react';
 import { View, StyleSheet, ScrollView, TouchableOpacity, NativeModules, Platform } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { Text, ScreenGradient, Card } from '../../ui';
-import { Colors, Spacing } from '../../theme';
+import { Colors, Spacing, Typography } from '../../theme';
 import { useObserveSubscription } from '../../hooks';
 import { isPremiumLiveActivityType } from '../../domain/premium';
 import {
@@ -205,7 +205,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: Colors.divider,
   },
-  badgeText: { color: Colors.textPrimary, fontSize: 11 },
+  badgeText: { color: Colors.textPrimary, fontSize: Typography.badge },
   actions: {
     flexDirection: 'row',
     gap: Spacing[2],
@@ -243,7 +243,7 @@ const styles = StyleSheet.create({
   },
   premiumBadgeText: {
     color: Colors.background,
-    fontSize: 10,
+    fontSize: Typography.micro,
   },
   optionHeader: {
     flexDirection: 'row',

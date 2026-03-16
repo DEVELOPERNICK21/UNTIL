@@ -11,7 +11,7 @@ import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Text, ScreenGradient, Card, ProgressLine } from '../../ui';
 import { useObserveTimeState, useDailyTasks } from '../../hooks';
-import { Spacing, getProgressColor } from '../../theme';
+import { Spacing, FontFamily, getProgressColor } from '../../theme';
 import type { RootStackParamList } from '../../navigation/RootNavigator';
 import { getDayProgress } from '../../core/time/day';
 import { startOfDay, endOfDay } from '../../core/time/clock';
@@ -420,7 +420,7 @@ const styles = StyleSheet.create({
   },
   headline: {
     marginBottom: Spacing[2],
-    fontWeight: '600',
+    fontFamily: FontFamily.medium,
   },
   subhead: {
     marginBottom: Spacing[5],

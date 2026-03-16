@@ -13,7 +13,7 @@ import {
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { Text, ScreenGradient } from '../../ui';
-import { Colors, Spacing } from '../../theme';
+import { Colors, Spacing, Typography } from '../../theme';
 import {
   startOverlay,
   stopOverlay,
@@ -346,7 +346,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: Colors.divider,
   },
-  badgeText: { color: Colors.textPrimary, fontSize: 11 },
+  badgeText: { color: Colors.textPrimary, fontSize: Typography.badge },
   actions: {
     flexDirection: 'row',
     gap: Spacing[2],
@@ -384,7 +384,7 @@ const styles = StyleSheet.create({
   },
   premiumBadgeText: {
     color: Colors.background,
-    fontSize: 10,
+    fontSize: Typography.micro,
   },
   optionHeader: {
     flexDirection: 'row',

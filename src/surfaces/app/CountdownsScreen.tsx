@@ -14,7 +14,7 @@ import { Text, ScreenGradient, Card } from '../../ui';
 import { getCountdownsUseCase, addCountdownUseCase, removeCountdownUseCase } from '../../di';
 import { syncCountdowns } from '../../infrastructure';
 import { getDaysLeft, formatDaysLeft } from '../../core/countdown/daysLeft';
-import { Spacing, Colors, Radius } from '../../theme';
+import { Spacing, Colors, Radius, Typography } from '../../theme';
 import type { RootStackParamList } from '../../navigation/RootNavigator';
 import type { Countdown } from '../../types';
 
@@ -191,7 +191,7 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing[2],
     paddingHorizontal: Spacing[3],
     color: Colors.textPrimary,
-    fontSize: 16,
+    fontSize: Typography.label,
     marginBottom: Spacing[2],
   },
   dateButton: {

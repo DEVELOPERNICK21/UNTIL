@@ -6,7 +6,7 @@ import { Text, ScreenGradient, Card, ProgressLine, CircularProgress } from '../.
 import { useObserveTimeState } from '../../hooks';
 import { getDayProgress } from '../../core/time/day';
 import { startOfDay, endOfDay } from '../../core/time/clock';
-import { Spacing, Colors, getProgressColor } from '../../theme';
+import { Spacing, Colors, Typography, FontFamily, getProgressColor } from '../../theme';
 import type { RootStackParamList } from '../../navigation/RootNavigator';
 
 const RING_SIZE = Math.min(220, Dimensions.get('window').width - Spacing[4] * 2 - 32);
@@ -135,15 +135,15 @@ const styles = StyleSheet.create({
   statLabel: {
     letterSpacing: 0.8,
     marginBottom: 4,
-    fontSize: 11,
+    fontSize: Typography.badge,
   },
   passedValue: {
-    fontSize: 18,
-    fontWeight: '600',
+    fontSize: Typography.greeting,
+    fontFamily: FontFamily.medium,
   },
   leftValue: {
-    fontSize: 18,
-    fontWeight: '600',
+    fontSize: Typography.greeting,
+    fontFamily: FontFamily.medium,
   },
   card: {
     marginBottom: Spacing[4],

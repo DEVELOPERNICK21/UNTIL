@@ -15,6 +15,21 @@ export const screenshotAndroid2 = require('./screenshotAndroid2.JPG');
 export const screenshotAndroid3 = require('./screenshotAndroid3.JPG');
 export const screenshotAndroid4 = require('./screenshotAndroid4.JPG');
 
+// App Images
+export const appLogoIcon = require('./appLogo.png');
+
+// Onboarding hero images (3-step flow)
+export const onboardingImage1 = require('./onboarding_image_1.png');
+export const onboardingImage2 = require('./onboarding_image_2.png');
+export const onboardingImage3 = require('./onboarding_image_3.png');
+
+/** Onboarding step images in order — Day Progress, Time Tracking, Cadence */
+export const onboardingImages = [
+  onboardingImage1,
+  onboardingImage2,
+  onboardingImage3,
+] as const;
+
 /** All iOS screenshot assets (for carousels or lists) */
 export const iosScreenshots = [
   iOSImage1,
@@ -30,3 +45,5 @@ export const androidScreenshots = [
   screenshotAndroid3,
   screenshotAndroid4,
 ] as const;
+
+export const commonImages = [appLogoIcon] as const;

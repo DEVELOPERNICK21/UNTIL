@@ -19,7 +19,7 @@ import { HourCalculationScreen } from '../surfaces/app/HourCalculationScreen';
 import { DynamicIslandScreen } from '../surfaces/app/DynamicIslandScreen';
 import { OverlayScreen } from '../surfaces/app/OverlayScreen';
 import { Text } from '../ui';
-import { Colors, Typography } from '../theme';
+import { useTheme, Typography, Weight, getFontFamilyForWeight } from '../theme';
 
 export type RootStackParamList = {
   Home: undefined;
@@ -40,28 +40,24 @@ export type RootStackParamList = {
   Overlay: undefined;
 };
 
-const headerStyle = {
-  headerStyle: { backgroundColor: Colors.background },
-  headerTintColor: Colors.textPrimary,
-  headerTitleStyle: {
-    color: Colors.textPrimary,
-    fontSize: Typography.sectionTitle,
-    fontWeight: '500' as const,
-  },
-  headerShadowVisible: false,
-};
-
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export function RootNavigator() {
+  const theme = useTheme();
+  const screenOptions = {
+    headerShown: true,
+    headerStyle: { backgroundColor: theme.background },
+    headerTintColor: theme.textPrimary,
+    headerTitleStyle: {
+      color: theme.textPrimary,
+      fontSize: Typography.sectionTitle,
+      fontFamily: getFontFamilyForWeight(Weight.medium),
+    },
+    headerShadowVisible: false,
+  };
   return (
     <NavigationContainer>
-      <Stack.Navigator
-        screenOptions={{
-          headerShown: true,
-          ...headerStyle,
-        }}
-      >
+      <Stack.Navigator screenOptions={screenOptions}>
         <Stack.Screen
           name="Home"
           component={HomeScreen}
@@ -94,7 +90,7 @@ export function RootNavigator() {
         <Stack.Screen
           name="Settings"
           component={SettingsScreen}
-          options={{ title: 'Profile' }}
+          options={{ title: 'Settings', headerBackTitle: 'Back' }}
         />
         <Stack.Screen
           name="Life"

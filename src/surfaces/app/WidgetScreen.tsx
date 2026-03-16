@@ -13,7 +13,7 @@ import { useObserveSubscription } from '../../hooks';
 import { isPremiumWidget } from '../../domain/premium';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Text, ScreenGradient } from '../../ui';
-import { Colors, Spacing, Radius } from '../../theme';
+import { Colors, Spacing, Radius, Typography } from '../../theme';
 import type { RootStackParamList } from '../../navigation/RootNavigator';
 
 const { WidgetBridge, LiveActivityBridge } = NativeModules;
@@ -460,7 +460,7 @@ const styles = StyleSheet.create({
   },
   tileTitle: {
     flex: 1,
-    fontSize: 17,
+    fontSize: Typography.lead,
   },
   tileDescription: {
     marginTop: 2,
@@ -486,7 +486,7 @@ const styles = StyleSheet.create({
   },
   statusPillText: {
     color: Colors.textPrimary,
-    fontSize: 11,
+    fontSize: Typography.badge,
   },
   premiumPill: {
     backgroundColor: Colors.percent,
@@ -496,7 +496,7 @@ const styles = StyleSheet.create({
   },
   premiumPillText: {
     color: Colors.background,
-    fontSize: 10,
+    fontSize: Typography.micro,
   },
 
   quickLinkTouch: {

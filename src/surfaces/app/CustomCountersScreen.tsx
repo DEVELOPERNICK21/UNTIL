@@ -13,7 +13,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Text, ScreenGradient, Card } from '../../ui';
 import { getCustomCountersUseCase, addCustomCounterUseCase, removeCustomCounterUseCase } from '../../di';
 import { syncCustomCounters } from '../../infrastructure';
-import { Spacing, Colors, Radius } from '../../theme';
+import { Spacing, Colors, Radius, Typography } from '../../theme';
 import type { RootStackParamList } from '../../navigation/RootNavigator';
 import type { CustomCounter } from '../../types';
 
@@ -157,7 +157,7 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing[2],
     paddingHorizontal: Spacing[3],
     color: Colors.textPrimary,
-    fontSize: 16,
+    fontSize: Typography.label,
   },
   addButton: {
     backgroundColor: Colors.divider,

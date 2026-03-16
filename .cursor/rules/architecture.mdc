@@ -20,6 +20,7 @@ alwaysApply: true
 - **Time/profile data**: `TimeRepository` (via `MmkvTimeRepository`) — only place that reads/writes user/time to MMKV
 - **Widget cache**: `TimeRepository.getWidgetCache()` — same time logic as `getTimeState()`
 - **Progress colors**: `theme/progressColor.ts` — `getProgressColor(progress)`; UI consumes, no duplicate logic
+- **Theme**: `theme/palettes.ts` + `stores/themeStore.ts` — design tokens (light/dark); UI consumes via `useTheme()` only; persistence via AsyncStorage
 - **Types/DTOs**: `types/index.ts` — `WidgetCache`, `UserProfile`, `TimeProgress`, etc.
 - **Storage keys**: `persistence/schema.ts` — shared with native widgets
 

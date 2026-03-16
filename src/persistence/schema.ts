@@ -53,6 +53,9 @@ export const STORAGE_KEYS = {
   // Monthly goals and repeat-daily rules
   MONTHLY_GOALS: 'monthly.goals',
   GOAL_REPEAT_DAILY: 'goal.repeat.daily',
+
+  // Onboarding (auth flow)
+  ONBOARDING_COMPLETED: 'onboarding.completed',
 } as const;
 
 export const DEFAULTS = {

@@ -8,7 +8,7 @@ import {
   CircularProgress,
 } from '../../ui';
 import { useObserveTimeState } from '../../hooks';
-import { Spacing, Colors, getProgressColor } from '../../theme';
+import { Spacing, Colors, Typography, FontFamily, getProgressColor } from '../../theme';
 
 function getDaysInMonth(): number {
   const d = new Date();
@@ -136,11 +136,11 @@ const styles = StyleSheet.create({
   statLabel: {
     letterSpacing: 0.8,
     marginBottom: 4,
-    fontSize: 11,
+    fontSize: Typography.badge,
   },
   bigValue: {
-    fontSize: 28,
-    fontWeight: '700',
+    fontSize: Typography.display,
+    fontFamily: FontFamily.bold,
   },
   card: {
     marginBottom: Spacing[4],

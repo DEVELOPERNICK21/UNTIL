@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { View, StyleSheet, useWindowDimensions, Animated, Easing } from 'react-native';
-import { Colors } from '../theme';
+import { useTheme } from '../theme';
 
 interface ProgressLineProps {
   progress: number;
@@ -14,6 +14,7 @@ const ANIM_DURATION = 380;
 const EASE = Easing.out(Easing.cubic);
 
 export function ProgressLine({ progress, fillColor, style }: ProgressLineProps) {
+  const theme = useTheme();
   const { width } = useWindowDimensions();
   const lineWidth = Math.min(width * 0.7, 280);
   const clampedProgress = Math.min(1, Math.max(0, progress));
@@ -33,11 +34,11 @@ export function ProgressLine({ progress, fillColor, style }: ProgressLineProps) 
     outputRange: [0, lineWidth],
   });
 
-  const color = fillColor ?? Colors.progressFill;
+  const color = fillColor ?? theme.progressFill;
 
   return (
     <View style={[styles.wrapper, { width: lineWidth }, style]}>
-      <View style={[styles.track, { height: HEIGHT }]}>
+      <View style={[styles.track, { height: HEIGHT, backgroundColor: theme.progressTrack }]}>
         <Animated.View
           style={[
             styles.fillRow,
@@ -72,7 +73,6 @@ const styles = StyleSheet.create({
   },
   track: {
     width: '100%',
-    backgroundColor: Colors.progressTrack,
     borderRadius: 999,
     overflow: 'visible',
   },

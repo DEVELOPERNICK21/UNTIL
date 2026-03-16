@@ -12,7 +12,7 @@ import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Text, ScreenGradient, Card } from '../../ui';
 import { getHourCalculationState, syncHourCalculationWidget } from '../../infrastructure/WidgetSync';
-import { Spacing, Colors, Radius } from '../../theme';
+import { Spacing, Colors, Radius, Typography } from '../../theme';
 import type { RootStackParamList } from '../../navigation/RootNavigator';
 
 function formatElapsed(totalElapsedMs: number, startTimeMs: number, isRunning: boolean): string {
@@ -163,7 +163,7 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing[2],
     paddingHorizontal: Spacing[3],
     color: Colors.textPrimary,
-    fontSize: 16,
+    fontSize: Typography.label,
   },
   primaryButton: {
     backgroundColor: Colors.divider,
@@ -173,7 +173,7 @@ const styles = StyleSheet.create({
   },
   primaryButtonText: { color: Colors.textPrimary },
   elapsed: {
-    fontSize: 32,
+    fontSize: Typography.large,
     marginVertical: Spacing[2],
   },
   runningHint: { marginBottom: Spacing[2] },

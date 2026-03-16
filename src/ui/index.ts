@@ -11,3 +11,5 @@ export { PieChart } from './PieChart';
 export type { PieSegment } from './PieChart';
 export { BarChart } from './BarChart';
 export type { BarDataPoint } from './BarChart';
+export { Slider } from './Slider';
+export type { SliderProps } from './Slider';

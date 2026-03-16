@@ -10,6 +10,7 @@ import { MmkvCustomCounterRepository } from './infrastructure/repositories/MmkvC
 import { MmkvCountdownRepository } from './infrastructure/repositories/MmkvCountdownRepository';
 import { MmkvTaskRepository } from './infrastructure/repositories/MmkvTaskRepository';
 import { MmkvMonthlyGoalRepository } from './infrastructure/repositories/MmkvMonthlyGoalRepository';
+import { MmkvOnboardingRepository } from './infrastructure/repositories/MmkvOnboardingRepository';
 import { AppUpdateServiceAdapter } from './infrastructure/adapters/AppUpdateServiceAdapter';
 import { AppVersionProviderAdapter } from './infrastructure/adapters/AppVersionProviderAdapter';
 import { ObserveTimeStateUseCase } from './domain/useCases/ObserveTimeStateUseCase';
@@ -54,6 +55,8 @@ import { CheckForAppUpdateUseCase } from './domain/useCases/CheckForAppUpdateUse
 import { GetAppVersionUseCase } from './domain/useCases/GetAppVersionUseCase';
 import { ActivateLicenseUseCase } from './domain/useCases/ActivateLicenseUseCase';
 import { VerifySubscriptionUseCase } from './domain/useCases/VerifySubscriptionUseCase';
+import { GetOnboardingCompletedUseCase } from './domain/useCases/GetOnboardingCompletedUseCase';
+import { SetOnboardingCompletedUseCase } from './domain/useCases/SetOnboardingCompletedUseCase';
 import { DeviceIdProviderAdapter } from './infrastructure/adapters/DeviceIdProviderAdapter';
 import { LicenseVerificationServiceAdapter } from './infrastructure/adapters/LicenseVerificationServiceAdapter';
 
@@ -64,6 +67,7 @@ const customCounterRepository = new MmkvCustomCounterRepository();
 const countdownRepository = new MmkvCountdownRepository();
 const taskRepository = new MmkvTaskRepository();
 const monthlyGoalRepository = new MmkvMonthlyGoalRepository();
+const onboardingRepository = new MmkvOnboardingRepository();
 const appUpdateService = new AppUpdateServiceAdapter();
 const appVersionProvider = new AppVersionProviderAdapter();
 const deviceIdProvider = new DeviceIdProviderAdapter();
@@ -125,3 +129,5 @@ export const verifySubscriptionUseCase = new VerifySubscriptionUseCase(
   deviceIdProvider,
   licenseVerificationService
 );
+export const getOnboardingCompletedUseCase = new GetOnboardingCompletedUseCase(onboardingRepository);
+export const setOnboardingCompletedUseCase = new SetOnboardingCompletedUseCase(onboardingRepository);
