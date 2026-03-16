@@ -17,10 +17,11 @@ export interface UpdateCheckResult {
   storeUrl?: string;
 }
 
-// TODO: point this to your real remote JSON on your website.
-
+// Remote JSON config for app updates. Served from your marketing site.
+// Implement a Next.js (or similar) API route at this path that returns the
+// config in the documented format.
 const UPDATE_CONFIG_URL =
-  'https://developernick1-until.vercel.app/api/update-config.json';
+  'https://developernick1-until.vercel.app/api/update-config';
 
 const LAST_CHECK_KEY = 'last_update_check_at';
 const ONE_DAY_MS = 24 * 60 * 60 * 1000;
