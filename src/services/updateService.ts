@@ -84,31 +84,6 @@ export async function fetchUpdateConfig(): Promise<UpdateConfig | null> {
   }
 }
 
-// For manual / debug use only
-export async function testUpdateNow() {
-  try {
-    console.log('[UpdateTest] App version:', DeviceInfo.getVersion());
-
-    const config = await fetchUpdateConfig();
-    console.log('[UpdateTest] Remote config:', config);
-
-    if (!config) {
-      console.log('[UpdateTest] No config (fetch failed or 404).');
-      return;
-    }
-
-    const result = await checkForAppUpdate();
-    console.log(
-      '[UpdateTest] Result:',
-      result.type,
-      'storeUrl:',
-      result.storeUrl,
-    );
-  } catch (e) {
-    console.log('[UpdateTest] Error while testing update:', e);
-  }
-}
-
 export async function checkForAppUpdate(): Promise<UpdateCheckResult> {
   const config = await fetchUpdateConfig();
   if (!config) {
