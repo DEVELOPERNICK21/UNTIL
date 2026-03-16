@@ -18,8 +18,9 @@ export interface UpdateCheckResult {
 }
 
 // TODO: point this to your real remote JSON on your website.
+
 const UPDATE_CONFIG_URL =
-  'https://your-website.com/path/to/update-config.json';
+  'https://developernick1-until.vercel.app/api/update-config.json';
 
 const LAST_CHECK_KEY = 'last_update_check_at';
 const ONE_DAY_MS = 24 * 60 * 60 * 1000;
@@ -30,11 +31,7 @@ export function parseSemver(version: string): [number, number, number] {
     return Number.isFinite(n) ? n : 0;
   });
 
-  return [
-    major ?? 0,
-    minor ?? 0,
-    patch ?? 0,
-  ] as [number, number, number];
+  return [major ?? 0, minor ?? 0, patch ?? 0] as [number, number, number];
 }
 
 export function compareSemver(a: string, b: string): -1 | 0 | 1 {
@@ -123,4 +120,3 @@ export async function openStoreUrl(url?: string): Promise<void> {
     // ignore
   }
 }
-
