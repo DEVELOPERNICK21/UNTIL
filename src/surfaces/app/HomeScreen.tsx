@@ -15,6 +15,7 @@ import { Spacing, FontFamily, getProgressColor } from '../../theme';
 import type { RootStackParamList } from '../../navigation/RootNavigator';
 import { getDayProgress } from '../../core/time/day';
 import { startOfDay, endOfDay } from '../../core/time/clock';
+import { testUpdateNow } from '../../services/updateService';
 
 function getDaysInMonth(): number {
   const d = new Date();
@@ -365,6 +366,10 @@ export function HomeScreen() {
                 />
               </>
             )}
+
+            <TouchableOpacity onPress={testUpdateNow}>
+              <Text>Test Update Now</Text>
+            </TouchableOpacity>
             <View style={styles.tasksCtaRow}>
               <TouchableOpacity
                 style={styles.tasksCta}

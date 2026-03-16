@@ -35,7 +35,6 @@ import {
 } from '../../theme';
 import { useUpdateUserProfile } from '../../hooks';
 import { syncWidgetCache } from '../../infrastructure';
-import { useOnboardingComplete } from '../onboarding';
 import type { AuthStackParamList } from '../../navigation/AuthNavigator';
 
 const LIFESPAN_MIN = 45;
@@ -78,7 +77,6 @@ export function IdentitySetupScreen() {
   const insets = useSafeAreaInsets();
   const theme = useTheme();
   const percent = theme.percent;
-  const completeAuth = useOnboardingComplete();
   const updateUserProfile = useUpdateUserProfile();
 
   const [birthDate, setBirthDate] = useState(new Date(1990, 0, 1));
@@ -99,7 +97,7 @@ export function IdentitySetupScreen() {
   const handleSeeTimeline = () => {
     updateUserProfile(birthDateStr, lifespan);
     syncWidgetCache();
-    completeAuth();
+    navigation.navigate('LifeWeeksPreview');
   };
 
   return (

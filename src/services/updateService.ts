@@ -56,6 +56,7 @@ export function getStoreUrl(config: UpdateConfig): string | undefined {
 }
 
 export function shouldSkipUpdateCheck(now: number = Date.now()): boolean {
+  // return false; // TEMP: always check for testing
   const last = getNumber(LAST_CHECK_KEY);
   if (!last) return false;
   return now - last < ONE_DAY_MS;
@@ -80,6 +81,31 @@ export async function fetchUpdateConfig(): Promise<UpdateConfig | null> {
     return json;
   } catch {
     return null;
+  }
+}
+
+// For manual / debug use only
+export async function testUpdateNow() {
+  try {
+    console.log('[UpdateTest] App version:', DeviceInfo.getVersion());
+
+    const config = await fetchUpdateConfig();
+    console.log('[UpdateTest] Remote config:', config);
+
+    if (!config) {
+      console.log('[UpdateTest] No config (fetch failed or 404).');
+      return;
+    }
+
+    const result = await checkForAppUpdate();
+    console.log(
+      '[UpdateTest] Result:',
+      result.type,
+      'storeUrl:',
+      result.storeUrl,
+    );
+  } catch (e) {
+    console.log('[UpdateTest] Error while testing update:', e);
   }
 }
 
@@ -119,5 +145,44 @@ export async function openStoreUrl(url?: string): Promise<void> {
     }
   } catch {
     // ignore
+  }
+}
+
+// DEBUG / manual testing helper – call from a button to inspect behaviour.
+export async function testUpdateNow(): Promise<void> {
+  try {
+    console.log('[UpdateTest] App version:', DeviceInfo.getVersion());
+    console.log('[UpdateTest] URL:', UPDATE_CONFIG_URL);
+
+    const response = await fetch(UPDATE_CONFIG_URL, {
+      method: 'GET',
+      headers: { Accept: 'application/json' },
+    });
+
+    console.log(
+      '[UpdateTest] HTTP status:',
+      response.status,
+      'ok:',
+      response.ok,
+    );
+
+    if (!response.ok) {
+      const text = await response.text().catch(() => '');
+      console.log('[UpdateTest] Non-OK response body:', text);
+      return;
+    }
+
+    const config = (await response.json()) as UpdateConfig;
+    console.log('[UpdateTest] Remote config parsed:', config);
+
+    const result = await checkForAppUpdate();
+    console.log(
+      '[UpdateTest] Result:',
+      result.type,
+      'storeUrl:',
+      result.storeUrl,
+    );
+  } catch (e) {
+    console.log('[UpdateTest] Error while testing update:', e);
   }
 }
