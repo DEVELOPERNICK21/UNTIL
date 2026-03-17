@@ -366,10 +366,6 @@ export function HomeScreen() {
                 />
               </>
             )}
-
-            <TouchableOpacity onPress={testUpdateNow}>
-              <Text>Test Update Now</Text>
-            </TouchableOpacity>
             <View style={styles.tasksCtaRow}>
               <TouchableOpacity
                 style={styles.tasksCta}

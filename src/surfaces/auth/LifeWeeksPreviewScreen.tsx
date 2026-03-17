@@ -1,5 +1,10 @@
 import React, { useMemo } from 'react';
-import { View, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import {
+  View,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+} from 'react-native';
 import {
   SafeAreaView,
   useSafeAreaInsets,
@@ -98,12 +103,7 @@ export function LifeWeeksPreviewScreen() {
                   ]}
                 >
                   You have lived{' '}
-                  <Text
-                    style={[
-                      styles.titleEmphasis,
-                      { color: theme.percent },
-                    ]}
-                  >
+                  <Text style={[styles.titleEmphasis, { color: theme.percent }]}>
                     {livedWeeksLabel} weeks
                   </Text>
                 </Text>
@@ -111,15 +111,12 @@ export function LifeWeeksPreviewScreen() {
                 <View style={styles.gridContainer}>
                   {weeksArray.map((isLived, index) => (
                     <View
-                      // eslint-disable-next-line react/no-array-index-key
                       key={index}
                       style={[
                         styles.weekDot,
-                        {
-                          backgroundColor: isLived
-                            ? theme.percent
-                            : theme.surfaceSubtle,
-                        },
+                        isLived
+                          ? { backgroundColor: theme.percent }
+                          : styles.weekDotRemaining,
                       ]}
                     />
                   ))}
@@ -209,6 +206,9 @@ const styles = StyleSheet.create({
     borderRadius: 3,
     marginHorizontal: 2,
     marginVertical: 3,
+  },
+  weekDotRemaining: {
+    backgroundColor: '#4A4A4A',
   },
   footer: {
     position: 'absolute',

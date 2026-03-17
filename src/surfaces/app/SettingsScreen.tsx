@@ -23,7 +23,6 @@ import {
   useUpdateUserProfile,
   useObserveSubscription,
 } from '../../hooks';
-import { syncWidgetCache } from '../../infrastructure';
 import { getAppVersionUseCase } from '../../di';
 import {
   useTheme,
@@ -106,7 +105,6 @@ export function SettingsScreen() {
     if (birthInput) {
       const age = parseInt(deathInput, 10);
       updateUserProfile(birthInput, isNaN(age) || age <= 0 ? 80 : age);
-      syncWidgetCache();
       setShowEditProfile(false);
     }
   };

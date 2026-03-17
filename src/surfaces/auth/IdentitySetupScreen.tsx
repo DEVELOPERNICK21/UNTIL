@@ -13,6 +13,7 @@ import {
   ScrollView,
   Vibration,
 } from 'react-native';
+import { ActivityIndicator } from 'react-native';
 import DateTimePicker, {
   type DateTimePickerEvent,
 } from '@react-native-community/datetimepicker';
@@ -34,7 +35,6 @@ import {
   Radius,
 } from '../../theme';
 import { useUpdateUserProfile } from '../../hooks';
-import { syncWidgetCache } from '../../infrastructure';
 import type { AuthStackParamList } from '../../navigation/AuthNavigator';
 
 const LIFESPAN_MIN = 45;
@@ -69,6 +69,12 @@ function formatDisplayDate(date: Date): string {
   return `${y} ${m} ${d}`;
 }
 
+function waitForNextFrame(): Promise<void> {
+  return new Promise(resolve => {
+    requestAnimationFrame(() => resolve());
+  });
+}
+
 export function IdentitySetupScreen() {
   const navigation =
     useNavigation<
@@ -82,6 +88,7 @@ export function IdentitySetupScreen() {
   const [birthDate, setBirthDate] = useState(new Date(1990, 0, 1));
   const [showPicker, setShowPicker] = useState(false);
   const [lifespan, setLifespan] = useState(DEFAULT_LIFESPAN);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const birthDateStr = useMemo(() => toBirthDateString(birthDate), [birthDate]);
 
@@ -94,10 +101,20 @@ export function IdentitySetupScreen() {
     });
   }, []);
 
-  const handleSeeTimeline = () => {
-    updateUserProfile(birthDateStr, lifespan);
-    syncWidgetCache();
-    navigation.navigate('LifeWeeksPreview');
+  const handleSeeTimeline = async () => {
+    if (isSubmitting) {
+      return;
+    }
+
+    setIsSubmitting(true);
+    await waitForNextFrame();
+
+    try {
+      await Promise.resolve(updateUserProfile(birthDateStr, lifespan));
+      navigation.navigate('LifeWeeksPreview');
+    } catch {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -132,11 +149,11 @@ export function IdentitySetupScreen() {
               </View>
               <View style={styles.headerRight} />
             </View>
-            <View style={styles.watermarkWrap}>
+            {/* <View style={styles.watermarkWrap}>
               <Text style={[styles.watermark, { color: theme.textPrimary }]}>
                 EST.
               </Text>
-            </View>
+            </View> */}
 
             {/* When were you born? */}
             <View style={styles.section}>
@@ -149,9 +166,10 @@ export function IdentitySetupScreen() {
                   style={{
                     fontFamily: FontFamily.bold,
                     fontSize: Typography.display,
+                    color: percent,
                   }}
                 >
-                  born?
+                  BORN?
                 </Text>
               </Text>
               <Text
@@ -205,7 +223,7 @@ export function IdentitySetupScreen() {
               >
                 Expected{' '}
                 <Text style={[styles.accentText, { color: percent }]}>
-                  Lifespan
+                  LIFESPAN
                 </Text>
               </Text>
               <Text
@@ -259,17 +277,28 @@ export function IdentitySetupScreen() {
             ]}
           >
             <TouchableOpacity
-              style={[styles.cta, { backgroundColor: percent }]}
+              style={[
+                styles.cta,
+                isSubmitting ? styles.ctaDisabled : null,
+                { backgroundColor: percent },
+              ]}
               onPress={handleSeeTimeline}
               activeOpacity={0.85}
+              disabled={isSubmitting}
             >
-              <Text variant="sectionTitle" style={styles.ctaLabel}>
-                SEE MY TIMELINE
-              </Text>
-              <Text variant="sectionTitle" style={styles.ctaLabel}>
-                {' '}
-                →
-              </Text>
+              {isSubmitting ? (
+                <ActivityIndicator color="#FFFFFF" />
+              ) : (
+                <>
+                  <Text variant="sectionTitle" style={styles.ctaLabel}>
+                    SEE MY TIMELINE
+                  </Text>
+                  <Text variant="sectionTitle" style={styles.ctaLabel}>
+                    {' '}
+                    →
+                  </Text>
+                </>
+              )}
             </TouchableOpacity>
             <Text
               variant="micro"
@@ -398,6 +427,9 @@ const styles = StyleSheet.create({
     borderRadius: Radius.md,
     minHeight: 56,
     ...Shadows.card,
+  },
+  ctaDisabled: {
+    opacity: 0.8,
   },
   ctaLabel: {
     fontFamily: getFontFamilyForWeight(Weight.bold),
