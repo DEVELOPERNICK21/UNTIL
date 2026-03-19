@@ -20,15 +20,19 @@
     "@react-navigation/native": "^7.1.28",
     "@react-navigation/native-stack": "^7.12.0",
     "@reduxjs/toolkit": "^2.11.2",
+    "@shopify/react-native-skia": "^2.5.1",
     "react": "19.2.0",
     "react-hook-form": "^7.71.1",
     "react-native": "0.83.1",
     "react-native-device-info": "^15.0.2",
+    "react-native-fs": "^2.20.0",
     "react-native-mmkv": "^4.1.2",
     "react-native-nitro-modules": "0.33.2",
     "react-native-safe-area-context": "^5.5.2",
     "react-native-screens": "^4.23.0",
+    "react-native-share": "12.2.6",
     "react-native-svg": "^15.15.3",
+    "react-native-view-shot": "^4.0.3",
     "react-redux": "^9.2.0",
     "sp-react-native-in-app-updates": "^1.5.0",
     "zod": "^4.3.6",
@@ -58,5 +62,6 @@
   },
   "engines": {
     "node": ">=20"
-  }
+  },
+  "packageManager": "yarn@1.22.22+sha512.a6b2f7906b721bba3d67d4aff083df04dad64c399707841b7acf00f6b133b7ac24255f2652fa22ae3534329dc6180534e98d17432037ff6fd140556e2bb3137e"
 }

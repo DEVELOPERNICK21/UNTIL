@@ -228,31 +228,42 @@ export function SettingsScreen() {
               <Text variant="caption" style={[styles.sectionLabel, { color: theme.textSecondary }]}>
                 CONFIGURATION
               </Text>
-              <View style={[styles.row, { borderBottomColor: theme.divider }]}>
-                <View style={styles.rowContent}>
-                  <Text variant="body" style={{ color: theme.textPrimary }}>Appearance</Text>
-                  <Text variant="caption" style={[styles.rowSubtitle, { color: theme.textSecondary }]}>
-                    {THEME_OPTIONS.find(o => o.value === themeMode)?.label ?? 'System'}
-                  </Text>
-                </View>
+              <View style={[styles.appearanceRow, { borderBottomColor: theme.divider }]}>
+                <Text variant="body" style={[styles.appearanceLabel, { color: theme.textPrimary }]}>
+                  Appearance
+                </Text>
+                <Text variant="caption" style={[styles.appearanceSubtitle, { color: theme.textSecondary }]}>
+                  Choose how UNTIL looks
+                </Text>
                 <View style={styles.themeChips}>
-                  {THEME_OPTIONS.map(({ value, label }) => (
-                    <TouchableOpacity
-                      key={value}
-                      style={[
-                        styles.chip,
-                        {
-                          borderColor: theme.divider,
-                          backgroundColor: themeMode === value ? theme.divider : theme.cardBase,
-                        },
-                      ]}
-                      onPress={() => setThemeMode(value)}
-                    >
-                      <Text variant="micro" style={{ color: themeMode === value ? theme.textPrimary : theme.textSecondary }}>
-                        {label}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
+                  {THEME_OPTIONS.map(({ value, label }) => {
+                    const isSelected = themeMode === value;
+                    const chipTextColor = isSelected ? '#FFFFFF' : theme.textSecondary;
+                    return (
+                      <TouchableOpacity
+                        key={value}
+                        style={[
+                          styles.chip,
+                          isSelected
+                            ? { backgroundColor: theme.percent, borderColor: theme.percent }
+                            : { backgroundColor: theme.cardBase, borderColor: theme.divider },
+                        ]}
+                        onPress={() => setThemeMode(value)}
+                        activeOpacity={0.75}
+                      >
+                        <Text
+                          variant="caption"
+                          style={[
+                            styles.chipLabel,
+                            { color: chipTextColor },
+                            isSelected && styles.chipLabelSelected,
+                          ]}
+                        >
+                          {label}
+                        </Text>
+                      </TouchableOpacity>
+                    );
+                  })}
                 </View>
               </View>
               <TouchableOpacity
@@ -403,15 +414,38 @@ const styles = StyleSheet.create({
     fontSize: Typography.title,
     marginLeft: Spacing[2],
   },
+  appearanceRow: {
+    paddingVertical: Spacing[4],
+    borderBottomWidth: StyleSheet.hairlineWidth,
+  },
+  appearanceLabel: {
+    fontFamily: getFontFamilyForWeight(Weight.medium),
+    marginBottom: Spacing.xs,
+  },
+  appearanceSubtitle: {
+    marginBottom: Spacing[3],
+  },
   themeChips: {
     flexDirection: 'row',
-    gap: Spacing.sm,
+    gap: Spacing[2],
+    flexWrap: 'wrap',
   },
   chip: {
-    paddingVertical: Spacing.xs,
-    paddingHorizontal: Spacing[2],
-    borderRadius: Radius.sm,
-    borderWidth: 1,
+    paddingVertical: Spacing[2],
+    paddingHorizontal: Spacing[3],
+    borderRadius: Radius.md,
+    borderWidth: 2,
+    minHeight: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  chipLabel: {
+    fontFamily: getFontFamilyForWeight(Weight.medium),
+    letterSpacing: 0.3,
+  },
+  chipLabelSelected: {
+    fontFamily: getFontFamilyForWeight(Weight.semibold),
+    color: '#FFFFFF',
   },
   editCard: {
     marginBottom: Spacing[4],

@@ -9,3 +9,4 @@ export { useInterventionState } from './useInterventionState';
 export { useDailyTasks } from './useDailyTasks';
 export { useOnboardingState } from './useOnboardingState';
 export { useAppUpdateCheck } from './useAppUpdateCheck';
+export { useGoalsFeatureEnabled } from './useGoalsFeatureEnabled';

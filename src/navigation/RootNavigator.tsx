@@ -6,6 +6,7 @@ import { HomeScreen } from '../surfaces/app/HomeScreen';
 import { SettingsScreen } from '../surfaces/app/SettingsScreen';
 import { LifeScreen } from '../surfaces/app/LifeScreen';
 import { WidgetScreen } from '../surfaces/app/WidgetScreen';
+import { WidgetCustomizationScreen } from '../surfaces/app/WidgetCustomizationScreen';
 import { CustomCountersScreen } from '../surfaces/app/CustomCountersScreen';
 import { CountdownsScreen } from '../surfaces/app/CountdownsScreen';
 import { DailyTasksScreen } from '../surfaces/app/DailyTasksScreen';
@@ -18,6 +19,7 @@ import { GoalDetailScreen } from '../surfaces/app/GoalDetailScreen';
 import { HourCalculationScreen } from '../surfaces/app/HourCalculationScreen';
 import { DynamicIslandScreen } from '../surfaces/app/DynamicIslandScreen';
 import { OverlayScreen } from '../surfaces/app/OverlayScreen';
+import { ShareSnapshotScreen } from '../surfaces/app/ShareSnapshotScreen';
 import { Text } from '../ui';
 import { useTheme, Typography, Weight, getFontFamilyForWeight } from '../theme';
 
@@ -26,6 +28,7 @@ export type RootStackParamList = {
   Settings: undefined;
   Life: undefined;
   Widget: undefined;
+  WidgetCustomization: undefined;
   CustomCounters: undefined;
   Countdowns: undefined;
   DailyTasks: undefined;
@@ -38,6 +41,7 @@ export type RootStackParamList = {
   HourCalculation: undefined;
   DynamicIsland: undefined;
   Overlay: undefined;
+  ShareSnapshot: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -67,6 +71,14 @@ export function RootNavigator() {
               <View
                 style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}
               >
+                <TouchableOpacity
+                  onPress={() => navigation.navigate('ShareSnapshot')}
+                  style={{ padding: 8 }}
+                >
+                  <Text variant="caption" color="secondary">
+                    Share
+                  </Text>
+                </TouchableOpacity>
                 <TouchableOpacity
                   onPress={() => navigation.navigate('Widget')}
                   style={{ padding: 8 }}
@@ -101,6 +113,11 @@ export function RootNavigator() {
           name="Widget"
           component={WidgetScreen}
           options={{ title: 'Settings', headerBackTitle: 'Back' }}
+        />
+        <Stack.Screen
+          name="WidgetCustomization"
+          component={WidgetCustomizationScreen}
+          options={{ title: 'Customize widget', headerBackTitle: 'Back' }}
         />
         <Stack.Screen
           name="CustomCounters"
@@ -161,6 +178,11 @@ export function RootNavigator() {
           name="Overlay"
           component={OverlayScreen}
           options={{ title: 'Floating overlay', headerBackTitle: 'Back' }}
+        />
+        <Stack.Screen
+          name="ShareSnapshot"
+          component={ShareSnapshotScreen}
+          options={{ title: 'Share snapshot', headerBackTitle: 'Back' }}
         />
       </Stack.Navigator>
     </NavigationContainer>

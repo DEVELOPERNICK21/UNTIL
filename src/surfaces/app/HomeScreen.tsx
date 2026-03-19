@@ -7,15 +7,16 @@ import {
   Easing,
   TouchableOpacity,
 } from 'react-native';
+import Svg, { Line, Rect } from 'react-native-svg';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text, ScreenGradient, Card, ProgressLine } from '../../ui';
-import { useObserveTimeState, useDailyTasks } from '../../hooks';
-import { Spacing, FontFamily, getProgressColor } from '../../theme';
+import { useObserveTimeState, useGoalsFeatureEnabled } from '../../hooks';
+import { Spacing, FontFamily, getProgressColor, useTheme, Shadows } from '../../theme';
 import type { RootStackParamList } from '../../navigation/RootNavigator';
 import { getDayProgress } from '../../core/time/day';
 import { startOfDay, endOfDay } from '../../core/time/clock';
-import { testUpdateNow } from '../../services/updateService';
 
 function getDaysInMonth(): number {
   const d = new Date();
@@ -220,15 +221,13 @@ function TimeBlock({
   );
 }
 
-function todayIso(): string {
-  return new Date().toISOString().slice(0, 10);
-}
-
 export function HomeScreen() {
   const navigation =
     useNavigation<NativeStackNavigationProp<RootStackParamList, 'Home'>>();
+  const insets = useSafeAreaInsets();
+  const theme = useTheme();
   const { userProfile, timeState } = useObserveTimeState();
-  const { stats } = useDailyTasks(todayIso());
+  const goalsFeatureEnabled = useGoalsFeatureEnabled();
   const [liveNow, setLiveNow] = useState(() => new Date());
 
   useEffect(() => {
@@ -333,79 +332,29 @@ export function HomeScreen() {
             </Card>
           )}
 
-          <Card style={styles.block}>
-            <Text
-              variant="sectionTitle"
-              color="secondary"
-              style={styles.blockTitle}
-            >
-              Today&apos;s tasks
-            </Text>
-            {stats.total === 0 ? (
-              <Text variant="body" color="secondary" style={styles.tasksEmpty}>
-                No tasks for today. Add tasks and track your day.
-              </Text>
-            ) : (
-              <>
-                <View style={styles.row}>
-                  <View style={styles.half}>
-                    <Text variant="title" color="primary" style={styles.value}>
-                      {stats.completed}/{stats.total} done
-                    </Text>
-                    <Text variant="caption" color="secondary">
-                      {stats.pending} pending
-                    </Text>
-                  </View>
-                </View>
-                <ProgressLine
-                  progress={stats.total > 0 ? stats.completed / stats.total : 0}
-                  fillColor={getProgressColor(
-                    stats.total > 0 ? stats.completed / stats.total : 0,
-                  )}
-                  style={styles.progress}
-                />
-              </>
-            )}
-            <View style={styles.tasksCtaRow}>
-              <TouchableOpacity
-                style={styles.tasksCta}
-                onPress={() => navigation.navigate('DailyTasks')}
-              >
-                <Text
-                  variant="caption"
-                  color="primary"
-                  style={styles.settingsLink}
-                >
-                  {stats.total === 0 ? 'Add tasks' : 'See all'}
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.tasksCta}
-                onPress={() => navigation.navigate('MonthlyGoals')}
-              >
-                <Text
-                  variant="caption"
-                  color="primary"
-                  style={styles.settingsLink}
-                >
-                  Monthly goals
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.tasksCta}
-                onPress={() => navigation.navigate('TaskReport')}
-              >
-                <Text
-                  variant="caption"
-                  color="primary"
-                  style={styles.settingsLink}
-                >
-                  Report
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </Card>
         </ScrollView>
+
+        {goalsFeatureEnabled && (
+          <TouchableOpacity
+            style={[
+              styles.fab,
+              {
+                backgroundColor: theme.percent,
+                right: Spacing[4],
+                bottom: Math.max(insets.bottom, Spacing[3]) + Spacing[2],
+              },
+            ]}
+            onPress={() => navigation.navigate('DailyTasks')}
+            activeOpacity={0.85}
+          >
+            <Svg width={24} height={24} viewBox="0 0 24 24" fill="none">
+              <Rect x={5} y={3} width={14} height={18} rx={2} stroke="#FFFFFF" strokeWidth={2} fill="none" />
+              <Line x1={8} y1={8} x2={16} y2={8} stroke="#FFFFFF" strokeWidth={1.5} strokeLinecap="round" />
+              <Line x1={8} y1={12} x2={16} y2={12} stroke="#FFFFFF" strokeWidth={1.5} strokeLinecap="round" />
+              <Line x1={8} y1={16} x2={14} y2={16} stroke="#FFFFFF" strokeWidth={1.5} strokeLinecap="round" />
+            </Svg>
+          </TouchableOpacity>
+        )}
       </ScreenGradient>
     </View>
   );
@@ -469,16 +418,13 @@ const styles = StyleSheet.create({
   settingsLink: {
     textDecorationLine: 'underline',
   },
-  tasksEmpty: {
-    marginBottom: Spacing[2],
-  },
-  tasksCtaRow: {
-    marginTop: Spacing[2],
-    flexDirection: 'row',
-    gap: Spacing[3],
-    flexWrap: 'wrap',
-  },
-  tasksCta: {
-    paddingVertical: Spacing[1],
+  fab: {
+    position: 'absolute',
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    justifyContent: 'center',
+    alignItems: 'center',
+    ...Shadows.fab,
   },
 });

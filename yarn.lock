@@ -1813,6 +1813,18 @@
     redux-thunk "^3.1.0"
     reselect "^5.1.0"
 
+"@shopify/react-native-skia@^2.5.1":
+  version "2.5.1"
+  resolved "https://registry.yarnpkg.com/@shopify/react-native-skia/-/react-native-skia-2.5.1.tgz#31d5a97ff759f2de982ce6bf6122d4774f1a3b6d"
+  integrity sha512-o1P9rFVEqWkEPLg3we6byTBK1ykKtx1GuVCUMSGfrlgKIIZ22WnQhLGSjL2cl2+a4P9li7zxXa5wlMVWTKdVCQ==
+  dependencies:
+    canvaskit-wasm "0.40.0"
+    react-native-skia-android "144.3.0"
+    react-native-skia-apple-ios "144.3.0"
+    react-native-skia-apple-macos "144.3.0"
+    react-native-skia-apple-tvos "144.3.0"
+    react-reconciler "0.31.0"
+
 "@sideway/address@^4.1.5":
   version "4.1.5"
   resolved "https://registry.npmjs.org/@sideway/address/-/address-4.1.5.tgz"
@@ -2166,6 +2178,11 @@
   version "9.3.2"
   resolved "https://registry.npmjs.org/@vscode/sudo-prompt/-/sudo-prompt-9.3.2.tgz"
   integrity sha512-gcXoCN00METUNFeQOFJ+C9xUI0DKB+0EGMVg7wbVYRHBw2Eq3fKisDZOkRdOz3kqXRKOENMfShPOmypw1/8nOw==
+
+"@webgpu/types@0.1.21":
+  version "0.1.21"
+  resolved "https://registry.yarnpkg.com/@webgpu/types/-/types-0.1.21.tgz#b181202daec30d66ccd67264de23814cfd176d3a"
+  integrity sha512-pUrWq3V5PiSGFLeLxoGqReTZmiiXwY3jRkIG5sLLKjyqNxrwm/04b4nw7LSmGWJcKk59XOM/YRTUwOzo4MMlow==
 
 "@xmldom/xmldom@^0.8.8":
   version "0.8.11"
@@ -2527,6 +2544,16 @@ balanced-match@^1.0.0:
   resolved "https://registry.npmjs.org/balanced-match/-/balanced-match-1.0.2.tgz"
   integrity sha512-3oSeUO0TMV67hN1AmbXsK4yaqU7tjiHlbxRDZOpH0KW9+CeX4bRAaX0Anxt0tx2MrpRpWwQaPwIlISEJhYU5Pw==
 
+base-64@^0.1.0:
+  version "0.1.0"
+  resolved "https://registry.yarnpkg.com/base-64/-/base-64-0.1.0.tgz#780a99c84e7d600260361511c4877613bf24f6bb"
+  integrity sha512-Y5gU45svrR5tI2Vt/X9GPd3L0HNIKzGu202EjxrXMpuc2V2CiKgemAbUUsqYmZJvPtCXoUKjNZwBJzsNScUbXA==
+
+base64-arraybuffer@^1.0.2:
+  version "1.0.2"
+  resolved "https://registry.yarnpkg.com/base64-arraybuffer/-/base64-arraybuffer-1.0.2.tgz#1c37589a7c4b0746e34bd1feb951da2df01c1bdc"
+  integrity sha512-I3yl4r9QB5ZRY3XuJVEPfc2XhZO6YweFPI+UovAzn+8/hb3oJ6lnysaFcjVpkCPfVWFUDvoZ8kmVDP7WyRtYtQ==
+
 base64-js@^1.3.1, base64-js@^1.5.1:
   version "1.5.1"
   resolved "https://registry.npmjs.org/base64-js/-/base64-js-1.5.1.tgz"
@@ -2691,6 +2718,13 @@ caniuse-lite@^1.0.30001759:
   version "1.0.30001769"
   resolved "https://registry.npmjs.org/caniuse-lite/-/caniuse-lite-1.0.30001769.tgz"
   integrity sha512-BCfFL1sHijQlBGWBMuJyhZUhzo7wer5sVj9hqekB/7xn0Ypy+pER/edCYQm4exbXj4WiySGp40P8UuTh6w1srg==
+
+canvaskit-wasm@0.40.0:
+  version "0.40.0"
+  resolved "https://registry.yarnpkg.com/canvaskit-wasm/-/canvaskit-wasm-0.40.0.tgz#61a77657259fddfc0025ad1c3f57ac8d4d5850ff"
+  integrity sha512-Od2o+ZmoEw9PBdN/yCGvzfu0WVqlufBPEWNG452wY7E9aT8RBE+ChpZF526doOlg7zumO4iCS+RAeht4P0Gbpw==
+  dependencies:
+    "@webgpu/types" "0.1.21"
 
 chalk@^4.0.0, chalk@^4.1.0, chalk@^4.1.2:
   version "4.1.2"
@@ -2957,6 +2991,13 @@ cross-spawn@^7.0.2, cross-spawn@^7.0.3, cross-spawn@^7.0.6:
     path-key "^3.1.0"
     shebang-command "^2.0.0"
     which "^2.0.1"
+
+css-line-break@^2.1.0:
+  version "2.1.0"
+  resolved "https://registry.yarnpkg.com/css-line-break/-/css-line-break-2.1.0.tgz#bfef660dfa6f5397ea54116bb3cb4873edbc4fa0"
+  integrity sha512-FHcKFCZcAha3LwfVBhCQbW2nCNbkZXn7KVUJcsT5/P8YmfsVja0FMPJr0B903j/E69HUphKiV9iQArX8SDYA4w==
+  dependencies:
+    utrie "^1.0.2"
 
 css-select@^5.1.0:
   version "5.2.2"
@@ -4031,6 +4072,14 @@ html-escaper@^2.0.0:
   version "2.0.2"
   resolved "https://registry.npmjs.org/html-escaper/-/html-escaper-2.0.2.tgz"
   integrity sha512-H2iMtd0I4Mt5eYiapRdIDjp+XzelXQ0tFE4JS7YFwFevXXMmOp9myNrUvCg0D6ws8iqkRPBfKHgbwig1SmlLfg==
+
+html2canvas@^1.4.1:
+  version "1.4.1"
+  resolved "https://registry.yarnpkg.com/html2canvas/-/html2canvas-1.4.1.tgz#7cef1888311b5011d507794a066041b14669a543"
+  integrity sha512-fPU6BHNpsyIhr8yyMpTLLxAbkaK8ArIBcmZIRiBLiDhjeqvXolaEmDGmELFuX9I4xDcaKKcJl+TKZLqruBbmWA==
+  dependencies:
+    css-line-break "^2.1.0"
+    text-segmentation "^1.0.3"
 
 http-errors@~2.0.1:
   version "2.0.1"
@@ -5855,6 +5904,14 @@ react-native-device-info@^8.7.0:
   resolved "https://registry.npmjs.org/react-native-device-info/-/react-native-device-info-8.7.1.tgz"
   integrity sha512-cVMZztFa2Qn6qpQa601W61CtUwZQ1KXfqCOeltejAWEXmgIWivC692WGSdtGudj4upSi1UgMSaGcvKjfcpdGjg==
 
+react-native-fs@^2.20.0:
+  version "2.20.0"
+  resolved "https://registry.yarnpkg.com/react-native-fs/-/react-native-fs-2.20.0.tgz#05a9362b473bfc0910772c0acbb73a78dbc810f6"
+  integrity sha512-VkTBzs7fIDUiy/XajOSNk0XazFE9l+QlMAce7lGuebZcag5CnjszB+u4BdqzwaQOdcYb5wsJIsqq4kxInIRpJQ==
+  dependencies:
+    base-64 "^0.1.0"
+    utf8 "^3.0.0"
+
 react-native-mmkv@^4.1.2:
   version "4.1.2"
   resolved "https://registry.npmjs.org/react-native-mmkv/-/react-native-mmkv-4.1.2.tgz"
@@ -5878,6 +5935,11 @@ react-native-screens@^4.23.0:
     react-freeze "^1.0.0"
     warn-once "^0.1.0"
 
+react-native-share@12.2.6:
+  version "12.2.6"
+  resolved "https://registry.yarnpkg.com/react-native-share/-/react-native-share-12.2.6.tgz#05975fabe7d766726fcc80e561f7a41a5ef64b87"
+  integrity sha512-K9jZCQaTIqSNG37kMVygU1rflVMJm2g0ikslnbbmQ7EgsckYpw7ipePyp01E64hG+HrWNl+z9ZnFWLCC6H+Tiw==
+
 react-native-siren@^0.0.7:
   version "0.0.7"
   resolved "https://registry.npmjs.org/react-native-siren/-/react-native-siren-0.0.7.tgz"
@@ -5886,7 +5948,27 @@ react-native-siren@^0.0.7:
     apisauce "^3.1.0"
     react-native-device-info "^8.7.0"
 
-react-native-svg-transformer@^1.5.3:
+react-native-skia-android@144.3.0:
+  version "144.3.0"
+  resolved "https://registry.yarnpkg.com/react-native-skia-android/-/react-native-skia-android-144.3.0.tgz#f95827f80ab5d7ecd101b688ba41d765492a34ee"
+  integrity sha512-0XsW8JQAgNBNvCwp/ypOKDF5CjKOlCTBfj43gYXK/clystG7e4y3XF/4v0vw9Slekj9BSQruHqGYpfs5hWgO/g==
+
+react-native-skia-apple-ios@144.3.0:
+  version "144.3.0"
+  resolved "https://registry.yarnpkg.com/react-native-skia-apple-ios/-/react-native-skia-apple-ios-144.3.0.tgz#958502b9eaa1f0600917e5f774684f985a2d23cc"
+  integrity sha512-gY8M6IiYhQR9J1xHvAbH4M5pcgS3wsBal/jETcwb7LHaPuxiRkig3Y3Bcl4yK5JgHomcrl18oWVj3xh3UqR2cg==
+
+react-native-skia-apple-macos@144.3.0:
+  version "144.3.0"
+  resolved "https://registry.yarnpkg.com/react-native-skia-apple-macos/-/react-native-skia-apple-macos-144.3.0.tgz#a8422828766868e99e423ad3442afb21fa4ee071"
+  integrity sha512-+2kYg+kfVRJX/FAsg+jIcvDQHTG9DzkI+b9GG4XdqHG/ixR4yd5opZ95l9rjLJuRGhnE+AB6StAz5zhjWFhHuw==
+
+react-native-skia-apple-tvos@144.3.0:
+  version "144.3.0"
+  resolved "https://registry.yarnpkg.com/react-native-skia-apple-tvos/-/react-native-skia-apple-tvos-144.3.0.tgz#7643564ee445fd5b685f23248d1bd7b6cfc673e5"
+  integrity sha512-Xq4N1xlIzZQgx/6LfkHbSCn5poo0O1D/5LjKmQvfVOrUkOe2Det4OdXrmbsVLFaeh7soB6Bn290s31agD011tw==
+
+react-native-svg-transformer@^1.5.0:
   version "1.5.3"
   resolved "https://registry.yarnpkg.com/react-native-svg-transformer/-/react-native-svg-transformer-1.5.3.tgz#a45b1bacb0623b66b134726a389ab2c67d856252"
   integrity sha512-M4uFg5pUt35OMgjD4rWWbwd6PmxV96W7r/gQTTa+iZA5B+jO6aURhzAZGLHSrg1Kb91cKG0Rildy9q1WJvYstg==
@@ -5904,6 +5986,13 @@ react-native-svg@^15.15.3:
     css-select "^5.1.0"
     css-tree "^1.1.3"
     warn-once "0.1.1"
+
+react-native-view-shot@^4.0.3:
+  version "4.0.3"
+  resolved "https://registry.yarnpkg.com/react-native-view-shot/-/react-native-view-shot-4.0.3.tgz#9b98388fcc5228073cb66ac98ca339eda35767ac"
+  integrity sha512-USNjYmED7C0me02c1DxKA0074Hw+y/nxo+xJKlffMvfUWWzL5ELh/TJA/pTnVqFurIrzthZDPtDM7aBFJuhrHQ==
+  dependencies:
+    html2canvas "^1.4.1"
 
 react-native@0.83.1:
   version "0.83.1"
@@ -5945,6 +6034,13 @@ react-native@0.83.1:
     whatwg-fetch "^3.0.0"
     ws "^7.5.10"
     yargs "^17.6.2"
+
+react-reconciler@0.31.0:
+  version "0.31.0"
+  resolved "https://registry.yarnpkg.com/react-reconciler/-/react-reconciler-0.31.0.tgz#6b7390fe8fab59210daf523d7400943973de1458"
+  integrity sha512-7Ob7Z+URmesIsIVRjnLoDGwBEG/tVitidU0nMsqX/eeJaLY89RISO/10ERe0MqmzuKUUB1rmY+h1itMbUHg9BQ==
+  dependencies:
+    scheduler "^0.25.0"
 
 react-redux@^9.2.0:
   version "9.2.0"
@@ -6187,6 +6283,11 @@ scheduler@0.27.0, scheduler@^0.27.0:
   version "0.27.0"
   resolved "https://registry.npmjs.org/scheduler/-/scheduler-0.27.0.tgz"
   integrity sha512-eNv+WrVbKu1f3vbYJT/xtiF5syA5HPIMtf9IgY/nKg0sWqzAUEvqY/xm7OcZc/qafLx/iO9FgOmeSAp4v5ti/Q==
+
+scheduler@^0.25.0:
+  version "0.25.0"
+  resolved "https://registry.yarnpkg.com/scheduler/-/scheduler-0.25.0.tgz#336cd9768e8cceebf52d3c80e3dcf5de23e7e015"
+  integrity sha512-xFVuu11jh+xcO7JOAGJNOXld8/TcEHK/4CituBUeUb5hqxJLj9YuemAEuvm9gQ/+pgXYfbQuqAkiYu+u7YEsNA==
 
 semver@^6.3.0, semver@^6.3.1:
   version "6.3.1"
@@ -6659,6 +6760,13 @@ test-exclude@^6.0.0:
     glob "^7.1.4"
     minimatch "^3.0.4"
 
+text-segmentation@^1.0.3:
+  version "1.0.3"
+  resolved "https://registry.yarnpkg.com/text-segmentation/-/text-segmentation-1.0.3.tgz#52a388159efffe746b24a63ba311b6ac9f2d7943"
+  integrity sha512-iOiPUo/BGnZ6+54OsWxZidGCsdU8YbE4PSpdPinp7DeMtUJNJBoJ/ouUSTJjHkh1KntHaltHl/gDs2FC4i5+Nw==
+  dependencies:
+    utrie "^1.0.2"
+
 text-table@^0.2.0:
   version "0.2.0"
   resolved "https://registry.npmjs.org/text-table/-/text-table-0.2.0.tgz"
@@ -6867,6 +6975,11 @@ use-sync-external-store@^1.4.0, use-sync-external-store@^1.5.0:
   resolved "https://registry.npmjs.org/use-sync-external-store/-/use-sync-external-store-1.6.0.tgz"
   integrity sha512-Pp6GSwGP/NrPIrxVFAIkOQeyw8lFenOHijQWkUTrDvrF4ALqylP2C/KCkeS9dpUM3KvYRQhna5vt7IL95+ZQ9w==
 
+utf8@^3.0.0:
+  version "3.0.0"
+  resolved "https://registry.yarnpkg.com/utf8/-/utf8-3.0.0.tgz#f052eed1364d696e769ef058b183df88c87f69d1"
+  integrity sha512-E8VjFIQ/TyQgp+TZfS6l8yp/xWppSAHzidGiRrqe4bK4XP9pTRyKFgGJpO3SN7zdX4DeomTrwaseCHovfpFcqQ==
+
 util-deprecate@^1.0.1:
   version "1.0.2"
   resolved "https://registry.npmjs.org/util-deprecate/-/util-deprecate-1.0.2.tgz"
@@ -6876,6 +6989,13 @@ utils-merge@1.0.1:
   version "1.0.1"
   resolved "https://registry.npmjs.org/utils-merge/-/utils-merge-1.0.1.tgz"
   integrity sha512-pMZTvIkT1d+TFGvDOqodOclx0QWkkgi6Tdoa8gC8ffGAAqz9pzPTZWAybbsHHoED/ztMtkv/VoYTYyShUn81hA==
+
+utrie@^1.0.2:
+  version "1.0.2"
+  resolved "https://registry.yarnpkg.com/utrie/-/utrie-1.0.2.tgz#d42fe44de9bc0119c25de7f564a6ed1b2c87a645"
+  integrity sha512-1MLa5ouZiOmQzUbjbu9VmjLzn1QLXBhwpUa7kdLUQK+KQ5KA9I1vk5U4YHe/X2Ch7PYnJfWuWT+VbuxbGwljhw==
+  dependencies:
+    base64-arraybuffer "^1.0.2"
 
 uuid@^7.0.3:
   version "7.0.3"

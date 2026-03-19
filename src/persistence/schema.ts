@@ -29,6 +29,7 @@ export const STORAGE_KEYS = {
 
   // Widget
   WIDGET_CACHE: 'widget.cache',
+  WIDGET_CONFIG: 'widget.config',
 
   // Custom counters (for counter widget)
   CUSTOM_COUNTERS: 'custom.counters',
