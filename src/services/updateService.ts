@@ -90,7 +90,8 @@ export async function checkForAppUpdate(): Promise<UpdateCheckResult> {
     return { type: 'NO_UPDATE' };
   }
 
-  const currentVersion = DeviceInfo.getVersion();
+  // Compare against build number so Android versionCode values match config.
+  const currentVersion = DeviceInfo.getBuildNumber();
   const { minimum_supported_version, latest_version } = config;
   const storeUrl = getStoreUrl(config);
 

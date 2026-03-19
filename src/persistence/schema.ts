@@ -17,6 +17,17 @@ export const STORAGE_KEYS = {
   SUBSCRIPTION_DEVICE_ID: 'subscription.deviceId',
   SUBSCRIPTION_LAST_VERIFIED: 'subscription.lastVerified',
 
+  // Freemium trial + engagement (SSOT)
+  TRIAL_START_DATE: 'trial.startDate',
+  ENGAGEMENT_APP_OPEN_COUNT: 'engagement.appOpenCount',
+  ENGAGEMENT_LIFE_SCREEN_VIEWED: 'engagement.lifeScreenViewed',
+  ENGAGEMENT_LIFE_UNLOCK_UNTIL: 'engagement.lifeUnlockUntil',
+
+  // Play purchase metadata (SSOT)
+  PURCHASE_TYPE: 'purchase.type',
+  PURCHASE_DATE: 'purchase.date',
+  PURCHASE_TOKEN: 'purchase.token',
+
   // Activity (Layer 3)
   ACTIVITY_BLOCKS_PREFIX: 'activity.blocks.',
   ACTIVITY_CURRENT_CATEGORY: 'activity.currentCategory',
@@ -63,6 +74,7 @@ export const DEFAULTS = {
   USER_DEATH_AGE: 80,
   SETTINGS_THEME: 'system' as const,
   PREMIUM_IS_ACTIVE: false,
+  ENGAGEMENT_APP_OPEN_COUNT: 0,
   ACTIVITY_DAILY_LIMIT_NOTHING: 2, // hours
   MIGRATION_VERSION: 0,
 };

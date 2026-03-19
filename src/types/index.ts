@@ -7,6 +7,8 @@ export type ThemeMode = 'light' | 'dark' | 'system';
 export type {
   ActivationResult,
   VerificationResult,
+  AccessState,
+  PurchaseType,
   SubscriptionState,
 } from './subscription';
 
