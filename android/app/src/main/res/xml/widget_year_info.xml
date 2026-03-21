@@ -6,6 +6,7 @@
     android:targetCellHeight="5"
     android:updatePeriodMillis="86400000"
     android:initialLayout="@layout/widget_year"
+    android:previewLayout="@layout/widget_year"
     android:resizeMode="horizontal|vertical"
     android:widgetCategory="home_screen|keyguard"
     android:description="@string/widget_year_description" />

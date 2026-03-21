@@ -1,10 +1,5 @@
 import React, { useMemo } from 'react';
-import {
-  View,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-} from 'react-native';
+import { View, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import {
   SafeAreaView,
   useSafeAreaInsets,
@@ -24,7 +19,10 @@ import { useObserveTimeState } from '../../hooks';
 import { useOnboardingComplete } from '../onboarding';
 import type { AuthStackParamList } from '../../navigation/AuthNavigator';
 
-type AuthNav = NativeStackNavigationProp<AuthStackParamList, 'LifeWeeksPreview'>;
+type AuthNav = NativeStackNavigationProp<
+  AuthStackParamList,
+  'LifeWeeksPreview'
+>;
 
 const WEEKS_PER_YEAR = 365.25 / 7;
 
@@ -53,6 +51,7 @@ export function LifeWeeksPreviewScreen() {
   }, [totalWeeks, livedWeeks]);
 
   const livedWeeksLabel = livedWeeks.toLocaleString();
+  const totalWeeksLabel = totalWeeks.toLocaleString();
 
   const handleEnterPresent = () => {
     completeAuth();
@@ -96,18 +95,15 @@ export function LifeWeeksPreviewScreen() {
 
             <View style={styles.card}>
               <View style={styles.cardContent}>
-                <Text
-                  style={[
-                    styles.title,
-                    { color: theme.textPrimary },
-                  ]}
-                >
+                <Text style={[styles.title, { color: theme.textPrimary }]}>
                   You have lived{' '}
-                  <Text style={[styles.titleEmphasis, { color: theme.percent }]}>
-                    {livedWeeksLabel} weeks
-                  </Text>
                 </Text>
-
+                <Text style={[styles.titleEmphasis, { color: theme.percent }]}>
+                  {livedWeeksLabel}{' '}
+                  <Text style={[{ color: '#FFFFFF' }]}>weeks </Text>/{' '}
+                  {totalWeeksLabel}
+                  <Text style={[{ color: '#FFFFFF' }]}> weeks </Text>
+                </Text>
                 <View style={styles.gridContainer}>
                   {weeksArray.map((isLived, index) => (
                     <View
@@ -189,10 +185,12 @@ const styles = StyleSheet.create({
     fontFamily: getFontFamilyForWeight(Weight.semibold),
     fontSize: Typography.display,
     textAlign: 'center',
-    marginBottom: Spacing[5],
+    // marginBottom: Spacing[5],
   },
   titleEmphasis: {
+    fontSize: Typography.display,
     fontFamily: getFontFamilyForWeight(Weight.bold),
+    marginBottom: Spacing[5],
   },
   gridContainer: {
     width: '100%',
@@ -231,4 +229,3 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
   },
 });
-

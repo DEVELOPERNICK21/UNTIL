@@ -28,6 +28,7 @@ export const SITE_CONFIG = {
 
 export const ROUTES = {
   home: '/',
+
   terms: '/terms',
   privacy: '/privacy',
 } as const;

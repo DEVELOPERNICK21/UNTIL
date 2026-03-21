@@ -12,7 +12,14 @@ import {
   observeSubscriptionUseCase,
 } from '../di';
 import { STORAGE_KEYS } from '../persistence/schema';
-import { getString, setString } from '../persistence/mmkv';
+import {
+  getString,
+  setString,
+  getNumber,
+  getBoolean,
+  setBoolean,
+} from '../persistence/mmkv';
+import { TRIAL_DURATION_MS } from '../config/accessConstants';
 
 function todayIso(): string {
   return new Date().toISOString().slice(0, 10);
@@ -32,11 +39,23 @@ export function syncWidgetCache(): void {
   }
 }
 /** Sync premium status to native for widget gating. iOS: UserDefaults; Android: MMKV (already shared). */
-export function syncPremiumStatus(): void {
+/**
+ * Trial unlocks the same widget surfaces as paid premium on iOS (UserDefaults bridge).
+ * Uses MMKV + shared constant only — avoids importing di (circular with billing wiring).
+ */
+function readEffectivePremiumForNativeBridge(): boolean {
   const { isPremium } = observeSubscriptionUseCase.observe();
+  if (isPremium) return true;
+  const trialStart = getNumber(STORAGE_KEYS.TRIAL_START_DATE);
+  if (trialStart == null || trialStart <= 0) return false;
+  return Date.now() <= trialStart + TRIAL_DURATION_MS;
+}
+
+export function syncPremiumStatus(): void {
+  const effectivePremium = readEffectivePremiumForNativeBridge();
   const { WidgetBridge } = NativeModules;
   if (Platform.OS === 'ios' && WidgetBridge?.setPremiumStatus) {
-    WidgetBridge.setPremiumStatus(isPremium);
+    WidgetBridge.setPremiumStatus(effectivePremium);
   } else if (Platform.OS === 'android' && WidgetBridge?.updateWidgets) {
     WidgetBridge.updateWidgets();
   }
@@ -106,7 +125,8 @@ export function getHourCalculationState(): HourCalculationState {
   try {
     const o = JSON.parse(json);
     return {
-      title: typeof o.title === 'string' ? o.title : DEFAULT_HOUR_CALCULATION.title,
+      title:
+        typeof o.title === 'string' ? o.title : DEFAULT_HOUR_CALCULATION.title,
       isRunning: Boolean(o.isRunning),
       startTimeMs: Number(o.startTimeMs) || 0,
       totalElapsedMs: Number(o.totalElapsedMs) || 0,
@@ -116,9 +136,22 @@ export function getHourCalculationState(): HourCalculationState {
   }
 }
 
-export type LiveActivityWidgetType = 'day' | 'month' | 'year' | 'life' | 'dailyTasks' | 'hourCalc';
+export type LiveActivityWidgetType =
+  | 'day'
+  | 'month'
+  | 'year'
+  | 'life'
+  | 'dailyTasks'
+  | 'hourCalc';
 
-const LIVE_ACTIVITY_WIDGET_TYPES: LiveActivityWidgetType[] = ['day', 'month', 'year', 'life', 'dailyTasks', 'hourCalc'];
+const LIVE_ACTIVITY_WIDGET_TYPES: LiveActivityWidgetType[] = [
+  'day',
+  'month',
+  'year',
+  'life',
+  'dailyTasks',
+  'hourCalc',
+];
 
 /** Android overlay widget type (same options as Live Activity). */
 export type OverlayWidgetType = LiveActivityWidgetType;
@@ -126,7 +159,10 @@ export type OverlayWidgetType = LiveActivityWidgetType;
 /** Get stored Live Activity widget type. */
 export function getLiveActivityWidgetType(): LiveActivityWidgetType {
   const stored = getString(STORAGE_KEYS.LIVE_ACTIVITY_WIDGET_TYPE);
-  if (stored && LIVE_ACTIVITY_WIDGET_TYPES.includes(stored as LiveActivityWidgetType)) {
+  if (
+    stored &&
+    LIVE_ACTIVITY_WIDGET_TYPES.includes(stored as LiveActivityWidgetType)
+  ) {
     return stored as LiveActivityWidgetType;
   }
   return 'day';
@@ -138,7 +174,9 @@ export function setLiveActivityWidgetType(type: LiveActivityWidgetType): void {
 }
 
 /** Build Live Activity state from all widget sources. Used for Dynamic Island / Lock Screen. */
-export function buildLiveActivityState(activeWidget?: LiveActivityWidgetType): object {
+export function buildLiveActivityState(
+  activeWidget?: LiveActivityWidgetType,
+): object {
   const widget = activeWidget ?? getLiveActivityWidgetType();
   const cache = syncWidgetUseCase.execute();
   const dailyPayload = getDailyTaskStatsUseCase.getWidgetPayload(todayIso());
@@ -185,7 +223,9 @@ export function syncLiveActivity(activeWidget?: LiveActivityWidgetType): void {
 }
 
 /** Update existing Live Activity. Call when app foregrounds. */
-export function updateLiveActivity(activeWidget?: LiveActivityWidgetType): void {
+export function updateLiveActivity(
+  activeWidget?: LiveActivityWidgetType,
+): void {
   if (Platform.OS !== 'ios') return;
   const LiveActivityBridge = NativeModules.LiveActivityBridge;
   if (!LiveActivityBridge?.updateActivity) return;
@@ -210,7 +250,10 @@ export function endLiveActivity(): void {
 export function getOverlayWidgetType(): OverlayWidgetType {
   if (Platform.OS !== 'android') return 'day';
   const stored = getString(STORAGE_KEYS.OVERLAY_WIDGET_TYPE);
-  if (stored && LIVE_ACTIVITY_WIDGET_TYPES.includes(stored as OverlayWidgetType)) {
+  if (
+    stored &&
+    LIVE_ACTIVITY_WIDGET_TYPES.includes(stored as OverlayWidgetType)
+  ) {
     return stored as OverlayWidgetType;
   }
   return 'day';
@@ -225,7 +268,7 @@ export function setOverlayWidgetType(type: OverlayWidgetType): void {
 /** Start floating overlay. Android only. Requires overlay permission. */
 export function startOverlay(): void {
   if (Platform.OS !== 'android') return;
-  setString(STORAGE_KEYS.OVERLAY_ENABLED, 'true');
+  setBoolean(STORAGE_KEYS.OVERLAY_ENABLED, true);
   const { WidgetBridge } = NativeModules;
   if (WidgetBridge?.startOverlay) {
     WidgetBridge.startOverlay();
@@ -235,7 +278,7 @@ export function startOverlay(): void {
 /** Stop floating overlay. Android only. */
 export function stopOverlay(): void {
   if (Platform.OS !== 'android') return;
-  setString(STORAGE_KEYS.OVERLAY_ENABLED, 'false');
+  setBoolean(STORAGE_KEYS.OVERLAY_ENABLED, false);
   const { WidgetBridge } = NativeModules;
   if (WidgetBridge?.stopOverlay) {
     WidgetBridge.stopOverlay();
@@ -245,7 +288,7 @@ export function stopOverlay(): void {
 /** Check if overlay is enabled (user has started it). Android only. */
 export function isOverlayEnabled(): boolean {
   if (Platform.OS !== 'android') return false;
-  return getString(STORAGE_KEYS.OVERLAY_ENABLED) === 'true';
+  return getBoolean(STORAGE_KEYS.OVERLAY_ENABLED) ?? false;
 }
 
 /** Update overlay content. Call when cache changes. Android only. */
@@ -277,7 +320,10 @@ export function requestOverlayPermission(): void {
 }
 
 /** Update title and/or reset the hour calculation widget. Triggers widget refresh on Android. */
-export function syncHourCalculationWidget(update: { title?: string; reset?: boolean }): void {
+export function syncHourCalculationWidget(update: {
+  title?: string;
+  reset?: boolean;
+}): void {
   const current = getHourCalculationState();
   const next: HourCalculationState = update.reset
     ? {

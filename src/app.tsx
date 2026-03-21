@@ -33,6 +33,8 @@ import {
   replaceCustomCountersFromSyncUseCase,
   checkForAppUpdateUseCase,
   verifySubscriptionUseCase,
+  trackAppOpenUseCase,
+  ensurePlayBillingSession,
 } from './di';
 import { ForceUpdateModal } from './components/update/ForceUpdateModal';
 import { OptionalUpdateModal } from './components/update/OptionalUpdateModal';
@@ -79,6 +81,13 @@ function App() {
     verifySubscriptionUseCase.execute().then(() => {
       syncPremiumStatus();
     });
+    if (Platform.OS === 'android') {
+      ensurePlayBillingSession().catch(() => {
+        /* ignore */
+      });
+    }
+    // Engagement tracking for event-based Life unlock.
+    trackAppOpenUseCase.execute();
     syncWidgetCache();
     syncCustomCounters();
     syncCountdowns();
@@ -104,6 +113,8 @@ function App() {
 
     const subAppState = AppState.addEventListener('change', state => {
       if (state === 'active') {
+        // Count each time the user returns to foreground.
+        trackAppOpenUseCase.execute();
         verifySubscriptionUseCase.execute().then(() => syncPremiumStatus());
         checkForAppUpdateUseCase.execute();
         if (

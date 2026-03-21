@@ -26,7 +26,14 @@ import RNFS from 'react-native-fs';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text, ScreenGradient, Card } from '../../ui';
 import { useObserveTimeState } from '../../hooks';
-import { useTheme, Spacing, Radius, Typography, FontFamily, getProgressColor } from '../../theme';
+import {
+  useTheme,
+  Spacing,
+  Radius,
+  Typography,
+  FontFamily,
+  getProgressColor,
+} from '../../theme';
 import { getDayProgress } from '../../core/time/day';
 import type { RootStackParamList } from '../../navigation/RootNavigator';
 
@@ -59,7 +66,9 @@ function HeaderShareButton({ onPress }: { onPress: () => void }) {
 
 export function ShareSnapshotScreen() {
   const navigation =
-    useNavigation<NativeStackNavigationProp<RootStackParamList, 'ShareSnapshot'>>();
+    useNavigation<
+      NativeStackNavigationProp<RootStackParamList, 'ShareSnapshot'>
+    >();
   const insets = useSafeAreaInsets();
   const theme = useTheme();
   const { timeState } = useObserveTimeState();
@@ -73,7 +82,10 @@ export function ShareSnapshotScreen() {
   const yearProgressPct = Math.round((timeState.year ?? 0) * 100);
   const lifeProgressPct = Math.round((timeState.life ?? 0) * 100);
 
-  const focusConfig: Record<FocusKey, { pct: number; label: string; unit: 'day' | 'month' | 'year' | 'life' }> = {
+  const focusConfig: Record<
+    FocusKey,
+    { pct: number; label: string; unit: 'day' | 'month' | 'year' | 'life' }
+  > = {
     day: { pct: dayProgressPct, label: 'TODAY', unit: 'day' },
     month: { pct: monthProgressPct, label: 'MONTH', unit: 'month' },
     year: { pct: yearProgressPct, label: 'YEAR', unit: 'year' },
@@ -87,7 +99,8 @@ export function ShareSnapshotScreen() {
   );
 
   const quote = useMemo(() => {
-    const unitPhrase = current.unit === 'life' ? 'your life' : `your ${current.unit}`;
+    const unitPhrase =
+      current.unit === 'life' ? 'your life' : `your ${current.unit}`;
     return `${current.pct}% of ${unitPhrase} is gone and it's not coming back`;
   }, [current.pct, current.unit]);
 
@@ -97,18 +110,43 @@ export function ShareSnapshotScreen() {
   const canvasSize = { width: canvasWidth, height: (canvasWidth * 16) / 9 }; // 9:16 preview
   const exportSize = { width: 1080, height: 1920 }; // story export only
 
-  const quoteFont = useFont(require('../../assets/fonts/Inter_18pt-Medium.ttf'), 54);
-  const percentFont = useFont(require('../../assets/fonts/Inter_18pt-Bold.ttf'), 120);
-  const labelFont = useFont(require('../../assets/fonts/Inter_18pt-Medium.ttf'), 28);
-  const lineFont = useFont(require('../../assets/fonts/Inter_18pt-Regular.ttf'), 40);
-  const miniPercentFont = useFont(require('../../assets/fonts/Inter_18pt-Medium.ttf'), 26);
-  const miniLabelFont = useFont(require('../../assets/fonts/Inter_18pt-Regular.ttf'), 22);
-  const brandFont = useFont(require('../../assets/fonts/Inter_18pt-Bold.ttf'), 40);
-  const brandByFont = useFont(require('../../assets/fonts/Inter_18pt-Regular.ttf'), 22);
+  const quoteFont = useFont(
+    require('../../assets/fonts/Inter_18pt-Medium.ttf'),
+    54,
+  );
+  const percentFont = useFont(
+    require('../../assets/fonts/Inter_18pt-Bold.ttf'),
+    120,
+  );
+  const labelFont = useFont(
+    require('../../assets/fonts/Inter_18pt-Medium.ttf'),
+    28,
+  );
+  const lineFont = useFont(
+    require('../../assets/fonts/Inter_18pt-Regular.ttf'),
+    40,
+  );
+  const miniPercentFont = useFont(
+    require('../../assets/fonts/Inter_18pt-Medium.ttf'),
+    26,
+  );
+  const miniLabelFont = useFont(
+    require('../../assets/fonts/Inter_18pt-Regular.ttf'),
+    22,
+  );
+  const brandFont = useFont(
+    require('../../assets/fonts/Inter_18pt-Bold.ttf'),
+    40,
+  );
+  const brandByFont = useFont(
+    require('../../assets/fonts/Inter_18pt-Regular.ttf'),
+    22,
+  );
   const brandLogo = useImage(require('../../assets/images/appLogo.png'));
 
   const primaryLine = useMemo(() => {
-    const unitPhrase = current.unit === 'life' ? 'your life' : `your ${current.unit}`;
+    const unitPhrase =
+      current.unit === 'life' ? 'your life' : `your ${current.unit}`;
     return `${current.pct}% of ${unitPhrase} is gone`;
   }, [current.pct, current.unit]);
 
@@ -139,15 +177,31 @@ export function ShareSnapshotScreen() {
   const handleShare = useCallback(async () => {
     try {
       if (!exportCanvasRef.current) {
-        Alert.alert('Share unavailable', 'Preparing the snapshot… try again in a second.');
+        Alert.alert(
+          'Share unavailable',
+          'Preparing the snapshot… try again in a second.',
+        );
         return;
       }
-      if (!quoteFont || !percentFont || !labelFont || !lineFont || !miniPercentFont || !miniLabelFont || !brandFont) {
-        Alert.alert('Share unavailable', 'Loading fonts… try again in a second.');
+      if (
+        !quoteFont ||
+        !percentFont ||
+        !labelFont ||
+        !lineFont ||
+        !miniPercentFont ||
+        !miniLabelFont ||
+        !brandFont
+      ) {
+        Alert.alert(
+          'Share unavailable',
+          'Loading fonts… try again in a second.',
+        );
         return;
       }
 
-      await new Promise<void>(resolve => requestAnimationFrame(() => resolve()));
+      await new Promise<void>(resolve =>
+        requestAnimationFrame(() => resolve()),
+      );
 
       const image = exportCanvasRef.current.makeImageSnapshot();
       const pngBase64 = image.encodeToBase64();
@@ -163,7 +217,10 @@ export function ShareSnapshotScreen() {
       });
     } catch (error) {
       console.warn('Share snapshot failed', error);
-      Alert.alert('Share failed', 'Something went wrong while preparing the image.');
+      Alert.alert(
+        'Share failed',
+        'Something went wrong while preparing the image.',
+      );
     }
   }, [
     exportCanvasRef,
@@ -210,7 +267,14 @@ export function ShareSnapshotScreen() {
       );
     }
 
-    return { backgroundPath, foregroundPath, centerX, centerY, radius, strokeWidth };
+    return {
+      backgroundPath,
+      foregroundPath,
+      centerX,
+      centerY,
+      radius,
+      strokeWidth,
+    };
   };
 
   // Preview ring: slightly larger in the on-screen UI.
@@ -246,10 +310,30 @@ export function ShareSnapshotScreen() {
     { centerY: exportLayout.ringCenterY, radius: exportLayout.ringRadius },
   );
 
-  const miniStats: { key: FocusKey; label: string; value: string; pct: number }[] = [
-    { key: 'month', label: 'MONTH', value: `${monthProgressPct}%`, pct: monthProgressPct },
-    { key: 'year', label: 'YEAR', value: `${yearProgressPct}%`, pct: yearProgressPct },
-    { key: 'life', label: 'LIFE', value: `${lifeProgressPct}%`, pct: lifeProgressPct },
+  const miniStats: {
+    key: FocusKey;
+    label: string;
+    value: string;
+    pct: number;
+  }[] = [
+    {
+      key: 'month',
+      label: 'MONTH',
+      value: `${monthProgressPct}%`,
+      pct: monthProgressPct,
+    },
+    {
+      key: 'year',
+      label: 'YEAR',
+      value: `${yearProgressPct}%`,
+      pct: yearProgressPct,
+    },
+    {
+      key: 'life',
+      label: 'LIFE',
+      value: `${lifeProgressPct}%`,
+      pct: lifeProgressPct,
+    },
   ];
 
   const canvasStyle = {
@@ -293,10 +377,7 @@ export function ShareSnapshotScreen() {
           <View style={styles.previewWrapper}>
             <Card style={styles.previewCard} lighter>
               <View style={styles.quoteBlock}>
-                <Text
-                  variant="title"
-                  style={styles.quoteLine}
-                >
+                <Text variant="title" style={styles.quoteLine}>
                   {quote}
                 </Text>
               </View>
@@ -308,46 +389,61 @@ export function ShareSnapshotScreen() {
                 <View
                   style={[
                     styles.previewCanvasWrap,
-                    { width: canvasSize.width, height: canvasSize.height * previewScale },
+                    {
+                      width: canvasSize.width,
+                      height: canvasSize.height * previewScale,
+                    },
                   ]}
                 >
-                  <View style={{ transform: [{ scale: previewScale }], transformOrigin: 'top' as any }}>
-                    <Canvas ref={canvasRef} style={[styles.canvas, canvasStyle]}>
-                  {/* Background */}
-                  <Rect
-                    x={0}
-                    y={0}
-                    width={canvasSize.width}
-                    height={canvasSize.height}
-                    color={BACKGROUND_COLOR}
-                  />
+                  <View
+                    style={{
+                      transform: [{ scale: previewScale }],
+                      transformOrigin: 'top' as any,
+                    }}
+                  >
+                    <Canvas
+                      ref={canvasRef}
+                      style={[styles.canvas, canvasStyle]}
+                    >
+                      {/* Background */}
+                      <Rect
+                        x={0}
+                        y={0}
+                        width={canvasSize.width}
+                        height={canvasSize.height}
+                        color={BACKGROUND_COLOR}
+                      />
 
-                  {/* Circular progress */}
-                  <Path
-                    path={previewRing.backgroundPath}
-                    color="rgba(255,255,255,0.12)"
-                    style="stroke"
-                    strokeWidth={18}
-                    strokeCap="round"
-                  />
-                  <Path
-                    path={previewRing.foregroundPath}
-                    color={hexToRgba(currentColor, 0.22)}
-                    style="stroke"
-                    strokeWidth={28}
-                    strokeCap="round"
-                  />
-                  <Path
-                    path={previewRing.foregroundPath}
-                    color={currentColor}
-                    style="stroke"
-                    strokeWidth={18}
-                    strokeCap="round"
-                  />
+                      {/* Circular progress */}
+                      <Path
+                        path={previewRing.backgroundPath}
+                        color="rgba(255,255,255,0.12)"
+                        style="stroke"
+                        strokeWidth={18}
+                        strokeCap="round"
+                      />
+                      <Path
+                        path={previewRing.foregroundPath}
+                        color={hexToRgba(currentColor, 0.22)}
+                        style="stroke"
+                        strokeWidth={28}
+                        strokeCap="round"
+                      />
+                      <Path
+                        path={previewRing.foregroundPath}
+                        color={currentColor}
+                        style="stroke"
+                        strokeWidth={18}
+                        strokeCap="round"
+                      />
                     </Canvas>
                   </View>
                 </View>
-                <View style={styles.mainRingCenter} collapsable={false} pointerEvents="none">
+                <View
+                  style={styles.mainRingCenter}
+                  collapsable={false}
+                  pointerEvents="none"
+                >
                   <Text variant="title" style={styles.primaryPercent}>
                     {current.pct}%
                   </Text>
@@ -373,9 +469,7 @@ export function ShareSnapshotScreen() {
                     onPress={() => setFocus(stat.key)}
                   >
                     <View style={styles.miniPieWrapper}>
-                      <Canvas
-                        style={styles.miniPieCanvas}
-                      >
+                      <Canvas style={styles.miniPieCanvas}>
                         <Rect
                           x={0}
                           y={0}
@@ -424,7 +518,10 @@ export function ShareSnapshotScreen() {
                               />
                               <Path
                                 path={fgPath}
-                                color={hexToRgba(getProgressColor(stat.pct / 100), 0.22)}
+                                color={hexToRgba(
+                                  getProgressColor(stat.pct / 100),
+                                  0.22,
+                                )}
                                 style="stroke"
                                 strokeWidth={strokeWidthMini + 5}
                                 strokeCap="round"
@@ -440,7 +537,11 @@ export function ShareSnapshotScreen() {
                           );
                         })()}
                       </Canvas>
-                      <View style={styles.miniPieCenter} collapsable={false} pointerEvents="none">
+                      <View
+                        style={styles.miniPieCenter}
+                        collapsable={false}
+                        pointerEvents="none"
+                      >
                         <Text variant="caption" style={styles.miniPiePercent}>
                           {stat.value}
                         </Text>
@@ -466,36 +567,47 @@ export function ShareSnapshotScreen() {
               { width: exportSize.width, height: exportSize.height },
             ]}
           >
-            <Rect x={0} y={0} width={exportSize.width} height={exportSize.height} color={BACKGROUND_COLOR} />
+            <Rect
+              x={0}
+              y={0}
+              width={exportSize.width}
+              height={exportSize.height}
+              color={BACKGROUND_COLOR}
+            />
 
             {/* Quote */}
-            {quoteFont && (() => {
-              const maxW = exportSize.width - exportLayout.paddingX * 2;
-              const lines = wrapWords(quoteFont, quote, maxW);
-              const startY = exportLayout.quoteTopY;
-              const lineH = 64;
-              return (
-                <>
-                  {lines.map((line, i) => (
-                    <SkiaText
-                      key={`q-${i}`}
-                      x={centerXForText(quoteFont, exportSize.width, line)}
-                      y={startY + i * lineH}
-                      text={line}
-                      font={quoteFont}
-                      color="#FFFFFF"
-                    />
-                  ))}
-                </>
-              );
-            })()}
+            {quoteFont &&
+              (() => {
+                const maxW = exportSize.width - exportLayout.paddingX * 2;
+                const lines = wrapWords(quoteFont, quote, maxW);
+                const startY = exportLayout.quoteTopY;
+                const lineH = 64;
+                return (
+                  <>
+                    {lines.map((line, i) => (
+                      <SkiaText
+                        key={`q-${i}`}
+                        x={centerXForText(quoteFont, exportSize.width, line)}
+                        y={startY + i * lineH}
+                        text={line}
+                        font={quoteFont}
+                        color="#FFFFFF"
+                      />
+                    ))}
+                  </>
+                );
+              })()}
 
             {/* Branding (top lockup) */}
             {brandFont && (
               <>
                 {brandByFont && (
                   <SkiaText
-                    x={centerXForText(brandByFont, exportSize.width, 'Created by')}
+                    x={centerXForText(
+                      brandByFont,
+                      exportSize.width,
+                      'Created by',
+                    )}
                     y={exportLayout.brandTopY}
                     text="Created by"
                     font={brandByFont}
@@ -573,29 +685,35 @@ export function ShareSnapshotScreen() {
             />
 
             {/* Center text */}
-            {percentFont && labelFont && (() => {
-              const percentText = `${current.pct}%`;
-              const labelText = current.label;
-              const cy = exportRing.centerY;
-              return (
-                <>
-                  <SkiaText
-                    x={centerXForText(percentFont, exportSize.width, percentText)}
-                    y={cy + percentFont.getSize() * 0.35}
-                    text={percentText}
-                    font={percentFont}
-                    color="#FFFFFF"
-                  />
-                  <SkiaText
-                    x={centerXForText(labelFont, exportSize.width, labelText)}
-                    y={cy + percentFont.getSize() * 1.1}
-                    text={labelText}
-                    font={labelFont}
-                    color="rgba(255,255,255,0.72)"
-                  />
-                </>
-              );
-            })()}
+            {percentFont &&
+              labelFont &&
+              (() => {
+                const percentText = `${current.pct}%`;
+                const labelText = current.label;
+                const cy = exportRing.centerY;
+                return (
+                  <>
+                    <SkiaText
+                      x={centerXForText(
+                        percentFont,
+                        exportSize.width,
+                        percentText,
+                      )}
+                      y={cy + percentFont.getSize() * 0.35}
+                      text={percentText}
+                      font={percentFont}
+                      color="#FFFFFF"
+                    />
+                    <SkiaText
+                      x={centerXForText(labelFont, exportSize.width, labelText)}
+                      y={cy + percentFont.getSize() * 1.1}
+                      text={labelText}
+                      font={labelFont}
+                      color="rgba(255,255,255,0.72)"
+                    />
+                  </>
+                );
+              })()}
 
             {/* Primary line */}
             {lineFont && (
@@ -609,60 +727,109 @@ export function ShareSnapshotScreen() {
             )}
 
             {/* Mini pies */}
-            {miniPercentFont && miniLabelFont && (() => {
-              const size = exportLayout.miniPieSize;
-              const radius = size / 2.4;
-              const strokeW = 14;
-              const y = exportLayout.miniPieY;
-              const xs = [exportSize.width * 0.25, exportSize.width * 0.5, exportSize.width * 0.75];
-              const stats = [
-                { label: 'MONTH', pct: monthProgressPct, value: `${monthProgressPct}%` },
-                { label: 'YEAR', pct: yearProgressPct, value: `${yearProgressPct}%` },
-                { label: 'LIFE', pct: lifeProgressPct, value: `${lifeProgressPct}%` },
-              ];
-              return (
-                <>
-                  {stats.map((s, i) => {
-                    const cx = xs[i];
-                    const cy = y;
-                    const fgColor = getProgressColor(s.pct / 100);
-                    const bg = Skia.Path.Make();
-                    bg.addCircle(cx, cy, radius);
-                    const fg = Skia.Path.Make();
-                    const start = -Math.PI / 2;
-                    const sweep = (Math.min(Math.max(s.pct, 0), 100) / 100) * Math.PI * 2;
-                    const steps = 64;
-                    const clamp = Math.max(0.01, sweep);
-                    fg.moveTo(cx + radius * Math.cos(start), cy + radius * Math.sin(start));
-                    for (let k = 1; k <= steps; k += 1) {
-                      const t = (k / steps) * clamp + start;
-                      fg.lineTo(cx + radius * Math.cos(t), cy + radius * Math.sin(t));
-                    }
-                    return (
-                      <React.Fragment key={s.label}>
-                        <Path path={bg} color="rgba(255,255,255,0.16)" style="stroke" strokeWidth={strokeW} strokeCap="round" />
-                        <Path path={fg} color={hexToRgba(fgColor, 0.22)} style="stroke" strokeWidth={strokeW + 8} strokeCap="round" />
-                        <Path path={fg} color={fgColor} style="stroke" strokeWidth={strokeW} strokeCap="round" />
-                        <SkiaText
-                          x={cx - (miniPercentFont.getTextWidth(s.value) ?? 0) / 2}
-                          y={cy + miniPercentFont.getSize() * 0.35}
-                          text={s.value}
-                          font={miniPercentFont}
-                          color="#FFFFFF"
-                        />
-                        <SkiaText
-                          x={cx - (miniLabelFont.getTextWidth(s.label) ?? 0) / 2}
-                          y={cy + radius + 44}
-                          text={s.label}
-                          font={miniLabelFont}
-                          color="rgba(255,255,255,0.72)"
-                        />
-                      </React.Fragment>
-                    );
-                  })}
-                </>
-              );
-            })()}
+            {miniPercentFont &&
+              miniLabelFont &&
+              (() => {
+                const size = exportLayout.miniPieSize;
+                const radius = size / 2.4;
+                const strokeW = 14;
+                const y = exportLayout.miniPieY;
+                const xs = [
+                  exportSize.width * 0.25,
+                  exportSize.width * 0.5,
+                  exportSize.width * 0.75,
+                ];
+                const stats = [
+                  {
+                    label: 'MONTH',
+                    pct: monthProgressPct,
+                    value: `${monthProgressPct}%`,
+                  },
+                  {
+                    label: 'YEAR',
+                    pct: yearProgressPct,
+                    value: `${yearProgressPct}%`,
+                  },
+                  {
+                    label: 'LIFE',
+                    pct: lifeProgressPct,
+                    value: `${lifeProgressPct}%`,
+                  },
+                ];
+                return (
+                  <>
+                    {stats.map((s, i) => {
+                      const cx = xs[i];
+                      const cy = y;
+                      const fgColor = getProgressColor(s.pct / 100);
+                      const bg = Skia.Path.Make();
+                      bg.addCircle(cx, cy, radius);
+                      const fg = Skia.Path.Make();
+                      const start = -Math.PI / 2;
+                      const sweep =
+                        (Math.min(Math.max(s.pct, 0), 100) / 100) * Math.PI * 2;
+                      const steps = 64;
+                      const clamp = Math.max(0.01, sweep);
+                      fg.moveTo(
+                        cx + radius * Math.cos(start),
+                        cy + radius * Math.sin(start),
+                      );
+                      for (let k = 1; k <= steps; k += 1) {
+                        const t = (k / steps) * clamp + start;
+                        fg.lineTo(
+                          cx + radius * Math.cos(t),
+                          cy + radius * Math.sin(t),
+                        );
+                      }
+                      return (
+                        <React.Fragment key={s.label}>
+                          <Path
+                            path={bg}
+                            color="rgba(255,255,255,0.16)"
+                            style="stroke"
+                            strokeWidth={strokeW}
+                            strokeCap="round"
+                          />
+                          <Path
+                            path={fg}
+                            color={hexToRgba(fgColor, 0.22)}
+                            style="stroke"
+                            strokeWidth={strokeW + 8}
+                            strokeCap="round"
+                          />
+                          <Path
+                            path={fg}
+                            color={fgColor}
+                            style="stroke"
+                            strokeWidth={strokeW}
+                            strokeCap="round"
+                          />
+                          <SkiaText
+                            x={
+                              cx -
+                              (miniPercentFont.getTextWidth(s.value) ?? 0) / 2
+                            }
+                            y={cy + miniPercentFont.getSize() * 0.35}
+                            text={s.value}
+                            font={miniPercentFont}
+                            color="#FFFFFF"
+                          />
+                          <SkiaText
+                            x={
+                              cx -
+                              (miniLabelFont.getTextWidth(s.label) ?? 0) / 2
+                            }
+                            y={cy + radius + 44}
+                            text={s.label}
+                            font={miniLabelFont}
+                            color="rgba(255,255,255,0.72)"
+                          />
+                        </React.Fragment>
+                      );
+                    })}
+                  </>
+                );
+              })()}
           </Canvas>
 
           <TouchableOpacity
@@ -775,7 +942,7 @@ const styles = StyleSheet.create({
     marginTop: Spacing[1],
     color: 'rgba(255,255,255,0.72)',
   },
-   miniPieWrapper: {
+  miniPieWrapper: {
     width: 80,
     height: 80,
     justifyContent: 'center',
@@ -824,4 +991,3 @@ const styles = StyleSheet.create({
     opacity: 0,
   },
 });
-

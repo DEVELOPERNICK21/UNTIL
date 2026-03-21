@@ -3,128 +3,26 @@
  * Configure widget type and start/stop the overlay. Requires "Display over other apps" permission.
  */
 
-import React, { useState, useCallback } from 'react';
-import {
-  View,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  Platform,
-} from 'react-native';
-import { useFocusEffect } from '@react-navigation/native';
+import React from 'react';
+import { View, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { Text, ScreenGradient } from '../../ui';
 import { Colors, Spacing, Typography } from '../../theme';
-import {
-  startOverlay,
-  stopOverlay,
-  getOverlayWidgetType,
-  setOverlayWidgetType,
-  updateOverlay,
-  isOverlayEnabled,
-  canDrawOverlays,
-  requestOverlayPermission,
-} from '../../infrastructure';
-import type { OverlayWidgetType } from '../../infrastructure';
-import { useObserveSubscription } from '../../hooks';
-import { isPremiumLiveActivityType } from '../../domain/premium';
-
-const WIDGET_OPTIONS: {
-  type: OverlayWidgetType;
-  title: string;
-  description: string;
-}[] = [
-  {
-    type: 'day',
-    title: 'Today',
-    description: '57% done · 42% left. Day progress with hours.',
-  },
-  {
-    type: 'month',
-    title: 'This month',
-    description: 'Feb 17% · 23d left. Month progress.',
-  },
-  {
-    type: 'year',
-    title: 'This year',
-    description: '9% · 329d left. Year progress.',
-  },
-  {
-    type: 'life',
-    title: 'Your life',
-    description: 'Life progress. Set birth date in Settings.',
-  },
-  {
-    type: 'dailyTasks',
-    title: 'Daily tasks',
-    description: "3/5 done. Today's task report.",
-  },
-  {
-    type: 'hourCalc',
-    title: 'Hour timer',
-    description: '0:12:34. Tap to start/stop.',
-  },
-];
+import { useOverlayControl } from '../../hooks';
 
 export function OverlayScreen() {
-  const { isPremium } = useObserveSubscription();
-  const [activeWidget, setActiveWidget] = useState<OverlayWidgetType>(
-    getOverlayWidgetType(),
-  );
-  const [hasPermission, setHasPermission] = useState<boolean | null>(null);
-  const [overlayActive, setOverlayActive] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const {
+    options,
+    hasPermission,
+    overlayActive,
+    error,
+    handleSelectWidget,
+    handleStart,
+    handleStop,
+    handleOpenSettings,
+    isAndroid,
+  } = useOverlayControl();
 
-  const refreshStatus = useCallback(() => {
-    setActiveWidget(getOverlayWidgetType());
-    setError(null);
-    canDrawOverlays()
-      .then(setHasPermission)
-      .catch(() => setHasPermission(false));
-    setOverlayActive(isOverlayEnabled());
-  }, []);
-
-  useFocusEffect(
-    useCallback(() => {
-      refreshStatus();
-    }, [refreshStatus]),
-  );
-
-  const handleSelectWidget = useCallback(
-    (type: OverlayWidgetType) => {
-      if (isPremiumLiveActivityType(type) && !isPremium) return;
-      setOverlayWidgetType(type);
-      setActiveWidget(type);
-      updateOverlay();
-    },
-    [isPremium],
-  );
-
-  const handleStart = useCallback(() => {
-    if (hasPermission === false) {
-      requestOverlayPermission();
-      return;
-    }
-    try {
-      startOverlay();
-      setOverlayActive(true);
-      setError(null);
-    } catch (e) {
-      setError(
-        'Could not start overlay. Grant "Display over other apps" permission.',
-      );
-    }
-  }, [hasPermission]);
-
-  const handleStop = useCallback(() => {
-    stopOverlay();
-    setOverlayActive(false);
-  }, []);
-
-  const handleOpenSettings = useCallback(() => {
-    requestOverlayPermission();
-  }, []);
-
-  if (Platform.OS !== 'android') {
+  if (!isAndroid) {
     return (
       <View style={styles.container}>
         <ScreenGradient>
@@ -147,8 +45,8 @@ export function OverlayScreen() {
             Floating overlay
           </Text>
           <Text variant="body" color="secondary" style={styles.subtitle}>
-            Dynamic Island–like pill that floats over other apps. Tap to expand,
-            drag to move, long-press to open Until.
+            Dynamic Island–like pill that floats over other apps. Drag to move,
+            long-press to open Until.
           </Text>
 
           {error && (
@@ -240,34 +138,40 @@ export function OverlayScreen() {
             color="secondary"
             style={styles.sectionSubtitle}
           >
-            Tap to select. Compact pill shows key metric; tap to expand.
+            Tap to select. Compact pill shows key metric.
           </Text>
 
-          {WIDGET_OPTIONS.map(({ type, title, description }) => {
-            const locked = isPremiumLiveActivityType(type) && !isPremium;
+          {options.map(option => {
             return (
               <TouchableOpacity
-                key={type}
+                key={option.type}
                 style={[
                   styles.optionCard,
-                  activeWidget === type && styles.optionCardSelected,
-                  locked && styles.optionCardLocked,
+                  option.selected && styles.optionCardSelected,
+                  option.locked && styles.optionCardLocked,
                 ]}
-                onPress={() => handleSelectWidget(type)}
-                activeOpacity={locked ? 1 : 0.7}
+                onPress={() => handleSelectWidget(option.type)}
+                activeOpacity={option.locked ? 1 : 0.7}
               >
                 <View style={styles.optionHeader}>
                   <Text variant="title" color="primary">
-                    {title}
+                    {option.title}
                   </Text>
-                  {locked && (
+                  {option.comingSoon && (
+                    <View style={[styles.premiumBadge, styles.soonBadge]}>
+                      <Text variant="caption" style={styles.premiumBadgeText}>
+                        Soon
+                      </Text>
+                    </View>
+                  )}
+                  {option.lockedPremium && (
                     <View style={styles.premiumBadge}>
                       <Text variant="caption" style={styles.premiumBadgeText}>
                         Premium
                       </Text>
                     </View>
                   )}
-                  {activeWidget === type && !locked && (
+                  {option.selected && !option.locked && (
                     <View style={styles.selectedDot} />
                   )}
                 </View>
@@ -276,7 +180,11 @@ export function OverlayScreen() {
                   color="secondary"
                   style={styles.optionDescription}
                 >
-                  {locked ? 'Upgrade to Premium to use this' : description}
+                  {option.comingSoon
+                    ? 'Coming in a future update.'
+                    : option.lockedPremium
+                    ? 'Upgrade to Premium to use this'
+                    : option.description}
                 </Text>
               </TouchableOpacity>
             );
@@ -381,6 +289,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing[2],
     paddingVertical: 2,
     borderRadius: 4,
+  },
+  soonBadge: {
+    backgroundColor: 'rgba(160, 160, 160, 0.45)',
   },
   premiumBadgeText: {
     color: Colors.background,

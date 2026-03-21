@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, StyleSheet, ScrollView, TouchableOpacity, Dimensions } from 'react-native';
+import { View, StyleSheet, ScrollView, TouchableOpacity, Dimensions, Alert } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Text, ScreenGradient, Card, ProgressLine, CircularProgress } from '../../ui';
@@ -93,7 +93,9 @@ export function DayDetailScreen() {
 
           <TouchableOpacity
             style={styles.cta}
-            onPress={() => navigation.navigate('DailyTasks')}
+            onPress={() => {
+              Alert.alert('Coming soon', 'Daily tasks will be available in a future update.');
+            }}
           >
             <Text variant="sectionTitle" color="primary">
               Today&apos;s tasks

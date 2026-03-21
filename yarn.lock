@@ -5912,15 +5912,20 @@ react-native-fs@^2.20.0:
     base-64 "^0.1.0"
     utf8 "^3.0.0"
 
-react-native-mmkv@^4.1.2:
-  version "4.1.2"
-  resolved "https://registry.npmjs.org/react-native-mmkv/-/react-native-mmkv-4.1.2.tgz"
-  integrity sha512-6LHb2DQBXuo96Aues13EugmlWw/HAYuh3KoJoQNrC4JsBwn3J3KiRYAg2mCm5Je0VYq2YsmbgZG7XJwX/WFYZA==
+react-native-iap@^14.4.0:
+  version "14.7.17"
+  resolved "https://registry.yarnpkg.com/react-native-iap/-/react-native-iap-14.7.17.tgz#b4b7efa99030707e5844b91897bfad394bf08873"
+  integrity sha512-0ZJYITTBcVZVDXGm4QS+ivIETxFS5fy4Nxk60/9NgoJVUuPXgEaDPPn4PUXixSWBhlkYVVpufCUy7pPXDIqctw==
 
-react-native-nitro-modules@0.33.2:
-  version "0.33.2"
-  resolved "https://registry.npmjs.org/react-native-nitro-modules/-/react-native-nitro-modules-0.33.2.tgz"
-  integrity sha512-ZlfOe6abODeHv/eZf8PxeSkrxIUhEKha6jaAAA9oXy7I6VPr7Ff4dUsAq3cyF3kX0L6qt2Dh9nzD2NdSsDwGpA==
+react-native-mmkv@^4.2.0:
+  version "4.2.0"
+  resolved "https://registry.yarnpkg.com/react-native-mmkv/-/react-native-mmkv-4.2.0.tgz#c7d2760d4784671ad3d8d5cd18f78fc932bfb1fd"
+  integrity sha512-LB1GeqkSJtu33li0nzgvo4W2RbsGfObXgQG2LBmbxfQP3sX+Q13OANoeKnJ1vwU8v4xNn4jWrA4vl3GuOt1/Rw==
+
+react-native-nitro-modules@^0.35.1:
+  version "0.35.2"
+  resolved "https://registry.yarnpkg.com/react-native-nitro-modules/-/react-native-nitro-modules-0.35.2.tgz#75fbcd42a73d93540c0069d42098d9dc6c12ea7e"
+  integrity sha512-97cZcCh3ZAuWAfutel2Q3qLfc45XXh7F9Ei5tEjahP0kV3q8hQelwLIulKXmjN+f0JI5Zf/wCsfwwdVWYU2tKA==
 
 react-native-safe-area-context@^5.5.2:
   version "5.6.2"

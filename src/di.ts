@@ -3,6 +3,7 @@
  * Single place where repository implementations are instantiated and injected into use cases.
  */
 
+import { Platform } from 'react-native';
 import { MmkvTimeRepository } from './infrastructure/repositories/MmkvTimeRepository';
 import { MmkvSubscriptionRepository } from './infrastructure/repositories/MmkvSubscriptionRepository';
 import { MmkvActivityRepository } from './infrastructure/repositories/MmkvActivityRepository';
@@ -59,6 +60,22 @@ import { GetOnboardingCompletedUseCase } from './domain/useCases/GetOnboardingCo
 import { SetOnboardingCompletedUseCase } from './domain/useCases/SetOnboardingCompletedUseCase';
 import { DeviceIdProviderAdapter } from './infrastructure/adapters/DeviceIdProviderAdapter';
 import { LicenseVerificationServiceAdapter } from './infrastructure/adapters/LicenseVerificationServiceAdapter';
+import { GetAccessStateUseCase } from './domain/useCases/GetAccessStateUseCase';
+import { TrackAppOpenUseCase } from './domain/useCases/TrackAppOpenUseCase';
+import { TrackLifeScreenViewedUseCase } from './domain/useCases/TrackLifeScreenViewedUseCase';
+import { ApplyStorePurchaseUseCase } from './domain/useCases/ApplyStorePurchaseUseCase';
+import { RestorePurchasesUseCase } from './domain/useCases/RestorePurchasesUseCase';
+import { PlayBillingRepository } from './infrastructure/repositories/PlayBillingRepository';
+import { NoOpPlayBillingRepository } from './infrastructure/repositories/NoOpPlayBillingRepository';
+import type { IPlayBillingRepository } from './domain/repository/IPlayBillingRepository';
+import { productIdToPurchaseType } from './domain/billing/mapProductId';
+
+/** Avoid top-level import of WidgetSync (circular with this file). */
+function syncPremiumAfterEntitlementChange(): void {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const { syncPremiumStatus } = require('./infrastructure/WidgetSync');
+  syncPremiumStatus();
+}
 
 const timeRepository = new MmkvTimeRepository();
 const subscriptionRepository = new MmkvSubscriptionRepository();
@@ -77,10 +94,57 @@ export const observeTimeStateUseCase = new ObserveTimeStateUseCase(timeRepositor
 export const updateUserProfileUseCase = new UpdateUserProfileUseCase(timeRepository);
 export const observeSubscriptionUseCase = new ObserveSubscriptionUseCase(subscriptionRepository);
 export const updateSubscriptionUseCase = new UpdateSubscriptionUseCase(subscriptionRepository);
+export const getAccessStateUseCase = new GetAccessStateUseCase(subscriptionRepository);
+export const trackAppOpenUseCase = new TrackAppOpenUseCase(subscriptionRepository);
+export const trackLifeScreenViewedUseCase = new TrackLifeScreenViewedUseCase(subscriptionRepository);
+export const applyStorePurchaseUseCase = new ApplyStorePurchaseUseCase(
+  subscriptionRepository,
+  syncPremiumAfterEntitlementChange
+);
+
+let playBillingAndroid: PlayBillingRepository | undefined;
+export const playBillingRepository: IPlayBillingRepository =
+  Platform.OS === 'android'
+    ? (() => {
+        let instance: PlayBillingRepository;
+        instance = new PlayBillingRepository(async purchase => {
+          if (purchase.purchaseState === 'pending') {
+            return;
+          }
+          if (!productIdToPurchaseType(purchase.productId)) {
+            return;
+          }
+          applyStorePurchaseUseCase.execute({
+            productId: purchase.productId,
+            purchaseToken: purchase.purchaseToken ?? null,
+            transactionDate: purchase.transactionDate,
+          });
+          await instance.finalizePurchase(purchase);
+        });
+        playBillingAndroid = instance;
+        return instance;
+      })()
+    : new NoOpPlayBillingRepository();
+
+export const restorePurchasesUseCase = new RestorePurchasesUseCase(
+  subscriptionRepository,
+  playBillingRepository,
+  syncPremiumAfterEntitlementChange
+);
+
+export async function ensurePlayBillingSession(): Promise<void> {
+  if (Platform.OS !== 'android' || !playBillingAndroid) return;
+  await playBillingAndroid.initConnection();
+  playBillingAndroid.attachPurchaseListeners();
+}
+
 export const logActivityUseCase = new LogActivityUseCase(activityRepository);
 export const getCategoryTotalsUseCase = new GetCategoryTotalsUseCase(activityRepository);
 export const getRegretProjectionUseCase = new GetRegretProjectionUseCase(activityRepository, timeRepository);
-export const getInterventionStateUseCase = new GetInterventionStateUseCase(activityRepository, subscriptionRepository);
+export const getInterventionStateUseCase = new GetInterventionStateUseCase(
+  activityRepository,
+  getAccessStateUseCase
+);
 export const syncWidgetUseCase = new SyncWidgetUseCase(timeRepository);
 export const getCustomCountersUseCase = new GetCustomCountersUseCase(customCounterRepository);
 export const addCustomCounterUseCase = new AddCustomCounterUseCase(customCounterRepository);

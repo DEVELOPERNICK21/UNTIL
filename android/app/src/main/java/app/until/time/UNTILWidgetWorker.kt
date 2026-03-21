@@ -43,6 +43,13 @@ private const val PENDING_INTENT_YEAR = 102
 private const val PENDING_INTENT_COUNTER_BASE = 200
 private const val PENDING_INTENT_DAILY_TASKS = 103
 private const val PENDING_INTENT_HOUR_CALCULATION = 104
+private const val PENDING_INTENT_LIFE = 105
+
+private const val STORAGE_KEY_TRIAL_START_DATE = "trial.startDate"
+private const val STORAGE_KEY_PREMIUM_IS_ACTIVE = "premium.isActive"
+private const val STORAGE_KEY_LIFE_UNLOCK_UNTIL = "engagement.lifeUnlockUntil"
+
+private const val TRIAL_DURATION_MS = 14L * 24 * 60 * 60 * 1000
 
 class UNTILWidgetWorker(
     context: Context,
@@ -84,6 +91,9 @@ class UNTILWidgetWorker(
             monthDaysPassed = 0, monthDaysLeft = 31, monthPercent = 0,
             yearDaysPassed = 0, yearDaysLeft = 365, yearPercent = 0,
             dayProgress = 0.0, monthProgress = 0.0, yearProgress = 0.0,
+            lifeProgress = null,
+            remainingDaysLife = null,
+            lifePercent = null,
             updatedAt = 0L
         )
 
@@ -142,6 +152,7 @@ class UNTILWidgetWorker(
             val dayProvider = ComponentName(context, UNTILDayWidgetProvider::class.java)
             val monthProvider = ComponentName(context, UNTILMonthWidgetProvider::class.java)
             val yearProvider = ComponentName(context, UNTILYearWidgetProvider::class.java)
+            val lifeProvider = ComponentName(context, UNTILLifeWidgetProvider::class.java)
             val counterProvider = ComponentName(context, UNTILCounterWidgetProvider::class.java)
             val countdownProvider = ComponentName(context, UNTILCountdownWidgetProvider::class.java)
             val dailyTasksProvider = ComponentName(context, UNTILDailyTasksWidgetProvider::class.java)
@@ -151,11 +162,13 @@ class UNTILWidgetWorker(
             val dailyTasksPayload = loadDailyTasksPayload(context)
 
             val dayIds = appWidgetManager.getAppWidgetIds(dayProvider)
+            val lifeIds = appWidgetManager.getAppWidgetIds(lifeProvider)
             val monthYearCache = cacheWithFreshMonthYear(context, cache)
             listOf(
                 Triple(dayIds, R.layout.widget_day, cache),
                 Triple(appWidgetManager.getAppWidgetIds(monthProvider), R.layout.widget_month, monthYearCache),
                 Triple(appWidgetManager.getAppWidgetIds(yearProvider), R.layout.widget_year, monthYearCache),
+                Triple(lifeIds, R.layout.widget_life, cache),
             ).forEach { (ids, layoutId, cacheForLayout) ->
                 if (ids.isEmpty()) return@forEach
                 for (id in ids) {
@@ -172,7 +185,8 @@ class UNTILWidgetWorker(
             if (dayIds.isNotEmpty()) scheduleDayTick(context)
             if (appWidgetManager.getAppWidgetIds(monthProvider).isNotEmpty() ||
                 appWidgetManager.getAppWidgetIds(yearProvider).isNotEmpty() ||
-                appWidgetManager.getAppWidgetIds(countdownProvider).isNotEmpty()) {
+                appWidgetManager.getAppWidgetIds(countdownProvider).isNotEmpty() ||
+                appWidgetManager.getAppWidgetIds(lifeProvider).isNotEmpty()) {
                 scheduleDailyMidnight(context)
             }
 
@@ -683,6 +697,15 @@ class UNTILWidgetWorker(
                     dayProgress = obj.optDouble("dayProgress", 0.0),
                     monthProgress = obj.optDouble("monthProgress", 0.0),
                     yearProgress = obj.optDouble("yearProgress", 0.0),
+                    lifeProgress = if (obj.has("lifeProgress") && !obj.isNull("lifeProgress")) {
+                        obj.optDouble("lifeProgress", 0.0)
+                    } else null,
+                    remainingDaysLife = if (obj.has("remainingDaysLife") && !obj.isNull("remainingDaysLife")) {
+                        obj.optInt("remainingDaysLife", 0)
+                    } else null,
+                    lifePercent = if (obj.has("lifePercent") && !obj.isNull("lifePercent")) {
+                        obj.optInt("lifePercent", 0)
+                    } else null,
                     updatedAt = obj.optLong("updatedAt", 0L)
                 )
             } catch (e: Exception) {
@@ -699,6 +722,7 @@ class UNTILWidgetWorker(
             val requestCode = when (layoutId) {
                 R.layout.widget_day -> PENDING_INTENT_DAY
                 R.layout.widget_month -> PENDING_INTENT_MONTH
+                R.layout.widget_life -> PENDING_INTENT_LIFE
                 R.layout.widget_year -> PENDING_INTENT_YEAR
                 else -> PENDING_INTENT_DAY
             }
@@ -716,6 +740,17 @@ class UNTILWidgetWorker(
         private fun buildRemoteViews(context: Context, layoutId: Int, cache: WidgetCache): RemoteViews {
             val views = RemoteViews(context.packageName, layoutId)
             try {
+                // Widget-level entitlement check (Android widgets can be added by users, so we must gate display here too).
+                val nowMs = System.currentTimeMillis()
+                val mmkv = MMKV.mmkvWithID(MMKV_ID)
+                val isPremiumActive = mmkv?.decodeBool(STORAGE_KEY_PREMIUM_IS_ACTIVE, false) ?: false
+                val trialStartMs = mmkv?.decodeLong(STORAGE_KEY_TRIAL_START_DATE, 0L) ?: 0L
+                val trialActive = trialStartMs > 0L && nowMs <= trialStartMs + TRIAL_DURATION_MS
+                val effectivePremium = isPremiumActive || trialActive
+                val lifeUnlockUntil = mmkv?.decodeLong(STORAGE_KEY_LIFE_UNLOCK_UNTIL, 0L) ?: 0L
+                val lifeEventUnlockActive = lifeUnlockUntil > nowMs && lifeUnlockUntil != 0L
+                val canAccessLife = effectivePremium || lifeEventUnlockActive
+
                 when (layoutId) {
                     R.layout.widget_day -> {
                         val dDone = cache.dayPercentDone.coerceIn(0, 100)
@@ -737,22 +772,30 @@ class UNTILWidgetWorker(
                         }
                     }
                     R.layout.widget_month -> {
-                        val mPassed = cache.monthDaysPassed.coerceIn(0, 31)
-                        val mLeft = cache.monthDaysLeft.coerceIn(0, 31)
-                        val mPct = cache.monthPercent.coerceIn(0, 100)
-                        val mProgress = cache.monthProgress.coerceIn(0.0, 1.0)
-                        views.setTextViewText(R.id.widget_month_passed, context.getString(R.string.widget_month_passed_format, mPassed))
-                        views.setTextViewText(R.id.widget_month_left, context.getString(R.string.widget_month_left_format, mLeft))
-                        views.setTextViewText(R.id.widget_month_percent, context.getString(R.string.widget_month_percent_format, mPct))
-                        // Month progress bar (keep day widget as circular only)
-                        views.setProgressBar(R.id.widget_month_progress, 100, (mProgress * 100).toInt().coerceIn(0, 100), false)
-                        try {
-                            val dotsBitmap = createMonthDotsBitmap(context, cache.monthIndex)
-                            if (dotsBitmap != null && !dotsBitmap.isRecycled) {
-                                views.setImageViewBitmap(R.id.widget_month_dots, dotsBitmap)
+                        if (!effectivePremium) {
+                            views.setTextViewText(R.id.widget_month_passed, context.getString(R.string.widget_life_locked))
+                            views.setTextViewText(R.id.widget_month_left, context.getString(R.string.widget_life_locked))
+                            views.setTextViewText(R.id.widget_month_percent, context.getString(R.string.widget_life_locked))
+                            views.setTextViewText(R.id.widget_month_label, context.getString(R.string.widget_life_locked))
+                            views.setProgressBar(R.id.widget_month_progress, 100, 0, false)
+                        } else {
+                            val mPassed = cache.monthDaysPassed.coerceIn(0, 31)
+                            val mLeft = cache.monthDaysLeft.coerceIn(0, 31)
+                            val mPct = cache.monthPercent.coerceIn(0, 100)
+                            val mProgress = cache.monthProgress.coerceIn(0.0, 1.0)
+                            views.setTextViewText(R.id.widget_month_passed, context.getString(R.string.widget_month_passed_format, mPassed))
+                            views.setTextViewText(R.id.widget_month_left, context.getString(R.string.widget_month_left_format, mLeft))
+                            views.setTextViewText(R.id.widget_month_percent, context.getString(R.string.widget_month_percent_format, mPct))
+                            // Month progress bar (keep day widget as circular only)
+                            views.setProgressBar(R.id.widget_month_progress, 100, (mProgress * 100).toInt().coerceIn(0, 100), false)
+                            try {
+                                val dotsBitmap = createMonthDotsBitmap(context, cache.monthIndex)
+                                if (dotsBitmap != null && !dotsBitmap.isRecycled) {
+                                    views.setImageViewBitmap(R.id.widget_month_dots, dotsBitmap)
+                                }
+                            } catch (e: Exception) {
+                                // Dots optional; text already set so widget still shows data
                             }
-                        } catch (e: Exception) {
-                            // Dots optional; text already set so widget still shows data
                         }
                     }
                     R.layout.widget_year -> {
@@ -778,6 +821,60 @@ class UNTILWidgetWorker(
                             }
                         } catch (e: Exception) {
                             // Dots optional; text/progress already set so widget still shows data
+                        }
+                    }
+                    R.layout.widget_life -> {
+                        if (!canAccessLife) {
+                            // Premium not active yet (trial expired + life unlock not reached).
+                            views.setTextViewText(R.id.widget_life_passed, context.getString(R.string.widget_life_locked))
+                            views.setTextViewText(R.id.widget_life_left, "")
+                            views.setTextViewText(R.id.widget_life_percent, context.getString(R.string.widget_life_locked))
+                            views.setTextViewText(R.id.widget_life_label, context.getString(R.string.widget_life_locked))
+                            views.setProgressBar(R.id.widget_life_progress, 100, 0, false)
+                        } else {
+                            // If birth date isn't available yet, SSOT cache values can be null.
+                            val lifeProgress = cache.lifeProgress
+                            val remainingDaysLife = cache.remainingDaysLife
+                            val lifePercent = cache.lifePercent
+                            if (lifeProgress == null || remainingDaysLife == null || lifePercent == null) {
+                                views.setTextViewText(
+                                    R.id.widget_life_label,
+                                    "${context.getString(R.string.widget_life_empty_line1)}\n${context.getString(R.string.widget_life_empty_line2)}",
+                                )
+                                views.setTextViewText(R.id.widget_life_passed, "")
+                                views.setTextViewText(R.id.widget_life_left, "")
+                                views.setTextViewText(R.id.widget_life_percent, "0%")
+                                views.setProgressBar(R.id.widget_life_progress, 100, 0, false)
+                            } else {
+                                val clamped = lifeProgress.coerceIn(0.0, 1.0)
+                                val consumedPct = lifePercent.coerceIn(0, 100)
+                                val leftPct = (100 - consumedPct).coerceIn(0, 100)
+                                val totalDaysPassed = (clamped * 365.25).toInt().coerceIn(0, 365)
+                                val leftDays = remainingDaysLife.coerceIn(0, 365)
+
+                                views.setTextViewText(
+                                    R.id.widget_life_passed,
+                                    context.getString(R.string.widget_life_passed_format, totalDaysPassed, consumedPct),
+                                )
+                                views.setTextViewText(
+                                    R.id.widget_life_left,
+                                    context.getString(R.string.widget_life_left_format, leftDays, leftPct),
+                                )
+                                views.setTextViewText(
+                                    R.id.widget_life_percent,
+                                    context.getString(R.string.widget_life_percent_format, consumedPct),
+                                )
+                                views.setProgressBar(R.id.widget_life_progress, 100, consumedPct, false)
+
+                                try {
+                                    val dotsBitmap = createYearDotsBitmap(context, clamped, totalDaysPassed)
+                                    if (dotsBitmap != null && !dotsBitmap.isRecycled) {
+                                        views.setImageViewBitmap(R.id.widget_life_dots, dotsBitmap)
+                                    }
+                                } catch (_: Exception) {
+                                    // Dots optional
+                                }
+                            }
                         }
                     }
                 }
@@ -1068,5 +1165,8 @@ private data class WidgetCache(
     val dayProgress: Double,
     val monthProgress: Double,
     val yearProgress: Double,
+    val lifeProgress: Double? = null,
+    val remainingDaysLife: Int? = null,
+    val lifePercent: Int? = null,
     val updatedAt: Long = 0L
 )

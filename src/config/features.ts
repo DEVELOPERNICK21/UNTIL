@@ -3,5 +3,8 @@
  * Surfaces use hooks (e.g. useGoalsFeatureEnabled) that read from here or from di/subscription.
  */
 
-/** When true, the Goals FAB is shown on Home and navigates to Monthly Goals. */
-export const GOALS_FEATURE_ENABLED = true;
+/**
+ * When true, the Home tasks FAB opens DailyTasks (full flow).
+ * When false, the FAB still shows and opens TasksComingSoon.
+ */
+export const GOALS_FEATURE_ENABLED = false;

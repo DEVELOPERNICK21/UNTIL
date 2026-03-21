@@ -81,6 +81,9 @@ class WidgetBridgeModule(reactContext: ReactApplicationContext) :
             val yearIds = appWidgetManager.getAppWidgetIds(
                 android.content.ComponentName(ctx, UNTILYearWidgetProvider::class.java)
             )
+            val lifeIds = appWidgetManager.getAppWidgetIds(
+                android.content.ComponentName(ctx, UNTILLifeWidgetProvider::class.java)
+            )
             val counterIds = appWidgetManager.getAppWidgetIds(
                 android.content.ComponentName(ctx, UNTILCounterWidgetProvider::class.java)
             )
@@ -97,6 +100,7 @@ class WidgetBridgeModule(reactContext: ReactApplicationContext) :
                 putBoolean("dayWidgetAdded", dayIds.isNotEmpty())
                 putBoolean("monthWidgetAdded", monthIds.isNotEmpty())
                 putBoolean("yearWidgetAdded", yearIds.isNotEmpty())
+                putBoolean("lifeWidgetAdded", lifeIds.isNotEmpty())
                 putBoolean("counterWidgetAdded", counterIds.isNotEmpty())
                 putBoolean("countdownWidgetAdded", countdownIds.isNotEmpty())
                 putBoolean("dailyTasksWidgetAdded", dailyTasksIds.isNotEmpty())

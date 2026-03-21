@@ -3,19 +3,21 @@
  */
 
 import type { IActivityRepository } from '../repository/IActivityRepository';
-import type { ISubscriptionRepository } from '../repository/ISubscriptionRepository';
 import { formatDateToIso } from '../../core/time/clock';
 import { shouldIntervene } from '../../core/activity/intervention';
+import type { GetAccessStateUseCase } from './GetAccessStateUseCase';
+import { hasPremiumBundle } from '../accessControl';
 
 export class GetInterventionStateUseCase {
   constructor(
     private readonly activityRepository: IActivityRepository,
-    private readonly subscriptionRepository: ISubscriptionRepository
+    private readonly getAccessStateUseCase: GetAccessStateUseCase
   ) {}
 
   execute(): import('../../core/activity/intervention').InterventionResult & { isPremium: boolean } {
-    const isPremium = this.subscriptionRepository.getIsPremium();
-    if (!isPremium) {
+    const access = this.getAccessStateUseCase.execute();
+    const entitled = hasPremiumBundle(access);
+    if (!entitled) {
       return { shouldShowRed: false, limitCrossed: false, message: null, isPremium: false };
     }
 

@@ -24,6 +24,10 @@ export class VerifySubscriptionUseCase {
     const lastVerified = this.subscriptionRepository.getLastVerifiedAt();
 
     if (!licenseKey) {
+      /** Play Billing entitlement (Android): no web license; trust stored store purchase metadata. */
+      if (this.subscriptionRepository.getPurchaseType() != null) {
+        return { valid: true };
+      }
       // No license — ensure premium is off
       if (this.subscriptionRepository.getIsPremium()) {
         this.subscriptionRepository.setIsPremium(false);
@@ -73,5 +77,8 @@ export class VerifySubscriptionUseCase {
     this.subscriptionRepository.setLicenseKey(null);
     this.subscriptionRepository.setDeviceId(null);
     this.subscriptionRepository.setLastVerifiedAt(0);
+    this.subscriptionRepository.setPurchaseType(null);
+    this.subscriptionRepository.setPurchaseDate(null);
+    this.subscriptionRepository.setPurchaseToken(null);
   }
 }

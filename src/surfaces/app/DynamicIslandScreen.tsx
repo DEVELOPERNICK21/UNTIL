@@ -4,12 +4,22 @@
  */
 
 import React, { useState, useCallback } from 'react';
-import { View, StyleSheet, ScrollView, TouchableOpacity, NativeModules, Platform } from 'react-native';
+import {
+  View,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  NativeModules,
+  Platform,
+} from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { Text, ScreenGradient, Card } from '../../ui';
 import { Colors, Spacing, Typography } from '../../theme';
-import { useObserveSubscription } from '../../hooks';
-import { isPremiumLiveActivityType } from '../../domain/premium';
+import { useAccessControl } from '../../hooks';
+import {
+  isPremiumLiveActivityType,
+  isV2LiveActivityType,
+} from '../../domain/premium';
 import {
   syncLiveActivity,
   endLiveActivity,
@@ -21,18 +31,48 @@ import type { LiveActivityWidgetType } from '../../infrastructure';
 
 const { LiveActivityBridge } = NativeModules;
 
-const WIDGET_OPTIONS: { type: LiveActivityWidgetType; title: string; description: string }[] = [
-  { type: 'day', title: 'Today', description: '57% done · 42% left. Day progress with hours.' },
-  { type: 'month', title: 'This month', description: 'Feb 17% · 23d left. Month progress.' },
-  { type: 'year', title: 'This year', description: '9% · 329d left. Year progress.' },
-  { type: 'life', title: 'Your life', description: 'Life progress. Set birth date in Settings.' },
-  { type: 'dailyTasks', title: 'Daily tasks', description: '3/5 done. Today\'s task report.' },
-  { type: 'hourCalc', title: 'Hour timer', description: '0:12:34. Tap to start/stop.' },
+const WIDGET_OPTIONS: {
+  type: LiveActivityWidgetType;
+  title: string;
+  description: string;
+}[] = [
+  {
+    type: 'day',
+    title: 'Today',
+    description: '57% done · 42% left. Day progress with hours.',
+  },
+  {
+    type: 'month',
+    title: 'This month',
+    description: 'Feb 17% · 23d left. Month progress.',
+  },
+  {
+    type: 'year',
+    title: 'This year',
+    description: '9% · 329d left. Year progress.',
+  },
+  {
+    type: 'life',
+    title: 'Your life',
+    description: 'Life progress. Set birth date in Settings.',
+  },
+  {
+    type: 'dailyTasks',
+    title: 'Daily tasks',
+    description: 'Coming in a future update.',
+  },
+  {
+    type: 'hourCalc',
+    title: 'Hour timer',
+    description: 'Coming in a future update.',
+  },
 ];
 
 export function DynamicIslandScreen() {
-  const { isPremium } = useObserveSubscription();
-  const [activeWidget, setActiveWidget] = useState<LiveActivityWidgetType>(getLiveActivityWidgetType());
+  const { hasPremiumBundle, canAccessLife } = useAccessControl();
+  const [activeWidget, setActiveWidget] = useState<LiveActivityWidgetType>(
+    getLiveActivityWidgetType(),
+  );
   const [liveActivityActive, setLiveActivityActive] = useState(false);
 
   const refreshStatus = useCallback(() => {
@@ -47,17 +87,27 @@ export function DynamicIslandScreen() {
   useFocusEffect(
     useCallback(() => {
       refreshStatus();
-    }, [refreshStatus])
+    }, [refreshStatus]),
   );
 
-  const handleSelectWidget = useCallback((type: LiveActivityWidgetType) => {
-    if (isPremiumLiveActivityType(type) && !isPremium) return; // Gate premium
-    setLiveActivityWidgetType(type);
-    setActiveWidget(type);
-    if (liveActivityActive) {
-      updateLiveActivity(type);
-    }
-  }, [liveActivityActive, isPremium]);
+  const handleSelectWidget = useCallback(
+    (type: LiveActivityWidgetType) => {
+      if (isV2LiveActivityType(type)) return;
+      if (type === 'life' && !canAccessLife) return;
+      if (
+        isPremiumLiveActivityType(type) &&
+        type !== 'life' &&
+        !hasPremiumBundle
+      )
+        return;
+      setLiveActivityWidgetType(type);
+      setActiveWidget(type);
+      if (liveActivityActive) {
+        updateLiveActivity(type);
+      }
+    },
+    [liveActivityActive, hasPremiumBundle, canAccessLife],
+  );
 
   const handleStart = useCallback(() => {
     syncLiveActivity(activeWidget);
@@ -92,13 +142,23 @@ export function DynamicIslandScreen() {
             Dynamic Island
           </Text>
           <Text variant="body" color="secondary" style={styles.subtitle}>
-            Live Activity in Dynamic Island and Lock Screen. Choose what to show. iPhone 14 Pro or later for Dynamic Island.
+            Live Activity in Dynamic Island and Lock Screen. Choose what to
+            show. iPhone 14 Pro or later for Dynamic Island.
           </Text>
 
           <View style={styles.statusCard}>
             <View style={styles.statusRow}>
-              <Text variant="title" color="primary">Status</Text>
-              <View style={[styles.badge, liveActivityActive ? styles.badgeActive : styles.badgeInactive]}>
+              <Text variant="title" color="primary">
+                Status
+              </Text>
+              <View
+                style={[
+                  styles.badge,
+                  liveActivityActive
+                    ? styles.badgeActive
+                    : styles.badgeInactive,
+                ]}
+              >
                 <Text variant="caption" style={styles.badgeText}>
                   {liveActivityActive ? 'Active' : 'Inactive'}
                 </Text>
@@ -106,18 +166,28 @@ export function DynamicIslandScreen() {
             </View>
             <View style={styles.actions}>
               <TouchableOpacity
-                style={[styles.button, liveActivityActive && styles.buttonDisabled]}
+                style={[
+                  styles.button,
+                  liveActivityActive && styles.buttonDisabled,
+                ]}
                 onPress={handleStart}
                 disabled={liveActivityActive}
               >
-                <Text variant="body" color="primary">Start</Text>
+                <Text variant="body" color="primary">
+                  Start
+                </Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={[styles.button, !liveActivityActive && styles.buttonDisabled]}
+                style={[
+                  styles.button,
+                  !liveActivityActive && styles.buttonDisabled,
+                ]}
                 onPress={handleStop}
                 disabled={!liveActivityActive}
               >
-                <Text variant="body" color="primary">Stop</Text>
+                <Text variant="body" color="primary">
+                  Stop
+                </Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -125,12 +195,21 @@ export function DynamicIslandScreen() {
           <Text variant="title" color="primary" style={styles.sectionTitle}>
             Show in Dynamic Island
           </Text>
-          <Text variant="caption" color="secondary" style={styles.sectionSubtitle}>
+          <Text
+            variant="caption"
+            color="secondary"
+            style={styles.sectionSubtitle}
+          >
             Tap to select. Compact view shows key metric; long-press to expand.
           </Text>
 
           {WIDGET_OPTIONS.map(({ type, title, description }) => {
-            const locked = isPremiumLiveActivityType(type) && !isPremium;
+            const v2 = isV2LiveActivityType(type);
+            const lockedPremium =
+              type === 'life'
+                ? !canAccessLife
+                : isPremiumLiveActivityType(type) && !hasPremiumBundle;
+            const locked = v2 || lockedPremium;
             return (
               <TouchableOpacity
                 key={type}
@@ -143,25 +222,45 @@ export function DynamicIslandScreen() {
                 activeOpacity={locked ? 1 : 0.7}
               >
                 <View style={styles.optionHeader}>
-                  <Text variant="title" color="primary">{title}</Text>
-                  {locked && (
+                  <Text variant="title" color="primary">
+                    {title}
+                  </Text>
+                  {v2 && (
+                    <View style={[styles.premiumBadge, styles.soonBadge]}>
+                      <Text variant="caption" style={styles.premiumBadgeText}>
+                        Soon
+                      </Text>
+                    </View>
+                  )}
+                  {lockedPremium && (
                     <View style={styles.premiumBadge}>
-                      <Text variant="caption" style={styles.premiumBadgeText}>Premium</Text>
+                      <Text variant="caption" style={styles.premiumBadgeText}>
+                        Premium
+                      </Text>
                     </View>
                   )}
                   {activeWidget === type && !locked && (
                     <View style={styles.selectedDot} />
                   )}
                 </View>
-                <Text variant="caption" color="secondary" style={styles.optionDescription}>
-                  {locked ? 'Upgrade to Premium to use this' : description}
+                <Text
+                  variant="caption"
+                  color="secondary"
+                  style={styles.optionDescription}
+                >
+                  {v2
+                    ? 'Coming in a future update.'
+                    : lockedPremium
+                    ? 'Upgrade to Premium to use this'
+                    : description}
                 </Text>
               </TouchableOpacity>
             );
           })}
 
           <Text variant="caption" color="secondary" style={styles.hint}>
-            Data updates when you open the app. Live Activity lasts up to 8 hours in Dynamic Island.
+            Data updates when you open the app. Live Activity lasts up to 8
+            hours in Dynamic Island.
           </Text>
         </ScrollView>
       </ScreenGradient>
@@ -240,6 +339,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing[2],
     paddingVertical: 2,
     borderRadius: 4,
+  },
+  soonBadge: {
+    backgroundColor: 'rgba(160, 160, 160, 0.45)',
   },
   premiumBadgeText: {
     color: Colors.background,

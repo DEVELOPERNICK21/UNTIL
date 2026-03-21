@@ -12,7 +12,6 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-  Linking,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -33,7 +32,6 @@ import {
   getFontFamilyForWeight,
   FontFamily,
 } from '../../theme';
-import { useThemeStore } from '../../stores/themeStore';
 import type { RootStackParamList } from '../../navigation/RootNavigator';
 
 function parseBirthDate(str: string): Date {
@@ -52,23 +50,30 @@ function toBirthDateString(d: Date): string {
   return `${y}-${m}-${day}`;
 }
 
-const MONTHS = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
+const MONTHS = [
+  'JAN',
+  'FEB',
+  'MAR',
+  'APR',
+  'MAY',
+  'JUN',
+  'JUL',
+  'AUG',
+  'SEP',
+  'OCT',
+  'NOV',
+  'DEC',
+];
 
-function formatBornExpected(birthDate: string | null, deathAge: number): string {
+function formatBornExpected(
+  birthDate: string | null,
+  deathAge: number,
+): string {
   if (!birthDate || birthDate.length < 10) return `EXPECTED: ${deathAge} YEARS`;
   const [y, m] = birthDate.split('-').map(Number);
   const month = MONTHS[(m ?? 1) - 1] ?? '';
   return `BORN: ${month} ${y}  +  EXPECTED: ${deathAge} YEARS`;
 }
-
-const PLAY_STORE_URL = 'https://play.google.com/store/apps/details?id=app.until.time';
-
-type ThemeOptionValue = 'light' | 'dark' | 'system';
-const THEME_OPTIONS: { value: ThemeOptionValue; label: string }[] = [
-  { value: 'light', label: 'Light' },
-  { value: 'dark', label: 'Dark' },
-  { value: 'system', label: 'System' },
-];
 
 type IntentionalityMode = 'quiet' | 'radical';
 
@@ -79,14 +84,13 @@ export function SettingsScreen() {
   const updateUserProfile = useUpdateUserProfile();
   const { isPremium } = useObserveSubscription();
   const theme = useTheme();
-  const themeMode = useThemeStore(s => s.themeMode);
-  const setThemeMode = useThemeStore(s => s.setThemeMode);
 
   const [birthInput, setBirthInput] = useState(userProfile.birthDate ?? '');
   const [deathInput, setDeathInput] = useState(String(userProfile.deathAge));
   const [showBirthPicker, setShowBirthPicker] = useState(false);
   const [showEditProfile, setShowEditProfile] = useState(false);
-  const [intentionality, setIntentionality] = useState<IntentionalityMode>('quiet');
+  const [intentionality, setIntentionality] =
+    useState<IntentionalityMode>('quiet');
 
   const birthDateForPicker = useMemo(
     () => parseBirthDate(birthInput),
@@ -94,7 +98,10 @@ export function SettingsScreen() {
   );
 
   const lifePercent = Math.round((timeState?.life ?? 0) * 100);
-  const bornExpectedLine = formatBornExpected(userProfile.birthDate, userProfile.deathAge);
+  const bornExpectedLine = formatBornExpected(
+    userProfile.birthDate,
+    userProfile.deathAge,
+  );
 
   useEffect(() => {
     setBirthInput(userProfile.birthDate ?? '');
@@ -117,35 +124,65 @@ export function SettingsScreen() {
           style={styles.keyboard}
         >
           <ScrollView
-            contentContainerStyle={[styles.content, { paddingBottom: Spacing[6] }]}
+            contentContainerStyle={[
+              styles.content,
+              { paddingBottom: Spacing[6] },
+            ]}
             showsVerticalScrollIndicator={false}
           >
             {/* Profile hero — centered, minimal */}
             <View style={styles.profileHero}>
               <View style={[styles.avatarRing, { borderColor: theme.divider }]}>
-                <View style={[styles.avatar, { backgroundColor: theme.cardLighter }]}>
-                  <Text variant="sectionTitle" style={{ color: theme.textSecondary }}>
+                <View
+                  style={[
+                    styles.avatar,
+                    { backgroundColor: theme.cardLighter },
+                  ]}
+                >
+                  <Text
+                    variant="sectionTitle"
+                    style={{ color: theme.textSecondary }}
+                  >
                     UNTIL
                   </Text>
                 </View>
-                <View style={[styles.avatarEditBadge, { backgroundColor: theme.background }]}>
-                  <Text style={[styles.editIcon, { color: theme.textPrimary }]}>✎</Text>
+                <View
+                  style={[
+                    styles.avatarEditBadge,
+                    { backgroundColor: theme.background },
+                  ]}
+                >
+                  <Text style={[styles.editIcon, { color: theme.textPrimary }]}>
+                    ✎
+                  </Text>
                 </View>
               </View>
-              <Text variant="title" style={[styles.profileName, { color: theme.textPrimary }]}>
+              <Text
+                variant="title"
+                style={[styles.profileName, { color: theme.textPrimary }]}
+              >
                 Profile
               </Text>
-              <Text variant="caption" style={[styles.profileMeta, { color: theme.textSecondary }]}>
+              <Text
+                variant="caption"
+                style={[styles.profileMeta, { color: theme.textSecondary }]}
+              >
                 {bornExpectedLine}
               </Text>
-              <Text variant="caption" style={[styles.profileMeta, { color: theme.textSecondary }]}>
+              <Text
+                variant="caption"
+                style={[styles.profileMeta, { color: theme.textSecondary }]}
+              >
                 REALITY: {lifePercent}% JOURNEY COMPLETED
               </Text>
             </View>
 
             {/* ACCOUNT */}
             <View style={styles.section}>
-              <Text variant="caption" style={[styles.sectionLabel, { color: theme.textSecondary }]}>
+              <Text
+                variant="caption"
+                style={[styles.sectionLabel, { color: theme.textSecondary }]}
+              >
                 ACCOUNT
               </Text>
               <TouchableOpacity
@@ -154,37 +191,69 @@ export function SettingsScreen() {
                 activeOpacity={0.7}
               >
                 <View style={styles.rowContent}>
-                  <Text variant="body" style={{ color: theme.textPrimary }}>Birth & lifespan</Text>
-                  <Text variant="caption" style={[styles.rowSubtitle, { color: theme.textSecondary }]}>
-                    {userProfile.birthDate ? `${userProfile.birthDate} · ${userProfile.deathAge} years` : 'Tap to set'}
+                  <Text variant="body" style={{ color: theme.textPrimary }}>
+                    Birth & lifespan
+                  </Text>
+                  <Text
+                    variant="caption"
+                    style={[styles.rowSubtitle, { color: theme.textSecondary }]}
+                  >
+                    {userProfile.birthDate
+                      ? `${userProfile.birthDate} · ${userProfile.deathAge} years`
+                      : 'Tap to set'}
                   </Text>
                 </View>
-                <Text style={[styles.chevron, { color: theme.textSecondary }]}>›</Text>
+                <Text style={[styles.chevron, { color: theme.textSecondary }]}>
+                  ›
+                </Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={[styles.row, styles.rowLast, { borderBottomColor: theme.divider }]}
-                onPress={() => !isPremium && Platform.OS === 'android' && Linking.openURL(PLAY_STORE_URL)}
+                style={[
+                  styles.row,
+                  styles.rowLast,
+                  { borderBottomColor: theme.divider },
+                ]}
+                onPress={() => navigation.navigate('Premium')}
                 activeOpacity={0.7}
               >
                 <View style={styles.rowContent}>
-                  <Text variant="body" style={{ color: theme.textPrimary }}>Premium</Text>
-                  <Text variant="caption" style={[styles.rowSubtitle, { color: theme.textSecondary }]}>
-                    {isPremium ? 'Active — managed via your store account' : 'Not active'}
+                  <Text variant="body" style={{ color: theme.textPrimary }}>
+                    Premium
+                  </Text>
+                  <Text
+                    variant="caption"
+                    style={[styles.rowSubtitle, { color: theme.textSecondary }]}
+                  >
+                    {isPremium
+                      ? 'Active — managed via your store account'
+                      : 'Not active'}
                   </Text>
                 </View>
-                <Text style={[styles.chevron, { color: theme.textSecondary }]}>›</Text>
+                <Text style={[styles.chevron, { color: theme.textSecondary }]}>
+                  ›
+                </Text>
               </TouchableOpacity>
             </View>
 
             {/* Edit profile card — inline when expanded */}
             {showEditProfile && (
               <Card style={styles.editCard}>
-                <Text variant="caption" color="secondary" style={styles.editLabel}>Birth date</Text>
+                <Text
+                  variant="caption"
+                  color="secondary"
+                  style={styles.editLabel}
+                >
+                  Birth date
+                </Text>
                 <TouchableOpacity
                   style={[styles.input, { borderColor: theme.divider }]}
                   onPress={() => setShowBirthPicker(true)}
                 >
-                  <Text variant="body" color={birthInput ? 'primary' : 'secondary'} style={styles.inputText}>
+                  <Text
+                    variant="body"
+                    color={birthInput ? 'primary' : 'secondary'}
+                    style={styles.inputText}
+                  >
                     {birthInput || 'Tap to pick date'}
                   </Text>
                 </TouchableOpacity>
@@ -201,11 +270,22 @@ export function SettingsScreen() {
                   />
                 )}
                 {Platform.OS === 'ios' && showBirthPicker && (
-                  <TouchableOpacity style={styles.pickerDone} onPress={() => setShowBirthPicker(false)}>
-                    <Text variant="caption" color="primary">Done</Text>
+                  <TouchableOpacity
+                    style={styles.pickerDone}
+                    onPress={() => setShowBirthPicker(false)}
+                  >
+                    <Text variant="caption" color="primary">
+                      Done
+                    </Text>
                   </TouchableOpacity>
                 )}
-                <Text variant="caption" color="secondary" style={styles.editLabel}>Expected lifespan (years)</Text>
+                <Text
+                  variant="caption"
+                  color="secondary"
+                  style={styles.editLabel}
+                >
+                  Expected lifespan (years)
+                </Text>
                 <TextInput
                   style={[styles.input, { borderColor: theme.divider }]}
                   value={deathInput}
@@ -218,76 +298,61 @@ export function SettingsScreen() {
                   style={[styles.saveBtn, { backgroundColor: theme.percent }]}
                   onPress={handleSave}
                 >
-                  <Text variant="sectionTitle" style={styles.saveBtnLabel}>Save</Text>
+                  <Text variant="sectionTitle" style={styles.saveBtnLabel}>
+                    Save
+                  </Text>
                 </TouchableOpacity>
               </Card>
             )}
 
             {/* CONFIGURATION */}
             <View style={styles.section}>
-              <Text variant="caption" style={[styles.sectionLabel, { color: theme.textSecondary }]}>
+              <Text
+                variant="caption"
+                style={[styles.sectionLabel, { color: theme.textSecondary }]}
+              >
                 CONFIGURATION
               </Text>
-              <View style={[styles.appearanceRow, { borderBottomColor: theme.divider }]}>
-                <Text variant="body" style={[styles.appearanceLabel, { color: theme.textPrimary }]}>
-                  Appearance
-                </Text>
-                <Text variant="caption" style={[styles.appearanceSubtitle, { color: theme.textSecondary }]}>
-                  Choose how UNTIL looks
-                </Text>
-                <View style={styles.themeChips}>
-                  {THEME_OPTIONS.map(({ value, label }) => {
-                    const isSelected = themeMode === value;
-                    const chipTextColor = isSelected ? '#FFFFFF' : theme.textSecondary;
-                    return (
-                      <TouchableOpacity
-                        key={value}
-                        style={[
-                          styles.chip,
-                          isSelected
-                            ? { backgroundColor: theme.percent, borderColor: theme.percent }
-                            : { backgroundColor: theme.cardBase, borderColor: theme.divider },
-                        ]}
-                        onPress={() => setThemeMode(value)}
-                        activeOpacity={0.75}
-                      >
-                        <Text
-                          variant="caption"
-                          style={[
-                            styles.chipLabel,
-                            { color: chipTextColor },
-                            isSelected && styles.chipLabelSelected,
-                          ]}
-                        >
-                          {label}
-                        </Text>
-                      </TouchableOpacity>
-                    );
-                  })}
-                </View>
-              </View>
               <TouchableOpacity
-                style={[styles.row, styles.rowLast, { borderBottomColor: theme.divider }]}
+                style={[
+                  styles.row,
+                  styles.rowLast,
+                  { borderBottomColor: theme.divider },
+                ]}
                 onPress={() => navigation.navigate('Widget')}
                 activeOpacity={0.7}
               >
                 <View style={styles.rowContent}>
-                  <Text variant="body" style={{ color: theme.textPrimary }}>Widget Design</Text>
-                  <Text variant="caption" style={[styles.rowSubtitle, { color: theme.textSecondary }]}>
+                  <Text variant="body" style={{ color: theme.textPrimary }}>
+                    Widget Design
+                  </Text>
+                  <Text
+                    variant="caption"
+                    style={[styles.rowSubtitle, { color: theme.textSecondary }]}
+                  >
                     Lockscreen & Home aesthetics
                   </Text>
                 </View>
-                <Text style={[styles.chevron, { color: theme.textSecondary }]}>›</Text>
+                <Text style={[styles.chevron, { color: theme.textSecondary }]}>
+                  ›
+                </Text>
               </TouchableOpacity>
             </View>
 
             {/* Intentionality Focus card */}
             <Card style={styles.intentCard} lighter>
-              <Text variant="title" style={[styles.intentTitle, { color: theme.textPrimary }]}>
+              <Text
+                variant="title"
+                style={[styles.intentTitle, { color: theme.textPrimary }]}
+              >
                 Intentionality Focus
               </Text>
-              <Text variant="body" style={[styles.intentDesc, { color: theme.textSecondary }]}>
-                Define the core essence of your current life stage. This will influence the tone of your Until insights.
+              <Text
+                variant="body"
+                style={[styles.intentDesc, { color: theme.textSecondary }]}
+              >
+                Define the core essence of your current life stage. This will
+                influence the tone of your Until insights.
               </Text>
               <View style={styles.radioGroup}>
                 <TouchableOpacity
@@ -295,12 +360,22 @@ export function SettingsScreen() {
                   onPress={() => setIntentionality('quiet')}
                   activeOpacity={0.7}
                 >
-                  <View style={[styles.radioOuter, { borderColor: theme.divider }]}>
+                  <View
+                    style={[styles.radioOuter, { borderColor: theme.divider }]}
+                  >
                     {intentionality === 'quiet' && (
-                      <View style={[styles.radioInner, { backgroundColor: theme.textPrimary }]} />
+                      <View
+                        style={[
+                          styles.radioInner,
+                          { backgroundColor: theme.textPrimary },
+                        ]}
+                      />
                     )}
                   </View>
-                  <Text variant="sectionTitle" style={[styles.radioLabel, { color: theme.textPrimary }]}>
+                  <Text
+                    variant="sectionTitle"
+                    style={[styles.radioLabel, { color: theme.textPrimary }]}
+                  >
                     QUIET CONTEMPLATION
                   </Text>
                 </TouchableOpacity>
@@ -309,23 +384,38 @@ export function SettingsScreen() {
                   onPress={() => setIntentionality('radical')}
                   activeOpacity={0.7}
                 >
-                  <View style={[styles.radioOuter, { borderColor: theme.divider }]}>
+                  <View
+                    style={[styles.radioOuter, { borderColor: theme.divider }]}
+                  >
                     {intentionality === 'radical' && (
-                      <View style={[styles.radioInner, { backgroundColor: theme.textPrimary }]} />
+                      <View
+                        style={[
+                          styles.radioInner,
+                          { backgroundColor: theme.textPrimary },
+                        ]}
+                      />
                     )}
                   </View>
-                  <Text variant="sectionTitle" style={[styles.radioLabel, { color: theme.textPrimary }]}>
+                  <Text
+                    variant="sectionTitle"
+                    style={[styles.radioLabel, { color: theme.textPrimary }]}
+                  >
                     RADICAL ACTION
                   </Text>
                 </TouchableOpacity>
               </View>
             </Card>
 
-            <View style={[styles.versionRow, { borderTopColor: theme.divider }]}>
-              <Text variant="caption" color="secondary">App version</Text>
+            <View
+              style={[styles.versionRow, { borderTopColor: theme.divider }]}
+            >
+              <Text variant="caption" color="secondary">
+                App version
+              </Text>
               <Text variant="body" color="primary" style={styles.versionValue}>
                 {(() => {
-                  const { version, buildNumber } = getAppVersionUseCase.execute();
+                  const { version, buildNumber } =
+                    getAppVersionUseCase.execute();
                   return buildNumber ? `${version} (${buildNumber})` : version;
                 })()}
               </Text>
@@ -413,39 +503,6 @@ const styles = StyleSheet.create({
   chevron: {
     fontSize: Typography.title,
     marginLeft: Spacing[2],
-  },
-  appearanceRow: {
-    paddingVertical: Spacing[4],
-    borderBottomWidth: StyleSheet.hairlineWidth,
-  },
-  appearanceLabel: {
-    fontFamily: getFontFamilyForWeight(Weight.medium),
-    marginBottom: Spacing.xs,
-  },
-  appearanceSubtitle: {
-    marginBottom: Spacing[3],
-  },
-  themeChips: {
-    flexDirection: 'row',
-    gap: Spacing[2],
-    flexWrap: 'wrap',
-  },
-  chip: {
-    paddingVertical: Spacing[2],
-    paddingHorizontal: Spacing[3],
-    borderRadius: Radius.md,
-    borderWidth: 2,
-    minHeight: 40,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  chipLabel: {
-    fontFamily: getFontFamilyForWeight(Weight.medium),
-    letterSpacing: 0.3,
-  },
-  chipLabelSelected: {
-    fontFamily: getFontFamilyForWeight(Weight.semibold),
-    color: '#FFFFFF',
   },
   editCard: {
     marginBottom: Spacing[4],

@@ -6,6 +6,7 @@
     android:targetCellHeight="2"
     android:updatePeriodMillis="60000"
     android:initialLayout="@layout/widget_hour_calculation"
+    android:previewLayout="@layout/widget_hour_calculation"
     android:resizeMode="horizontal|vertical"
     android:widgetCategory="home_screen"
     android:description="@string/widget_hour_calculation_description" />

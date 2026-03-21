@@ -1,104 +1,47 @@
-import React, { useState, useCallback } from 'react';
+import React from 'react';
 import {
   View,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  NativeModules,
   Platform,
 } from 'react-native';
-import { useFocusEffect, useNavigation } from '@react-navigation/native';
-import { isOverlayEnabled } from '../../infrastructure';
-import { useObserveSubscription } from '../../hooks';
-import { isPremiumWidget } from '../../domain/premium';
+import { useNavigation } from '@react-navigation/native';
+import { useAccessControl, useWidgetSurfaceStatus } from '../../hooks';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Text, ScreenGradient } from '../../ui';
 import { Colors, Spacing, Radius, Typography } from '../../theme';
 import type { RootStackParamList } from '../../navigation/RootNavigator';
 
-const { WidgetBridge, LiveActivityBridge } = NativeModules;
-
-function useOverlayStatus() {
-  const [active, setActive] = useState(false);
-  useFocusEffect(
-    useCallback(() => {
-      if (Platform.OS === 'android') setActive(isOverlayEnabled());
-    }, []),
-  );
-  return active;
-}
-
-export type WidgetStatus = {
-  dayWidgetAdded: boolean;
-  monthWidgetAdded: boolean;
-  yearWidgetAdded: boolean;
-  counterWidgetAdded: boolean;
-  countdownWidgetAdded: boolean;
-  dailyTasksWidgetAdded?: boolean;
-  hourCalculationWidgetAdded?: boolean;
-} | null;
-
-const WIDGETS: {
-  key: keyof NonNullable<WidgetStatus>;
-  kind:
-    | 'day'
-    | 'month'
-    | 'year'
-    | 'counter'
-    | 'countdown'
-    | 'dailyTasks'
-    | 'hourCalc';
+const PREVIEW_ITEMS: {
+  key: string;
   title: string;
-  description: string;
+  value: string;
+  subtitle: string;
 }[] = [
   {
-    key: 'dayWidgetAdded',
-    kind: 'day',
+    key: 'day',
     title: 'Today',
-    description:
-      'Day progress with hours and minutes. Small, medium, and large sizes.',
+    value: '57% done',
+    subtitle: '10h 14m left',
   },
   {
-    key: 'monthWidgetAdded',
-    kind: 'month',
+    key: 'month',
     title: 'This month',
-    description:
-      'Month progress with 12 dots and days passed/left. Medium size.',
+    value: '17%',
+    subtitle: '23 days left',
   },
   {
-    key: 'yearWidgetAdded',
-    kind: 'year',
+    key: 'year',
     title: 'This year',
-    description:
-      'Year progress with 365 dots and days passed/left. Large size.',
+    value: '9%',
+    subtitle: '329 days left',
   },
   {
-    key: 'counterWidgetAdded',
-    kind: 'counter',
-    title: 'Counter',
-    description:
-      'Tap to add +1. Create counters in Custom counters, then add this widget.',
-  },
-  {
-    key: 'countdownWidgetAdded',
-    kind: 'countdown',
-    title: 'Countdown',
-    description:
-      'Shows days left until a deadline. Add deadlines in Countdowns.',
-  },
-  {
-    key: 'dailyTasksWidgetAdded',
-    kind: 'dailyTasks',
-    title: 'Daily tasks',
-    description:
-      "Today's task report: completed vs pending. Add tasks in Today's tasks.",
-  },
-  {
-    key: 'hourCalculationWidgetAdded',
-    kind: 'hourCalc',
-    title: 'Hour calculation',
-    description:
-      'Tap to start/stop. One timer. Set title (e.g. Office hour) in Until.',
+    key: 'life',
+    title: 'Your life',
+    value: '31%',
+    subtitle: '20,126 days left',
   },
 ];
 
@@ -126,6 +69,7 @@ interface SettingTileProps {
   status?: 'on' | 'off' | 'active' | 'inactive';
   statusLabel?: string;
   locked?: boolean;
+  comingSoon?: boolean;
   onPress?: () => void;
   children?: React.ReactNode;
 }
@@ -136,6 +80,7 @@ function SettingTile({
   status,
   statusLabel,
   locked,
+  comingSoon,
   onPress,
   children,
 }: SettingTileProps) {
@@ -164,7 +109,14 @@ function SettingTile({
             </Text>
           </View>
         )}
-        {locked && (
+        {comingSoon && (
+          <View style={[styles.premiumPill, styles.comingSoonPill]}>
+            <Text variant="caption" style={styles.premiumPillText}>
+              Soon
+            </Text>
+          </View>
+        )}
+        {locked && !comingSoon && (
           <View style={styles.premiumPill}>
             <Text variant="caption" style={styles.premiumPillText}>
               Premium
@@ -178,7 +130,11 @@ function SettingTile({
         style={styles.tileDescription}
         numberOfLines={2}
       >
-        {locked ? 'Upgrade to Premium to add this widget.' : description}
+        {comingSoon
+          ? 'Coming in a future update.'
+          : locked
+          ? 'Upgrade to Premium to add this widget.'
+          : description}
       </Text>
       {children}
     </View>
@@ -191,7 +147,12 @@ function SettingTile({
         onPress={onPress}
         style={styles.tileWrapper}
       >
-        <View style={[styles.glassTile, locked && styles.tileLocked]}>
+        <View
+          style={[
+            styles.glassTile,
+            (locked || comingSoon) && styles.tileLocked,
+          ]}
+        >
           {content}
           <Text variant="caption" color="secondary" style={styles.tileChevron}>
             Open →
@@ -201,7 +162,9 @@ function SettingTile({
     );
   }
   return (
-    <View style={[styles.glassTile, locked && styles.tileLocked]}>
+    <View
+      style={[styles.glassTile, (locked || comingSoon) && styles.tileLocked]}
+    >
       {content}
     </View>
   );
@@ -239,58 +202,35 @@ function QuickLinkTile({
   );
 }
 
+function ComingSoonQuickRow({
+  title,
+  subtitle,
+}: {
+  title: string;
+  subtitle: string;
+}) {
+  return (
+    <View style={[styles.quickLinkTile, styles.quickLinkDisabled]}>
+      <View style={styles.quickLinkBody}>
+        <Text variant="body" color="secondary" style={styles.quickLinkTitle}>
+          {title}
+        </Text>
+        <Text variant="caption" color="secondary">
+          {subtitle}
+        </Text>
+      </View>
+      <Text variant="caption" color="secondary">
+        Soon
+      </Text>
+    </View>
+  );
+}
+
 export function WidgetScreen() {
   const navigation =
     useNavigation<NativeStackNavigationProp<RootStackParamList, 'Widget'>>();
-  const { isPremium } = useObserveSubscription();
-  const [status, setStatus] = useState<WidgetStatus>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [liveActivityActive, setLiveActivityActive] = useState(false);
-  const overlayActive = useOverlayStatus();
-
-  const fetchStatus = useCallback(() => {
-    if (!WidgetBridge?.getWidgetStatus) {
-      setStatus({
-        dayWidgetAdded: false,
-        monthWidgetAdded: false,
-        yearWidgetAdded: false,
-        counterWidgetAdded: false,
-        countdownWidgetAdded: false,
-        dailyTasksWidgetAdded: false,
-        hourCalculationWidgetAdded: false,
-      });
-      setLoading(false);
-      return;
-    }
-    setLoading(true);
-    setError(null);
-    WidgetBridge.getWidgetStatus()
-      .then((result: WidgetStatus) => {
-        setStatus(result ?? null);
-        setLoading(false);
-      })
-      .catch((err: { message?: string }) => {
-        setError(err?.message ?? 'Could not load widget status');
-        setStatus(null);
-        setLoading(false);
-      });
-  }, []);
-
-  const refreshLiveActivityStatus = useCallback(() => {
-    if (Platform.OS === 'ios' && LiveActivityBridge?.isActivityActive) {
-      LiveActivityBridge.isActivityActive()
-        .then((active: boolean) => setLiveActivityActive(active))
-        .catch(() => setLiveActivityActive(false));
-    }
-  }, []);
-
-  useFocusEffect(
-    useCallback(() => {
-      fetchStatus();
-      refreshLiveActivityStatus();
-    }, [fetchStatus, refreshLiveActivityStatus]),
-  );
+  const { hasPremiumBundle, canAccessLife } = useAccessControl();
+  const { liveActivityActive, overlayActive } = useWidgetSurfaceStatus();
 
   return (
     <View style={styles.container}>
@@ -307,42 +247,22 @@ export function WidgetScreen() {
             widgets and configure what appears in Dynamic Island or overlay.
           </Text>
 
-          {loading && (
-            <Text variant="caption" color="secondary" style={styles.statusText}>
-              Checking…
-            </Text>
-          )}
-          {error && (
-            <Text
-              variant="caption"
-              style={[styles.statusText, { color: Colors.textSecondary }]}
-            >
-              {error}
-            </Text>
-          )}
-
-          {/* Section: Home screen widgets */}
-          {!loading && status && (
-            <>
-              <SectionHeader label="Home screen widgets" />
-              <GlassSection style={styles.sectionSpacing}>
-                {WIDGETS.map(({ key, kind, title, description }) => {
-                  const added = status[key];
-                  const locked = isPremiumWidget(kind) && !isPremium;
-                  return (
-                    <SettingTile
-                      key={key}
-                      title={title}
-                      description={description}
-                      status={added ? 'on' : 'off'}
-                      statusLabel={added ? 'On home screen' : 'Not added'}
-                      locked={locked}
-                    />
-                  );
-                })}
-              </GlassSection>
-            </>
-          )}
+          <SectionHeader label="Preview" />
+          <View style={styles.previewStrip}>
+            {PREVIEW_ITEMS.map(item => (
+              <View key={item.key} style={styles.previewCard}>
+                <Text variant="caption" color="secondary" style={styles.previewTitle}>
+                  {item.title}
+                </Text>
+                <Text variant="title" color="primary" style={styles.previewValue}>
+                  {item.value}
+                </Text>
+                <Text variant="caption" color="secondary" style={styles.previewSubtitle}>
+                  {item.subtitle}
+                </Text>
+              </View>
+            ))}
+          </View>
 
           {/* Section: Always visible (Dynamic Island / Floating overlay) */}
           <SectionHeader label="Always visible" />
@@ -353,16 +273,26 @@ export function WidgetScreen() {
                 description="Live Activity in Dynamic Island and Lock Screen. Tap to configure."
                 status={liveActivityActive ? 'active' : 'inactive'}
                 statusLabel={liveActivityActive ? 'Active' : 'Inactive'}
-                onPress={() => navigation.navigate('DynamicIsland')}
+                locked={!(hasPremiumBundle || canAccessLife)}
+                onPress={() =>
+                  hasPremiumBundle || canAccessLife
+                    ? navigation.navigate('DynamicIsland')
+                    : navigation.navigate('Premium')
+                }
               />
             )}
             {Platform.OS === 'android' && (
               <SettingTile
                 title="Floating overlay"
-                description="Dynamic Island–like pill over other apps. Tap to expand, drag to move."
+                description="Dynamic Island–like pill over other apps. Drag to move."
                 status={overlayActive ? 'active' : 'inactive'}
                 statusLabel={overlayActive ? 'Active' : 'Inactive'}
-                onPress={() => navigation.navigate('Overlay')}
+                locked={!(hasPremiumBundle || canAccessLife)}
+                onPress={() =>
+                  hasPremiumBundle || canAccessLife
+                    ? navigation.navigate('Overlay')
+                    : navigation.navigate('Premium')
+                }
               />
             )}
           </GlassSection>
@@ -370,25 +300,21 @@ export function WidgetScreen() {
           {/* Section: Quick links */}
           <SectionHeader label="Manage data & features" />
           <GlassSection style={styles.sectionSpacing}>
-            <QuickLinkTile
+            <ComingSoonQuickRow
               title="Custom counters"
               subtitle="Tap-to-increment widgets (e.g. Water)"
-              onPress={() => navigation.navigate('CustomCounters')}
             />
-            <QuickLinkTile
-              title="Countdowns"
-              subtitle="Deadline countdown (e.g. Project, Interview)"
-              onPress={() => navigation.navigate('Countdowns')}
+            <ComingSoonQuickRow
+              title="Deadlines"
+              subtitle="Countdown to a date (e.g. project, interview)"
             />
-            <QuickLinkTile
+            <ComingSoonQuickRow
               title="Today's tasks"
               subtitle="Daily task list and day report"
-              onPress={() => navigation.navigate('DailyTasks')}
             />
-            <QuickLinkTile
+            <ComingSoonQuickRow
               title="Hour calculation"
               subtitle="Tap widget to start/stop. Set title in app."
-              onPress={() => navigation.navigate('HourCalculation')}
             />
             <QuickLinkTile
               title="Task report"
@@ -435,6 +361,31 @@ const styles = StyleSheet.create({
   },
   sectionSpacing: {
     marginBottom: Spacing[2],
+  },
+  previewStrip: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: Spacing[2],
+    marginBottom: Spacing[3],
+  },
+  previewCard: {
+    flexBasis: '48%',
+    backgroundColor: Colors.glassHighlight,
+    borderColor: Colors.glassBorder,
+    borderWidth: 1,
+    borderRadius: Radius.md,
+    paddingVertical: Spacing[2],
+    paddingHorizontal: Spacing[2],
+  },
+  previewTitle: {
+    marginBottom: 2,
+  },
+  previewValue: {
+    fontSize: Typography.body,
+    marginBottom: 2,
+  },
+  previewSubtitle: {
+    fontSize: Typography.small,
   },
 
   tileWrapper: {
@@ -515,6 +466,16 @@ const styles = StyleSheet.create({
   },
   quickLinkTitle: {
     marginBottom: 2,
+  },
+  quickLinkBody: {
+    flex: 1,
+    paddingRight: Spacing[2],
+  },
+  quickLinkDisabled: {
+    opacity: 0.65,
+  },
+  comingSoonPill: {
+    backgroundColor: 'rgba(160, 160, 160, 0.35)',
   },
 
   hint: {

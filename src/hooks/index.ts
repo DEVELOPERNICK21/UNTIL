@@ -1,6 +1,9 @@
 export { useObserveTimeState } from './useObserveTimeState';
 export { useUpdateUserProfile } from './useUpdateUserProfile';
 export { useObserveSubscription } from './useObserveSubscription';
+export { useAccessControl } from './useAccessControl';
+export { usePurchase } from './usePurchase';
+export { useTrackLifeScreenVisit } from './useTrackLifeScreenVisit';
 export { useUpdateSubscription } from './useUpdateSubscription';
 export { useLogActivity } from './useLogActivity';
 export { useObserveCategoryTotals } from './useObserveCategoryTotals';
@@ -10,3 +13,5 @@ export { useDailyTasks } from './useDailyTasks';
 export { useOnboardingState } from './useOnboardingState';
 export { useAppUpdateCheck } from './useAppUpdateCheck';
 export { useGoalsFeatureEnabled } from './useGoalsFeatureEnabled';
+export { useOverlayControl } from './useOverlayControl';
+export { useWidgetSurfaceStatus } from './useWidgetSurfaceStatus';

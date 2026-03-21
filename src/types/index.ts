@@ -125,7 +125,12 @@ export interface Countdown {
 }
 
 /** Task categories for daily task list (separate from ActivityCategory). */
-export type TaskCategory = 'health' | 'work' | 'personal_care' | 'learning' | 'other';
+export type TaskCategory =
+  | 'health'
+  | 'work'
+  | 'personal_care'
+  | 'learning'
+  | 'other';
 
 /** Single daily task. date is YYYY-MM-DD. Optional source when created from a monthly goal. */
 export interface DailyTask {

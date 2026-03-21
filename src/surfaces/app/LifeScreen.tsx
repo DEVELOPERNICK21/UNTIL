@@ -15,7 +15,7 @@ import {
   ProgressLine,
   CircularProgress,
 } from '../../ui';
-import { useObserveTimeState } from '../../hooks';
+import { useObserveTimeState, useAccessControl, useTrackLifeScreenVisit } from '../../hooks';
 import { Spacing, Colors, Typography, FontFamily, getProgressColor } from '../../theme';
 import type { RootStackParamList } from '../../navigation/RootNavigator';
 
@@ -25,9 +25,11 @@ const RING_SIZE = Math.min(
 );
 
 export function LifeScreen() {
+  useTrackLifeScreenVisit();
   const navigation =
     useNavigation<NativeStackNavigationProp<RootStackParamList, 'Life'>>();
   const { userProfile, timeState } = useObserveTimeState();
+  const { canAccessLife } = useAccessControl();
   const hasBirthDate = !!userProfile.birthDate;
 
   const progress = timeState.life ?? 0;
@@ -53,7 +55,38 @@ export function LifeScreen() {
             Your life
           </Text>
 
-          {hasBirthDate ? (
+          {!hasBirthDate ? (
+            <Card style={styles.card}>
+              <Text variant="body" color="secondary" style={styles.cardText}>
+                Set your birth date in Settings to see how much of your life has
+                passed and how much is left.
+              </Text>
+              <TouchableOpacity
+                style={styles.settingsCta}
+                onPress={() => navigation.navigate('Settings')}
+              >
+                <Text variant="sectionTitle" color="primary">
+                  Open Settings →
+                </Text>
+              </TouchableOpacity>
+            </Card>
+          ) : !canAccessLife ? (
+            <Card style={styles.card}>
+              <Text variant="body" color="secondary" style={styles.cardText}>
+                Life details are part of Premium (or your trial). Visiting this screen can unlock
+                Life for 24 hours after enough app opens — pull to leave and return if you just
+                unlocked.
+              </Text>
+              <TouchableOpacity
+                style={styles.settingsCta}
+                onPress={() => navigation.navigate('Premium')}
+              >
+                <Text variant="sectionTitle" color="primary">
+                  Unlock Premium →
+                </Text>
+              </TouchableOpacity>
+            </Card>
+          ) : (
             <>
               <View style={styles.ringWrap}>
                 <CircularProgress
@@ -107,21 +140,6 @@ export function LifeScreen() {
                 />
               </Card>
             </>
-          ) : (
-            <Card style={styles.card}>
-              <Text variant="body" color="secondary" style={styles.cardText}>
-                Set your birth date in Settings to see how much of your life has
-                passed and how much is left.
-              </Text>
-              <TouchableOpacity
-                style={styles.settingsCta}
-                onPress={() => navigation.navigate('Settings')}
-              >
-                <Text variant="sectionTitle" color="primary">
-                  Open Settings →
-                </Text>
-              </TouchableOpacity>
-            </Card>
           )}
         </ScrollView>
       </ScreenGradient>

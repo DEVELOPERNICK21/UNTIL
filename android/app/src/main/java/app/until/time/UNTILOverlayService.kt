@@ -43,7 +43,6 @@ class UNTILOverlayService : Service() {
     private var windowManager: WindowManager? = null
     private var overlayView: FrameLayout? = null
     private var params: WindowManager.LayoutParams? = null
-    private var isExpanded = false
     private var updateHandler: Handler? = null
     private val updateRunnable = object : Runnable {
         override fun run() {
@@ -111,6 +110,8 @@ class UNTILOverlayService : Service() {
         }
 
         setupTouchListeners(root)
+        root.findViewById<View>(R.id.overlay_expanded)?.visibility = View.GONE
+        root.findViewById<View>(R.id.overlay_compact)?.visibility = View.VISIBLE
         safeUpdateOverlayContent(root)
 
         try {
@@ -141,27 +142,16 @@ class UNTILOverlayService : Service() {
 
     private fun setupTouchListeners(root: FrameLayout) {
         val compact = root.findViewById<View>(R.id.overlay_compact)
-        val expanded = root.findViewById<View>(R.id.overlay_expanded)
-        if (compact == null || expanded == null) return
-
-        var hasMoved = false
+        if (compact == null) return
 
         compact.setOnClickListener {
-            if (!hasMoved) {
-                if (isExpanded) {
-                    collapseOverlay(root)
-                } else {
-                    expandOverlay(root)
-                }
-            }
+            // Keep compact-only behavior (no expand/collapse).
         }
 
         compact.setOnLongClickListener {
             openApp()
             true
         }
-
-        expanded.setOnClickListener { openApp() }
 
         var initialX = 0
         var initialY = 0
@@ -171,16 +161,12 @@ class UNTILOverlayService : Service() {
         compact.setOnTouchListener { _, event ->
             when (event.action) {
                 MotionEvent.ACTION_DOWN -> {
-                    hasMoved = false
                     initialX = params?.x ?: 0
                     initialY = params?.y ?: 0
                     initialTouchX = event.rawX
                     initialTouchY = event.rawY
                 }
                 MotionEvent.ACTION_MOVE -> {
-                    val dx = kotlin.math.abs(event.rawX - initialTouchX)
-                    val dy = kotlin.math.abs(event.rawY - initialTouchY)
-                    if (dx > 10 || dy > 10) hasMoved = true
                     params?.let {
                         it.x = initialX + (event.rawX - initialTouchX).toInt()
                         it.y = initialY + (event.rawY - initialTouchY).toInt()
@@ -192,32 +178,6 @@ class UNTILOverlayService : Service() {
             }
             false
         }
-    }
-
-    private fun expandOverlay(root: FrameLayout) {
-        try {
-            isExpanded = true
-            root.findViewById<View>(R.id.overlay_expanded)?.visibility = View.VISIBLE
-            root.findViewById<View>(R.id.overlay_compact)?.visibility = View.GONE
-            params?.let {
-                it.width = (280 * resources.displayMetrics.density).toInt()
-                it.height = WindowManager.LayoutParams.WRAP_CONTENT
-                windowManager?.updateViewLayout(root, it)
-            }
-        } catch (e: Exception) { /* ignore */ }
-    }
-
-    private fun collapseOverlay(root: FrameLayout) {
-        try {
-            isExpanded = false
-            root.findViewById<View>(R.id.overlay_expanded)?.visibility = View.GONE
-            root.findViewById<View>(R.id.overlay_compact)?.visibility = View.VISIBLE
-            params?.let {
-                it.width = WindowManager.LayoutParams.WRAP_CONTENT
-                it.height = WindowManager.LayoutParams.WRAP_CONTENT
-                windowManager?.updateViewLayout(root, it)
-            }
-        } catch (e: Exception) { /* ignore */ }
     }
 
     private fun safeUpdateOverlayContent(root: FrameLayout) {
@@ -452,7 +412,7 @@ class UNTILOverlayService : Service() {
 
         return NotificationCompat.Builder(this, NOTIFICATION_CHANNEL_ID)
             .setContentTitle("Until overlay")
-            .setContentText("Floating time progress. Tap to expand.")
+            .setContentText("Floating time progress. Long-press to open Until.")
             .setSmallIcon(android.R.drawable.ic_menu_recent_history)
             .setContentIntent(pendingOpen)
             .addAction(android.R.drawable.ic_menu_close_clear_cancel, "Stop", pendingStop)

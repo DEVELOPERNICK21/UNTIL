@@ -12,7 +12,7 @@ import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text, ScreenGradient, Card, ProgressLine } from '../../ui';
-import { useObserveTimeState, useGoalsFeatureEnabled } from '../../hooks';
+import { useObserveTimeState, useGoalsFeatureEnabled, useAccessControl } from '../../hooks';
 import { Spacing, FontFamily, getProgressColor, useTheme, Shadows } from '../../theme';
 import type { RootStackParamList } from '../../navigation/RootNavigator';
 import { getDayProgress } from '../../core/time/day';
@@ -228,6 +228,7 @@ export function HomeScreen() {
   const theme = useTheme();
   const { userProfile, timeState } = useObserveTimeState();
   const goalsFeatureEnabled = useGoalsFeatureEnabled();
+  const { canAccessLife } = useAccessControl();
   const [liveNow, setLiveNow] = useState(() => new Date());
 
   useEffect(() => {
@@ -298,16 +299,40 @@ export function HomeScreen() {
           />
 
           {hasBirthDate ? (
-            <TimeBlock
-              index={3}
-              title="Your life"
-              passedLabel={`${life.passedDays.toLocaleString()} days`}
-              leftLabel={`${life.leftDays.toLocaleString()} days`}
-              progress={timeState.life}
-              passedPct={life.passedPct}
-              leftPct={life.leftPct}
-              onPress={() => navigation.navigate('Life')}
-            />
+            canAccessLife ? (
+              <TimeBlock
+                index={3}
+                title="Your life"
+                passedLabel={`${life.passedDays.toLocaleString()} days`}
+                leftLabel={`${life.leftDays.toLocaleString()} days`}
+                progress={timeState.life}
+                passedPct={life.passedPct}
+                leftPct={life.leftPct}
+                onPress={() => navigation.navigate('Life')}
+              />
+            ) : (
+              <Card style={styles.block}>
+                <Text
+                  variant="sectionTitle"
+                  color="secondary"
+                  style={styles.blockTitle}
+                >
+                  Your life
+                </Text>
+                <Text variant="body" color="secondary" style={styles.lifePrompt}>
+                  Premium, trial, or a short unlock is required for Life details. Open Premium to
+                  subscribe or restore.
+                </Text>
+                <Text
+                  variant="caption"
+                  color="primary"
+                  style={styles.settingsLink}
+                  onPress={() => navigation.navigate('Premium')}
+                >
+                  Unlock Premium
+                </Text>
+              </Card>
+            )
           ) : (
             <Card style={styles.block}>
               <Text
@@ -332,29 +357,37 @@ export function HomeScreen() {
             </Card>
           )}
 
+          <Card style={{ ...styles.block, opacity: 0.85 }}>
+            <Text variant="sectionTitle" color="secondary" style={styles.blockTitle}>
+              Coming soon
+            </Text>
+            <Text variant="body" color="secondary">
+              Monthly goals and today&apos;s tasks will appear here in a future update.
+            </Text>
+          </Card>
         </ScrollView>
 
-        {goalsFeatureEnabled && (
-          <TouchableOpacity
-            style={[
-              styles.fab,
-              {
-                backgroundColor: theme.percent,
-                right: Spacing[4],
-                bottom: Math.max(insets.bottom, Spacing[3]) + Spacing[2],
-              },
-            ]}
-            onPress={() => navigation.navigate('DailyTasks')}
-            activeOpacity={0.85}
-          >
-            <Svg width={24} height={24} viewBox="0 0 24 24" fill="none">
-              <Rect x={5} y={3} width={14} height={18} rx={2} stroke="#FFFFFF" strokeWidth={2} fill="none" />
-              <Line x1={8} y1={8} x2={16} y2={8} stroke="#FFFFFF" strokeWidth={1.5} strokeLinecap="round" />
-              <Line x1={8} y1={12} x2={16} y2={12} stroke="#FFFFFF" strokeWidth={1.5} strokeLinecap="round" />
-              <Line x1={8} y1={16} x2={14} y2={16} stroke="#FFFFFF" strokeWidth={1.5} strokeLinecap="round" />
-            </Svg>
-          </TouchableOpacity>
-        )}
+        <TouchableOpacity
+          style={[
+            styles.fab,
+            {
+              backgroundColor: theme.percent,
+              right: Spacing[4],
+              bottom: Math.max(insets.bottom, Spacing[3]) + Spacing[2],
+            },
+          ]}
+          onPress={() =>
+            navigation.navigate(goalsFeatureEnabled ? 'DailyTasks' : 'TasksComingSoon')
+          }
+          activeOpacity={0.85}
+        >
+          <Svg width={24} height={24} viewBox="0 0 24 24" fill="none">
+            <Rect x={5} y={3} width={14} height={18} rx={2} stroke="#FFFFFF" strokeWidth={2} fill="none" />
+            <Line x1={8} y1={8} x2={16} y2={8} stroke="#FFFFFF" strokeWidth={1.5} strokeLinecap="round" />
+            <Line x1={8} y1={12} x2={16} y2={12} stroke="#FFFFFF" strokeWidth={1.5} strokeLinecap="round" />
+            <Line x1={8} y1={16} x2={14} y2={16} stroke="#FFFFFF" strokeWidth={1.5} strokeLinecap="round" />
+          </Svg>
+        </TouchableOpacity>
       </ScreenGradient>
     </View>
   );
