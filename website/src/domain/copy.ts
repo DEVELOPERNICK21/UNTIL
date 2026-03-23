@@ -5,30 +5,61 @@
 
 export const LANDING_COPY = {
   /** Top-of-page price/offer line (e.g. "Intro price — Premium ₹99") */
-  introPriceLine: 'Limited time — Premium ₹99 (was ₹299). One-time, no subscription. iPhone & Android.',
+  introPriceLine:
+    'Start free. Premium includes 14-day trial, then monthly, yearly, or lifetime on Android.',
 
   hero: {
     title: 'See your time.',
-    headline: 'Transform how you see time — day, month, year, life.',
-    subtitle: 'One app. No clutter. Progress at a glance on your home screen.',
+    headline: 'Day, month, year, and life - always visible.',
+    subtitle:
+      'Track progress, deadlines, counters, tasks, and shareable snapshots. Built for home screen glanceability.',
     cta: 'Get the app',
   },
 
   /** Feature cards (with optional category for layout) */
   features: [
-    { category: 'Today', title: 'Day progress', description: 'Watch the day fill. Hours and minutes left, in real time.' },
-    { category: 'Calendar', title: 'Month & year', description: 'How much of this month and year is already gone.' },
-    { category: 'Life', title: 'Life view', description: 'Your life in progress. Set your horizon and see what’s left.' },
-    { category: 'Widgets', title: 'Widgets & countdowns', description: 'Home screen widgets and countdowns to what matters.' },
+    {
+      category: 'Core',
+      title: 'Live day, month, year, life progress',
+      description:
+        'Real-time progress with left vs passed view so you always know where your time is going.',
+    },
+    {
+      category: 'Widgets',
+      title: 'Home + lock screen widgets',
+      description:
+        'Today, month, year, life, deadlines, tasks, counters, and hour timer on your home screen.',
+    },
+    {
+      category: 'Focus',
+      title: 'Deadlines, counters, and daily tasks',
+      description:
+        'Countdown to important dates, tap-to-increment custom counters, and track daily tasks with reports.',
+    },
+    {
+      category: 'Sharing',
+      title: 'Share snapshot',
+      description:
+        'Generate a clean story-style image of your progress to post or send in one tap.',
+    },
   ],
 
   /** Value prop bullets — "That's why Until exists" (ChatPal-style) */
   valueProps: {
     tagline: "That's why Until exists",
     items: [
-      { label: 'Less time blindness', desc: 'See what’s left, not just what’s passed.' },
-      { label: 'More awareness', desc: 'Day, month, year, life — one glance.' },
-      { label: 'More intentional choices', desc: 'Widgets and countdowns keep what matters in view.' },
+      {
+        label: 'Less time blindness',
+        desc: 'See what is left, not only what is gone.',
+      },
+      {
+        label: 'Faster decisions',
+        desc: 'A glance at widgets helps you course-correct during the day.',
+      },
+      {
+        label: 'Consistent action',
+        desc: 'Tasks, counters, and deadlines keep your priorities visible.',
+      },
     ],
   },
 
@@ -38,23 +69,33 @@ export const LANDING_COPY = {
     items: [
       {
         question: 'What is Until?',
-        answer: 'Until is a time-awareness app that shows how much of your day, month, year, and life has passed — and how much is left. Home screen widgets let you see progress at a glance without opening the app.',
+        answer:
+          'Until is a time-awareness app that shows how much of your day, month, year, and life has passed and how much is left. You can keep this visible through home and lock screen widgets.',
       },
       {
         question: 'How does it work?',
-        answer: 'Set your birth date (optional) for life progress. Add countdowns to deadlines. Use custom counters for habits. Add daily tasks and monthly goals. Widgets on your home screen show everything at a glance.',
+        answer:
+          'Set your profile (including optional birth date), then add deadlines, custom counters, and daily tasks. Until calculates progress continuously and syncs widget data so your key numbers stay visible.',
       },
       {
-        question: 'Is Until free?',
-        answer: 'Yes. Until is free to use. Optional Premium (one-time, no subscription) unlocks extra features and supports development. Limited-time intro price available.',
+        question: 'Is Until free or paid?',
+        answer:
+          'Until has a free core experience (day/year progress and sharing). Premium unlocks more surfaces and features such as month/life widgets, Dynamic Island on iOS, and floating overlay on Android. Premium starts with a 14-day trial and supports monthly, yearly, and lifetime options on Android.',
+      },
+      {
+        question: 'What can I put on widgets?',
+        answer:
+          'You can show day, month, year, life, deadlines, daily task progress, custom counters, and hour timer state. Widget options vary by device and platform.',
       },
       {
         question: 'Who is Until for?',
-        answer: 'Anyone who wants to see time clearly — day progress, month and year left, life in perspective. Great for people who use countdowns, track habits, or want a sobering view of time.',
+        answer:
+          'People who want time clarity, not another noisy productivity app. It is useful for students, creators, professionals, and anyone who benefits from seeing progress and remaining time in one glance.',
       },
       {
         question: 'How do I get started?',
-        answer: 'Download on Google Play (Android) or wait for the App Store release (iOS coming soon). Add a widget to your home screen. Optionally set your birth date and add countdowns or daily tasks.',
+        answer:
+          'Download on Google Play, open the app, and set up one thing first (a deadline, task list, or counter). Then add an Until widget so the app stays useful even when closed.',
       },
     ],
   },
@@ -64,10 +105,25 @@ export const LANDING_COPY = {
     title: 'Why people choose Until',
     subtitle: 'Time awareness without opening the app.',
     items: [
-      { title: 'Day, month, year, life', description: 'One place to see progress through today, the month, the year, and your life.' },
-      { title: 'Home screen widgets', description: 'iOS and Android widgets. See time at a glance, no opening the app.' },
-      { title: 'Countdowns & counters', description: 'Count down to deadlines. Tap-to-increment counters for habits.' },
-      { title: 'No clutter', description: 'Minimal, honest design. No ads, no fluff.' },
+      {
+        title: 'One glance, full context',
+        description:
+          'See today, this month, this year, and life progress in a single system.',
+      },
+      {
+        title: 'Built for surfaces',
+        description:
+          'Widgets first, plus Dynamic Island on iOS and floating overlay on Android.',
+      },
+      {
+        title: 'Action + reflection',
+        description:
+          'Use deadlines, counters, and daily tasks to translate awareness into action.',
+      },
+      {
+        title: 'Simple, serious design',
+        description: 'No ads, low friction, and focused visuals that keep attention on time.',
+      },
     ],
   },
 
@@ -83,13 +139,14 @@ export const LANDING_COPY = {
 
   /** Pricing CTA block — checkmarks for premium value props */
   pricingCta: {
-    title: 'Get Until',
-    subtitle: 'Free to use. Unlock optional Premium for ₹99 (limited time — was ₹299) for extra features and to support development.',
+    title: 'Start free, upgrade when ready',
+    subtitle:
+      'Use core features for free. Premium includes a 14-day trial and unlocks advanced surfaces and features.',
     checkmarks: [
-      'Day, month, year, life progress',
-      'iOS & Android home screen widgets',
-      'Countdowns & custom counters',
-      'One-time Premium — no subscription',
+      'Free core: day + year progress and share snapshot',
+      'Premium: month + life widgets and advanced surfaces',
+      'Dynamic Island (iOS) and overlay (Android)',
+      'Android plans: monthly, yearly, and lifetime',
     ],
     ctaLabelAndroid: 'Get on Google Play',
     iosComingSoon: 'Coming soon',

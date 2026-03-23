@@ -7,17 +7,6 @@
  * Android uses widgetCategory keyguard for lock screen placement.
  */
 
-export { STORAGE_KEYS, DEFAULTS } from '../../persistence/schema';
+export { STORAGE_KEYS, DEFAULTS } from '../../types/widgetDataContract';
 export type { WidgetCache } from '../../types';
-
-import type { ActivityCategory } from '../../types';
-
-export interface WidgetData {
-  birthDate: string | null;
-  deathAge: number;
-  dayProgress: number;
-  monthProgress: number;
-  yearProgress: number;
-  lifeProgress: number;
-  categoryTotals?: Partial<Record<ActivityCategory, number>>;
-}
+export type { WidgetData } from '../../types/widgetDataContract';

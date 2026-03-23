@@ -34,7 +34,6 @@ import {
   FontFamily,
   getProgressColor,
 } from '../../theme';
-import { getDayProgress } from '../../core/time/day';
 import type { RootStackParamList } from '../../navigation/RootNavigator';
 
 type FocusKey = 'day' | 'month' | 'year' | 'life';
@@ -77,7 +76,7 @@ export function ShareSnapshotScreen() {
   const [focus, setFocus] = useState<FocusKey>('day');
   const { width: screenWidth } = useWindowDimensions();
 
-  const dayProgressPct = Math.round(getDayProgress(new Date()).progress * 100);
+  const dayProgressPct = Math.round((timeState.day ?? 0) * 100);
   const monthProgressPct = Math.round((timeState.month ?? 0) * 100);
   const yearProgressPct = Math.round((timeState.year ?? 0) * 100);
   const lifeProgressPct = Math.round((timeState.life ?? 0) * 100);

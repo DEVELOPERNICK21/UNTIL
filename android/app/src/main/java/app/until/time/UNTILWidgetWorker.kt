@@ -23,6 +23,7 @@ import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Paint
 import android.graphics.Color
+import kotlin.math.roundToInt
 
 
 private const val WIDGET_CACHE_KEY = "widget.cache"
@@ -44,12 +45,6 @@ private const val PENDING_INTENT_COUNTER_BASE = 200
 private const val PENDING_INTENT_DAILY_TASKS = 103
 private const val PENDING_INTENT_HOUR_CALCULATION = 104
 private const val PENDING_INTENT_LIFE = 105
-
-private const val STORAGE_KEY_TRIAL_START_DATE = "trial.startDate"
-private const val STORAGE_KEY_PREMIUM_IS_ACTIVE = "premium.isActive"
-private const val STORAGE_KEY_LIFE_UNLOCK_UNTIL = "engagement.lifeUnlockUntil"
-
-private const val TRIAL_DURATION_MS = 14L * 24 * 60 * 60 * 1000
 
 class UNTILWidgetWorker(
     context: Context,
@@ -740,17 +735,6 @@ class UNTILWidgetWorker(
         private fun buildRemoteViews(context: Context, layoutId: Int, cache: WidgetCache): RemoteViews {
             val views = RemoteViews(context.packageName, layoutId)
             try {
-                // Widget-level entitlement check (Android widgets can be added by users, so we must gate display here too).
-                val nowMs = System.currentTimeMillis()
-                val mmkv = MMKV.mmkvWithID(MMKV_ID)
-                val isPremiumActive = mmkv?.decodeBool(STORAGE_KEY_PREMIUM_IS_ACTIVE, false) ?: false
-                val trialStartMs = mmkv?.decodeLong(STORAGE_KEY_TRIAL_START_DATE, 0L) ?: 0L
-                val trialActive = trialStartMs > 0L && nowMs <= trialStartMs + TRIAL_DURATION_MS
-                val effectivePremium = isPremiumActive || trialActive
-                val lifeUnlockUntil = mmkv?.decodeLong(STORAGE_KEY_LIFE_UNLOCK_UNTIL, 0L) ?: 0L
-                val lifeEventUnlockActive = lifeUnlockUntil > nowMs && lifeUnlockUntil != 0L
-                val canAccessLife = effectivePremium || lifeEventUnlockActive
-
                 when (layoutId) {
                     R.layout.widget_day -> {
                         val dDone = cache.dayPercentDone.coerceIn(0, 100)
@@ -772,30 +756,22 @@ class UNTILWidgetWorker(
                         }
                     }
                     R.layout.widget_month -> {
-                        if (!effectivePremium) {
-                            views.setTextViewText(R.id.widget_month_passed, context.getString(R.string.widget_life_locked))
-                            views.setTextViewText(R.id.widget_month_left, context.getString(R.string.widget_life_locked))
-                            views.setTextViewText(R.id.widget_month_percent, context.getString(R.string.widget_life_locked))
-                            views.setTextViewText(R.id.widget_month_label, context.getString(R.string.widget_life_locked))
-                            views.setProgressBar(R.id.widget_month_progress, 100, 0, false)
-                        } else {
-                            val mPassed = cache.monthDaysPassed.coerceIn(0, 31)
-                            val mLeft = cache.monthDaysLeft.coerceIn(0, 31)
-                            val mPct = cache.monthPercent.coerceIn(0, 100)
-                            val mProgress = cache.monthProgress.coerceIn(0.0, 1.0)
-                            views.setTextViewText(R.id.widget_month_passed, context.getString(R.string.widget_month_passed_format, mPassed))
-                            views.setTextViewText(R.id.widget_month_left, context.getString(R.string.widget_month_left_format, mLeft))
-                            views.setTextViewText(R.id.widget_month_percent, context.getString(R.string.widget_month_percent_format, mPct))
-                            // Month progress bar (keep day widget as circular only)
-                            views.setProgressBar(R.id.widget_month_progress, 100, (mProgress * 100).toInt().coerceIn(0, 100), false)
-                            try {
-                                val dotsBitmap = createMonthDotsBitmap(context, cache.monthIndex)
-                                if (dotsBitmap != null && !dotsBitmap.isRecycled) {
-                                    views.setImageViewBitmap(R.id.widget_month_dots, dotsBitmap)
-                                }
-                            } catch (e: Exception) {
-                                // Dots optional; text already set so widget still shows data
+                        val mPassed = cache.monthDaysPassed.coerceIn(0, 31)
+                        val mLeft = cache.monthDaysLeft.coerceIn(0, 31)
+                        val mPct = cache.monthPercent.coerceIn(0, 100)
+                        val mProgress = cache.monthProgress.coerceIn(0.0, 1.0)
+                        views.setTextViewText(R.id.widget_month_passed, context.getString(R.string.widget_month_passed_format, mPassed))
+                        views.setTextViewText(R.id.widget_month_left, context.getString(R.string.widget_month_left_format, mLeft))
+                        views.setTextViewText(R.id.widget_month_percent, context.getString(R.string.widget_month_percent_format, mPct))
+                        // Month progress bar (keep day widget as circular only)
+                        views.setProgressBar(R.id.widget_month_progress, 100, (mProgress * 100).toInt().coerceIn(0, 100), false)
+                        try {
+                            val dotsBitmap = createMonthDotsBitmap(context, cache.monthIndex)
+                            if (dotsBitmap != null && !dotsBitmap.isRecycled) {
+                                views.setImageViewBitmap(R.id.widget_month_dots, dotsBitmap)
                             }
+                        } catch (e: Exception) {
+                            // Dots optional; text already set so widget still shows data
                         }
                     }
                     R.layout.widget_year -> {
@@ -824,56 +800,56 @@ class UNTILWidgetWorker(
                         }
                     }
                     R.layout.widget_life -> {
-                        if (!canAccessLife) {
-                            // Premium not active yet (trial expired + life unlock not reached).
-                            views.setTextViewText(R.id.widget_life_passed, context.getString(R.string.widget_life_locked))
+                        // If birth date isn't available yet, SSOT cache values can be null.
+                        val lifeProgress = cache.lifeProgress
+                        val remainingDaysLife = cache.remainingDaysLife
+                        val lifePercent = cache.lifePercent
+                        if (lifeProgress == null || remainingDaysLife == null || lifePercent == null) {
+                            views.setTextViewText(
+                                R.id.widget_life_label,
+                                "${context.getString(R.string.widget_life_empty_line1)}\n${context.getString(R.string.widget_life_empty_line2)}",
+                            )
+                            views.setTextViewText(R.id.widget_life_passed, "")
                             views.setTextViewText(R.id.widget_life_left, "")
-                            views.setTextViewText(R.id.widget_life_percent, context.getString(R.string.widget_life_locked))
-                            views.setTextViewText(R.id.widget_life_label, context.getString(R.string.widget_life_locked))
-                            views.setProgressBar(R.id.widget_life_progress, 100, 0, false)
+                            views.setTextViewText(R.id.widget_life_percent, "0%")
                         } else {
-                            // If birth date isn't available yet, SSOT cache values can be null.
-                            val lifeProgress = cache.lifeProgress
-                            val remainingDaysLife = cache.remainingDaysLife
-                            val lifePercent = cache.lifePercent
-                            if (lifeProgress == null || remainingDaysLife == null || lifePercent == null) {
-                                views.setTextViewText(
-                                    R.id.widget_life_label,
-                                    "${context.getString(R.string.widget_life_empty_line1)}\n${context.getString(R.string.widget_life_empty_line2)}",
-                                )
-                                views.setTextViewText(R.id.widget_life_passed, "")
-                                views.setTextViewText(R.id.widget_life_left, "")
-                                views.setTextViewText(R.id.widget_life_percent, "0%")
-                                views.setProgressBar(R.id.widget_life_progress, 100, 0, false)
+                            val clamped = lifeProgress.coerceIn(0.0, 1.0)
+                            val consumedPct = lifePercent.coerceIn(0, 100)
+                            val leftYearsRaw = (remainingDaysLife.toDouble() / 365.25).coerceAtLeast(0.0)
+                            val totalYearsRaw = if (clamped >= 0.999999) {
+                                leftYearsRaw
                             } else {
-                                val clamped = lifeProgress.coerceIn(0.0, 1.0)
-                                val consumedPct = lifePercent.coerceIn(0, 100)
-                                val leftPct = (100 - consumedPct).coerceIn(0, 100)
-                                val totalDaysPassed = (clamped * 365.25).toInt().coerceIn(0, 365)
-                                val leftDays = remainingDaysLife.coerceIn(0, 365)
+                                (leftYearsRaw / (1.0 - clamped)).coerceAtLeast(leftYearsRaw)
+                            }
+                            val totalYears = totalYearsRaw.roundToInt().coerceIn(1, 120)
+                            val livedYears = (totalYears * clamped).coerceIn(0.0, totalYears.toDouble())
+                            val leftYears = (totalYears.toDouble() - livedYears).coerceAtLeast(0.0)
+                            val livedYearsText = livedYears.roundToInt().toString()
+                            val leftYearsText = leftYears.roundToInt().toString()
 
-                                views.setTextViewText(
-                                    R.id.widget_life_passed,
-                                    context.getString(R.string.widget_life_passed_format, totalDaysPassed, consumedPct),
-                                )
-                                views.setTextViewText(
-                                    R.id.widget_life_left,
-                                    context.getString(R.string.widget_life_left_format, leftDays, leftPct),
-                                )
-                                views.setTextViewText(
-                                    R.id.widget_life_percent,
-                                    context.getString(R.string.widget_life_percent_format, consumedPct),
-                                )
-                                views.setProgressBar(R.id.widget_life_progress, 100, consumedPct, false)
+                            views.setTextViewText(
+                                R.id.widget_life_passed,
+                                context.getString(R.string.widget_life_passed_years_compact_format, livedYearsText),
+                            )
+                            views.setTextViewText(
+                                R.id.widget_life_left,
+                                context.getString(R.string.widget_life_left_years_compact_format, leftYearsText),
+                            )
+                            views.setTextViewText(
+                                R.id.widget_life_percent,
+                                context.getString(R.string.widget_life_percent_format, consumedPct),
+                            )
 
-                                try {
-                                    val dotsBitmap = createYearDotsBitmap(context, clamped, totalDaysPassed)
-                                    if (dotsBitmap != null && !dotsBitmap.isRecycled) {
-                                        views.setImageViewBitmap(R.id.widget_life_dots, dotsBitmap)
-                                    }
-                                } catch (_: Exception) {
-                                    // Dots optional
+                            try {
+                                val dotsBitmap = createLifeYearsDotsBitmap(
+                                    progress = clamped,
+                                    totalYears = totalYears,
+                                )
+                                if (dotsBitmap != null && !dotsBitmap.isRecycled) {
+                                    views.setImageViewBitmap(R.id.widget_life_dots, dotsBitmap)
                                 }
+                            } catch (_: Exception) {
+                                // Dots optional
                             }
                         }
                     }
@@ -1010,9 +986,9 @@ class UNTILWidgetWorker(
 
                 val cellW = bitmapWidth / cols.toFloat()
                 val cellH = bitmapHeight / rows.toFloat()
-                // 30% bigger dots (as requested)
-                val radius = 5.2f * 1.3f
-                val currentRadius = radius * 1.6f
+                // Slightly larger month dots for better readability.
+                val radius = 8f
+                val currentRadius = radius * 1.45f
 
                 for (i in 0 until totalDots) {
                     val col = i % cols
@@ -1088,6 +1064,71 @@ class UNTILWidgetWorker(
                         }
                         else -> {
                             canvas.drawCircle(cx, cy, radius, remainingPaint)
+                        }
+                    }
+                }
+                bitmap
+            } catch (e: Exception) {
+                null
+            }
+        }
+
+        /** Life dots: 1 dot per life year (max 120). Purple = lived, Orange = current year, Gray = remaining. */
+        private fun createLifeYearsDotsBitmap(progress: Double, totalYears: Int): Bitmap? {
+            return try {
+                val dots = totalYears.coerceIn(1, 120)
+                val cols = 12
+                val rows = Math.ceil(dots / cols.toDouble()).toInt()
+                // Render life dots at higher pixel density to avoid soft upscaling in RemoteViews.
+                val dotSize = 18
+                val gap = 10
+                val step = (dotSize + gap).toFloat()
+                val width = (cols * step).toInt().coerceAtMost(900).coerceAtLeast(1)
+                val height = (rows * step).toInt().coerceAtMost(900).coerceAtLeast(1)
+                val radius = (dotSize / 2f).coerceAtLeast(1f)
+                val currentRadius = radius * 1.22f
+
+                val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+                val canvas = Canvas(bitmap)
+
+                val passedPaint = Paint().apply {
+                    color = Color.parseColor("#BB86FC")
+                    isAntiAlias = false
+                    isDither = false
+                }
+                val currentPaint = Paint().apply {
+                    color = Color.parseColor("#E87C20")
+                    isAntiAlias = false
+                    isDither = false
+                }
+                val remainingPaint = Paint().apply {
+                    color = Color.parseColor("#666666")
+                    isAntiAlias = false
+                    isDither = false
+                }
+
+                val passedDots = (progress.coerceIn(0.0, 1.0) * dots).toInt().coerceIn(0, dots)
+                val hasCurrentYear = passedDots < dots && progress < 1.0
+                val currentYear = if (hasCurrentYear) passedDots else -1
+
+                for (row in 0 until rows) {
+                    val rowStart = row * cols
+                    val rowEndExclusive = minOf(rowStart + cols, dots)
+                    val dotsInRow = (rowEndExclusive - rowStart).coerceAtLeast(0)
+                    if (dotsInRow == 0) continue
+
+                    val rowWidth = dotsInRow * dotSize + (dotsInRow - 1) * gap
+                    val rowStartX = ((width - rowWidth) / 2f) + radius
+                    val cy = row * step + radius
+                    if (cy + radius > height) break
+
+                    for (indexInRow in 0 until dotsInRow) {
+                        val i = rowStart + indexInRow
+                        val cx = rowStartX + indexInRow * step
+                        when {
+                            i < passedDots -> canvas.drawCircle(cx, cy, radius, passedPaint)
+                            i == currentYear && currentYear >= 0 -> canvas.drawCircle(cx, cy, currentRadius, currentPaint)
+                            else -> canvas.drawCircle(cx, cy, radius, remainingPaint)
                         }
                     }
                 }

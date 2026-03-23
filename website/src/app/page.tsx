@@ -21,8 +21,8 @@ export default function HomePage() {
       {/* Intro price line — limited time highlighted */}
       <section style={{ paddingTop: '1.5rem', paddingBottom: '0.5rem' }}>
         <p className="landing-intro-line">
-          <span className="landing-offer-badge">Limited time</span>
-          <span>Premium ₹99 (was ₹299). One-time, no subscription. iPhone &amp; Android.</span>
+          <span className="landing-offer-badge">{pricing.introLabel}</span>
+          <span>{introPriceLine}</span>
         </p>
       </section>
 
@@ -83,7 +83,7 @@ export default function HomePage() {
               cursor: 'default',
             }}
           >
-            App Store — Coming soon
+            App Store - {pricingCta.iosComingSoon}
           </span>
           <a
             href={SITE_CONFIG.playStoreUrl}
@@ -99,7 +99,7 @@ export default function HomePage() {
               textDecoration: 'none',
             }}
           >
-            Get on Google Play
+            {hero.cta}
           </a>
         </div>
         <HeroScreenshotShowcase />
@@ -469,7 +469,7 @@ export default function HomePage() {
             textDecoration: 'none',
           }}
         >
-          Get on Google Play
+          {hero.cta}
         </a>
       </section>
     </>

@@ -11,16 +11,18 @@ import {
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Text, ScreenGradient, Card } from '../../ui';
+import { useWidgetSyncActions } from '../../hooks';
 import { getCustomCountersUseCase, addCustomCounterUseCase, removeCustomCounterUseCase } from '../../di';
-import { syncCustomCounters } from '../../infrastructure';
 import { Spacing, Colors, Radius, Typography } from '../../theme';
 import type { RootStackParamList } from '../../navigation/RootNavigator';
 import type { CustomCounter } from '../../types';
 
 export function CustomCountersScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList, 'CustomCounters'>>();
+  const { syncCustomCounters } = useWidgetSyncActions();
   const [counters, setCounters] = useState<CustomCounter[]>(() => getCustomCountersUseCase.execute());
   const [newTitle, setNewTitle] = useState('');
+  const hasCounter = counters.length > 0;
 
   const refresh = useCallback(() => {
     setCounters(getCustomCountersUseCase.execute());
@@ -33,6 +35,7 @@ export function CustomCountersScreen() {
   );
 
   const handleAdd = () => {
+    if (hasCounter) return;
     const title = newTitle.trim();
     if (!title) return;
     addCustomCounterUseCase.execute(title);
@@ -72,7 +75,7 @@ export function CustomCountersScreen() {
             Custom counters
           </Text>
           <Text variant="body" color="secondary" style={styles.subtitle}>
-            Add a counter (e.g. Water), then add the Counter widget to your home screen. Tapping the widget opens the app and adds +1.
+            Set one counter (e.g. Water), then add the Counter widget to your home screen. Tapping the widget opens the app and adds +1.
           </Text>
 
           <View style={styles.addRow}>
@@ -85,15 +88,21 @@ export function CustomCountersScreen() {
               autoCapitalize="words"
               onSubmitEditing={handleAdd}
               returnKeyType="done"
+              editable={!hasCounter}
             />
             <TouchableOpacity
-              style={[styles.addButton, !newTitle.trim() && styles.addButtonDisabled]}
+              style={[styles.addButton, (!newTitle.trim() || hasCounter) && styles.addButtonDisabled]}
               onPress={handleAdd}
-              disabled={!newTitle.trim()}
+              disabled={!newTitle.trim() || hasCounter}
             >
               <Text variant="caption" style={styles.addButtonText}>Add</Text>
             </TouchableOpacity>
           </View>
+          {hasCounter && (
+            <Text variant="caption" color="secondary" style={styles.singleLimitHint}>
+              Only one counter is allowed. Remove the current one to create a new counter.
+            </Text>
+          )}
 
           {counters.length === 0 ? (
             <Text variant="body" color="secondary" style={styles.empty}>
@@ -125,8 +134,8 @@ export function CustomCountersScreen() {
 
           <Text variant="caption" color="secondary" style={styles.hint}>
             {Platform.OS === 'ios'
-              ? 'Long-press home screen → + → search Until → add "Counter" widget, then choose a counter.'
-              : 'Long-press home screen → Widgets → Until → Counter. When adding, choose which counter to show.'}
+              ? 'Long-press home screen → + → search Until → add "Counter" widget.'
+              : 'Long-press home screen → Widgets → Until → Counter.'}
           </Text>
         </ScrollView>
       </ScreenGradient>
@@ -170,6 +179,9 @@ const styles = StyleSheet.create({
   },
   addButtonText: {
     color: Colors.textPrimary,
+  },
+  singleLimitHint: {
+    marginBottom: Spacing[3],
   },
   empty: {
     marginBottom: Spacing[4],

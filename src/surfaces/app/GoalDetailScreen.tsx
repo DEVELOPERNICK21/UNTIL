@@ -13,6 +13,7 @@ import { useRoute, useNavigation, useFocusEffect } from '@react-navigation/nativ
 import type { RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Text, ScreenGradient, Card } from '../../ui';
+import { useWidgetSyncActions } from '../../hooks';
 import {
   getGoalUseCase,
   updateMonthlyGoalUseCase,
@@ -25,7 +26,6 @@ import {
   removeRepeatDailyFromGoalUseCase,
   isRepeatDailyUseCase,
 } from '../../di';
-import { syncDailyTasksWidget } from '../../infrastructure';
 import { Spacing, Colors, Radius, Typography } from '../../theme';
 import type { RootStackParamList } from '../../navigation/RootNavigator';
 import type { GoalTask, TaskCategory } from '../../types';
@@ -49,6 +49,7 @@ function categoryLabel(cat: TaskCategory): string {
 export function GoalDetailScreen() {
   const route = useRoute<RouteProp<RootStackParamList, 'GoalDetail'>>();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList, 'GoalDetail'>>();
+  const { syncDailyTasksWidget } = useWidgetSyncActions();
   const goalId = route.params?.goalId ?? '';
   const [goal, setGoal] = useState(() => getGoalUseCase.execute(goalId));
   const [addModalVisible, setAddModalVisible] = useState(false);

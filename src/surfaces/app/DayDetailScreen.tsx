@@ -4,18 +4,21 @@ import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Text, ScreenGradient, Card, ProgressLine, CircularProgress } from '../../ui';
 import { useObserveTimeState } from '../../hooks';
-import { getDayProgress } from '../../core/time/day';
-import { startOfDay, endOfDay } from '../../core/time/clock';
 import { Spacing, Colors, Typography, FontFamily, getProgressColor } from '../../theme';
 import type { RootStackParamList } from '../../navigation/RootNavigator';
 
 const RING_SIZE = Math.min(220, Dimensions.get('window').width - Spacing[4] * 2 - 32);
 
 function formatTime(date: Date) {
-  const start = startOfDay(date).getTime();
-  const end = endOfDay(date).getTime();
+  const startDate = new Date(date);
+  startDate.setHours(0, 0, 0, 0);
+  const endDate = new Date(startDate);
+  endDate.setHours(23, 59, 59, 999);
+  const start = startDate.getTime();
+  const end = endDate.getTime();
   const passedMs = date.getTime() - start;
   const remainingMs = Math.max(0, end - date.getTime());
+  const totalMs = Math.max(1, end - start);
   const passedS = Math.floor(passedMs / 1000);
   const remainingS = Math.floor(remainingMs / 1000);
   const h = (n: number) => Math.floor(n / 3600);
@@ -24,7 +27,7 @@ function formatTime(date: Date) {
   return {
     passed: `${h(passedS)}h ${m(passedS)}m ${s(passedS)}s`,
     left: `${h(remainingS)}h ${m(remainingS)}m ${s(remainingS)}s`,
-    progress: getDayProgress(date).progress,
+    progress: Math.min(1, Math.max(0, passedMs / totalMs)),
   };
 }
 

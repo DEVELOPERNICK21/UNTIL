@@ -17,12 +17,12 @@ export const SITE_CONFIG = {
   appStoreUrl: 'https://apps.apple.com/app/until/id000000000',
   /** Pricing for landing page (SSOT). Add wasPrice & savePercent for intro-offer style. */
   pricing: {
-    introLabel: 'Limited time offer',
-    oneTimeLabel: 'Optional Premium — one-time, no subscription',
-    price: '₹99',
-    wasPrice: '₹299',
-    savePercent: 67,
-    currencyNote: 'Limited time. iPhone & Android.',
+    introLabel: 'Premium plans on Android',
+    oneTimeLabel: 'Free core + 14-day trial for Premium features',
+    price: 'Monthly from ₹99',
+    wasPrice: 'Yearly and lifetime options available',
+    savePercent: 0,
+    currencyNote: 'Actual prices are shown in Google Play by region.',
   },
 } as const;
 

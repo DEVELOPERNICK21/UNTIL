@@ -5,13 +5,11 @@ import {
   StyleSheet,
   TouchableOpacity,
   TextInput,
-  Alert,
 } from 'react-native';
 import { Text, ScreenGradient } from '../../ui';
 import { Colors, Spacing, Radius, Typography } from '../../theme';
 import { WidgetPreview } from '../widgets/WidgetPreview';
-import { useWidgetConfigStore } from '../../stores/widgetConfigStore';
-import { useAccessControl } from '../../hooks';
+import { useWidgetConfig } from '../../hooks';
 
 const PRESET_MESSAGES = [
   'Time is running',
@@ -20,7 +18,6 @@ const PRESET_MESSAGES = [
 ];
 
 export function WidgetCustomizationScreen() {
-  const { hasPremiumBundle, canAccessLife } = useAccessControl();
   const {
     config,
     hydrate,
@@ -30,7 +27,7 @@ export function WidgetCustomizationScreen() {
     setFont,
     setShowMessage,
     setMessage,
-  } = useWidgetConfigStore();
+  } = useWidgetConfig();
 
   useEffect(() => {
     void hydrate();
@@ -60,17 +57,6 @@ export function WidgetCustomizationScreen() {
             ]}
             selected={config.type}
             onSelect={value => {
-              if (value === 'month' && !hasPremiumBundle) {
-                Alert.alert('Premium', 'This widget requires Premium or your trial.');
-                return;
-              }
-              if (value === 'life' && !canAccessLife) {
-                Alert.alert(
-                  'Life is unlocked',
-                  'Premium, trial, or a short unlock (24h after 3 opens or visiting Life) is required.',
-                );
-                return;
-              }
               setType(value as any);
             }}
           />

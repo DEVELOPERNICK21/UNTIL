@@ -14,7 +14,7 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { useDailyTasks } from '../../hooks';
+import { useDailyTasks, useWidgetSyncActions } from '../../hooks';
 import type { RootStackParamList } from '../../navigation/RootNavigator';
 import { Text, ScreenGradient, Card, ProgressLine } from '../../ui';
 import {
@@ -24,7 +24,6 @@ import {
   removeTaskUseCase,
   getGoalUseCase,
 } from '../../di';
-import { syncDailyTasksWidget } from '../../infrastructure';
 import { Spacing, Colors, Radius, Typography, FontFamily } from '../../theme';
 import type { DailyTask, TaskCategory } from '../../types';
 
@@ -185,6 +184,7 @@ export function DailyTasksScreen() {
     >();
   const today = todayIso();
   const { tasks, stats, refresh } = useDailyTasks(today);
+  const { syncDailyTasksWidget } = useWidgetSyncActions();
   const [newTitle, setNewTitle] = React.useState('');
   const [selectedCategory, setSelectedCategory] =
     React.useState<TaskCategory>('other');

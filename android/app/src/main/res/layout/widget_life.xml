@@ -5,43 +5,29 @@
     android:layout_height="match_parent"
     android:background="@drawable/widget_background"
     android:orientation="vertical"
-    android:padding="16dp"
-    android:gravity="center_horizontal">
+    android:padding="12dp"
+    android:gravity="center_horizontal|top">
 
     <ImageView
         android:id="@+id/widget_life_dots"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:minHeight="56dp"
-        android:maxHeight="96dp"
-        android:layout_marginBottom="12dp"
+        android:minHeight="120dp"
+        android:maxHeight="190dp"
+        android:layout_marginTop="4dp"
+        android:layout_marginBottom="8dp"
         android:scaleType="fitCenter"
         android:adjustViewBounds="true"
         android:layout_gravity="center_horizontal"
         android:contentDescription="@null" />
-
-    <ProgressBar
-        android:id="@+id/widget_life_progress"
-        style="?android:attr/progressBarStyleHorizontal"
-        android:layout_width="match_parent"
-        android:layout_height="8dp"
-        android:layout_marginTop="10dp"
-        android:layout_marginBottom="10dp"
-        android:layout_gravity="center_horizontal"
-        android:max="100"
-        android:progress="0"
-        android:progressTint="#E87C20"
-        android:progressBackgroundTint="#444444" />
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:gravity="center"
-        android:layout_gravity="center_horizontal"
-        android:paddingLeft="8dp"
-        android:paddingRight="8dp">
+        android:layout_gravity="center_horizontal">
 
         <TextView
             android:id="@+id/widget_life_passed"
@@ -49,12 +35,12 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:textColor="#FF3B30"
-            android:textSize="13sp"
+            android:textSize="12sp"
             android:textStyle="bold"
             android:gravity="center"
             android:maxLines="1"
             android:ellipsize="end"
-            android:text="0d lived" />
+            android:text="0y lived" />
 
         <TextView
             android:id="@+id/widget_life_left"
@@ -62,12 +48,12 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:textColor="#34C759"
-            android:textSize="13sp"
+            android:textSize="12sp"
             android:textStyle="bold"
             android:gravity="center"
             android:maxLines="1"
             android:ellipsize="end"
-            android:text="0d left" />
+            android:text="0y left" />
     </LinearLayout>
 
     <TextView
@@ -77,7 +63,7 @@
         android:layout_marginTop="2dp"
         android:layout_gravity="center_horizontal"
         android:textColor="#E9A23A"
-        android:textSize="20sp"
+        android:textSize="24sp"
         android:textStyle="bold"
         android:maxLines="1"
         android:ellipsize="end"

@@ -31,7 +31,6 @@ import {
 import {
   incrementCustomCounterUseCase,
   replaceCustomCountersFromSyncUseCase,
-  checkForAppUpdateUseCase,
   verifySubscriptionUseCase,
   trackAppOpenUseCase,
   ensurePlayBillingSession,
@@ -94,7 +93,6 @@ function App() {
     syncDailyTasksWidget();
     updateLiveActivity();
     if (Platform.OS === 'android') updateOverlay();
-    checkForAppUpdateUseCase.execute();
 
     const processInitialUrl = () => {
       Linking.getInitialURL().then(url => {
@@ -116,7 +114,6 @@ function App() {
         // Count each time the user returns to foreground.
         trackAppOpenUseCase.execute();
         verifySubscriptionUseCase.execute().then(() => syncPremiumStatus());
-        checkForAppUpdateUseCase.execute();
         if (
           Platform.OS === 'ios' &&
           NativeModules.WidgetBridge?.getCustomCountersFromAppGroup

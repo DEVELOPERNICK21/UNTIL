@@ -5,7 +5,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { observeSubscriptionUseCase, getAccessStateUseCase } from '../di';
 import type { AccessState } from '../types';
-import { canAccessLife, hasPremiumBundle } from '../domain/accessControl';
 
 export function useAccessControl(): {
   access: AccessState;
@@ -28,8 +27,9 @@ export function useAccessControl(): {
 
   return {
     access,
-    hasPremiumBundle: hasPremiumBundle(access),
-    canAccessLife: canAccessLife(access),
+    hasPremiumBundle: access.isPremium || access.trialActive,
+    canAccessLife:
+      access.isPremium || access.trialActive || access.lifeEventUnlockActive,
     refresh,
   };
 }

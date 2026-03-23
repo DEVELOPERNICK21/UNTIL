@@ -3,123 +3,28 @@
  * Configure widget type (Day, Month, Year, Life, Daily Task, Hour Calc) and start/stop
  */
 
-import React, { useState, useCallback } from 'react';
+import React from 'react';
 import {
   View,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  NativeModules,
-  Platform,
 } from 'react-native';
-import { useFocusEffect } from '@react-navigation/native';
-import { Text, ScreenGradient, Card } from '../../ui';
+import { Text, ScreenGradient } from '../../ui';
 import { Colors, Spacing, Typography } from '../../theme';
-import { useAccessControl } from '../../hooks';
-import {
-  isPremiumLiveActivityType,
-  isV2LiveActivityType,
-} from '../../domain/premium';
-import {
-  syncLiveActivity,
-  endLiveActivity,
-  getLiveActivityWidgetType,
-  setLiveActivityWidgetType,
-  updateLiveActivity,
-} from '../../infrastructure';
-import type { LiveActivityWidgetType } from '../../infrastructure';
-
-const { LiveActivityBridge } = NativeModules;
-
-const WIDGET_OPTIONS: {
-  type: LiveActivityWidgetType;
-  title: string;
-  description: string;
-}[] = [
-  {
-    type: 'day',
-    title: 'Today',
-    description: '57% done · 42% left. Day progress with hours.',
-  },
-  {
-    type: 'month',
-    title: 'This month',
-    description: 'Feb 17% · 23d left. Month progress.',
-  },
-  {
-    type: 'year',
-    title: 'This year',
-    description: '9% · 329d left. Year progress.',
-  },
-  {
-    type: 'life',
-    title: 'Your life',
-    description: 'Life progress. Set birth date in Settings.',
-  },
-  {
-    type: 'dailyTasks',
-    title: 'Daily tasks',
-    description: 'Coming in a future update.',
-  },
-  {
-    type: 'hourCalc',
-    title: 'Hour timer',
-    description: 'Coming in a future update.',
-  },
-];
+import { useDynamicIslandControl } from '../../hooks';
 
 export function DynamicIslandScreen() {
-  const { hasPremiumBundle, canAccessLife } = useAccessControl();
-  const [activeWidget, setActiveWidget] = useState<LiveActivityWidgetType>(
-    getLiveActivityWidgetType(),
-  );
-  const [liveActivityActive, setLiveActivityActive] = useState(false);
+  const {
+    options,
+    liveActivityActive,
+    handleSelectWidget,
+    handleStart,
+    handleStop,
+    isIos,
+  } = useDynamicIslandControl();
 
-  const refreshStatus = useCallback(() => {
-    if (Platform.OS === 'ios' && LiveActivityBridge?.isActivityActive) {
-      LiveActivityBridge.isActivityActive()
-        .then((active: boolean) => setLiveActivityActive(active))
-        .catch(() => setLiveActivityActive(false));
-    }
-    setActiveWidget(getLiveActivityWidgetType());
-  }, []);
-
-  useFocusEffect(
-    useCallback(() => {
-      refreshStatus();
-    }, [refreshStatus]),
-  );
-
-  const handleSelectWidget = useCallback(
-    (type: LiveActivityWidgetType) => {
-      if (isV2LiveActivityType(type)) return;
-      if (type === 'life' && !canAccessLife) return;
-      if (
-        isPremiumLiveActivityType(type) &&
-        type !== 'life' &&
-        !hasPremiumBundle
-      )
-        return;
-      setLiveActivityWidgetType(type);
-      setActiveWidget(type);
-      if (liveActivityActive) {
-        updateLiveActivity(type);
-      }
-    },
-    [liveActivityActive, hasPremiumBundle, canAccessLife],
-  );
-
-  const handleStart = useCallback(() => {
-    syncLiveActivity(activeWidget);
-    setLiveActivityActive(true);
-  }, [activeWidget]);
-
-  const handleStop = useCallback(() => {
-    endLiveActivity();
-    setLiveActivityActive(false);
-  }, []);
-
-  if (Platform.OS !== 'ios') {
+  if (!isIos) {
     return (
       <View style={styles.container}>
         <ScreenGradient>
@@ -203,19 +108,13 @@ export function DynamicIslandScreen() {
             Tap to select. Compact view shows key metric; long-press to expand.
           </Text>
 
-          {WIDGET_OPTIONS.map(({ type, title, description }) => {
-            const v2 = isV2LiveActivityType(type);
-            const lockedPremium =
-              type === 'life'
-                ? !canAccessLife
-                : isPremiumLiveActivityType(type) && !hasPremiumBundle;
-            const locked = v2 || lockedPremium;
+          {options.map(({ type, title, description, selected, comingSoon, lockedPremium, locked }) => {
             return (
               <TouchableOpacity
                 key={type}
                 style={[
                   styles.optionCard,
-                  activeWidget === type && styles.optionCardSelected,
+                  selected && styles.optionCardSelected,
                   locked && styles.optionCardLocked,
                 ]}
                 onPress={() => handleSelectWidget(type)}
@@ -225,7 +124,7 @@ export function DynamicIslandScreen() {
                   <Text variant="title" color="primary">
                     {title}
                   </Text>
-                  {v2 && (
+                  {comingSoon && (
                     <View style={[styles.premiumBadge, styles.soonBadge]}>
                       <Text variant="caption" style={styles.premiumBadgeText}>
                         Soon
@@ -239,7 +138,7 @@ export function DynamicIslandScreen() {
                       </Text>
                     </View>
                   )}
-                  {activeWidget === type && !locked && (
+                  {selected && !locked && (
                     <View style={styles.selectedDot} />
                   )}
                 </View>
@@ -248,7 +147,7 @@ export function DynamicIslandScreen() {
                   color="secondary"
                   style={styles.optionDescription}
                 >
-                  {v2
+                  {comingSoon
                     ? 'Coming in a future update.'
                     : lockedPremium
                     ? 'Upgrade to Premium to use this'

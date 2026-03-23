@@ -15,8 +15,6 @@ import { Text, ScreenGradient, Card, ProgressLine } from '../../ui';
 import { useObserveTimeState, useGoalsFeatureEnabled, useAccessControl } from '../../hooks';
 import { Spacing, FontFamily, getProgressColor, useTheme, Shadows } from '../../theme';
 import type { RootStackParamList } from '../../navigation/RootNavigator';
-import { getDayProgress } from '../../core/time/day';
-import { startOfDay, endOfDay } from '../../core/time/clock';
 
 function getDaysInMonth(): number {
   const d = new Date();
@@ -29,11 +27,13 @@ function getDaysInYear(): number {
 }
 
 function formatDayPassedLeftWithSeconds(date: Date) {
-  const day = getDayProgress(date);
-  const start = startOfDay(date).getTime();
-  const end = endOfDay(date).getTime();
-  const passedMs = date.getTime() - start;
-  const remainingMs = Math.max(0, end - date.getTime());
+  const start = new Date(date);
+  start.setHours(0, 0, 0, 0);
+  const end = new Date(start);
+  end.setHours(23, 59, 59, 999);
+  const passedMs = date.getTime() - start.getTime();
+  const remainingMs = Math.max(0, end.getTime() - date.getTime());
+  const totalMs = Math.max(1, end.getTime() - start.getTime());
   const passedS = Math.floor(passedMs / 1000);
   const remainingS = Math.floor(remainingMs / 1000);
   const passedH = Math.floor(passedS / 3600);
@@ -44,9 +44,10 @@ function formatDayPassedLeftWithSeconds(date: Date) {
   const leftSec = remainingS % 60;
   const passedStr = `${passedH}h ${passedM}m ${passedSec}s`;
   const leftStr = `${leftH}h ${leftM}m ${leftSec}s`;
-  const passedPct = Math.round(day.progress * 100);
+  const progress = Math.min(1, Math.max(0, passedMs / totalMs));
+  const passedPct = Math.round(progress * 100);
   const leftPct = 100 - passedPct;
-  return { passedStr, leftStr, passedPct, leftPct, progress: day.progress };
+  return { passedStr, leftStr, passedPct, leftPct, progress };
 }
 
 function formatMonthPassedLeft(remainingDaysMonth: number) {
@@ -357,7 +358,7 @@ export function HomeScreen() {
             </Card>
           )}
 
-          <Card style={{ ...styles.block, opacity: 0.85 }}>
+          <Card style={styles.comingSoonBlock}>
             <Text variant="sectionTitle" color="secondary" style={styles.blockTitle}>
               Coming soon
             </Text>
@@ -410,6 +411,10 @@ const styles = StyleSheet.create({
   },
   block: {
     marginBottom: Spacing[4],
+  },
+  comingSoonBlock: {
+    marginBottom: Spacing[4],
+    opacity: 0.85,
   },
   blockTitle: {
     marginBottom: Spacing[3],

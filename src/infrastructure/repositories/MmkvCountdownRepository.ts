@@ -37,14 +37,13 @@ export class MmkvCountdownRepository implements ICountdownRepository {
   }
 
   add(title: string, date: string): Countdown {
-    const list = loadCountdowns();
     const countdown: Countdown = {
       id: randomId(),
       title: (title || 'Deadline').trim() || 'Deadline',
       date: date || new Date().toISOString().slice(0, 10),
     };
-    list.push(countdown);
-    saveCountdowns(list);
+    // Single-item mode: keep exactly one deadline.
+    saveCountdowns([countdown]);
     this.notifySubscribers();
     return countdown;
   }

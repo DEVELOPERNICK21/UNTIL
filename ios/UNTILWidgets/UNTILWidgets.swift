@@ -590,6 +590,30 @@ private extension Comparable {
     }
 }
 
+private func lifeYearMetrics(from cache: WidgetCache) -> (livedYears: Double, leftYears: Double, totalYears: Int, lifePct: Int)? {
+    guard let rawProgress = cache.lifeProgress,
+          let remainingDaysLife = cache.remainingDaysLife,
+          let lifePct = cache.lifePercent else {
+        return nil
+    }
+    let progress = rawProgress.clamped(to: 0.0...1.0)
+    let leftYearsRaw = max(0, Double(remainingDaysLife) / 365.25)
+    let totalYearsRaw: Double
+    if progress >= 0.999999 {
+        totalYearsRaw = max(1.0, leftYearsRaw)
+    } else {
+        totalYearsRaw = max(1.0, leftYearsRaw / (1.0 - progress))
+    }
+    let totalYears = min(120, max(1, Int(totalYearsRaw.rounded())))
+    let livedYears = (Double(totalYears) * progress).clamped(to: 0.0...Double(totalYears))
+    let leftYears = max(0.0, Double(totalYears) - livedYears)
+    return (livedYears, leftYears, totalYears, lifePct.clamped(to: 0...100))
+}
+
+private func formatYears(_ years: Double) -> String {
+    String(format: "%.1f", years)
+}
+
 // MARK: - Year Dots View (365 dots; fits inside given bounds with insets, no clipping)
 private struct YearDotsView: View {
     let progress: Double
@@ -646,6 +670,75 @@ private struct YearDotsView: View {
                 let color: Color = {
                     if i < passedDots { return Design.passedDot }
                     if i == currentDay && currentDay >= 0 { return Design.currentDot }
+                    return Design.remainingDot
+                }()
+                Circle()
+                    .fill(color)
+                    .frame(width: radius * 2, height: radius * 2)
+            }
+        }
+        .frame(width: gridWidth, height: gridHeight)
+        .scaleEffect(scale, anchor: .center)
+        .frame(width: contentWidth, height: availableHeight)
+        .clipped()
+    }
+}
+
+// MARK: - Life Dots View (1 dot per life year, capped to 120)
+private struct LifeYearsDotsView: View {
+    let progress: Double
+    let totalYears: Int
+    var availableWidth: CGFloat = 0
+    var availableHeight: CGFloat = 0
+    private let horizontalInset: CGFloat = 8
+    private let cols = 12
+    private var rows: Int { (dots + cols - 1) / cols }
+    private var dots: Int { totalYears.clamped(to: 1...120) }
+    private let dotRadius: CGFloat = 3.5
+    private let currentDotRadius: CGFloat = 4.5
+    private let gap: CGFloat = 4
+
+    private var contentWidth: CGFloat {
+        max(0, availableWidth - horizontalInset * 2)
+    }
+
+    private var cellSize: CGFloat {
+        guard contentWidth > 0 else { return dotRadius * 2 }
+        let totalGap = CGFloat(cols - 1) * gap
+        return max(2, (contentWidth - totalGap) / CGFloat(cols))
+    }
+
+    private var gridWidth: CGFloat {
+        let size = cellSize
+        return CGFloat(cols) * size + CGFloat(cols - 1) * gap
+    }
+
+    private var gridHeight: CGFloat {
+        let size = cellSize
+        return CGFloat(rows) * size + CGFloat(rows - 1) * gap
+    }
+
+    private var scaleToFit: CGFloat {
+        guard availableHeight > 0, gridHeight > 0, availableWidth > 0 else { return 1 }
+        let scaleH = availableHeight / gridHeight
+        let scaleW = contentWidth / gridWidth
+        return min(1, scaleH, scaleW)
+    }
+
+    var body: some View {
+        let clampedProgress = progress.clamped(to: 0.0...1.0)
+        let passedDots = min(Int(Double(dots) * clampedProgress), dots)
+        let hasCurrent = clampedProgress < 1.0 && passedDots < dots
+        let currentDot = hasCurrent ? passedDots : -1
+        let size = cellSize
+        let scale = scaleToFit
+
+        LazyVGrid(columns: Array(repeating: GridItem(.fixed(size), spacing: gap), count: cols), spacing: gap) {
+            ForEach(0..<dots, id: \.self) { i in
+                let radius = (i == currentDot && currentDot >= 0) ? min(currentDotRadius, size / 2) : min(dotRadius, size / 2)
+                let color: Color = {
+                    if i < passedDots { return Design.passedDot }
+                    if i == currentDot && currentDot >= 0 { return Design.currentDot }
                     return Design.remainingDot
                 }()
                 Circle()
@@ -959,6 +1052,82 @@ private struct YearAccessoryRectangularView: View {
     }
 }
 
+private struct LifeAccessoryInlineView: View {
+    let cache: WidgetCache
+
+    var body: some View {
+        if let metrics = lifeYearMetrics(from: cache) {
+            Text("Life \(metrics.lifePct)% · \(formatYears(metrics.leftYears))y left")
+                .font(.system(size: 14, weight: .medium))
+                .foregroundColor(Design.lightText)
+        } else {
+            Text("Set birth date in Until")
+                .font(.system(size: 14, weight: .medium))
+                .foregroundColor(Design.grayLabel)
+        }
+    }
+}
+
+private struct LifeAccessoryCircularView: View {
+    let cache: WidgetCache
+
+    var body: some View {
+        ZStack {
+            AccessoryWidgetBackground()
+            VStack(spacing: 2) {
+                Text("\(cache.lifePercent ?? 0)%")
+                    .font(.system(size: 20, weight: .bold))
+                    .foregroundColor(Design.percent)
+                Text("life")
+                    .font(.system(size: 10, weight: .medium))
+                    .foregroundColor(Design.grayLabel)
+            }
+        }
+    }
+}
+
+private struct LifeAccessoryRectangularView: View {
+    let cache: WidgetCache
+
+    var body: some View {
+        if let metrics = lifeYearMetrics(from: cache) {
+            VStack(alignment: .leading, spacing: 6) {
+                Text("Your life")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundColor(Design.grayLabel)
+                HStack {
+                    Text("\(formatYears(metrics.livedYears))y lived")
+                        .font(.system(size: 14, weight: .bold))
+                        .foregroundColor(Design.passed)
+                    Spacer()
+                    Text("\(formatYears(metrics.leftYears))y left")
+                        .font(.system(size: 14, weight: .bold))
+                        .foregroundColor(Design.left)
+                }
+                GeometryReader { geo in
+                    ZStack(alignment: .leading) {
+                        RoundedRectangle(cornerRadius: 3)
+                            .fill(Design.progressBg)
+                        RoundedRectangle(cornerRadius: 3)
+                            .fill(Design.progressOrange)
+                            .frame(width: max(0, geo.size.width * CGFloat(metrics.livedYears / Double(metrics.totalYears))))
+                    }
+                }
+                .frame(height: 6)
+            }
+        } else {
+            VStack(alignment: .leading, spacing: 6) {
+                Text("Your life")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundColor(Design.grayLabel)
+                Text("Set birth date in Until")
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundColor(Design.lightText)
+            }
+        }
+    }
+}
+
 // MARK: - Day Widget View
 struct DayWidgetView: View {
     let entry: UNTILWidgetEntry
@@ -1181,6 +1350,101 @@ struct YearWidgetView: View {
                 .foregroundColor(Design.grayLabel)
         }
         .padding(20)
+    }
+
+    private var placeholderView: some View {
+        Text("Open Until to sync")
+            .font(.system(size: Design.labelSize))
+            .foregroundColor(.gray)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+}
+
+// MARK: - Life Widget View
+struct LifeWidgetView: View {
+    let entry: UNTILWidgetEntry
+    @Environment(\.widgetFamily) private var family
+
+    var body: some View {
+        Group {
+            if let cache = entry.cache {
+                switch family {
+                case .accessoryInline:
+                    LifeAccessoryInlineView(cache: cache)
+                case .accessoryCircular:
+                    LifeAccessoryCircularView(cache: cache)
+                case .accessoryRectangular:
+                    LifeAccessoryRectangularView(cache: cache)
+                default:
+                    lifeContent(cache: cache)
+                }
+            } else {
+                placeholderView
+            }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .widgetBackground()
+    }
+
+    private func lifeContent(cache: WidgetCache) -> some View {
+        if let metrics = lifeYearMetrics(from: cache) {
+            return AnyView(
+                VStack(spacing: 14) {
+                    GeometryReader { geo in
+                        LifeYearsDotsView(
+                            progress: metrics.livedYears / Double(metrics.totalYears),
+                            totalYears: metrics.totalYears,
+                            availableWidth: geo.size.width,
+                            availableHeight: geo.size.height
+                        )
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 110)
+                    .layoutPriority(1)
+
+                    GeometryReader { geo in
+                        ZStack(alignment: .leading) {
+                            RoundedRectangle(cornerRadius: 6)
+                                .fill(Design.progressBg)
+                            RoundedRectangle(cornerRadius: 6)
+                                .fill(Design.progressOrange)
+                                .frame(width: max(0, geo.size.width * CGFloat(metrics.livedYears / Double(metrics.totalYears))))
+                        }
+                    }
+                    .frame(height: 10)
+
+                    Text("\(metrics.lifePct)%")
+                        .font(.system(size: 28, weight: .bold))
+                        .foregroundColor(Design.percent)
+                    Text("of life lived")
+                        .font(.system(size: 13))
+                        .foregroundColor(Design.grayLabel)
+
+                    HStack(spacing: 8) {
+                        Text("\(formatYears(metrics.livedYears))y lived")
+                            .font(.system(size: 15, weight: .bold))
+                            .foregroundColor(Design.passed)
+                        Text("\(formatYears(metrics.leftYears))y left")
+                            .font(.system(size: 15, weight: .bold))
+                            .foregroundColor(Design.left)
+                    }
+                }
+                .padding(20)
+            )
+        }
+
+        return AnyView(
+            VStack(spacing: 8) {
+                Text("Your life")
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundColor(Design.lightText)
+                Text("Set birth date in Until")
+                    .font(.system(size: 12))
+                    .foregroundColor(Design.grayLabel)
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+        )
     }
 
     private var placeholderView: some View {
@@ -1601,6 +1865,19 @@ struct YearWidget: Widget {
     }
 }
 
+struct LifeWidget: Widget {
+    let kind: String = "UNTILLifeWidget"
+
+    var body: some WidgetConfiguration {
+        StaticConfiguration(kind: kind, provider: MonthYearWidgetProvider()) { entry in
+            LifeWidgetView(entry: entry)
+        }
+        .configurationDisplayName("Until Life")
+        .description("See your life progress. Home screen and Lock Screen.")
+        .supportedFamilies([.systemMedium, .accessoryInline, .accessoryCircular, .accessoryRectangular])
+    }
+}
+
 // MARK: - Live Activity (Dynamic Island + Lock Screen)
 // UNTILLiveActivityAttributes is defined in UNTIL/UNTILLiveActivityAttributes.swift (shared target)
 
@@ -2011,9 +2288,9 @@ struct UNTILWidgetsBundle: WidgetBundle {
         DayWidget()
         MonthWidget()
         YearWidget()
+        LifeWidget()
         CounterWidget()
         CountdownWidget()
-        DailyTasksWidget()
         HourCalculationWidget()
         UNTILLiveActivityWidget()
     }

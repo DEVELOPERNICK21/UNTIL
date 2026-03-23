@@ -2,7 +2,15 @@ import React from 'react';
 import { View, StyleSheet } from 'react-native';
 import { Text } from '../../ui';
 import { Colors, Spacing, Radius, Typography } from '../../theme';
-import type { WidgetConfig } from '../../domain/widget/WidgetConfig';
+
+type WidgetConfig = {
+  type: 'day' | 'month' | 'year' | 'life';
+  theme: 'light' | 'dark' | 'amoled';
+  layout: 'minimal' | 'detailed';
+  font: 'clean' | 'emotional';
+  showMessage: boolean;
+  message: string;
+};
 
 interface Props {
   config: WidgetConfig;

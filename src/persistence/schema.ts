@@ -68,6 +68,9 @@ export const STORAGE_KEYS = {
 
   // Onboarding (auth flow)
   ONBOARDING_COMPLETED: 'onboarding.completed',
+
+  // App update checks
+  UPDATE_LAST_CHECK_AT: 'update.lastCheckAt',
 } as const;
 
 export const DEFAULTS = {

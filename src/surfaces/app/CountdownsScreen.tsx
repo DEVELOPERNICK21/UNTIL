@@ -11,13 +11,12 @@ import {
 import { useFocusEffect } from '@react-navigation/native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Text, ScreenGradient, Card } from '../../ui';
+import { useWidgetSyncActions } from '../../hooks';
 import {
   getCountdownsUseCase,
   addCountdownUseCase,
   removeCountdownUseCase,
 } from '../../di';
-import { syncCountdowns } from '../../infrastructure';
-import { getDaysLeft, formatDaysLeft } from '../../core/countdown/daysLeft';
 import { Spacing, Colors, Radius, Typography } from '../../theme';
 import type { RootStackParamList } from '../../navigation/RootNavigator';
 import type { Countdown } from '../../types';
@@ -29,7 +28,24 @@ function toDateString(d: Date): string {
   return `${y}-${m}-${day}`;
 }
 
+function getDaysLeft(targetDate: string): number {
+  const target = new Date(targetDate);
+  const today = new Date();
+  target.setHours(0, 0, 0, 0);
+  today.setHours(0, 0, 0, 0);
+  return Math.ceil((target.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+}
+
+function formatDaysLeft(days: number): string {
+  if (days > 1) return `${days} days left`;
+  if (days === 1) return '1 day left';
+  if (days === 0) return 'Today';
+  if (days === -1) return '1 day ago';
+  return `${Math.abs(days)} days ago`;
+}
+
 export function CountdownsScreen() {
+  const { syncCountdowns } = useWidgetSyncActions();
   const [countdowns, setCountdowns] = useState<Countdown[]>(() =>
     getCountdownsUseCase.execute(),
   );
@@ -40,6 +56,7 @@ export function CountdownsScreen() {
     return d;
   });
   const [showPicker, setShowPicker] = useState(false);
+  const hasDeadline = countdowns.length > 0;
 
   const refresh = useCallback(() => {
     setCountdowns(getCountdownsUseCase.execute());
@@ -52,6 +69,7 @@ export function CountdownsScreen() {
   );
 
   const handleAdd = () => {
+    if (hasDeadline) return;
     const title = newTitle.trim() || 'Deadline';
     const dateStr = toDateString(newDate);
     addCountdownUseCase.execute(title, dateStr);
@@ -92,7 +110,7 @@ export function CountdownsScreen() {
             Deadlines
           </Text>
           <Text variant="body" color="secondary" style={styles.subtitle}>
-            Add a deadline (e.g. Project, Interview) and date. The widget shows
+            Set one deadline (e.g. Project, Interview) and date. The widget shows
             how many days are left.
           </Text>
 
@@ -104,10 +122,14 @@ export function CountdownsScreen() {
               placeholder="Title (e.g. Project, Interview)"
               placeholderTextColor={Colors.textSecondary}
               autoCapitalize="words"
+              editable={!hasDeadline}
             />
             <TouchableOpacity
               style={styles.dateButton}
-              onPress={() => setShowPicker(true)}
+              onPress={() => {
+                if (!hasDeadline) setShowPicker(true);
+              }}
+              disabled={hasDeadline}
             >
               <Text variant="body" color="primary">
                 {toDateString(newDate)}
@@ -138,16 +160,21 @@ export function CountdownsScreen() {
             <TouchableOpacity
               style={[
                 styles.addButton,
-                !newTitle.trim() && styles.addButtonDisabled,
+                (!newTitle.trim() || hasDeadline) && styles.addButtonDisabled,
               ]}
               onPress={handleAdd}
-              disabled={!newTitle.trim()}
+              disabled={!newTitle.trim() || hasDeadline}
             >
               <Text variant="caption" style={styles.addButtonText}>
                 Add
               </Text>
             </TouchableOpacity>
           </View>
+          {hasDeadline && (
+            <Text variant="caption" color="secondary" style={styles.singleLimitHint}>
+              Only one deadline is allowed. Remove the current one to create a new deadline.
+            </Text>
+          )}
 
           {countdowns.length === 0 ? (
             <Text variant="body" color="secondary" style={styles.empty}>
@@ -188,8 +215,7 @@ export function CountdownsScreen() {
           )}
 
           <Text variant="caption" color="secondary" style={styles.hint}>
-            Add the Deadline widget from your home screen. It shows the first
-            deadline (e.g. 7 days left).
+            Add the Deadline widget from your home screen.
           </Text>
         </ScrollView>
       </ScreenGradient>
@@ -239,6 +265,7 @@ const styles = StyleSheet.create({
   },
   addButtonDisabled: { opacity: 0.5 },
   addButtonText: { color: Colors.textPrimary },
+  singleLimitHint: { marginBottom: Spacing[3] },
   empty: { marginBottom: Spacing[4], fontStyle: 'italic' },
   card: { marginBottom: Spacing[3] },
   row: {

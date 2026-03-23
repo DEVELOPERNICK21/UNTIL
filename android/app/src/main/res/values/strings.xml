@@ -24,8 +24,10 @@
     <string name="widget_year_percent_format">%d%% consumed</string>
 
     <string name="widget_life_description">Life progress when birth date is set in Until.</string>
-    <string name="widget_life_passed_format">%1$dd lived (%2$d%%)</string>
-    <string name="widget_life_left_format">%1$dd left (%2$d%%)</string>
+    <string name="widget_life_passed_years_format">%1$s years lived (%2$d%%)</string>
+    <string name="widget_life_left_years_format">%1$s years left (%2$d%%)</string>
+    <string name="widget_life_passed_years_compact_format">%1$sy lived</string>
+    <string name="widget_life_left_years_compact_format">%1$sy left</string>
     <string name="widget_life_percent_format">%d%% of life</string>
     <string name="widget_life_locked">Premium required</string>
     <string name="widget_life_empty_line1">Open Until to sync</string>

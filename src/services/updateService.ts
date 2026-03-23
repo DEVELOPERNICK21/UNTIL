@@ -1,6 +1,7 @@
 import { Platform, Linking } from 'react-native';
 import DeviceInfo from 'react-native-device-info';
 import { getNumber, setNumber } from '../persistence/mmkv';
+import { STORAGE_KEYS } from '../persistence/schema';
 
 export type UpdateType = 'FORCE_UPDATE' | 'OPTIONAL_UPDATE' | 'NO_UPDATE';
 
@@ -23,7 +24,7 @@ export interface UpdateCheckResult {
 const UPDATE_CONFIG_URL =
   'https://developernick1-until.vercel.app/api/update-config';
 
-const LAST_CHECK_KEY = 'last_update_check_at';
+const LAST_CHECK_KEY = STORAGE_KEYS.UPDATE_LAST_CHECK_AT;
 const ONE_DAY_MS = 24 * 60 * 60 * 1000;
 
 export function parseSemver(version: string): [number, number, number] {

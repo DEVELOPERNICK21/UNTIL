@@ -104,28 +104,10 @@
           android:resource="@xml/widget_countdown_info" />
       </receiver>
       <receiver
-        android:name=".UNTILDailyTasksWidgetProvider"
-        android:exported="true"
-        android:label="Until Daily tasks">
-        <intent-filter>
-          <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
-        </intent-filter>
-        <meta-data
-          android:name="android.appwidget.provider"
-          android:resource="@xml/widget_daily_tasks_info" />
-      </receiver>
-      <receiver
         android:name=".CounterIncrementReceiver"
         android:exported="true">
         <intent-filter>
           <action android:name="app.until.time.INCREMENT_COUNTER" />
-        </intent-filter>
-      </receiver>
-      <receiver
-        android:name=".DailyTasksWidgetTapReceiver"
-        android:exported="true">
-        <intent-filter>
-          <action android:name="app.until.time.TOGGLE_DAILY_TASKS_PAGE" />
         </intent-filter>
       </receiver>
       <receiver

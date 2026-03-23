@@ -7,43 +7,11 @@ import {
   Platform,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { useAccessControl, useWidgetSurfaceStatus } from '../../hooks';
+import { useWidgetSurfaceStatus } from '../../hooks';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Text, ScreenGradient } from '../../ui';
-import { Colors, Spacing, Radius, Typography } from '../../theme';
+import { Colors, Spacing, Radius, Typography, useTheme } from '../../theme';
 import type { RootStackParamList } from '../../navigation/RootNavigator';
-
-const PREVIEW_ITEMS: {
-  key: string;
-  title: string;
-  value: string;
-  subtitle: string;
-}[] = [
-  {
-    key: 'day',
-    title: 'Today',
-    value: '57% done',
-    subtitle: '10h 14m left',
-  },
-  {
-    key: 'month',
-    title: 'This month',
-    value: '17%',
-    subtitle: '23 days left',
-  },
-  {
-    key: 'year',
-    title: 'This year',
-    value: '9%',
-    subtitle: '329 days left',
-  },
-  {
-    key: 'life',
-    title: 'Your life',
-    value: '31%',
-    subtitle: '20,126 days left',
-  },
-];
 
 function SectionHeader({ label }: { label: string }) {
   return (
@@ -56,11 +24,15 @@ function SectionHeader({ label }: { label: string }) {
 function GlassSection({
   children,
   style,
+  cardStyle,
 }: {
   children: React.ReactNode;
   style?: object;
+  cardStyle: object;
 }) {
-  return <View style={[styles.glassSection, style]}>{children}</View>;
+  return (
+    <View style={[styles.glassSection, cardStyle, style]}>{children}</View>
+  );
 }
 
 interface SettingTileProps {
@@ -72,6 +44,7 @@ interface SettingTileProps {
   comingSoon?: boolean;
   onPress?: () => void;
   children?: React.ReactNode;
+  cardStyle: object;
 }
 
 function SettingTile({
@@ -83,6 +56,7 @@ function SettingTile({
   comingSoon,
   onPress,
   children,
+  cardStyle,
 }: SettingTileProps) {
   const content = (
     <View style={styles.tileInner}>
@@ -150,6 +124,7 @@ function SettingTile({
         <View
           style={[
             styles.glassTile,
+            cardStyle,
             (locked || comingSoon) && styles.tileLocked,
           ]}
         >
@@ -163,7 +138,11 @@ function SettingTile({
   }
   return (
     <View
-      style={[styles.glassTile, (locked || comingSoon) && styles.tileLocked]}
+      style={[
+        styles.glassTile,
+        cardStyle,
+        (locked || comingSoon) && styles.tileLocked,
+      ]}
     >
       {content}
     </View>
@@ -174,10 +153,12 @@ function QuickLinkTile({
   title,
   subtitle,
   onPress,
+  cardStyle,
 }: {
   title: string;
   subtitle: string;
   onPress: () => void;
+  cardStyle: object;
 }) {
   return (
     <TouchableOpacity
@@ -185,7 +166,7 @@ function QuickLinkTile({
       onPress={onPress}
       style={styles.quickLinkTouch}
     >
-      <View style={styles.quickLinkTile}>
+      <View style={[styles.quickLinkTile, cardStyle]}>
         <View>
           <Text variant="body" color="primary" style={styles.quickLinkTitle}>
             {title}
@@ -202,35 +183,16 @@ function QuickLinkTile({
   );
 }
 
-function ComingSoonQuickRow({
-  title,
-  subtitle,
-}: {
-  title: string;
-  subtitle: string;
-}) {
-  return (
-    <View style={[styles.quickLinkTile, styles.quickLinkDisabled]}>
-      <View style={styles.quickLinkBody}>
-        <Text variant="body" color="secondary" style={styles.quickLinkTitle}>
-          {title}
-        </Text>
-        <Text variant="caption" color="secondary">
-          {subtitle}
-        </Text>
-      </View>
-      <Text variant="caption" color="secondary">
-        Soon
-      </Text>
-    </View>
-  );
-}
-
 export function WidgetScreen() {
   const navigation =
     useNavigation<NativeStackNavigationProp<RootStackParamList, 'Widget'>>();
-  const { hasPremiumBundle, canAccessLife } = useAccessControl();
   const { liveActivityActive, overlayActive } = useWidgetSurfaceStatus();
+  const theme = useTheme();
+  const isLight = theme.statusBarStyle === 'dark-content';
+
+  const elevatedLightCard = isLight
+    ? styles.lightCardSurface
+    : styles.darkCardSurface;
 
   return (
     <View style={styles.container}>
@@ -247,38 +209,20 @@ export function WidgetScreen() {
             widgets and configure what appears in Dynamic Island or overlay.
           </Text>
 
-          <SectionHeader label="Preview" />
-          <View style={styles.previewStrip}>
-            {PREVIEW_ITEMS.map(item => (
-              <View key={item.key} style={styles.previewCard}>
-                <Text variant="caption" color="secondary" style={styles.previewTitle}>
-                  {item.title}
-                </Text>
-                <Text variant="title" color="primary" style={styles.previewValue}>
-                  {item.value}
-                </Text>
-                <Text variant="caption" color="secondary" style={styles.previewSubtitle}>
-                  {item.subtitle}
-                </Text>
-              </View>
-            ))}
-          </View>
-
           {/* Section: Always visible (Dynamic Island / Floating overlay) */}
           <SectionHeader label="Always visible" />
-          <GlassSection style={styles.sectionSpacing}>
+          <GlassSection
+            style={styles.sectionSpacing}
+            cardStyle={elevatedLightCard}
+          >
             {Platform.OS === 'ios' && (
               <SettingTile
                 title="Dynamic Island"
                 description="Live Activity in Dynamic Island and Lock Screen. Tap to configure."
                 status={liveActivityActive ? 'active' : 'inactive'}
                 statusLabel={liveActivityActive ? 'Active' : 'Inactive'}
-                locked={!(hasPremiumBundle || canAccessLife)}
-                onPress={() =>
-                  hasPremiumBundle || canAccessLife
-                    ? navigation.navigate('DynamicIsland')
-                    : navigation.navigate('Premium')
-                }
+                onPress={() => navigation.navigate('DynamicIsland')}
+                cardStyle={elevatedLightCard}
               />
             )}
             {Platform.OS === 'android' && (
@@ -287,39 +231,41 @@ export function WidgetScreen() {
                 description="Dynamic Island–like pill over other apps. Drag to move."
                 status={overlayActive ? 'active' : 'inactive'}
                 statusLabel={overlayActive ? 'Active' : 'Inactive'}
-                locked={!(hasPremiumBundle || canAccessLife)}
-                onPress={() =>
-                  hasPremiumBundle || canAccessLife
-                    ? navigation.navigate('Overlay')
-                    : navigation.navigate('Premium')
-                }
+                onPress={() => navigation.navigate('Overlay')}
+                cardStyle={elevatedLightCard}
               />
             )}
           </GlassSection>
 
           {/* Section: Quick links */}
           <SectionHeader label="Manage data & features" />
-          <GlassSection style={styles.sectionSpacing}>
-            <ComingSoonQuickRow
+          <GlassSection
+            style={styles.sectionSpacing}
+            cardStyle={elevatedLightCard}
+          >
+            <QuickLinkTile
               title="Custom counters"
               subtitle="Tap-to-increment widgets (e.g. Water)"
+              onPress={() => navigation.navigate('CustomCounters')}
+              cardStyle={elevatedLightCard}
             />
-            <ComingSoonQuickRow
+            <QuickLinkTile
               title="Deadlines"
               subtitle="Countdown to a date (e.g. project, interview)"
+              onPress={() => navigation.navigate('Countdowns')}
+              cardStyle={elevatedLightCard}
             />
-            <ComingSoonQuickRow
-              title="Today's tasks"
-              subtitle="Daily task list and day report"
-            />
-            <ComingSoonQuickRow
+            <QuickLinkTile
               title="Hour calculation"
               subtitle="Tap widget to start/stop. Set title in app."
+              onPress={() => navigation.navigate('HourCalculation')}
+              cardStyle={elevatedLightCard}
             />
             <QuickLinkTile
               title="Task report"
               subtitle="Daily, weekly & monthly charts"
               onPress={() => navigation.navigate('TaskReport')}
+              cardStyle={elevatedLightCard}
             />
           </GlassSection>
 
@@ -362,32 +308,19 @@ const styles = StyleSheet.create({
   sectionSpacing: {
     marginBottom: Spacing[2],
   },
-  previewStrip: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: Spacing[2],
-    marginBottom: Spacing[3],
+  lightCardSurface: {
+    backgroundColor: '#FFFFFF',
+    borderColor: 'rgba(15, 23, 42, 0.08)',
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 4,
   },
-  previewCard: {
-    flexBasis: '48%',
+  darkCardSurface: {
     backgroundColor: Colors.glassHighlight,
     borderColor: Colors.glassBorder,
-    borderWidth: 1,
-    borderRadius: Radius.md,
-    paddingVertical: Spacing[2],
-    paddingHorizontal: Spacing[2],
   },
-  previewTitle: {
-    marginBottom: 2,
-  },
-  previewValue: {
-    fontSize: Typography.body,
-    marginBottom: 2,
-  },
-  previewSubtitle: {
-    fontSize: Typography.small,
-  },
-
   tileWrapper: {
     marginBottom: Spacing[2],
   },
@@ -470,9 +403,6 @@ const styles = StyleSheet.create({
   quickLinkBody: {
     flex: 1,
     paddingRight: Spacing[2],
-  },
-  quickLinkDisabled: {
-    opacity: 0.65,
   },
   comingSoonPill: {
     backgroundColor: 'rgba(160, 160, 160, 0.35)',

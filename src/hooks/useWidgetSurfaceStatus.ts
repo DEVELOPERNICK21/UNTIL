@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react';
 import { NativeModules, Platform } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
-import { isOverlayEnabled } from '../infrastructure';
+import { isOverlayEnabled } from '../infrastructure/WidgetSync';
 
 const { LiveActivityBridge } = NativeModules;
 

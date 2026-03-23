@@ -5,7 +5,7 @@
 
 import { useCallback } from 'react';
 import { updateUserProfileUseCase } from '../di';
-import { syncWidgetCache } from '../infrastructure';
+import { syncWidgetCache } from '../infrastructure/WidgetSync';
 
 export function useUpdateUserProfile() {
   const updateUserProfile = useCallback(

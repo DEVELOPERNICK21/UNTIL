@@ -15,3 +15,6 @@ export { useAppUpdateCheck } from './useAppUpdateCheck';
 export { useGoalsFeatureEnabled } from './useGoalsFeatureEnabled';
 export { useOverlayControl } from './useOverlayControl';
 export { useWidgetSurfaceStatus } from './useWidgetSurfaceStatus';
+export { useDynamicIslandControl } from './useDynamicIslandControl';
+export { useWidgetSyncActions } from './useWidgetSyncActions';
+export { useWidgetConfig } from './useWidgetConfig';

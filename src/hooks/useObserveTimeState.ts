@@ -4,7 +4,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { observeTimeStateUseCase } from '../di';
-import { syncWidgetCache } from '../infrastructure';
+import { syncWidgetCache } from '../infrastructure/WidgetSync';
 
 const POLL_INTERVAL_MS = 60000; // 60 seconds
 

@@ -10,10 +10,8 @@ import {
   startOverlay,
   stopOverlay,
   updateOverlay,
-} from '../infrastructure';
-import type { OverlayWidgetType } from '../infrastructure';
-import { isPremiumLiveActivityType, isV2LiveActivityType } from '../domain/premium';
-import { useAccessControl } from './useAccessControl';
+} from '../infrastructure/WidgetSync';
+import type { OverlayWidgetType } from '../infrastructure/WidgetSync';
 
 const WIDGET_OPTIONS: {
   type: OverlayWidgetType;
@@ -24,12 +22,14 @@ const WIDGET_OPTIONS: {
   { type: 'month', title: 'This month', description: 'Feb 17% · 23d left. Month progress.' },
   { type: 'year', title: 'This year', description: '9% · 329d left. Year progress.' },
   { type: 'life', title: 'Your life', description: 'Life progress. Set birth date in Settings.' },
-  { type: 'dailyTasks', title: 'Daily tasks', description: 'Coming in a future update.' },
   { type: 'hourCalc', title: 'Hour timer', description: 'Coming in a future update.' },
 ];
 
+function isComingSoonType(type: OverlayWidgetType): boolean {
+  return type === 'hourCalc';
+}
+
 export function useOverlayControl() {
-  const { hasPremiumBundle, canAccessLife } = useAccessControl();
   const [activeWidget, setActiveWidget] = useState<OverlayWidgetType>(
     getOverlayWidgetType(),
   );
@@ -63,14 +63,12 @@ export function useOverlayControl() {
 
   const handleSelectWidget = useCallback(
     (type: OverlayWidgetType) => {
-      if (isV2LiveActivityType(type)) return;
-      if (type === 'life' && !canAccessLife) return;
-      if (isPremiumLiveActivityType(type) && type !== 'life' && !hasPremiumBundle) return;
+      if (isComingSoonType(type)) return;
       setOverlayWidgetType(type);
       setActiveWidget(type);
       updateOverlay();
     },
-    [hasPremiumBundle, canAccessLife],
+    [],
   );
 
   const handleStart = useCallback(() => {
@@ -99,20 +97,16 @@ export function useOverlayControl() {
   const options = useMemo(
     () =>
       WIDGET_OPTIONS.map(option => {
-        const comingSoon = isV2LiveActivityType(option.type);
-        const lockedPremium =
-          option.type === 'life'
-            ? !canAccessLife
-            : isPremiumLiveActivityType(option.type) && !hasPremiumBundle;
+        const comingSoon = isComingSoonType(option.type);
         return {
           ...option,
           selected: activeWidget === option.type,
           comingSoon,
-          lockedPremium,
-          locked: comingSoon || lockedPremium,
+          lockedPremium: false,
+          locked: comingSoon,
         };
       }),
-    [activeWidget, hasPremiumBundle, canAccessLife],
+    [activeWidget],
   );
 
   return {

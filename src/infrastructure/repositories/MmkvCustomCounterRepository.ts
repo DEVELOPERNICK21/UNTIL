@@ -37,15 +37,14 @@ export class MmkvCustomCounterRepository implements ICustomCounterRepository {
   }
 
   add(title: string): CustomCounter {
-    const list = loadCounters();
     const trimmed = title.trim() || 'Counter';
     const counter: CustomCounter = {
       id: randomId(),
       title: trimmed,
       count: 0,
     };
-    list.push(counter);
-    saveCounters(list);
+    // Single-item mode: keep exactly one counter.
+    saveCounters([counter]);
     this.notifySubscribers();
     return counter;
   }
