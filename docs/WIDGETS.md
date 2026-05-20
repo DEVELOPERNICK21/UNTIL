@@ -412,7 +412,7 @@ All time logic lives in `core/time`; widgets read cached JSON. Update frequency 
 **iOS:** Timeline policy per provider (DayWidgetProvider, MonthYearWidgetProvider, etc.).  
 **Android:** DayWidgetTickWorker (1s), StopwatchTickWorker (1s when running), DailyMidnightWorker (midnight), WorkManager (15 min fallback).
 
-**Stale cache fallback (Android):** When app hasn't run today, month/year widgets recompute from `Calendar` so display stays correct.
+**Stale cache fallback (native):** When the app hasn't run today, widgets recompute day progress from wall clock and refresh month/year from `Calendar` (Android: `cacheFreshForDisplay` in `UNTILWidgetWorker`; iOS: `WidgetCache.freshForDisplay`). Life/tasks/counters still need an app sync for profile-specific data.
 
 ---
 

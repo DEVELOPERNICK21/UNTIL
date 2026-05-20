@@ -92,35 +92,69 @@ class UNTILWidgetWorker(
             updatedAt = 0L
         )
 
-        /** Recompute month/year from current date when cache is stale (app hasn't run today). SSOT: core/time in JS; this is a fallback for widget display when app is killed. */
-        private fun cacheWithFreshMonthYear(context: Context, cache: WidgetCache): WidgetCache {
-            val cal = Calendar.getInstance()
-            cal.set(Calendar.HOUR_OF_DAY, 0)
-            cal.set(Calendar.MINUTE, 0)
-            cal.set(Calendar.SECOND, 0)
-            cal.set(Calendar.MILLISECOND, 0)
-            val startOfTodayMs = cal.timeInMillis
-            if (cache.updatedAt >= startOfTodayMs) return cache
-            val now = Calendar.getInstance()
-            val dayOfMonth = now.get(Calendar.DAY_OF_MONTH)
-            val daysInMonth = now.getActualMaximum(Calendar.DAY_OF_MONTH)
-            val monthLeft = daysInMonth - dayOfMonth
-            val monthProgress = if (daysInMonth > 0) dayOfMonth.toDouble() / daysInMonth else 0.0
-            val dayOfYear = now.get(Calendar.DAY_OF_YEAR)
-            val daysInYear = now.getActualMaximum(Calendar.DAY_OF_YEAR)
-            val yearLeft = daysInYear - dayOfYear
-            val yearProgress = if (daysInYear > 0) dayOfYear.toDouble() / daysInYear else 0.0
-            return cache.copy(
-                monthIndex = now.get(Calendar.MONTH) + 1,
-                monthDaysPassed = dayOfMonth,
-                monthDaysLeft = monthLeft,
-                monthPercent = (monthProgress * 100).toInt().coerceIn(0, 100),
-                monthProgress = monthProgress,
-                yearDaysPassed = dayOfYear,
-                yearDaysLeft = yearLeft,
-                yearPercent = (yearProgress * 100).toInt().coerceIn(0, 100),
-                yearProgress = yearProgress
+        /**
+         * Recompute day progress from wall clock and refresh month/year when the app has not
+         * synced today. Mirrors core/time/day.ts + month/year fallbacks so widgets stay correct
+         * without opening the app (WorkManager ticks, boot, or system widget updates).
+         */
+        private fun cacheFreshForDisplay(cache: WidgetCache, nowMs: Long = System.currentTimeMillis()): WidgetCache {
+            val now = Calendar.getInstance().apply { timeInMillis = nowMs }
+            val startOfToday = Calendar.getInstance().apply {
+                timeInMillis = nowMs
+                set(Calendar.HOUR_OF_DAY, 0)
+                set(Calendar.MINUTE, 0)
+                set(Calendar.SECOND, 0)
+                set(Calendar.MILLISECOND, 0)
+            }
+            val endOfToday = Calendar.getInstance().apply {
+                timeInMillis = nowMs
+                set(Calendar.HOUR_OF_DAY, 23)
+                set(Calendar.MINUTE, 59)
+                set(Calendar.SECOND, 59)
+                set(Calendar.MILLISECOND, 999)
+            }
+            val startMs = startOfToday.timeInMillis
+            val endMs = endOfToday.timeInMillis
+            val totalMs = (endMs - startMs).toDouble().coerceAtLeast(1.0)
+            val elapsedMs = (nowMs - startMs).toDouble().coerceIn(0.0, totalMs)
+            val remainingMs = (endMs - nowMs).toDouble().coerceAtLeast(0.0)
+            val dayProgress = (elapsedMs / totalMs).coerceIn(0.0, 1.0)
+            val totalMinutesInDay = 24 * 60
+            val passedMinutes = (dayProgress * totalMinutesInDay).toInt().coerceIn(0, totalMinutesInDay)
+            val remainingMinutes = (totalMinutesInDay - passedMinutes).coerceIn(0, totalMinutesInDay)
+
+            var fresh = cache.copy(
+                dayProgress = dayProgress,
+                dayPercentDone = (dayProgress * 100).toInt().coerceIn(0, 100),
+                dayPercentLeft = ((1.0 - dayProgress) * 100).toInt().coerceIn(0, 100),
+                dayPassedMinutes = passedMinutes,
+                dayRemainingMinutes = remainingMinutes,
+                startOfDay = startMs,
+                endOfDay = endMs,
             )
+
+            if (cache.updatedAt < startMs) {
+                val dayOfMonth = now.get(Calendar.DAY_OF_MONTH)
+                val daysInMonth = now.getActualMaximum(Calendar.DAY_OF_MONTH)
+                val monthLeft = daysInMonth - dayOfMonth
+                val monthProgress = if (daysInMonth > 0) dayOfMonth.toDouble() / daysInMonth else 0.0
+                val dayOfYear = now.get(Calendar.DAY_OF_YEAR)
+                val daysInYear = now.getActualMaximum(Calendar.DAY_OF_YEAR)
+                val yearLeft = daysInYear - dayOfYear
+                val yearProgress = if (daysInYear > 0) dayOfYear.toDouble() / daysInYear else 0.0
+                fresh = fresh.copy(
+                    monthIndex = now.get(Calendar.MONTH) + 1,
+                    monthDaysPassed = dayOfMonth,
+                    monthDaysLeft = monthLeft,
+                    monthPercent = (monthProgress * 100).toInt().coerceIn(0, 100),
+                    monthProgress = monthProgress,
+                    yearDaysPassed = dayOfYear,
+                    yearDaysLeft = yearLeft,
+                    yearPercent = (yearProgress * 100).toInt().coerceIn(0, 100),
+                    yearProgress = yearProgress,
+                )
+            }
+            return fresh
         }
 
         fun scheduleDailyMidnight(context: Context) {
@@ -142,7 +176,8 @@ class UNTILWidgetWorker(
         }
 
         fun updateWidgets(context: Context) {
-            val cache = loadWidgetCache(context) ?: defaultCache
+            val rawCache = loadWidgetCache(context) ?: defaultCache
+            val cache = cacheFreshForDisplay(rawCache)
             val appWidgetManager = AppWidgetManager.getInstance(context)
             val dayProvider = ComponentName(context, UNTILDayWidgetProvider::class.java)
             val monthProvider = ComponentName(context, UNTILMonthWidgetProvider::class.java)
@@ -158,11 +193,10 @@ class UNTILWidgetWorker(
 
             val dayIds = appWidgetManager.getAppWidgetIds(dayProvider)
             val lifeIds = appWidgetManager.getAppWidgetIds(lifeProvider)
-            val monthYearCache = cacheWithFreshMonthYear(context, cache)
             listOf(
                 Triple(dayIds, R.layout.widget_day, cache),
-                Triple(appWidgetManager.getAppWidgetIds(monthProvider), R.layout.widget_month, monthYearCache),
-                Triple(appWidgetManager.getAppWidgetIds(yearProvider), R.layout.widget_year, monthYearCache),
+                Triple(appWidgetManager.getAppWidgetIds(monthProvider), R.layout.widget_month, cache),
+                Triple(appWidgetManager.getAppWidgetIds(yearProvider), R.layout.widget_year, cache),
                 Triple(lifeIds, R.layout.widget_life, cache),
             ).forEach { (ids, layoutId, cacheForLayout) ->
                 if (ids.isEmpty()) return@forEach
@@ -171,7 +205,7 @@ class UNTILWidgetWorker(
                         val views = buildRemoteViews(context, layoutId, cacheForLayout)
                         appWidgetManager.updateAppWidget(id, views)
                     } catch (e: Exception) {
-                        val fallbackCache = if (layoutId == R.layout.widget_month || layoutId == R.layout.widget_year) cacheWithFreshMonthYear(context, defaultCache) else defaultCache
+                        val fallbackCache = cacheFreshForDisplay(defaultCache)
                         val views = buildRemoteViews(context, layoutId, fallbackCache)
                         appWidgetManager.updateAppWidget(id, views)
                     }

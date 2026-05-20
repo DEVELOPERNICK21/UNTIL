@@ -8,11 +8,7 @@ import {
   playBillingRepository,
   restorePurchasesUseCase,
 } from '../di';
-import {
-  BILLING_INAPP_IDS,
-  BILLING_PRODUCT_IDS,
-  BILLING_SUBSCRIPTION_IDS,
-} from '../config/billing';
+import { BILLING_PAYWALL_IDS, BILLING_PRODUCT_IDS } from '../config/billing';
 
 export type BillingProductRow = {
   productId: string;
@@ -22,7 +18,7 @@ export type BillingProductRow = {
   currency?: string;
 };
 
-const ALL_BILLING_IDS = [...BILLING_SUBSCRIPTION_IDS, ...BILLING_INAPP_IDS];
+const PAYWALL_PRODUCT_IDS = BILLING_PAYWALL_IDS;
 
 export function usePurchase() {
   const [products, setProducts] = useState<BillingProductRow[]>([]);
@@ -32,7 +28,7 @@ export function usePurchase() {
     setLoading(true);
     try {
       await ensurePlayBillingSession();
-      const list = await playBillingRepository.getProducts(ALL_BILLING_IDS);
+      const list = await playBillingRepository.getProducts(PAYWALL_PRODUCT_IDS);
       setProducts(list);
       return list;
     } finally {

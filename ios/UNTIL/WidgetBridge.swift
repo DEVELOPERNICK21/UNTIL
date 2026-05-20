@@ -38,9 +38,7 @@ class WidgetBridge: NSObject {
     guard let defaults = UserDefaults(suiteName: appGroupID) else { return }
     defaults.set(json, forKey: widgetCacheKey)
     defaults.synchronize()
-    WidgetCenter.shared.reloadTimelines(ofKind: kindDay)
-    WidgetCenter.shared.reloadTimelines(ofKind: kindMonth)
-    WidgetCenter.shared.reloadTimelines(ofKind: kindYear)
+    WidgetCenter.shared.reloadAllTimelines()
   }
 
   @objc func setCustomCounters(_ json: String) {

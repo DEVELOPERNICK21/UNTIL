@@ -64,7 +64,9 @@ import { GetAccessStateUseCase } from './domain/useCases/GetAccessStateUseCase';
 import { TrackAppOpenUseCase } from './domain/useCases/TrackAppOpenUseCase';
 import { TrackLifeScreenViewedUseCase } from './domain/useCases/TrackLifeScreenViewedUseCase';
 import { ApplyStorePurchaseUseCase } from './domain/useCases/ApplyStorePurchaseUseCase';
+import { PlayPurchaseVerificationServiceAdapter } from './infrastructure/adapters/PlayPurchaseVerificationServiceAdapter';
 import { RestorePurchasesUseCase } from './domain/useCases/RestorePurchasesUseCase';
+import { ReconcilePlayEntitlementUseCase } from './domain/useCases/ReconcilePlayEntitlementUseCase';
 import { PlayBillingRepository } from './infrastructure/repositories/PlayBillingRepository';
 import { NoOpPlayBillingRepository } from './infrastructure/repositories/NoOpPlayBillingRepository';
 import type { IPlayBillingRepository } from './domain/repository/IPlayBillingRepository';
@@ -75,6 +77,9 @@ function syncPremiumAfterEntitlementChange(): void {
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   const { syncPremiumStatus } = require('./infrastructure/WidgetSync');
   syncPremiumStatus();
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const { cancelTrialLocalNotifications } = require('./services/trialReminders');
+  void cancelTrialLocalNotifications();
 }
 
 const timeRepository = new MmkvTimeRepository();
@@ -89,6 +94,7 @@ const appUpdateService = new AppUpdateServiceAdapter();
 const appVersionProvider = new AppVersionProviderAdapter();
 const deviceIdProvider = new DeviceIdProviderAdapter();
 const licenseVerificationService = new LicenseVerificationServiceAdapter();
+const playPurchaseVerificationService = new PlayPurchaseVerificationServiceAdapter();
 
 export const observeTimeStateUseCase = new ObserveTimeStateUseCase(timeRepository);
 export const updateUserProfileUseCase = new UpdateUserProfileUseCase(timeRepository);
@@ -99,6 +105,7 @@ export const trackAppOpenUseCase = new TrackAppOpenUseCase(subscriptionRepositor
 export const trackLifeScreenViewedUseCase = new TrackLifeScreenViewedUseCase(subscriptionRepository);
 export const applyStorePurchaseUseCase = new ApplyStorePurchaseUseCase(
   subscriptionRepository,
+  playPurchaseVerificationService,
   syncPremiumAfterEntitlementChange
 );
 
@@ -114,11 +121,14 @@ export const playBillingRepository: IPlayBillingRepository =
           if (!productIdToPurchaseType(purchase.productId)) {
             return;
           }
-          applyStorePurchaseUseCase.execute({
+          const result = await applyStorePurchaseUseCase.execute({
             productId: purchase.productId,
             purchaseToken: purchase.purchaseToken ?? null,
             transactionDate: purchase.transactionDate,
           });
+          if (!result.applied) {
+            return;
+          }
           await instance.finalizePurchase(purchase);
         });
         playBillingAndroid = instance;
@@ -129,6 +139,12 @@ export const playBillingRepository: IPlayBillingRepository =
 export const restorePurchasesUseCase = new RestorePurchasesUseCase(
   subscriptionRepository,
   playBillingRepository,
+  syncPremiumAfterEntitlementChange
+);
+
+export const reconcilePlayEntitlementUseCase = new ReconcilePlayEntitlementUseCase(
+  subscriptionRepository,
+  restorePurchasesUseCase,
   syncPremiumAfterEntitlementChange
 );
 

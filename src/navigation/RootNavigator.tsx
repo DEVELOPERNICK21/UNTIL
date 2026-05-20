@@ -9,6 +9,7 @@ import {
   type GestureResponderEvent,
 } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
+import { rootNavigationRef } from './rootNavigationRef';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { HomeScreen } from '../surfaces/app/HomeScreen';
 import { SettingsScreen } from '../surfaces/app/SettingsScreen';
@@ -295,7 +296,7 @@ export function RootNavigator() {
     headerShadowVisible: false,
   };
   return (
-    <NavigationContainer>
+    <NavigationContainer ref={rootNavigationRef}>
       <Stack.Navigator screenOptions={screenOptions}>
         <Stack.Screen
           name="Home"

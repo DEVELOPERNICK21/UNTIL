@@ -6,7 +6,7 @@
 export const LANDING_COPY = {
   /** Top-of-page price/offer line (e.g. "Intro price — Premium ₹99") */
   introPriceLine:
-    'Start free. Premium includes 14-day trial, then monthly, yearly, or lifetime on Android.',
+    'Start free. Premium: 14-day trial, then ₹499/year or ₹1,499 lifetime on Android.',
 
   hero: {
     title: 'See your time.',
@@ -80,7 +80,7 @@ export const LANDING_COPY = {
       {
         question: 'Is Until free or paid?',
         answer:
-          'Until has a free core experience (day/year progress and sharing). Premium unlocks more surfaces and features such as month/life widgets, Dynamic Island on iOS, and floating overlay on Android. Premium starts with a 14-day trial and supports monthly, yearly, and lifetime options on Android.',
+          'Until has a free core experience (day/year progress and sharing). Premium unlocks month/life widgets, full Life progress, Dynamic Island on iOS, and floating overlay on Android. Start with a 14-day trial, then ₹499/year or a one-time ₹1,499 lifetime on Android.',
       },
       {
         question: 'What can I put on widgets?',

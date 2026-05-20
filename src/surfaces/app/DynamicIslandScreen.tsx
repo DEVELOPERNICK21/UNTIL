@@ -10,11 +10,16 @@ import {
   ScrollView,
   TouchableOpacity,
 } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Text, ScreenGradient } from '../../ui';
 import { Colors, Spacing, Typography } from '../../theme';
 import { useDynamicIslandControl } from '../../hooks';
+import type { RootStackParamList } from '../../navigation/RootNavigator';
 
 export function DynamicIslandScreen() {
+  const navigation =
+    useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const {
     options,
     liveActivityActive,
@@ -117,8 +122,14 @@ export function DynamicIslandScreen() {
                   selected && styles.optionCardSelected,
                   locked && styles.optionCardLocked,
                 ]}
-                onPress={() => handleSelectWidget(type)}
-                activeOpacity={locked ? 1 : 0.7}
+                onPress={() => {
+                  if (lockedPremium) {
+                    navigation.navigate('Premium');
+                    return;
+                  }
+                  handleSelectWidget(type);
+                }}
+                activeOpacity={locked && !lockedPremium ? 1 : 0.7}
               >
                 <View style={styles.optionHeader}>
                   <Text variant="title" color="primary">

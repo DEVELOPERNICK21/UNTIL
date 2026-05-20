@@ -1,0 +1,33 @@
+{
+  "projectId": "9043125905380080859",
+  "projectTitle": "Until Onboarding Experience",
+  "screens": [
+    {
+      "id": "14e43fa8a94f43f49d30ff6fce0627e5",
+      "name": "YourJourney",
+      "stitchTitle": "Your Journey",
+      "surface": "IdentitySetupScreen"
+    },
+    {
+      "id": "579325600a3049c6aa05a9ded525a043",
+      "name": "LifeHorizon",
+      "stitchTitle": "Life Horizon",
+      "surface": "OnboardingScreen",
+      "stepIndex": 1
+    },
+    {
+      "id": "826b42798ad44ea1a780682e410ac1c4",
+      "name": "TodayIsLimited",
+      "stitchTitle": "Today is Limited",
+      "surface": "OnboardingScreen",
+      "stepIndex": 0
+    },
+    {
+      "id": "54bd49e75be94106a65464898fde3b9b",
+      "name": "FindYourCadence",
+      "stitchTitle": "Find Your Cadence",
+      "surface": "OnboardingScreen",
+      "stepIndex": 2
+    }
+  ]
+}

@@ -22,6 +22,8 @@ export const STORAGE_KEYS = {
   ENGAGEMENT_APP_OPEN_COUNT: 'engagement.appOpenCount',
   ENGAGEMENT_LIFE_SCREEN_VIEWED: 'engagement.lifeScreenViewed',
   ENGAGEMENT_LIFE_UNLOCK_UNTIL: 'engagement.lifeUnlockUntil',
+  /** Last time user dismissed an interstitial paywall (48h cooldown). */
+  PAYWALL_DISMISSED_AT: 'engagement.paywallDismissedAt',
 
   // Play purchase metadata (SSOT)
   PURCHASE_TYPE: 'purchase.type',
@@ -71,6 +73,14 @@ export const STORAGE_KEYS = {
 
   // App update checks
   UPDATE_LAST_CHECK_AT: 'update.lastCheckAt',
+  UPDATE_DISMISSED_VERSION: 'update.dismissedVersion',
+
+  // Play subscription reconcile (expired/canceled)
+  PLAY_ENTITLEMENT_RECONCILE_AT: 'billing.reconcileAt',
+
+  // Trial reminders (days 10, 13, 14)
+  TRIAL_REMINDERS_SCHEDULED: 'trial.remindersScheduled',
+  TRIAL_REMINDERS_INAPP_SHOWN: 'trial.remindersInAppShown',
 } as const;
 
 export const DEFAULTS = {

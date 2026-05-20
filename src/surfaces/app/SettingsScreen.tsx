@@ -225,8 +225,8 @@ export function SettingsScreen() {
                     style={[styles.rowSubtitle, { color: theme.textSecondary }]}
                   >
                     {isPremium
-                      ? 'Active — managed via your store account'
-                      : 'Not active'}
+                      ? 'Active — manage in Google Play'
+                      : 'Yearly subscription or lifetime'}
                   </Text>
                 </View>
                 <Text style={[styles.chevron, { color: theme.textSecondary }]}>

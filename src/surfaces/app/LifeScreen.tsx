@@ -15,8 +15,9 @@ import {
   ProgressLine,
   CircularProgress,
 } from '../../ui';
-import { useObserveTimeState, useAccessControl, useTrackLifeScreenVisit } from '../../hooks';
-import { Spacing, Colors, Typography, FontFamily, getProgressColor } from '../../theme';
+import { useObserveTimeState, useAccessControl, useTrackLifeScreenVisit, useLifeUnlockPaywallPrompt } from '../../hooks';
+import { LifeUnlockEndedModal } from '../../components/premium/LifeUnlockEndedModal';
+import { Spacing, Typography, FontFamily, getProgressColor } from '../../theme';
 import type { RootStackParamList } from '../../navigation/RootNavigator';
 
 const RING_SIZE = Math.min(
@@ -30,6 +31,8 @@ export function LifeScreen() {
     useNavigation<NativeStackNavigationProp<RootStackParamList, 'Life'>>();
   const { userProfile, timeState } = useObserveTimeState();
   const { canAccessLife } = useAccessControl();
+  const { visible: lifeUnlockPaywallVisible, dismiss: dismissLifeUnlockPaywall } =
+    useLifeUnlockPaywallPrompt(true);
   const hasBirthDate = !!userProfile.birthDate;
 
   const progress = timeState.life ?? 0;
@@ -42,6 +45,10 @@ export function LifeScreen() {
 
   return (
     <View style={styles.container}>
+      <LifeUnlockEndedModal
+        visible={lifeUnlockPaywallVisible}
+        onDismiss={dismissLifeUnlockPaywall}
+      />
       <ScreenGradient>
         <ScrollView
           contentContainerStyle={styles.content}

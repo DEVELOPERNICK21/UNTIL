@@ -17,7 +17,9 @@ import { runMigrations } from './persistence/migration';
 import { RootNavigator } from './navigation/RootNavigator';
 import { AuthNavigator } from './navigation/AuthNavigator';
 import { SplashScreen } from './surfaces/splash';
-import { useOnboardingState, useAppUpdateCheck } from './hooks';
+import { useOnboardingState, useAppUpdateCheck, useTrialEndingReminder } from './hooks';
+import { TrialEndingModal } from './components/premium/TrialEndingModal';
+import { recordOptionalUpdateDismissed } from './services/updateService';
 import { ThemeProvider, useTheme } from './theme';
 import {
   syncWidgetCache,
@@ -34,11 +36,29 @@ import {
   verifySubscriptionUseCase,
   trackAppOpenUseCase,
   ensurePlayBillingSession,
+  reconcilePlayEntitlementUseCase,
 } from './di';
+import {
+  recordPlayEntitlementReconcile,
+  shouldReconcilePlayEntitlement,
+} from './services/playEntitlementReconcile';
 import { ForceUpdateModal } from './components/update/ForceUpdateModal';
 import { OptionalUpdateModal } from './components/update/OptionalUpdateModal';
 
 runMigrations();
+
+function reconcilePlayEntitlementIfNeeded(): void {
+  if (Platform.OS !== 'android' || !shouldReconcilePlayEntitlement()) {
+    return;
+  }
+  recordPlayEntitlementReconcile();
+  ensurePlayBillingSession()
+    .then(() => reconcilePlayEntitlementUseCase.execute())
+    .then(() => syncPremiumStatus())
+    .catch(() => {
+      /* Play unreachable */
+    });
+}
 
 function handleIncrementCounterUrl(url: string | null): boolean {
   if (!url || typeof url !== 'string') return false;
@@ -84,6 +104,7 @@ function App() {
       ensurePlayBillingSession().catch(() => {
         /* ignore */
       });
+      reconcilePlayEntitlementIfNeeded();
     }
     // Engagement tracking for event-based Life unlock.
     trackAppOpenUseCase.execute();
@@ -114,6 +135,7 @@ function App() {
         // Count each time the user returns to foreground.
         trackAppOpenUseCase.execute();
         verifySubscriptionUseCase.execute().then(() => syncPremiumStatus());
+        reconcilePlayEntitlementIfNeeded();
         if (
           Platform.OS === 'ios' &&
           NativeModules.WidgetBridge?.getCustomCountersFromAppGroup
@@ -180,13 +202,21 @@ function App() {
 function PostSplashContent() {
   const theme = useTheme();
   const { hasCompleted, completeOnboarding } = useOnboardingState();
-  const { updateType, storeUrl } = useAppUpdateCheck();
+  const { updateType, storeUrl, latestVersion } = useAppUpdateCheck();
+  const {
+    visible: trialReminderVisible,
+    trialDay,
+    dismiss: dismissTrialReminder,
+  } = useTrialEndingReminder();
   const [optionalVisible, setOptionalVisible] = useState(true);
 
   const showForce = updateType === 'FORCE_UPDATE';
   const showOptional = updateType === 'OPTIONAL_UPDATE' && optionalVisible;
 
   const handleDismissOptional = () => {
+    if (latestVersion) {
+      recordOptionalUpdateDismissed(latestVersion);
+    }
     setOptionalVisible(false);
   };
 
@@ -208,6 +238,13 @@ function PostSplashContent() {
         storeUrl={storeUrl}
         onDismiss={handleDismissOptional}
       />
+      {hasCompleted ? (
+        <TrialEndingModal
+          visible={trialReminderVisible}
+          trialDay={trialDay}
+          onDismiss={dismissTrialReminder}
+        />
+      ) : null}
     </>
   );
 }

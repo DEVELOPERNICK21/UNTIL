@@ -18,17 +18,22 @@ export const screenshotAndroid4 = require('./screenshotAndroid4.JPG');
 // App Images
 export const appLogoIcon = require('./appLogo.png');
 
-// Onboarding hero images (3-step flow)
-export const onboardingImage1 = require('./onboarding_image_1.png');
-export const onboardingImage2 = require('./onboarding_image_2.png');
-export const onboardingImage3 = require('./onboarding_image_3.png');
+// Onboarding hero illustrations (Stitch source art only — not full-screen mockups)
+export const onboardingHeroToday = require('./onboarding_hero_today.png');
+export const onboardingHeroHorizon = require('./onboarding_hero_horizon.png');
+export const onboardingHeroCadence = require('./onboarding_hero_cadence.png');
 
-/** Onboarding step images in order — Day Progress, Time Tracking, Cadence */
+/** Onboarding carousel: Today is Limited → Life Horizon → Find Your Cadence */
 export const onboardingImages = [
-  onboardingImage1,
-  onboardingImage2,
-  onboardingImage3,
+  onboardingHeroToday,
+  onboardingHeroHorizon,
+  onboardingHeroCadence,
 ] as const;
+
+/** @deprecated Use onboardingImages */
+export const onboardingImage1 = onboardingHeroToday;
+export const onboardingImage2 = onboardingHeroHorizon;
+export const onboardingImage3 = onboardingHeroCadence;
 
 /** All iOS screenshot assets (for carousels or lists) */
 export const iosScreenshots = [

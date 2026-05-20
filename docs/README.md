@@ -30,6 +30,8 @@ Index of project documentation for developers and AI agents.
 | [WIDGETS.md](./WIDGETS.md) | Widget implementation (iOS/Android) |
 | [DynamicIslandLiveActivity.md](./DynamicIslandLiveActivity.md) | Live Activity / Dynamic Island setup |
 | [ANDROID_RELEASE_BUILD.md](./ANDROID_RELEASE_BUILD.md) | Android release build and signing |
+| [MONETIZATION_STRATEGY.md](./MONETIZATION_STRATEGY.md) | Pricing, plans, paywall psychology, ethical rules |
+| [PLAY_BILLING.md](./PLAY_BILLING.md) | Google Play yearly + lifetime setup |
 | [PLAY_STORE_ASSETS.md](./PLAY_STORE_ASSETS.md) | Play Store listing assets |
 
 ---

@@ -1,0 +1,37 @@
+---
+description: Monetization, pricing, paywall copy, and free vs Premium gating for UNTIL
+globs:
+  - src/config/monetization.ts
+  - src/config/billing.ts
+  - src/surfaces/app/PremiumScreen.tsx
+  - src/components/premium/**
+  - src/surfaces/auth/OnboardingPaywallScreen.tsx
+  - docs/MONETIZATION_STRATEGY.md
+  - docs/PLAY_BILLING.md
+---
+
+# Monetization rules
+
+Read `docs/MONETIZATION_STRATEGY.md` before changing pricing, paywall, or gates.
+
+## Plans (Android paywall)
+
+- **Yearly** ₹499/year — `yearly_subscription` — primary, “Best value”
+- **Monthly** ₹99/month — `monthly_subscription`
+- **Lifetime** ₹1,499 — `lifetime_unlock` — decoy (≥3× yearly)
+- **Student yearly** ₹249 — `yearly_subscription_student` (optional, flag in `monetization.ts`)
+
+## SSOT
+
+- Copy & fallback prices: `src/config/monetization.ts`
+- Play product IDs: `src/config/billing.ts`
+- Shared paywall UI: `src/components/premium/PremiumPaywallBody.tsx`
+
+## Free forever
+
+Day widget, Year widget, Share — never paywall.
+
+## Ethics
+
+- 48h cooldown after dismissing interstitial paywall
+- Trial reminders days 10, 13, 14 (in-app + local notifications)

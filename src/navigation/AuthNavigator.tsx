@@ -12,11 +12,13 @@ import {
 import { LoginScreen } from '../surfaces/auth/LoginScreen';
 import { IdentitySetupScreen } from '../surfaces/auth/IdentitySetupScreen';
 import { LifeWeeksPreviewScreen } from '../surfaces/auth/LifeWeeksPreviewScreen';
+import { OnboardingPaywallScreen } from '../surfaces/auth/OnboardingPaywallScreen';
 
 export type AuthStackParamList = {
   Onboarding: undefined;
   IdentitySetup: undefined;
   LifeWeeksPreview: undefined;
+  OnboardingPaywall: undefined;
   Login: undefined;
 };
 
@@ -42,6 +44,10 @@ export function AuthNavigator({ onComplete }: AuthNavigatorProps) {
           <Stack.Screen
             name="LifeWeeksPreview"
             component={LifeWeeksPreviewScreen}
+          />
+          <Stack.Screen
+            name="OnboardingPaywall"
+            component={OnboardingPaywallScreen}
           />
           <Stack.Screen name="Login" component={LoginScreen} />
         </Stack.Navigator>

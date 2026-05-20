@@ -11,5 +11,6 @@ class UNTILDayWidgetProvider : AppWidgetProvider() {
 
     override fun onEnabled(context: Context) {
         UNTILWidgetWorker.schedule(context)
+        UNTILWidgetWorker.scheduleDayTick(context)
     }
 }

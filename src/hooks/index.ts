@@ -12,6 +12,8 @@ export { useInterventionState } from './useInterventionState';
 export { useDailyTasks } from './useDailyTasks';
 export { useOnboardingState } from './useOnboardingState';
 export { useAppUpdateCheck } from './useAppUpdateCheck';
+export { useLifeUnlockPaywallPrompt } from './useLifeUnlockPaywallPrompt';
+export { useTrialEndingReminder } from './useTrialEndingReminder';
 export { useGoalsFeatureEnabled } from './useGoalsFeatureEnabled';
 export { useOverlayControl } from './useOverlayControl';
 export { useWidgetSurfaceStatus } from './useWidgetSurfaceStatus';

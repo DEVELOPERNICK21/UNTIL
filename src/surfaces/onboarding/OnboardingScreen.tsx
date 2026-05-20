@@ -1,6 +1,5 @@
 /**
- * Onboarding flow — 3 steps with swipe, shown in Auth stack after splash.
- * Uses theme only; no core/persistence/infrastructure.
+ * Onboarding flow — 3 Stitch carousel steps, then IdentitySetup ("Your Journey").
  */
 
 import React, {
@@ -19,6 +18,8 @@ import {
   NativeSyntheticEvent,
   NativeScrollEvent,
   Vibration,
+  Image,
+  ImageSourcePropType,
 } from 'react-native';
 import Svg, { Defs, LinearGradient, Rect, Stop } from 'react-native-svg';
 import {
@@ -27,7 +28,7 @@ import {
 } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { Text } from '../../ui';
+import { Text, Card, DotsGrid } from '../../ui';
 import {
   useTheme,
   Spacing,
@@ -35,40 +36,48 @@ import {
   Radius,
   Weight,
   getFontFamilyForWeight,
-  FontFamily,
-  Shadows,
 } from '../../theme';
-import {
-  OnboardingIcon1,
-  OnboardingIcon2,
-  OnboardingIcon3,
-} from '../../assets/icons';
+import { onboardingImages } from '../../assets/images';
 import type { AuthStackParamList } from '../../navigation/AuthNavigator';
 
-const STEPS = [
+type StepConfig = {
+  title: string;
+  subtitle: string;
+  cta: string;
+  ctaGoesToNext: boolean;
+  hero: (typeof onboardingImages)[number];
+  showDayProgress?: boolean;
+  showLifeGrid?: boolean;
+};
+
+const STEPS: StepConfig[] = [
   {
-    stepTitle: 'Day Progress',
     title: 'Today is limited.',
-    subtitle: 'See how much of it is already gone.',
-    cta: 'Begin Journey',
+    subtitle:
+      "Live day, month, and year progress in real time. See what's passed and what's left at a glance.",
+    cta: 'Continue',
     ctaGoesToNext: true,
+    hero: onboardingImages[0],
+    showDayProgress: true,
   },
   {
-    stepTitle: 'Time Tracking',
-    title: 'Time leaves traces.',
-    subtitle: 'Understand where your days are going.',
-    cta: 'Next',
+    title: 'Your life has a horizon.',
+    subtitle:
+      'Visualize your life in weeks. Understand your cadence and focus on what truly matters.',
+    cta: 'Continue',
     ctaGoesToNext: true,
+    hero: onboardingImages[1],
+    showLifeGrid: true,
   },
   {
-    stepTitle: 'Your life has a horizon.',
-    title: 'Discover the weeks you’ve lived — and the ones still ahead.',
-    titleBoldSuffix: 'cadence.',
-    subtitle: 'Synchronize your life with the present.',
-    cta: 'Begin Your Journey',
+    title: 'Find your cadence.',
+    subtitle:
+      'Glanceable widgets for your home and lock screen. Time context without the clutter.',
+    cta: 'Get Started',
     ctaGoesToNext: false,
+    hero: onboardingImages[2],
   },
-] as const;
+];
 
 const OnboardingCompleteContext = createContext<(() => void) | null>(null);
 
@@ -78,110 +87,147 @@ export function useOnboardingComplete() {
   return cb;
 }
 
-/** CTA button — orange accent, white text. */
-function CTAButton({
-  label,
-  onPress,
-  showArrow,
-}: {
-  label: string;
-  onPress: () => void;
-  showArrow?: boolean;
-}) {
+function BrandHeader({ onSkip }: { onSkip: () => void }) {
   const theme = useTheme();
   return (
-    <TouchableOpacity
-      style={[styles.ctaButton, { backgroundColor: theme.percent }]}
-      onPress={() => {
-        Vibration.vibrate(10);
-        onPress();
-      }}
-      activeOpacity={0.85}
-    >
-      <Text variant="sectionTitle" style={styles.ctaLabel}>
-        {label}
-        {showArrow ? ' →' : ''}
-      </Text>
-    </TouchableOpacity>
+    <View style={styles.brandHeader}>
+      <View style={styles.brandLeft}>
+        <Text variant="body" style={{ color: theme.percent }}>
+          ⏳
+        </Text>
+        <Text
+          variant="sectionTitle"
+          style={[styles.brandTitle, { color: theme.textPrimary }]}
+        >
+          UNTIL
+        </Text>
+      </View>
+      <TouchableOpacity onPress={onSkip} hitSlop={12}>
+        <Text variant="body" style={{ color: theme.textSecondary }}>
+          Skip
+        </Text>
+      </TouchableOpacity>
+    </View>
   );
 }
 
-const STEP_ICONS = [OnboardingIcon1, OnboardingIcon2, OnboardingIcon3] as const;
-
-function StepIllustration({
+function HeroImage({
+  source,
+  height,
+  width,
   stepIndex,
-  containerHeight,
-  containerWidth,
 }: {
+  source: ImageSourcePropType;
+  height: number;
+  width: number;
   stepIndex: number;
-  containerHeight: number;
-  containerWidth: number;
 }) {
   const theme = useTheme();
-  const Icon = STEP_ICONS[stepIndex] ?? STEP_ICONS[0];
+  const fadeId = `onboardingHeroFade-${stepIndex}`;
   return (
-    <View
-      style={[
-        styles.illustrationSvgWrap,
-        { height: containerHeight, width: containerWidth },
-      ]}
-    >
-      {/* Full-bleed hero — slightly over-zoomed so edges are offscreen */}
-      <Icon width={containerWidth * 1.3} height={containerHeight * 1.3} />
-
-      {/* Top & bottom fade so image blends into background like reference */}
-      <Svg
-        pointerEvents="none"
-        height={containerHeight}
-        style={StyleSheet.absoluteFill}
-      >
+    <View style={[styles.heroWrap, { height, width }]}>
+      <Image
+        source={source}
+        style={[
+          styles.heroImage,
+          { width: width * 1.08, height: height * 1.12, marginLeft: -width * 0.04 },
+        ]}
+        resizeMode="cover"
+      />
+      <Svg pointerEvents="none" height={height} style={StyleSheet.absoluteFill}>
         <Defs>
-          <LinearGradient
-            id={`onboardingFade-${stepIndex}`}
-            x1="0"
-            y1="0"
-            x2="0"
-            y2="1"
-          >
-            {/* Top fade — thin band */}
-            <Stop offset="0" stopColor={theme.background} stopOpacity="1" />
-            <Stop offset="0.06" stopColor={theme.background} stopOpacity="0" />
-            {/* Middle fully visible */}
-            <Stop offset="0.94" stopColor={theme.background} stopOpacity="0" />
-            {/* Bottom fade — mirror of top */}
+          <LinearGradient id={fadeId} x1="0" y1="0" x2="0" y2="1">
+            <Stop offset="0" stopColor={theme.background} stopOpacity="0.35" />
+            <Stop offset="0.12" stopColor={theme.background} stopOpacity="0" />
+            <Stop offset="0.72" stopColor={theme.background} stopOpacity="0" />
             <Stop offset="1" stopColor={theme.background} stopOpacity="1" />
           </LinearGradient>
         </Defs>
-        <Rect
-          x={0}
-          y={0}
-          width={containerWidth}
-          height={containerHeight}
-          fill={`url(#onboardingFade-${stepIndex})`}
-        />
+        <Rect x={0} y={0} width={width} height={height} fill={`url(#${fadeId})`} />
       </Svg>
     </View>
   );
 }
 
-function OnboardingScreenInner({ onGoToLogin }: { onGoToLogin: () => void }) {
+function DayProgressDemo() {
+  const theme = useTheme();
+  const demoProgress = 0.72;
+  return (
+    <View style={styles.dayProgressBlock}>
+      <View style={styles.dayProgressRow}>
+        <Text
+          variant="micro"
+          style={[styles.dayProgressLabel, { color: theme.textSecondary }]}
+        >
+          DAY PROGRESS
+        </Text>
+        <Text
+          variant="title"
+          style={[styles.dayProgressPct, { color: theme.percent }]}
+        >
+          72%
+        </Text>
+      </View>
+      <View
+        style={[styles.progressTrack, { backgroundColor: theme.progressTrack }]}
+      >
+        <View
+          style={[
+            styles.progressFill,
+            {
+              width: `${demoProgress * 100}%`,
+              backgroundColor: theme.percent,
+            },
+          ]}
+        />
+      </View>
+    </View>
+  );
+}
+
+function LifeGridPreview() {
+  const theme = useTheme();
+  return (
+    <Card style={styles.lifeGridCard} lighter>
+      <View style={styles.lifeGridHeader}>
+        <Text variant="micro" style={{ color: theme.textSecondary }}>
+          LIFE PROGRESS
+        </Text>
+        <Text variant="micro" style={{ color: theme.percent }}>
+          2,140 weeks lived
+        </Text>
+      </View>
+      <DotsGrid
+        rows={3}
+        cols={12}
+        fillCount={16}
+        fillColor={theme.percent}
+        emptyColor={theme.progressTrack}
+        size={8}
+        gap={6}
+      />
+    </Card>
+  );
+}
+
+function OnboardingScreenInner() {
+  const navigation =
+    useNavigation<
+      NativeStackNavigationProp<AuthStackParamList, 'Onboarding'>
+    >();
   const { width, height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const theme = useTheme();
-  const percent = theme.percent;
   const flatListRef = useRef<FlatList>(null);
   const [step, setStep] = useState(0);
   const safeStep = Math.min(Math.max(0, step), STEPS.length - 1);
   const config = STEPS[safeStep];
-  const isFirst = safeStep === 0;
   const isLast = safeStep === STEPS.length - 1;
-  const currentStepTitle = config.stepTitle;
-  /** Content height for slide. Image area ~58% so hero feels zoomed and fades into content. */
-  const contentHeight = Math.max(
-    200,
-    height - 44 - 140 - Math.max(insets.bottom, Spacing.lg),
+
+  const heroHeight = Math.min(
+    Math.max(220, (height - insets.top - 120) * 0.5),
+    400,
   );
-  const illustrationHeight = contentHeight * 0.58;
 
   const onScroll = useCallback(
     (e: NativeSyntheticEvent<NativeScrollEvent>) => {
@@ -192,125 +238,86 @@ function OnboardingScreenInner({ onGoToLogin }: { onGoToLogin: () => void }) {
     [width],
   );
 
-  const handleSkip = useCallback(() => {
+  const goToIdentity = useCallback(() => {
     Vibration.vibrate(10);
-    onGoToLogin();
-  }, [onGoToLogin]);
+    navigation.navigate('IdentitySetup');
+  }, [navigation]);
 
   const handleCta = useCallback(() => {
+    Vibration.vibrate(10);
     if (config.ctaGoesToNext && !isLast) {
       flatListRef.current?.scrollToIndex({
         index: safeStep + 1,
         animated: true,
       });
     } else {
-      onGoToLogin();
+      goToIdentity();
     }
-  }, [config.ctaGoesToNext, isLast, safeStep, onGoToLogin]);
-
-  const handleBack = useCallback(() => {
-    if (safeStep > 0) {
-      Vibration.vibrate(10);
-      flatListRef.current?.scrollToIndex({
-        index: safeStep - 1,
-        animated: true,
-      });
-    }
-  }, [safeStep]);
+  }, [config.ctaGoesToNext, isLast, safeStep, goToIdentity]);
 
   const renderSlide = useCallback(
-    ({ item, index }: { item: (typeof STEPS)[number]; index: number }) => (
+    ({ item, index }: { item: StepConfig; index: number }) => (
       <View style={[styles.slide, { width }]}>
-        {/* Image area — zoomed hero with bottom fade into background */}
-        <View
-          style={[
-            styles.illustrationWrap,
-            { minHeight: illustrationHeight, height: illustrationHeight },
-          ]}
-        >
-          <StepIllustration
+        <View style={[styles.heroBleed, { width }]}>
+          <HeroImage
+            source={item.hero}
+            height={heroHeight}
+            width={width}
             stepIndex={index}
-            containerHeight={illustrationHeight}
-            containerWidth={width}
           />
         </View>
-        {/* Title and subtitle below image */}
         <View style={styles.textBlock}>
-          {'titleBoldSuffix' in item ? (
-            <Text
-              variant="display"
-              style={[styles.title, { color: theme.textPrimary }]}
-            >
-              Find your{' '}
-              <Text
-                style={{
-                  fontFamily: FontFamily.bold,
-                  fontSize: Typography.display,
-                }}
-              >
-                cadence.
-              </Text>
-            </Text>
-          ) : (
-            <Text
-              variant="display"
-              style={[styles.title, { color: theme.textPrimary }]}
-            >
-              {item.title}
-            </Text>
-          )}
+          <Text
+            variant="display"
+            style={[styles.title, { color: theme.textPrimary }]}
+          >
+            {item.title}
+          </Text>
           <Text
             variant="body"
             style={[styles.subtitle, { color: theme.textSecondary }]}
           >
             {item.subtitle}
           </Text>
+          {item.showDayProgress ? <DayProgressDemo /> : null}
+          {item.showLifeGrid ? <LifeGridPreview /> : null}
+        </View>
+        <View style={styles.slideDots}>
+          {STEPS.map((_, i) => {
+            const active = i === index;
+            return (
+              <View
+                key={i}
+                style={[
+                  styles.dot,
+                  active
+                    ? [styles.dotActive, { backgroundColor: theme.percent }]
+                    : [
+                        styles.dotInactive,
+                        { backgroundColor: theme.progressTrack },
+                      ],
+                ]}
+              />
+            );
+          })}
         </View>
       </View>
     ),
-    [width, theme, illustrationHeight],
+    [width, theme, heroHeight],
   );
 
-  const keyExtractor = useCallback(
-    (_: (typeof STEPS)[number], i: number) => String(i),
-    [],
-  );
+  const keyExtractor = useCallback((_: StepConfig, i: number) => String(i), []);
 
   return (
     <SafeAreaView
       style={[styles.container, { backgroundColor: theme.background }]}
     >
-      {/* Header — back (when not first), step title centered, Skip right */}
-      <View style={styles.header}>
-        <View style={styles.headerLeft}>
-          {!isFirst ? (
-            <TouchableOpacity onPress={handleBack} style={styles.backHit}>
-              <Text variant="body" style={{ color: theme.textPrimary }}>
-                ←
-              </Text>
-            </TouchableOpacity>
-          ) : null}
-        </View>
-        <View style={styles.headerCenter}>
-          <Text
-            variant="sectionTitle"
-            style={[styles.stepTitle, { color: theme.textPrimary }]}
-          >
-            {currentStepTitle}
-          </Text>
-        </View>
-        <TouchableOpacity onPress={handleSkip} style={styles.skipHit}>
-          <Text variant="body" style={{ color: theme.textSecondary }}>
-            Skip
-          </Text>
-        </TouchableOpacity>
-      </View>
+      <BrandHeader onSkip={goToIdentity} />
 
-      {/* Swipeable slides */}
       <View style={styles.pagerWrap}>
         <FlatList
           ref={flatListRef}
-          data={[...STEPS]}
+          data={STEPS}
           renderItem={renderSlide}
           keyExtractor={keyExtractor}
           horizontal
@@ -336,30 +343,30 @@ function OnboardingScreenInner({ onGoToLogin }: { onGoToLogin: () => void }) {
         />
       </View>
 
-      {/* Fixed footer — always visible, never cut off */}
       <View
         style={[
           styles.footer,
           { paddingBottom: Math.max(insets.bottom, Spacing.lg) },
         ]}
       >
-        <View style={styles.pagination}>
-          {STEPS.map((_, i) => {
-            const isActive = i === safeStep;
-            return (
-              <View
-                key={i}
-                style={[
-                  styles.dot,
-                  isActive
-                    ? [styles.dotActive, { backgroundColor: percent }]
-                    : [styles.dotInactiveBase, { backgroundColor: theme.progressTrack }],
-                ]}
-              />
-            );
-          })}
-        </View>
-        <CTAButton label={config.cta} onPress={handleCta} showArrow={isLast} />
+        <TouchableOpacity onPress={goToIdentity} style={styles.footerSkip}>
+          <Text variant="body" style={{ color: theme.textSecondary }}>
+            ✕ Skip
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.ctaPill, { backgroundColor: theme.percent }]}
+          onPress={handleCta}
+          activeOpacity={0.85}
+        >
+          <Text variant="sectionTitle" style={styles.ctaPillLabel}>
+            {config.cta}
+          </Text>
+          <Text variant="sectionTitle" style={styles.ctaPillLabel}>
+            {' '}
+            →
+          </Text>
+        </TouchableOpacity>
       </View>
     </SafeAreaView>
   );
@@ -369,118 +376,135 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  header: {
+  brandHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: Spacing.md,
+    paddingHorizontal: Spacing.lg,
     paddingVertical: Spacing.sm,
     minHeight: 44,
   },
-  headerLeft: {
-    minWidth: 44,
-    justifyContent: 'center',
-  },
-  stepTitle: {
-    fontFamily: getFontFamilyForWeight(Weight.semibold),
-  },
-  skipHit: {
-    padding: Spacing.sm,
-    minWidth: 44,
-  },
-  backHit: {
-    padding: Spacing.sm,
-    minWidth: 44,
-  },
-  headerCenter: {
-    flex: 1,
+  brandLeft: {
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
+    gap: Spacing.sm,
+  },
+  brandTitle: {
+    letterSpacing: 1,
+    fontFamily: getFontFamilyForWeight(Weight.semibold),
   },
   pagerWrap: {
     flex: 1,
   },
   slide: {
     flex: 1,
-    paddingHorizontal: Spacing.lg,
-    justifyContent: 'flex-start',
   },
-  illustrationWrap: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: '100%',
-  },
-  illustrationSvgWrap: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: '100%',
-    height: '100%',
+  heroBleed: {
     overflow: 'hidden',
+  },
+  heroWrap: {
+    width: '100%',
+    overflow: 'hidden',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  heroImage: {
+    position: 'absolute',
+    top: 0,
   },
   textBlock: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: Spacing.md,
+    marginTop: -Spacing.lg,
+    paddingTop: Spacing.sm,
+    paddingHorizontal: Spacing.lg,
+    gap: Spacing.sm,
   },
   title: {
-    textAlign: 'center',
-    marginBottom: Spacing.sm,
+    textAlign: 'left',
   },
   subtitle: {
-    textAlign: 'center',
-    paddingHorizontal: Spacing.sm,
+    textAlign: 'left',
+    lineHeight: Typography.body * 1.5,
   },
-  footer: {
-    paddingHorizontal: Spacing.lg,
-    paddingTop: Spacing.lg,
+  dayProgressBlock: {
+    marginTop: Spacing.lg,
+    gap: Spacing.sm,
+  },
+  dayProgressRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-end',
+  },
+  dayProgressLabel: {
+    letterSpacing: 2,
+  },
+  dayProgressPct: {
+    fontFamily: getFontFamilyForWeight(Weight.semibold),
+  },
+  progressTrack: {
+    height: 14,
+    borderRadius: Radius.full,
+    overflow: 'hidden',
+  },
+  progressFill: {
+    height: '100%',
+    borderRadius: Radius.full,
+  },
+  lifeGridCard: {
+    marginTop: Spacing.lg,
     gap: Spacing.md,
-    backgroundColor: 'transparent',
   },
-  pagination: {
+  lifeGridHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  slideDots: {
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
     gap: Spacing.sm,
+    marginTop: Spacing.lg,
+    marginBottom: Spacing.sm,
+    paddingHorizontal: Spacing.lg,
   },
   dot: {
     height: 4,
+    borderRadius: 2,
   },
   dotActive: {
     width: 32,
-    height: 4,
-    borderRadius: 2,
   },
-  dotInactiveBase: {
-    width: 10,
-    height: 4,
-    borderRadius: 2,
+  dotInactive: {
+    width: 8,
   },
-  ctaButton: {
+  footer: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: Spacing[3],
-    paddingHorizontal: Spacing[3],
-    borderRadius: Radius.md,
-    minHeight: 52,
-    ...Shadows.card,
+    justifyContent: 'space-between',
+    paddingHorizontal: Spacing.lg,
+    paddingTop: Spacing.sm,
   },
-  ctaLabel: {
+  footerSkip: {
+    paddingVertical: Spacing.sm,
+    paddingRight: Spacing.md,
+  },
+  ctaPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.xl,
+    borderRadius: Radius.full,
+    minHeight: 48,
+  },
+  ctaPillLabel: {
     fontFamily: getFontFamilyForWeight(Weight.semibold),
     color: '#FFFFFF',
   },
 });
 
 export function OnboardingScreen() {
-  const navigation =
-    useNavigation<
-      NativeStackNavigationProp<AuthStackParamList, 'Onboarding'>
-    >();
-  const onGoToNext = useCallback(() => {
-    navigation.navigate('IdentitySetup');
-  }, [navigation]);
-  return <OnboardingScreenInner onGoToLogin={onGoToNext} />;
+  return <OnboardingScreenInner />;
 }
 
 export { OnboardingCompleteContext };

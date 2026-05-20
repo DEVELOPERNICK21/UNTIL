@@ -358,14 +358,16 @@ export function HomeScreen() {
             </Card>
           )}
 
-          <Card style={styles.comingSoonBlock}>
-            <Text variant="sectionTitle" color="secondary" style={styles.blockTitle}>
-              Coming soon
-            </Text>
-            <Text variant="body" color="secondary">
-              Monthly goals and today&apos;s tasks will appear here in a future update.
-            </Text>
-          </Card>
+          {!goalsFeatureEnabled ? (
+            <Card style={styles.comingSoonBlock}>
+              <Text variant="sectionTitle" color="secondary" style={styles.blockTitle}>
+                Coming soon
+              </Text>
+              <Text variant="body" color="secondary">
+                Monthly goals and today&apos;s tasks will appear here in a future update.
+              </Text>
+            </Card>
+          ) : null}
         </ScrollView>
 
         <TouchableOpacity

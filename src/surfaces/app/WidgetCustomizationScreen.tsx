@@ -1,15 +1,20 @@
-import React, { useEffect } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import {
   View,
   ScrollView,
   StyleSheet,
   TouchableOpacity,
   TextInput,
+  Alert,
 } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Text, ScreenGradient } from '../../ui';
 import { Colors, Spacing, Radius, Typography } from '../../theme';
 import { WidgetPreview } from '../widgets/WidgetPreview';
-import { useWidgetConfig } from '../../hooks';
+import { useWidgetConfig, useAccessControl } from '../../hooks';
+import { isPremiumWidgetConfigType } from '../../config/widgetGating';
+import type { RootStackParamList } from '../../navigation/RootNavigator';
 
 const PRESET_MESSAGES = [
   'Time is running',
@@ -18,6 +23,9 @@ const PRESET_MESSAGES = [
 ];
 
 export function WidgetCustomizationScreen() {
+  const navigation =
+    useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const { hasPremiumBundle } = useAccessControl();
   const {
     config,
     hydrate,
@@ -32,6 +40,46 @@ export function WidgetCustomizationScreen() {
   useEffect(() => {
     void hydrate();
   }, [hydrate]);
+
+  const promptPremiumForWidget = useCallback(
+    (widgetLabel: string) => {
+      Alert.alert(
+        'Premium widget',
+        `${widgetLabel} is part of Premium. Upgrade to add this widget to your home screen.`,
+        [
+          { text: 'Not now', style: 'cancel' },
+          {
+            text: 'View Premium',
+            onPress: () => navigation.navigate('Premium'),
+          },
+        ]
+      );
+    },
+    [navigation]
+  );
+
+  const handleSelectType = useCallback(
+    (value: string) => {
+      if (isPremiumWidgetConfigType(value) && !hasPremiumBundle) {
+        promptPremiumForWidget(value === 'month' ? 'Month' : 'Life');
+        return;
+      }
+      setType(value as typeof config.type);
+    },
+    [hasPremiumBundle, promptPremiumForWidget, setType, config.type]
+  );
+
+  const handleAddWidget = useCallback(() => {
+    if (isPremiumWidgetConfigType(config.type) && !hasPremiumBundle) {
+      promptPremiumForWidget(config.type === 'month' ? 'Month' : 'Life');
+      return;
+    }
+    Alert.alert(
+      'Add widget',
+      'Long-press your home screen, tap Widgets, then choose Until and your preferred size.',
+      [{ text: 'OK' }]
+    );
+  }, [config.type, hasPremiumBundle, promptPremiumForWidget]);
 
   return (
     <ScreenGradient>
@@ -56,9 +104,7 @@ export function WidgetCustomizationScreen() {
               { key: 'life', label: 'Life' },
             ]}
             selected={config.type}
-            onSelect={value => {
-              setType(value as any);
-            }}
+            onSelect={handleSelectType}
           />
         </View>
 
@@ -141,6 +187,7 @@ export function WidgetCustomizationScreen() {
         <TouchableOpacity
           activeOpacity={0.8}
           style={styles.primaryButton}
+          onPress={handleAddWidget}
         >
           <Text style={styles.primaryButtonText}>Add widget</Text>
         </TouchableOpacity>

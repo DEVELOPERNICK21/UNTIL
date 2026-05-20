@@ -28,5 +28,6 @@ class MainApplication : Application(), ReactApplication {
     loadReactNative(this)
     UNTILWidgetWorker.schedule(this)
     WorkManager.getInstance(this).enqueue(OneTimeWorkRequestBuilder<UNTILWidgetWorker>().build())
+    UNTILWidgetWorker.scheduleDailyMidnight(this)
   }
 }

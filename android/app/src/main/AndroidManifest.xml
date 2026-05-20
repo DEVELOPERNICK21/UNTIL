@@ -7,6 +7,7 @@
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
     <uses-permission android:name="android.permission.VIBRATE" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
     <application
       android:name=".MainApplication"
@@ -111,6 +112,24 @@
         </intent-filter>
       </receiver>
       <receiver
+        android:name=".UNTILDailyTasksWidgetProvider"
+        android:exported="true"
+        android:label="Until Daily tasks">
+        <intent-filter>
+          <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+        </intent-filter>
+        <meta-data
+          android:name="android.appwidget.provider"
+          android:resource="@xml/widget_daily_tasks_info" />
+      </receiver>
+      <receiver
+        android:name=".DailyTasksWidgetTapReceiver"
+        android:exported="true">
+        <intent-filter>
+          <action android:name="app.until.time.TOGGLE_DAILY_TASKS_PAGE" />
+        </intent-filter>
+      </receiver>
+      <receiver
         android:name=".UNTILHourCalculationWidgetProvider"
         android:exported="true"
         android:label="Until Hour calculation">
@@ -132,5 +151,15 @@
         android:name=".UNTILOverlayService"
         android:exported="false"
         android:foregroundServiceType="dataSync" />
+
+      <receiver
+        android:name=".WidgetBootReceiver"
+        android:exported="true"
+        android:enabled="true">
+        <intent-filter>
+          <action android:name="android.intent.action.BOOT_COMPLETED" />
+          <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+        </intent-filter>
+      </receiver>
     </application>
 </manifest>

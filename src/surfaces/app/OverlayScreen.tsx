@@ -5,11 +5,16 @@
 
 import React from 'react';
 import { View, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Text, ScreenGradient } from '../../ui';
 import { Colors, Spacing, Typography } from '../../theme';
 import { useOverlayControl } from '../../hooks';
+import type { RootStackParamList } from '../../navigation/RootNavigator';
 
 export function OverlayScreen() {
+  const navigation =
+    useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const {
     options,
     hasPermission,
@@ -150,8 +155,14 @@ export function OverlayScreen() {
                   option.selected && styles.optionCardSelected,
                   option.locked && styles.optionCardLocked,
                 ]}
-                onPress={() => handleSelectWidget(option.type)}
-                activeOpacity={option.locked ? 1 : 0.7}
+                onPress={() => {
+                  if (option.lockedPremium) {
+                    navigation.navigate('Premium');
+                    return;
+                  }
+                  handleSelectWidget(option.type);
+                }}
+                activeOpacity={option.locked && !option.lockedPremium ? 1 : 0.7}
               >
                 <View style={styles.optionHeader}>
                   <Text variant="title" color="primary">

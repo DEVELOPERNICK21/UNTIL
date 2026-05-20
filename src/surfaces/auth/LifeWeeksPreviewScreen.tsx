@@ -16,7 +16,6 @@ import {
   Radius,
 } from '../../theme';
 import { useObserveTimeState } from '../../hooks';
-import { useOnboardingComplete } from '../onboarding';
 import type { AuthStackParamList } from '../../navigation/AuthNavigator';
 
 type AuthNav = NativeStackNavigationProp<
@@ -30,7 +29,6 @@ export function LifeWeeksPreviewScreen() {
   const navigation = useNavigation<AuthNav>();
   const insets = useSafeAreaInsets();
   const theme = useTheme();
-  const completeAuth = useOnboardingComplete();
   const { userProfile, timeState } = useObserveTimeState();
 
   const { totalWeeks, livedWeeks } = useMemo(() => {
@@ -54,7 +52,7 @@ export function LifeWeeksPreviewScreen() {
   const totalWeeksLabel = totalWeeks.toLocaleString();
 
   const handleEnterPresent = () => {
-    completeAuth();
+    navigation.navigate('OnboardingPaywall');
   };
 
   const handleBack = () => {

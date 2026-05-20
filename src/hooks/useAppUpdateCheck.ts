@@ -9,6 +9,8 @@ import {
 export interface UseAppUpdateCheckState {
   updateType: 'FORCE_UPDATE' | 'OPTIONAL_UPDATE' | 'NONE';
   storeUrl?: string;
+  /** Play-store latest versionCode from remote config (for dismiss persistence). */
+  latestVersion?: string;
   loading: boolean;
 }
 
@@ -49,6 +51,7 @@ export function useAppUpdateCheck(): UseAppUpdateCheckState {
       setState({
         updateType: mapped,
         storeUrl: result.storeUrl,
+        latestVersion: result.latestVersion,
         loading: false,
       });
     };

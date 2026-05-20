@@ -9,6 +9,11 @@ import {
   updateLiveActivity,
 } from '../infrastructure/WidgetSync';
 import type { LiveActivityWidgetType } from '../infrastructure/WidgetSync';
+import { useAccessControl } from './useAccessControl';
+
+function isPremiumLiveActivityType(type: LiveActivityWidgetType): boolean {
+  return type === 'month' || type === 'life';
+}
 
 const { LiveActivityBridge } = NativeModules;
 
@@ -49,6 +54,7 @@ function isComingSoonType(type: LiveActivityWidgetType): boolean {
 }
 
 export function useDynamicIslandControl() {
+  const { hasPremiumBundle } = useAccessControl();
   const [activeWidget, setActiveWidget] = useState<LiveActivityWidgetType>(
     getLiveActivityWidgetType(),
   );
@@ -72,13 +78,14 @@ export function useDynamicIslandControl() {
   const handleSelectWidget = useCallback(
     (type: LiveActivityWidgetType) => {
       if (isComingSoonType(type)) return;
+      if (isPremiumLiveActivityType(type) && !hasPremiumBundle) return;
       setLiveActivityWidgetType(type);
       setActiveWidget(type);
       if (liveActivityActive) {
         updateLiveActivity(type);
       }
     },
-    [liveActivityActive],
+    [liveActivityActive, hasPremiumBundle],
   );
 
   const handleStart = useCallback(() => {
@@ -95,15 +102,19 @@ export function useDynamicIslandControl() {
     () =>
       WIDGET_OPTIONS.map(option => {
         const comingSoon = isComingSoonType(option.type);
+        const lockedPremium =
+          !comingSoon &&
+          isPremiumLiveActivityType(option.type) &&
+          !hasPremiumBundle;
         return {
           ...option,
           selected: activeWidget === option.type,
           comingSoon,
-          lockedPremium: false,
-          locked: comingSoon,
+          lockedPremium,
+          locked: comingSoon || lockedPremium,
         };
       }),
-    [activeWidget],
+    [activeWidget, hasPremiumBundle],
   );
 
   return {

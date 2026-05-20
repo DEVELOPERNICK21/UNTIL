@@ -1,6 +1,6 @@
 import { Platform, Linking } from 'react-native';
 import DeviceInfo from 'react-native-device-info';
-import { getNumber, setNumber } from '../persistence/mmkv';
+import { getNumber, getString, setNumber, setString } from '../persistence/mmkv';
 import { STORAGE_KEYS } from '../persistence/schema';
 
 export type UpdateType = 'FORCE_UPDATE' | 'OPTIONAL_UPDATE' | 'NO_UPDATE';
@@ -16,6 +16,7 @@ export interface UpdateConfig {
 export interface UpdateCheckResult {
   type: UpdateType;
   storeUrl?: string;
+  latestVersion?: string;
 }
 
 // Remote JSON config for app updates. Served from your marketing site.
@@ -25,6 +26,7 @@ const UPDATE_CONFIG_URL =
   'https://developernick1-until.vercel.app/api/update-config';
 
 const LAST_CHECK_KEY = STORAGE_KEYS.UPDATE_LAST_CHECK_AT;
+const DISMISSED_VERSION_KEY = STORAGE_KEYS.UPDATE_DISMISSED_VERSION;
 const ONE_DAY_MS = 24 * 60 * 60 * 1000;
 
 export function parseSemver(version: string): [number, number, number] {
@@ -44,6 +46,63 @@ export function compareSemver(a: string, b: string): -1 | 0 | 1 {
   if (aMin !== bMin) return aMin < bMin ? -1 : 1;
   if (aPatch !== bPatch) return aPatch < bPatch ? -1 : 1;
   return 0;
+}
+
+/** Integer versionCode comparison (Play Store version code, e.g. 7 vs 8). */
+export function compareVersionCode(a: string, b: string): -1 | 0 | 1 {
+  const aNum = parseInt(a.replace(/[^\d]/g, ''), 10) || 0;
+  const bNum = parseInt(b.replace(/[^\d]/g, ''), 10) || 0;
+  if (aNum < bNum) return -1;
+  if (aNum > bNum) return 1;
+  return 0;
+}
+
+/**
+ * Installed version for update checks. On Android this must be versionCode
+ * (build.gradle versionCode), which matches Play Console and update-config.
+ */
+export async function getInstalledVersionForUpdateCheck(): Promise<string> {
+  try {
+    const deviceInfo = DeviceInfo as typeof DeviceInfo & {
+      getBuildNumberSync?: () => string;
+    };
+    const syncBuild = deviceInfo.getBuildNumberSync?.();
+    if (typeof syncBuild === 'string' && syncBuild.trim()) {
+      return syncBuild.trim();
+    }
+
+    const build: unknown = deviceInfo.getBuildNumber();
+    if (typeof build === 'string' && build.trim()) {
+      return build.trim();
+    }
+    if (
+      build &&
+      typeof build === 'object' &&
+      'then' in build &&
+      typeof (build as Promise<unknown>).then === 'function'
+    ) {
+      const resolved = await (build as Promise<string>);
+      if (typeof resolved === 'string' && resolved.trim()) {
+        return resolved.trim();
+      }
+    }
+
+    const marketing = DeviceInfo.getVersion();
+    if (typeof marketing === 'string' && marketing.trim()) {
+      return marketing.trim();
+    }
+  } catch {
+    // fall through
+  }
+  return '0';
+}
+
+export function wasOptionalUpdateDismissed(latestVersion: string): boolean {
+  return getString(DISMISSED_VERSION_KEY) === latestVersion;
+}
+
+export function recordOptionalUpdateDismissed(latestVersion: string): void {
+  setString(DISMISSED_VERSION_KEY, latestVersion);
 }
 
 export function getStoreUrl(config: UpdateConfig): string | undefined {
@@ -91,26 +150,34 @@ export async function checkForAppUpdate(): Promise<UpdateCheckResult> {
     return { type: 'NO_UPDATE' };
   }
 
-  // Compare against build number so Android versionCode values match config.
-  const currentVersion = DeviceInfo.getBuildNumber();
+  // Compare against versionCode (Android) / build number (iOS) — must match update-config.
+  const currentVersion = await getInstalledVersionForUpdateCheck();
   const { minimum_supported_version, latest_version } = config;
   const storeUrl = getStoreUrl(config);
+  const compare = compareVersionCode;
 
-  if (compareSemver(currentVersion, minimum_supported_version) === -1) {
+  if (compare(currentVersion, minimum_supported_version) === -1) {
     return {
       type: 'FORCE_UPDATE',
       storeUrl,
+      latestVersion: latest_version,
     };
   }
 
-  if (compareSemver(currentVersion, latest_version) === -1) {
-    return {
-      type: 'OPTIONAL_UPDATE',
-      storeUrl,
-    };
+  // Up to date or ahead of store (e.g. internal build) — no prompt.
+  if (compare(currentVersion, latest_version) >= 0) {
+    return { type: 'NO_UPDATE' };
   }
 
-  return { type: 'NO_UPDATE' };
+  if (wasOptionalUpdateDismissed(latest_version)) {
+    return { type: 'NO_UPDATE' };
+  }
+
+  return {
+    type: 'OPTIONAL_UPDATE',
+    storeUrl,
+    latestVersion: latest_version,
+  };
 }
 
 export async function openStoreUrl(url?: string): Promise<void> {
@@ -128,7 +195,11 @@ export async function openStoreUrl(url?: string): Promise<void> {
 // DEBUG / manual testing helper – call from a button to inspect behaviour.
 export async function testUpdateNow(): Promise<void> {
   try {
-    console.log('[UpdateTest] App version:', DeviceInfo.getVersion());
+    console.log('[UpdateTest] App version (name):', DeviceInfo.getVersion());
+    console.log(
+      '[UpdateTest] Build / versionCode:',
+      await getInstalledVersionForUpdateCheck(),
+    );
     console.log('[UpdateTest] URL:', UPDATE_CONFIG_URL);
 
     const response = await fetch(UPDATE_CONFIG_URL, {

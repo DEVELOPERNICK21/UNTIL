@@ -12,6 +12,11 @@ import {
   updateOverlay,
 } from '../infrastructure/WidgetSync';
 import type { OverlayWidgetType } from '../infrastructure/WidgetSync';
+import { useAccessControl } from './useAccessControl';
+
+function isPremiumOverlayType(type: OverlayWidgetType): boolean {
+  return type === 'month' || type === 'life';
+}
 
 const WIDGET_OPTIONS: {
   type: OverlayWidgetType;
@@ -30,6 +35,7 @@ function isComingSoonType(type: OverlayWidgetType): boolean {
 }
 
 export function useOverlayControl() {
+  const { hasPremiumBundle } = useAccessControl();
   const [activeWidget, setActiveWidget] = useState<OverlayWidgetType>(
     getOverlayWidgetType(),
   );
@@ -64,11 +70,12 @@ export function useOverlayControl() {
   const handleSelectWidget = useCallback(
     (type: OverlayWidgetType) => {
       if (isComingSoonType(type)) return;
+      if (isPremiumOverlayType(type) && !hasPremiumBundle) return;
       setOverlayWidgetType(type);
       setActiveWidget(type);
       updateOverlay();
     },
-    [],
+    [hasPremiumBundle],
   );
 
   const handleStart = useCallback(() => {
@@ -98,15 +105,17 @@ export function useOverlayControl() {
     () =>
       WIDGET_OPTIONS.map(option => {
         const comingSoon = isComingSoonType(option.type);
+        const lockedPremium =
+          !comingSoon && isPremiumOverlayType(option.type) && !hasPremiumBundle;
         return {
           ...option,
           selected: activeWidget === option.type,
           comingSoon,
-          lockedPremium: false,
-          locked: comingSoon,
+          lockedPremium,
+          locked: comingSoon || lockedPremium,
         };
       }),
-    [activeWidget],
+    [activeWidget, hasPremiumBundle],
   );
 
   return {

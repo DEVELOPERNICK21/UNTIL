@@ -7,7 +7,12 @@ import { BILLING_PRODUCT_IDS } from '../../config/billing';
 
 export function productIdToPurchaseType(productId: string): PurchaseType | null {
   if (productId === BILLING_PRODUCT_IDS.monthly) return 'monthly';
-  if (productId === BILLING_PRODUCT_IDS.yearly) return 'yearly';
+  if (
+    productId === BILLING_PRODUCT_IDS.yearly ||
+    productId === BILLING_PRODUCT_IDS.yearlyStudent
+  ) {
+    return 'yearly';
+  }
   if (productId === BILLING_PRODUCT_IDS.lifetime) return 'lifetime';
   return null;
 }

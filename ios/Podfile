@@ -30,5 +30,46 @@ target 'UNTIL' do
       :mac_catalyst_enabled => false,
       # :ccache_enabled => true
     )
+
+    # @shopify/react-native-skia: xcframeworks must exist under libs/ios or Archive
+    # fails with undefined Sk* symbols. The pod's prepare_command should copy them;
+    # if post_install runs before that lands (or prepare is skipped), run the same
+    # copy step from ../scripts/ensure-skia-ios-libs.js.
+    skia_root = File.expand_path(
+      '../node_modules/@shopify/react-native-skia',
+      Pod::Config.instance.installation_root,
+    )
+    if File.directory?(skia_root)
+      skia_libs_ios = File.join(skia_root, 'libs', 'ios')
+      has_skia_ios =
+        File.directory?(skia_libs_ios) &&
+        Dir.glob(File.join(skia_libs_ios, '*.xcframework')).any?
+      unless has_skia_ios
+        ensure_script = File.expand_path(
+          '../scripts/ensure-skia-ios-libs.js',
+          Pod::Config.instance.installation_root,
+        )
+        if File.file?(ensure_script)
+          Pod::UI.puts '[Podfile] Skia libs/ios missing; running ensure-skia-ios-libs.js...'.yellow
+          unless system('node', ensure_script)
+            raise 'ensure-skia-ios-libs.js failed. Run from project root: node scripts/ensure-skia-ios-libs.js'
+          end
+        end
+      end
+      unless File.directory?(skia_libs_ios) &&
+             Dir.glob(File.join(skia_libs_ios, '*.xcframework')).any?
+        raise <<~MSG
+
+          Skia iOS binaries still missing under:
+            #{skia_libs_ios}
+
+          From the project root run `yarn install`, then:
+            node scripts/ensure-skia-ios-libs.js
+            cd ios && pod install --repo-update
+
+          Then Clean Build Folder in Xcode and archive again.
+        MSG
+      end
+    end
   end
 end

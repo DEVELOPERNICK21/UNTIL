@@ -7,7 +7,7 @@ import {
   Platform,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { useWidgetSurfaceStatus } from '../../hooks';
+import { useWidgetSurfaceStatus, useAccessControl } from '../../hooks';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Text, ScreenGradient } from '../../ui';
 import { Colors, Spacing, Radius, Typography, useTheme } from '../../theme';
@@ -187,6 +187,7 @@ export function WidgetScreen() {
   const navigation =
     useNavigation<NativeStackNavigationProp<RootStackParamList, 'Widget'>>();
   const { liveActivityActive, overlayActive } = useWidgetSurfaceStatus();
+  const { hasPremiumBundle } = useAccessControl();
   const theme = useTheme();
   const isLight = theme.statusBarStyle === 'dark-content';
 
@@ -235,6 +236,35 @@ export function WidgetScreen() {
                 cardStyle={elevatedLightCard}
               />
             )}
+          </GlassSection>
+
+          <SectionHeader label="Premium home screen widgets" />
+          <GlassSection
+            style={styles.sectionSpacing}
+            cardStyle={elevatedLightCard}
+          >
+            <SettingTile
+              title="Month widget"
+              description="This month progress on your home screen."
+              locked={!hasPremiumBundle}
+              onPress={() =>
+                hasPremiumBundle
+                  ? navigation.navigate('WidgetCustomization')
+                  : navigation.navigate('Premium')
+              }
+              cardStyle={elevatedLightCard}
+            />
+            <SettingTile
+              title="Life widget"
+              description="Your life progress at a glance."
+              locked={!hasPremiumBundle}
+              onPress={() =>
+                hasPremiumBundle
+                  ? navigation.navigate('WidgetCustomization')
+                  : navigation.navigate('Premium')
+              }
+              cardStyle={elevatedLightCard}
+            />
           </GlassSection>
 
           {/* Section: Quick links */}

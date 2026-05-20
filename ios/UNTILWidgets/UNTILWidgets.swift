@@ -63,6 +63,131 @@ struct WidgetCache: Codable {
         lifePercent = try c.decodeIfPresent(Int.self, forKey: .lifePercent)
         updatedAt = try c.decode(Int64.self, forKey: .updatedAt)
     }
+
+    init(
+        dayProgress: Double,
+        dayPercentDone: Int,
+        dayPercentLeft: Int,
+        dayHoursPassed: Double,
+        dayHoursLeft: Double,
+        dayPassedMinutes: Int?,
+        dayRemainingMinutes: Int?,
+        startOfDay: Int64?,
+        endOfDay: Int64?,
+        monthProgress: Double,
+        monthIndex: Int?,
+        monthDaysPassed: Int,
+        monthDaysLeft: Int,
+        monthPercent: Int,
+        yearProgress: Double,
+        yearDaysPassed: Int,
+        yearDaysLeft: Int,
+        yearPercent: Int,
+        lifeProgress: Double?,
+        remainingDaysLife: Int?,
+        lifePercent: Int?,
+        updatedAt: Int64
+    ) {
+        self.dayProgress = dayProgress
+        self.dayPercentDone = dayPercentDone
+        self.dayPercentLeft = dayPercentLeft
+        self.dayHoursPassed = dayHoursPassed
+        self.dayHoursLeft = dayHoursLeft
+        self.dayPassedMinutes = dayPassedMinutes
+        self.dayRemainingMinutes = dayRemainingMinutes
+        self.startOfDay = startOfDay
+        self.endOfDay = endOfDay
+        self.monthProgress = monthProgress
+        self.monthIndex = monthIndex
+        self.monthDaysPassed = monthDaysPassed
+        self.monthDaysLeft = monthDaysLeft
+        self.monthPercent = monthPercent
+        self.yearProgress = yearProgress
+        self.yearDaysPassed = yearDaysPassed
+        self.yearDaysLeft = yearDaysLeft
+        self.yearPercent = yearPercent
+        self.lifeProgress = lifeProgress
+        self.remainingDaysLife = remainingDaysLife
+        self.lifePercent = lifePercent
+        self.updatedAt = updatedAt
+    }
+
+    /// Recompute day from wall clock; refresh month/year when app has not synced today.
+    func freshForDisplay(at now: Date = Date()) -> WidgetCache {
+        let cal = Calendar.current
+        let startOfToday = cal.startOfDay(for: now)
+        var endComps = cal.dateComponents([.year, .month, .day], from: now)
+        endComps.hour = 23
+        endComps.minute = 59
+        endComps.second = 59
+        endComps.nanosecond = 999_000_000
+        let endOfToday = cal.date(from: endComps) ?? now
+        let startMs = Int64(startOfToday.timeIntervalSince1970 * 1000)
+        let endMs = Int64(endOfToday.timeIntervalSince1970 * 1000)
+        let nowMs = now.timeIntervalSince1970 * 1000
+        let totalMs = max(1.0, Double(endMs - startMs))
+        let elapsedMs = min(max(0, nowMs - Double(startMs)), totalMs)
+        let remainingMs = max(0, Double(endMs) - nowMs)
+        let progress = min(1, max(0, elapsedMs / totalMs))
+        let totalMinutesInDay = 24 * 60
+        let passedMinutes = Int(progress * Double(totalMinutesInDay))
+        let remainingMinutes = max(0, totalMinutesInDay - passedMinutes)
+        let dayHoursPassed = (progress * 24 * 10).rounded() / 10
+        let dayHoursLeft = (remainingMs / (60 * 60 * 1000) * 10).rounded() / 10
+
+        var monthProgress = self.monthProgress
+        var monthIndex = self.monthIndex
+        var monthDaysPassed = self.monthDaysPassed
+        var monthDaysLeft = self.monthDaysLeft
+        var monthPercent = self.monthPercent
+        var yearProgress = self.yearProgress
+        var yearDaysPassed = self.yearDaysPassed
+        var yearDaysLeft = self.yearDaysLeft
+        var yearPercent = self.yearPercent
+
+        if updatedAt < startMs {
+            let dayOfMonth = cal.component(.day, from: now)
+            let daysInMonth = cal.range(of: .day, in: .month, for: now)?.count ?? 31
+            let monthLeft = daysInMonth - dayOfMonth
+            monthProgress = daysInMonth > 0 ? Double(dayOfMonth) / Double(daysInMonth) : 0
+            monthIndex = cal.component(.month, from: now)
+            monthDaysPassed = dayOfMonth
+            monthDaysLeft = monthLeft
+            monthPercent = Int((monthProgress * 100).rounded()).clamped(to: 0...100)
+            let dayOfYear = cal.ordinality(of: .day, in: .year, for: now) ?? 1
+            let daysInYear = cal.range(of: .day, in: .year, for: now)?.count ?? 365
+            let yearLeft = daysInYear - dayOfYear
+            yearProgress = daysInYear > 0 ? Double(dayOfYear) / Double(daysInYear) : 0
+            yearDaysPassed = dayOfYear
+            yearDaysLeft = yearLeft
+            yearPercent = Int((yearProgress * 100).rounded()).clamped(to: 0...100)
+        }
+
+        return WidgetCache(
+            dayProgress: progress,
+            dayPercentDone: Int((progress * 100).rounded()).clamped(to: 0...100),
+            dayPercentLeft: Int(((1 - progress) * 100).rounded()).clamped(to: 0...100),
+            dayHoursPassed: dayHoursPassed,
+            dayHoursLeft: dayHoursLeft,
+            dayPassedMinutes: passedMinutes,
+            dayRemainingMinutes: remainingMinutes,
+            startOfDay: startMs,
+            endOfDay: endMs,
+            monthProgress: monthProgress,
+            monthIndex: monthIndex,
+            monthDaysPassed: monthDaysPassed,
+            monthDaysLeft: monthDaysLeft,
+            monthPercent: monthPercent,
+            yearProgress: yearProgress,
+            yearDaysPassed: yearDaysPassed,
+            yearDaysLeft: yearDaysLeft,
+            yearPercent: yearPercent,
+            lifeProgress: lifeProgress,
+            remainingDaysLife: remainingDaysLife,
+            lifePercent: lifePercent,
+            updatedAt: updatedAt
+        )
+    }
 }
 
 // MARK: - Design Tokens
@@ -88,10 +213,11 @@ private enum Design {
 /// Shared provider for widgets that don't need per-second or per-minute updates.
 /// Used when a dedicated provider (Day, MonthYear, etc.) is more appropriate.
 struct UNTILWidgetProvider: TimelineProvider {
-    private func loadWidgetCache() -> WidgetCache? {
+    private func loadWidgetCache(at now: Date = Date()) -> WidgetCache? {
         guard let json = WidgetCacheReader.loadJSON() else { return nil }
         guard let data = json.data(using: .utf8) else { return nil }
-        return try? JSONDecoder().decode(WidgetCache.self, from: data)
+        guard let cache = try? JSONDecoder().decode(WidgetCache.self, from: data) else { return nil }
+        return cache.freshForDisplay(at: now)
     }
 
     func placeholder(in context: Context) -> UNTILWidgetEntry {
@@ -114,10 +240,11 @@ struct UNTILWidgetProvider: TimelineProvider {
 
 /// Month and Year widgets: refresh at start of next day (midnight) since values change daily.
 struct MonthYearWidgetProvider: TimelineProvider {
-    private func loadWidgetCache() -> WidgetCache? {
+    private func loadWidgetCache(at now: Date = Date()) -> WidgetCache? {
         guard let json = WidgetCacheReader.loadJSON() else { return nil }
         guard let data = json.data(using: .utf8) else { return nil }
-        return try? JSONDecoder().decode(WidgetCache.self, from: data)
+        guard let cache = try? JSONDecoder().decode(WidgetCache.self, from: data) else { return nil }
+        return cache.freshForDisplay(at: now)
     }
 
     func placeholder(in context: Context) -> UNTILWidgetEntry {
@@ -144,10 +271,11 @@ struct MonthYearWidgetProvider: TimelineProvider {
 struct DayWidgetProvider: TimelineProvider {
     private static let entriesPerTimeline = 60
 
-    private func loadWidgetCache() -> WidgetCache? {
+    private func loadWidgetCache(at now: Date = Date()) -> WidgetCache? {
         guard let json = WidgetCacheReader.loadJSON() else { return nil }
         guard let data = json.data(using: .utf8) else { return nil }
-        return try? JSONDecoder().decode(WidgetCache.self, from: data)
+        guard let cache = try? JSONDecoder().decode(WidgetCache.self, from: data) else { return nil }
+        return cache.freshForDisplay(at: now)
     }
 
     func placeholder(in context: Context) -> UNTILWidgetEntry {
@@ -160,12 +288,12 @@ struct DayWidgetProvider: TimelineProvider {
     }
 
     func getTimeline(in context: Context, completion: @escaping (Timeline<UNTILWidgetEntry>) -> Void) {
-        let cache = loadWidgetCache()
         let calendar = Calendar.current
         let now = Date()
         var entries: [UNTILWidgetEntry] = []
         for offset in 0..<Self.entriesPerTimeline {
             guard let date = calendar.date(byAdding: .second, value: offset, to: now) else { continue }
+            let cache = loadWidgetCache(at: date)
             entries.append(UNTILWidgetEntry(date: date, cache: cache))
         }
         let nextRefresh = calendar.date(byAdding: .second, value: Self.entriesPerTimeline, to: now) ?? now
@@ -207,10 +335,11 @@ struct DailyTasksWidgetProvider: TimelineProvider {
         return try? JSONDecoder().decode(DailyTaskWidgetPayload.self, from: data)
     }
 
-    private func loadWidgetCache() -> WidgetCache? {
+    private func loadWidgetCache(at now: Date = Date()) -> WidgetCache? {
         guard let json = WidgetCacheReader.loadJSON() else { return nil }
         guard let data = json.data(using: .utf8) else { return nil }
-        return try? JSONDecoder().decode(WidgetCache.self, from: data)
+        guard let cache = try? JSONDecoder().decode(WidgetCache.self, from: data) else { return nil }
+        return cache.freshForDisplay(at: now)
     }
 
     func placeholder(in context: Context) -> DailyTasksWidgetEntry {
@@ -2291,6 +2420,7 @@ struct UNTILWidgetsBundle: WidgetBundle {
         LifeWidget()
         CounterWidget()
         CountdownWidget()
+        DailyTasksWidget()
         HourCalculationWidget()
         UNTILLiveActivityWidget()
     }
