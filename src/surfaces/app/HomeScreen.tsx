@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useMemo, useCallback, memo } from 'react';
 import {
   View,
   StyleSheet,
@@ -117,7 +117,7 @@ function leftValueGlowStyle(hexColor: string) {
   };
 }
 
-function TimeBlock({
+const TimeBlock = memo(function TimeBlock({
   title,
   passedLabel,
   leftLabel,
@@ -220,7 +220,39 @@ function TimeBlock({
       )}
     </Animated.View>
   );
-}
+});
+
+/**
+ * Optimized sub-component for the "Today" block to isolate 1s timer re-renders.
+ */
+const TodayTimeBlock = memo(function TodayTimeBlock({
+  onPress,
+}: {
+  onPress: () => void;
+}) {
+  const [liveNow, setLiveNow] = useState(() => new Date());
+
+  useEffect(() => {
+    const tick = () => setLiveNow(new Date());
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, []);
+
+  const day = formatDayPassedLeftWithSeconds(liveNow);
+
+  return (
+    <TimeBlock
+      index={0}
+      title="Today"
+      passedLabel={day.passedStr}
+      leftLabel={day.leftStr}
+      progress={day.progress}
+      passedPct={day.passedPct}
+      leftPct={day.leftPct}
+      onPress={onPress}
+    />
+  );
+});
 
 export function HomeScreen() {
   const navigation =
@@ -230,26 +262,36 @@ export function HomeScreen() {
   const { userProfile, timeState } = useObserveTimeState();
   const goalsFeatureEnabled = useGoalsFeatureEnabled();
   const { canAccessLife } = useAccessControl();
-  const [liveNow, setLiveNow] = useState(() => new Date());
 
-  useEffect(() => {
-    const tick = () => setLiveNow(new Date());
-    const id = setInterval(tick, 1000);
-    return () => clearInterval(id);
-  }, []);
-
-  const remainingDaysMonth = timeState.remainingDaysMonth ?? 0;
-  const remainingDaysYear = timeState.remainingDaysYear ?? 0;
-
-  const day = formatDayPassedLeftWithSeconds(liveNow);
-  const month = formatMonthPassedLeft(remainingDaysMonth);
-  const year = formatYearPassedLeft(remainingDaysYear);
-  const life = formatLifePassedLeft(
-    timeState.life,
-    timeState.remainingDaysLife,
-    userProfile.deathAge ?? 80,
+  const month = useMemo(
+    () => formatMonthPassedLeft(timeState.remainingDaysMonth ?? 0),
+    [timeState.remainingDaysMonth],
+  );
+  const year = useMemo(
+    () => formatYearPassedLeft(timeState.remainingDaysYear ?? 0),
+    [timeState.remainingDaysYear],
+  );
+  const life = useMemo(
+    () =>
+      formatLifePassedLeft(
+        timeState.life,
+        timeState.remainingDaysLife,
+        userProfile.deathAge ?? 80,
+      ),
+    [timeState.life, timeState.remainingDaysLife, userProfile.deathAge],
   );
   const hasBirthDate = !!userProfile.birthDate;
+
+  const navigateToDayDetail = useCallback(() => navigation.navigate('DayDetail'), [navigation]);
+  const navigateToMonthDetail = useCallback(() => navigation.navigate('MonthDetail'), [navigation]);
+  const navigateToYearDetail = useCallback(() => navigation.navigate('YearDetail'), [navigation]);
+  const navigateToLife = useCallback(() => navigation.navigate('Life'), [navigation]);
+  const navigateToPremium = useCallback(() => navigation.navigate('Premium'), [navigation]);
+  const navigateToSettings = useCallback(() => navigation.navigate('Settings'), [navigation]);
+  const navigateToTasks = useCallback(
+    () => navigation.navigate(goalsFeatureEnabled ? 'DailyTasks' : 'TasksComingSoon'),
+    [navigation, goalsFeatureEnabled],
+  );
 
   return (
     <View style={styles.container}>
@@ -266,16 +308,7 @@ export function HomeScreen() {
             Passed and left — one place.
           </Text>
 
-          <TimeBlock
-            index={0}
-            title="Today"
-            passedLabel={day.passedStr}
-            leftLabel={day.leftStr}
-            progress={day.progress}
-            passedPct={day.passedPct}
-            leftPct={day.leftPct}
-            onPress={() => navigation.navigate('DayDetail')}
-          />
+          <TodayTimeBlock onPress={navigateToDayDetail} />
 
           <TimeBlock
             index={1}
@@ -285,7 +318,7 @@ export function HomeScreen() {
             progress={timeState.month}
             passedPct={month.passedPct}
             leftPct={month.leftPct}
-            onPress={() => navigation.navigate('MonthDetail')}
+            onPress={navigateToMonthDetail}
           />
 
           <TimeBlock
@@ -296,7 +329,7 @@ export function HomeScreen() {
             progress={timeState.year}
             passedPct={year.passedPct}
             leftPct={year.leftPct}
-            onPress={() => navigation.navigate('YearDetail')}
+            onPress={navigateToYearDetail}
           />
 
           {hasBirthDate ? (
@@ -309,7 +342,7 @@ export function HomeScreen() {
                 progress={timeState.life}
                 passedPct={life.passedPct}
                 leftPct={life.leftPct}
-                onPress={() => navigation.navigate('Life')}
+                onPress={navigateToLife}
               />
             ) : (
               <Card style={styles.block}>
@@ -328,7 +361,7 @@ export function HomeScreen() {
                   variant="caption"
                   color="primary"
                   style={styles.settingsLink}
-                  onPress={() => navigation.navigate('Premium')}
+                  onPress={navigateToPremium}
                 >
                   Unlock Premium
                 </Text>
@@ -351,7 +384,7 @@ export function HomeScreen() {
                 variant="caption"
                 color="primary"
                 style={styles.settingsLink}
-                onPress={() => navigation.navigate('Settings')}
+                onPress={navigateToSettings}
               >
                 Open Settings
               </Text>
@@ -379,9 +412,7 @@ export function HomeScreen() {
               bottom: Math.max(insets.bottom, Spacing[3]) + Spacing[2],
             },
           ]}
-          onPress={() =>
-            navigation.navigate(goalsFeatureEnabled ? 'DailyTasks' : 'TasksComingSoon')
-          }
+          onPress={navigateToTasks}
           activeOpacity={0.85}
         >
           <Svg width={24} height={24} viewBox="0 0 24 24" fill="none">
