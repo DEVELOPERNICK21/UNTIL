@@ -29,23 +29,30 @@ export const MONETIZATION_PAYWALL_COPY = {
   headline: 'Your life is passing. Start watching it.',
   subheadline:
     'See every day, month, and year of your life — live on your home screen and overlay.',
-  yearlyCta: 'Start 14-day free trial',
+  /** Shown on yearly plan — subscription bills immediately via Google Play (no Play free trial). */
+  yearlyCta: 'Subscribe yearly',
   yearlyCtaSub:
-    'Then billed yearly. Cancel anytime in Google Play before renewal — no surprise charges.',
+    'Billed at the yearly price shown when you subscribe in Google Play. Cancel anytime in Google Play → Subscriptions before renewal.',
+  yearlyCtaSubDuringPreview:
+    'Your free app preview does not charge you. Subscribing bills the yearly price in Google Play. Cancel anytime in Google Play → Subscriptions.',
   monthlyCta: 'Monthly',
-  monthlySub: 'Flexible · cancel anytime in Google Play',
+  monthlySub:
+    'Billed monthly in Google Play when you subscribe. Cancel anytime in Google Play → Subscriptions.',
   lifetimeCta: 'Own it forever',
-  lifetimeSub: 'One-time payment · all Premium features · no renewal',
+  lifetimeSub: 'One-time payment in Google Play · all Premium features · no renewal',
   studentCta: 'Student yearly',
   studentSub: 'Verify with student email in a future update · same Premium features',
   regionalNote:
     'Prices in your currency are set by Google Play (regional pricing may apply).',
+  previewActiveTitle: 'Free app preview active',
+  previewActiveBody:
+    'Premium features unlocked for {days} days — no subscription or payment yet.',
   lifeUnlockEndedTitle: 'Keep your life progress visible',
   lifeUnlockEndedMessage:
     'Your 24-hour Life preview ended. Premium keeps your life %, month widget, and overlay on every day.',
   onboardingPaywallTitle: 'You have seen your life in weeks.',
   onboardingPaywallSub:
-    'Keep month & life widgets, overlay, and your full Life screen — with a 14-day trial on yearly.',
+    'Keep month & life widgets, overlay, and your full Life screen. Try Premium free for 14 days in the app, or subscribe anytime.',
   freeForeverLine: 'Day & year widgets and Share stay free forever.',
   trialReminderDay10:
     '4 days left in your Premium trial. Keep your Life screen and widgets.',
@@ -61,15 +68,30 @@ export const PREMIUM_BENEFITS = [
   'Floating overlay — month & life (Android)',
   'Dynamic Island — month & life (iOS)',
   'Activity intervention alerts',
-  `${MONETIZATION_TRIAL_DAYS}-day trial on yearly plan`,
+  `${MONETIZATION_TRIAL_DAYS}-day free app preview (no payment)`,
 ] as const;
 
 export const PAYWALL_TRUST_SIGNALS = [
-  'Cancel anytime in Google Play',
+  'Cancel subscriptions in Google Play → Subscriptions',
   'Day + Year widgets free forever',
   'Secure payment via Google Play',
-  '14-day trial on yearly',
+  `${MONETIZATION_TRIAL_DAYS}-day app preview before you subscribe`,
 ] as const;
+
+/** Days left in the in-app preview (ceil), 0 if ended or unknown. */
+export function trialPreviewDaysLeft(
+  trialEndsAtMs: number | null,
+  nowMs: number = Date.now()
+): number {
+  if (trialEndsAtMs == null || nowMs >= trialEndsAtMs) return 0;
+  return Math.ceil((trialEndsAtMs - nowMs) / (24 * 60 * 60 * 1000));
+}
+
+export function formatPreviewActiveBody(trialEndsAtMs: number | null): string {
+  const days = trialPreviewDaysLeft(trialEndsAtMs);
+  const dayLabel = days === 1 ? '1 day' : `${days} days`;
+  return MONETIZATION_PAYWALL_COPY.previewActiveBody.replace('{days}', dayLabel);
+}
 
 export function formatInr(amount: number): string {
   return `₹${amount.toLocaleString('en-IN')}`;
