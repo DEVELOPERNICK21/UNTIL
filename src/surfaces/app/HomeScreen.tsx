@@ -117,7 +117,7 @@ function leftValueGlowStyle(hexColor: string) {
   };
 }
 
-function TimeBlock({
+const TimeBlock = React.memo(function TimeBlock({
   title,
   passedLabel,
   leftLabel,
@@ -220,6 +220,35 @@ function TimeBlock({
       )}
     </Animated.View>
   );
+});
+
+/**
+ * TodayTimeBlock isolates the 1-second timer to prevent the entire HomeScreen
+ * from re-rendering every second.
+ */
+function TodayTimeBlock({ index, onPress }: { index: number; onPress: () => void }) {
+  const [liveNow, setLiveNow] = useState(() => new Date());
+
+  useEffect(() => {
+    const tick = () => setLiveNow(new Date());
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, []);
+
+  const day = formatDayPassedLeftWithSeconds(liveNow);
+
+  return (
+    <TimeBlock
+      index={index}
+      title="Today"
+      passedLabel={day.passedStr}
+      leftLabel={day.leftStr}
+      progress={day.progress}
+      passedPct={day.passedPct}
+      leftPct={day.leftPct}
+      onPress={onPress}
+    />
+  );
 }
 
 export function HomeScreen() {
@@ -230,18 +259,10 @@ export function HomeScreen() {
   const { userProfile, timeState } = useObserveTimeState();
   const goalsFeatureEnabled = useGoalsFeatureEnabled();
   const { canAccessLife } = useAccessControl();
-  const [liveNow, setLiveNow] = useState(() => new Date());
-
-  useEffect(() => {
-    const tick = () => setLiveNow(new Date());
-    const id = setInterval(tick, 1000);
-    return () => clearInterval(id);
-  }, []);
 
   const remainingDaysMonth = timeState.remainingDaysMonth ?? 0;
   const remainingDaysYear = timeState.remainingDaysYear ?? 0;
 
-  const day = formatDayPassedLeftWithSeconds(liveNow);
   const month = formatMonthPassedLeft(remainingDaysMonth);
   const year = formatYearPassedLeft(remainingDaysYear);
   const life = formatLifePassedLeft(
@@ -266,14 +287,8 @@ export function HomeScreen() {
             Passed and left — one place.
           </Text>
 
-          <TimeBlock
+          <TodayTimeBlock
             index={0}
-            title="Today"
-            passedLabel={day.passedStr}
-            leftLabel={day.leftStr}
-            progress={day.progress}
-            passedPct={day.passedPct}
-            leftPct={day.leftPct}
             onPress={() => navigation.navigate('DayDetail')}
           />
 
