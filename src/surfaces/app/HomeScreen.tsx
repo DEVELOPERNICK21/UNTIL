@@ -12,7 +12,13 @@ import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text, ScreenGradient, Card, ProgressLine } from '../../ui';
-import { useObserveTimeState, useGoalsFeatureEnabled, useAccessControl } from '../../hooks';
+import {
+  useObserveTimeState,
+  useGoalsFeatureEnabled,
+  useAccessControl,
+  useDailyReflection,
+} from '../../hooks';
+import { TimeCoachCard } from '../../components/reflections/TimeCoachCard';
 import { Spacing, FontFamily, getProgressColor, useTheme, Shadows } from '../../theme';
 import type { RootStackParamList } from '../../navigation/RootNavigator';
 
@@ -230,6 +236,7 @@ export function HomeScreen() {
   const { userProfile, timeState } = useObserveTimeState();
   const goalsFeatureEnabled = useGoalsFeatureEnabled();
   const { canAccessLife } = useAccessControl();
+  const dailyReflection = useDailyReflection();
   const [liveNow, setLiveNow] = useState(() => new Date());
 
   useEffect(() => {
@@ -265,6 +272,19 @@ export function HomeScreen() {
           <Text variant="body" color="secondary" style={styles.subhead}>
             Passed and left — one place.
           </Text>
+
+          {dailyReflection.visible ? (
+            <TimeCoachCard
+              reflection={dailyReflection.reflection}
+              tone={dailyReflection.tone}
+              canUsePremiumReflections={
+                dailyReflection.canUsePremiumReflections
+              }
+              onDismiss={dailyReflection.dismiss}
+              onToneChange={dailyReflection.setTone}
+              onBirthDatePress={() => navigation.navigate('Settings')}
+            />
+          ) : null}
 
           <TimeBlock
             index={0}

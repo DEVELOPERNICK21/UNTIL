@@ -18,10 +18,17 @@ export const MONETIZATION_FEATURE_FLAGS = {
   studentPlanEnabled: true,
 } as const;
 
-export const MONETIZATION_TRIAL_DAYS = 14;
+export const MONETIZATION_TRIAL_DAYS = 5;
 
-/** Trial reminder schedule (day of trial, 1-based). */
-export const TRIAL_REMINDER_DAYS = [10, 13, 14] as const;
+/** Trial reminder schedule (day of trial, 1-based) — last 3 days of preview. */
+export const TRIAL_REMINDER_DAYS: readonly number[] =
+  MONETIZATION_TRIAL_DAYS >= 3
+    ? [
+        MONETIZATION_TRIAL_DAYS - 2,
+        MONETIZATION_TRIAL_DAYS - 1,
+        MONETIZATION_TRIAL_DAYS,
+      ]
+    : [MONETIZATION_TRIAL_DAYS];
 
 export const PAYWALL_DISMISS_COOLDOWN_MS = 48 * 60 * 60 * 1000;
 
@@ -52,14 +59,8 @@ export const MONETIZATION_PAYWALL_COPY = {
     'Your 24-hour Life preview ended. Premium keeps your life %, month widget, and overlay on every day.',
   onboardingPaywallTitle: 'You have seen your life in weeks.',
   onboardingPaywallSub:
-    'Keep month & life widgets, overlay, and your full Life screen. Try Premium free for 14 days in the app, or subscribe anytime.',
+    'Keep month & life widgets, overlay, and your full Life screen. Try Premium free for 5 days in the app, or subscribe anytime.',
   freeForeverLine: 'Day & year widgets and Share stay free forever.',
-  trialReminderDay10:
-    '4 days left in your Premium trial. Keep your Life screen and widgets.',
-  trialReminderDay13:
-    'Last day tomorrow — renew to keep month & life widgets without interruption.',
-  trialReminderDay14:
-    'Your trial ends today. ₹499/year keeps everything — less than ₹1.37/day.',
 } as const;
 
 export const PREMIUM_BENEFITS = [

@@ -13,19 +13,7 @@ import { useRoute, useNavigation, useFocusEffect } from '@react-navigation/nativ
 import type { RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Text, ScreenGradient, Card } from '../../ui';
-import { useWidgetSyncActions } from '../../hooks';
-import {
-  getGoalUseCase,
-  updateMonthlyGoalUseCase,
-  removeMonthlyGoalUseCase,
-  addGoalTaskUseCase,
-  updateGoalTaskUseCase,
-  removeGoalTaskUseCase,
-  addToDailyFromGoalUseCase,
-  setRepeatDailyFromGoalUseCase,
-  removeRepeatDailyFromGoalUseCase,
-  isRepeatDailyUseCase,
-} from '../../di';
+import { useGoalDetail, useWidgetSyncActions } from '../../hooks';
 import { Spacing, Colors, Radius, Typography } from '../../theme';
 import type { RootStackParamList } from '../../navigation/RootNavigator';
 import type { GoalTask, TaskCategory } from '../../types';
@@ -51,7 +39,17 @@ export function GoalDetailScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList, 'GoalDetail'>>();
   const { syncDailyTasksWidget } = useWidgetSyncActions();
   const goalId = route.params?.goalId ?? '';
-  const [goal, setGoal] = useState(() => getGoalUseCase.execute(goalId));
+  const {
+    goal,
+    refresh,
+    removeGoal,
+    addTask,
+    updateTask,
+    removeTask,
+    addTaskToDay,
+    isRepeatDaily,
+    toggleRepeatDaily,
+  } = useGoalDetail(goalId);
   const [addModalVisible, setAddModalVisible] = useState(false);
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [addTitle, setAddTitle] = useState('');
@@ -59,10 +57,6 @@ export function GoalDetailScreen() {
   const [editTask, setEditTask] = useState<GoalTask | null>(null);
   const [editTitle, setEditTitle] = useState('');
   const [editCategory, setEditCategory] = useState<TaskCategory>('other');
-
-  const refresh = useCallback(() => {
-    setGoal(getGoalUseCase.execute(goalId));
-  }, [goalId]);
 
   useFocusEffect(
     useCallback(() => {
@@ -80,7 +74,7 @@ export function GoalDetailScreen() {
           text: 'Remove',
           style: 'destructive',
           onPress: () => {
-            removeMonthlyGoalUseCase.execute(goalId);
+            removeGoal();
             navigation.goBack();
           },
         },
@@ -91,10 +85,9 @@ export function GoalDetailScreen() {
   const handleAddTask = () => {
     const t = addTitle.trim();
     if (!t) return;
-    addGoalTaskUseCase.execute(goalId, { title: t, category: addCategory });
+    addTask({ title: t, category: addCategory });
     setAddTitle('');
     setAddModalVisible(false);
-    refresh();
   };
 
   const openEditTask = (task: GoalTask) => {
@@ -108,10 +101,9 @@ export function GoalDetailScreen() {
     if (!editTask) return;
     const t = editTitle.trim();
     if (!t) return;
-    updateGoalTaskUseCase.execute(goalId, editTask.id, { title: t, category: editCategory });
+    updateTask(editTask.id, { title: t, category: editCategory });
     setEditModalVisible(false);
     setEditTask(null);
-    refresh();
   };
 
   const handleRemoveTask = (task: GoalTask) => {
@@ -124,8 +116,7 @@ export function GoalDetailScreen() {
           text: 'Remove',
           style: 'destructive',
           onPress: () => {
-            removeGoalTaskUseCase.execute(goalId, task.id);
-            refresh();
+            removeTask(task.id);
           },
         },
       ]
@@ -133,20 +124,13 @@ export function GoalDetailScreen() {
   };
 
   const handleAddToToday = (task: GoalTask) => {
-    addToDailyFromGoalUseCase.execute(goalId, task.id, todayIso());
+    addTaskToDay(task.id, todayIso());
     syncDailyTasksWidget();
-    refresh();
   };
 
   const handleToggleRepeatDaily = (task: GoalTask) => {
-    const isRepeat = isRepeatDailyUseCase.execute(goalId, task.id);
-    if (isRepeat) {
-      removeRepeatDailyFromGoalUseCase.execute(goalId, task.id);
-    } else {
-      setRepeatDailyFromGoalUseCase.execute(goalId, task.id, todayIso());
-    }
+    toggleRepeatDaily(task.id, todayIso());
     syncDailyTasksWidget();
-    refresh();
   };
 
   if (!goal) {
@@ -194,7 +178,7 @@ export function GoalDetailScreen() {
             </Text>
           ) : (
             goal.tasks.map((task) => {
-              const isRepeat = isRepeatDailyUseCase.execute(goalId, task.id);
+              const isRepeat = isRepeatDaily(task.id);
               return (
                 <Card key={task.id} style={styles.taskCard}>
                   <View style={styles.taskRow}>

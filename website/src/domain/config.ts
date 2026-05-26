@@ -18,7 +18,7 @@ export const SITE_CONFIG = {
   /** Pricing for landing page (SSOT). Add wasPrice & savePercent for intro-offer style. */
   pricing: {
     introLabel: 'Premium plans on Android',
-    oneTimeLabel: 'Free core + 14-day trial for Premium features',
+    oneTimeLabel: 'Free core + 5-day app preview for Premium features',
     price: 'Monthly from ₹99',
     wasPrice: 'Yearly and lifetime options available',
     savePercent: 0,
