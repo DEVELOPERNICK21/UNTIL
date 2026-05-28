@@ -7,7 +7,7 @@ import {
 } from '../src/domain/accessControl';
 
 describe('accessControl', () => {
-  it('trial active within 14 days from start', () => {
+  it('trial active within preview window from start', () => {
     const now = 10_000_000;
     const access = computeAccessState({
       now,
@@ -23,7 +23,7 @@ describe('accessControl', () => {
     expect(hasPremiumBundle(access)).toBe(true);
   });
 
-  it('trial inactive after 14 days', () => {
+  it('trial inactive after preview window', () => {
     const now = 10_000_000;
     const access = computeAccessState({
       now,

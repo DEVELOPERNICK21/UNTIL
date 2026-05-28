@@ -17,13 +17,6 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useDailyTasks, useWidgetSyncActions } from '../../hooks';
 import type { RootStackParamList } from '../../navigation/RootNavigator';
 import { Text, ScreenGradient, Card, ProgressLine } from '../../ui';
-import {
-  addTaskUseCase,
-  toggleTaskUseCase,
-  updateTaskUseCase,
-  removeTaskUseCase,
-  getGoalUseCase,
-} from '../../di';
 import { Spacing, Colors, Radius, Typography, FontFamily } from '../../theme';
 import type { DailyTask, TaskCategory } from '../../types';
 
@@ -183,7 +176,16 @@ export function DailyTasksScreen() {
       NativeStackNavigationProp<RootStackParamList, 'DailyTasks'>
     >();
   const today = todayIso();
-  const { tasks, stats, refresh } = useDailyTasks(today);
+  const {
+    tasks,
+    stats,
+    refresh,
+    addTask,
+    toggleTask,
+    updateTask,
+    removeTask,
+    getGoalTitle,
+  } = useDailyTasks(today);
   const { syncDailyTasksWidget } = useWidgetSyncActions();
   const [newTitle, setNewTitle] = React.useState('');
   const [selectedCategory, setSelectedCategory] =
@@ -198,28 +200,26 @@ export function DailyTasksScreen() {
     refresh();
     syncDailyTasksWidget();
     setTimeout(() => setRefreshing(false), 100);
-  }, [refresh]);
+  }, [refresh, syncDailyTasksWidget]);
 
   const handleAdd = useCallback(() => {
     const title = newTitle.trim();
     if (!title) return;
-    addTaskUseCase.execute({
+    addTask({
       date: today,
       title,
       category: selectedCategory,
     });
     setNewTitle('');
-    refresh();
     syncDailyTasksWidget();
-  }, [today, newTitle, selectedCategory, refresh]);
+  }, [today, newTitle, selectedCategory, addTask, syncDailyTasksWidget]);
 
   const handleToggle = useCallback(
     (id: string) => {
-      toggleTaskUseCase.execute(id);
-      refresh();
+      toggleTask(id);
       syncDailyTasksWidget();
     },
-    [refresh],
+    [toggleTask, syncDailyTasksWidget],
   );
 
   const openEdit = useCallback((task: DailyTask) => {
@@ -236,14 +236,13 @@ export function DailyTasksScreen() {
     if (!editingTask) return;
     const title = editTitle.trim();
     if (!title) return;
-    updateTaskUseCase.execute(editingTask.id, {
+    updateTask(editingTask.id, {
       title,
       category: editCategory,
     });
-    refresh();
     syncDailyTasksWidget();
     closeEdit();
-  }, [editingTask, editTitle, editCategory, refresh, closeEdit]);
+  }, [editingTask, editTitle, editCategory, updateTask, syncDailyTasksWidget, closeEdit]);
 
   const handleRemove = useCallback(
     (task: DailyTask) => {
@@ -253,14 +252,13 @@ export function DailyTasksScreen() {
           text: 'Remove',
           style: 'destructive',
           onPress: () => {
-            removeTaskUseCase.execute(task.id);
-            refresh();
+            removeTask(task.id);
             syncDailyTasksWidget();
           },
         },
       ]);
     },
-    [refresh],
+    [removeTask, syncDailyTasksWidget],
   );
 
   const progress = stats.total > 0 ? stats.completed / stats.total : 0;
@@ -411,7 +409,7 @@ export function DailyTasksScreen() {
                 task={task}
                 goalTitle={
                   task.sourceGoalId
-                    ? getGoalUseCase.execute(task.sourceGoalId)?.title ?? null
+                    ? getGoalTitle(task.sourceGoalId)
                     : undefined
                 }
                 onToggle={() => handleToggle(task.id)}

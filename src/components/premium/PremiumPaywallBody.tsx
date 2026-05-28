@@ -25,9 +25,9 @@ import {
   MONETIZATION_FEATURE_FLAGS,
   MONETIZATION_PAYWALL_COPY,
   MONETIZATION_PRICING,
-  MONETIZATION_TRIAL_DAYS,
   PAYWALL_TRUST_SIGNALS,
   PREMIUM_BENEFITS,
+  formatPreviewActiveBody,
 } from '../../config/monetization';
 
 function priceLabel(
@@ -91,6 +91,14 @@ export function PremiumPaywallBody({
         FALLBACK_STUDENT_YEARLY_PRICE
       ),
     [products, productIds]
+  );
+
+  const yearlyCtaSub = useMemo(
+    () =>
+      !isPremium && access.trialActive
+        ? MONETIZATION_PAYWALL_COPY.yearlyCtaSubDuringPreview
+        : MONETIZATION_PAYWALL_COPY.yearlyCtaSub,
+    [isPremium, access.trialActive]
   );
 
   const onBuy = useCallback(
@@ -160,8 +168,11 @@ export function PremiumPaywallBody({
 
       {!isPremium && access.trialActive && (
         <Card style={{ ...styles.statusCard, borderColor: theme.percent }}>
-          <Text variant="body" color="primary">
-            Trial active ({MONETIZATION_TRIAL_DAYS} days). All Premium features unlocked.
+          <Text variant="body" color="primary" style={styles.previewTitle}>
+            {MONETIZATION_PAYWALL_COPY.previewActiveTitle}
+          </Text>
+          <Text variant="caption" color="secondary" style={styles.previewBody}>
+            {formatPreviewActiveBody(access.trialEndsAt)}
           </Text>
         </Card>
       )}
@@ -205,7 +216,7 @@ export function PremiumPaywallBody({
           {MONETIZATION_PRICING.yearlySavingsVsMonthlyDisplay}/year vs monthly
         </Text>
         <Text variant="caption" color="secondary" style={styles.ctaMeta}>
-          {MONETIZATION_PAYWALL_COPY.yearlyCtaSub}
+          {yearlyCtaSub}
         </Text>
       </TouchableOpacity>
 
@@ -300,6 +311,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderRadius: 12,
   },
+  previewTitle: { marginBottom: Spacing[1] },
+  previewBody: { lineHeight: 18 },
   benefitsBlock: { marginBottom: Spacing[4] },
   benefitsHeading: { letterSpacing: 1, marginBottom: Spacing[2] },
   benefitRow: { flexDirection: 'row', marginBottom: Spacing[1] },

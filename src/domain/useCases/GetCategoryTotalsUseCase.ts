@@ -3,15 +3,17 @@
  */
 
 import type { IActivityRepository } from '../repository/IActivityRepository';
-import { formatDateToIso } from '../../core/time/clock';
+import type { IClock } from '../ports/IClock';
 
 export class GetCategoryTotalsUseCase {
-  constructor(private readonly repository: IActivityRepository) {}
+  constructor(
+    private readonly repository: IActivityRepository,
+    private readonly clock: IClock
+  ) {}
 
   execute(): ReturnType<IActivityRepository['getCategoryTotals']> {
-    const now = new Date();
-    const dateIso = formatDateToIso(now);
-    const year = now.getFullYear();
+    const dateIso = this.clock.todayIso();
+    const year = this.clock.currentYear();
     return this.repository.getCategoryTotals(dateIso, year);
   }
 

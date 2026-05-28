@@ -12,11 +12,7 @@ import {
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Text, ScreenGradient, Card } from '../../ui';
-import {
-  getMonthlyGoalsUseCase,
-  addMonthlyGoalUseCase,
-  removeMonthlyGoalUseCase,
-} from '../../di';
+import { useMonthlyGoals } from '../../hooks';
 import { Spacing, Colors, Radius, Typography } from '../../theme';
 import type { RootStackParamList } from '../../navigation/RootNavigator';
 import type { MonthlyGoal } from '../../types';
@@ -33,16 +29,11 @@ function monthLabel(month: string): string {
 
 export function MonthlyGoalsScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList, 'MonthlyGoals'>>();
-  const [goals, setGoals] = useState<MonthlyGoal[]>(() =>
-    getMonthlyGoalsUseCase.executeForMonth(currentMonthIso())
-  );
+  const month = currentMonthIso();
+  const { goals, refresh, addGoal, removeGoal } = useMonthlyGoals(month);
   const [modalVisible, setModalVisible] = useState(false);
   const [title, setTitle] = useState('');
   const [targetDescription, setTargetDescription] = useState('');
-
-  const refresh = useCallback(() => {
-    setGoals(getMonthlyGoalsUseCase.executeForMonth(currentMonthIso()));
-  }, []);
 
   useFocusEffect(
     useCallback(() => {
@@ -59,13 +50,11 @@ export function MonthlyGoalsScreen() {
   const handleAdd = () => {
     const t = title.trim();
     if (!t) return;
-    addMonthlyGoalUseCase.execute({
-      month: currentMonthIso(),
+    addGoal({
       title: t,
       targetDescription: targetDescription.trim() || undefined,
     });
     setModalVisible(false);
-    refresh();
   };
 
   const handleRemove = (goal: MonthlyGoal) => {
@@ -78,8 +67,7 @@ export function MonthlyGoalsScreen() {
           text: 'Remove',
           style: 'destructive',
           onPress: () => {
-            removeMonthlyGoalUseCase.execute(goal.id);
-            refresh();
+            removeGoal(goal.id);
           },
         },
       ]

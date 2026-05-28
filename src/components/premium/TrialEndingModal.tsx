@@ -37,7 +37,7 @@ export function TrialEndingModal({
       <View style={styles.backdrop}>
         <View style={[styles.card, { backgroundColor: theme.cardBaseAlpha }]}>
           <Text variant="title" style={{ color: theme.textPrimary, marginBottom: Spacing[2] }}>
-            Trial ending soon
+            Free preview ending soon
           </Text>
           <Text variant="body" style={{ color: theme.textSecondary, marginBottom: Spacing[4] }}>
             {getTrialReminderMessage(trialDay)}
