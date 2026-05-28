@@ -11,14 +11,8 @@ import Svg, { Line, Rect } from 'react-native-svg';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Text, ScreenGradient, Card, ProgressLine } from '../../ui';
-import {
-  useObserveTimeState,
-  useGoalsFeatureEnabled,
-  useAccessControl,
-  useDailyReflection,
-} from '../../hooks';
-import { TimeCoachCard } from '../../components/reflections/TimeCoachCard';
+import { Text, ScreenGradient, Card, ProgressLine, FAB } from '../../ui';
+import { useObserveTimeState, useGoalsFeatureEnabled, useAccessControl } from '../../hooks';
 import { Spacing, FontFamily, getProgressColor, useTheme, Shadows } from '../../theme';
 import type { RootStackParamList } from '../../navigation/RootNavigator';
 
@@ -218,7 +212,12 @@ const TimeBlock = memo(function TimeBlock({
   return (
     <Animated.View style={{ opacity }}>
       {onPress ? (
-        <TouchableOpacity onPress={onPress} activeOpacity={0.85}>
+        <TouchableOpacity
+          onPress={onPress}
+          activeOpacity={0.85}
+          accessibilityRole="button"
+          accessibilityLabel={`${title}: ${passedPct}% passed, ${leftPct}% left. Tap for details.`}
+        >
           {content}
         </TouchableOpacity>
       ) : (
@@ -409,17 +408,16 @@ export function HomeScreen() {
           ) : null}
         </ScrollView>
 
-        <TouchableOpacity
-          style={[
-            styles.fab,
-            {
-              backgroundColor: theme.percent,
-              right: Spacing[4],
-              bottom: Math.max(insets.bottom, Spacing[3]) + Spacing[2],
-            },
-          ]}
-          onPress={navigateToTasks}
-          activeOpacity={0.85}
+        <FAB
+          style={{
+            position: 'absolute',
+            right: Spacing[4],
+            bottom: Math.max(insets.bottom, Spacing[3]) + Spacing[2],
+          }}
+          onPress={() =>
+            navigation.navigate(goalsFeatureEnabled ? 'DailyTasks' : 'TasksComingSoon')
+          }
+          accessibilityLabel="Open daily tasks"
         >
           <Svg width={24} height={24} viewBox="0 0 24 24" fill="none">
             <Rect x={5} y={3} width={14} height={18} rx={2} stroke="#FFFFFF" strokeWidth={2} fill="none" />
@@ -427,7 +425,7 @@ export function HomeScreen() {
             <Line x1={8} y1={12} x2={16} y2={12} stroke="#FFFFFF" strokeWidth={1.5} strokeLinecap="round" />
             <Line x1={8} y1={16} x2={14} y2={16} stroke="#FFFFFF" strokeWidth={1.5} strokeLinecap="round" />
           </Svg>
-        </TouchableOpacity>
+        </FAB>
       </ScreenGradient>
     </View>
   );
