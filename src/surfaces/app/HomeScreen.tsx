@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, memo } from 'react';
+import React, { useEffect, useRef, useState, useMemo, useCallback, memo } from 'react';
 import {
   View,
   StyleSheet,
@@ -229,10 +229,13 @@ const TimeBlock = memo(function TimeBlock({
 });
 
 /**
- * Performance optimization: Isolates the 1-second timer to prevent
- * the entire HomeScreen from re-rendering every second.
+ * Optimized sub-component for the "Today" block to isolate 1s timer re-renders.
  */
-function LiveTodayBlock({ onPress }: { onPress: () => void }) {
+const TodayTimeBlock = memo(function TodayTimeBlock({
+  onPress,
+}: {
+  onPress: () => void;
+}) {
   const [liveNow, setLiveNow] = useState(() => new Date());
 
   useEffect(() => {
@@ -255,7 +258,7 @@ function LiveTodayBlock({ onPress }: { onPress: () => void }) {
       onPress={onPress}
     />
   );
-}
+});
 
 export function HomeScreen() {
   const navigation =
@@ -265,19 +268,36 @@ export function HomeScreen() {
   const { userProfile, timeState } = useObserveTimeState();
   const goalsFeatureEnabled = useGoalsFeatureEnabled();
   const { canAccessLife } = useAccessControl();
-  const dailyReflection = useDailyReflection();
 
-  const remainingDaysMonth = timeState.remainingDaysMonth ?? 0;
-  const remainingDaysYear = timeState.remainingDaysYear ?? 0;
-
-  const month = formatMonthPassedLeft(remainingDaysMonth);
-  const year = formatYearPassedLeft(remainingDaysYear);
-  const life = formatLifePassedLeft(
-    timeState.life,
-    timeState.remainingDaysLife,
-    userProfile.deathAge ?? 80,
+  const month = useMemo(
+    () => formatMonthPassedLeft(timeState.remainingDaysMonth ?? 0),
+    [timeState.remainingDaysMonth],
+  );
+  const year = useMemo(
+    () => formatYearPassedLeft(timeState.remainingDaysYear ?? 0),
+    [timeState.remainingDaysYear],
+  );
+  const life = useMemo(
+    () =>
+      formatLifePassedLeft(
+        timeState.life,
+        timeState.remainingDaysLife,
+        userProfile.deathAge ?? 80,
+      ),
+    [timeState.life, timeState.remainingDaysLife, userProfile.deathAge],
   );
   const hasBirthDate = !!userProfile.birthDate;
+
+  const navigateToDayDetail = useCallback(() => navigation.navigate('DayDetail'), [navigation]);
+  const navigateToMonthDetail = useCallback(() => navigation.navigate('MonthDetail'), [navigation]);
+  const navigateToYearDetail = useCallback(() => navigation.navigate('YearDetail'), [navigation]);
+  const navigateToLife = useCallback(() => navigation.navigate('Life'), [navigation]);
+  const navigateToPremium = useCallback(() => navigation.navigate('Premium'), [navigation]);
+  const navigateToSettings = useCallback(() => navigation.navigate('Settings'), [navigation]);
+  const navigateToTasks = useCallback(
+    () => navigation.navigate(goalsFeatureEnabled ? 'DailyTasks' : 'TasksComingSoon'),
+    [navigation, goalsFeatureEnabled],
+  );
 
   return (
     <View style={styles.container}>
@@ -294,20 +314,7 @@ export function HomeScreen() {
             Passed and left — one place.
           </Text>
 
-          {dailyReflection.visible ? (
-            <TimeCoachCard
-              reflection={dailyReflection.reflection}
-              tone={dailyReflection.tone}
-              canUsePremiumReflections={
-                dailyReflection.canUsePremiumReflections
-              }
-              onDismiss={dailyReflection.dismiss}
-              onToneChange={dailyReflection.setTone}
-              onBirthDatePress={() => navigation.navigate('Settings')}
-            />
-          ) : null}
-
-          <LiveTodayBlock onPress={() => navigation.navigate('DayDetail')} />
+          <TodayTimeBlock onPress={navigateToDayDetail} />
 
           <TimeBlock
             index={1}
@@ -317,7 +324,7 @@ export function HomeScreen() {
             progress={timeState.month}
             passedPct={month.passedPct}
             leftPct={month.leftPct}
-            onPress={() => navigation.navigate('MonthDetail')}
+            onPress={navigateToMonthDetail}
           />
 
           <TimeBlock
@@ -328,7 +335,7 @@ export function HomeScreen() {
             progress={timeState.year}
             passedPct={year.passedPct}
             leftPct={year.leftPct}
-            onPress={() => navigation.navigate('YearDetail')}
+            onPress={navigateToYearDetail}
           />
 
           {hasBirthDate ? (
@@ -341,7 +348,7 @@ export function HomeScreen() {
                 progress={timeState.life}
                 passedPct={life.passedPct}
                 leftPct={life.leftPct}
-                onPress={() => navigation.navigate('Life')}
+                onPress={navigateToLife}
               />
             ) : (
               <Card style={styles.block}>
@@ -360,7 +367,7 @@ export function HomeScreen() {
                   variant="caption"
                   color="primary"
                   style={styles.settingsLink}
-                  onPress={() => navigation.navigate('Premium')}
+                  onPress={navigateToPremium}
                 >
                   Unlock Premium
                 </Text>
@@ -383,7 +390,7 @@ export function HomeScreen() {
                 variant="caption"
                 color="primary"
                 style={styles.settingsLink}
-                onPress={() => navigation.navigate('Settings')}
+                onPress={navigateToSettings}
               >
                 Open Settings
               </Text>
@@ -411,9 +418,7 @@ export function HomeScreen() {
               bottom: Math.max(insets.bottom, Spacing[3]) + Spacing[2],
             },
           ]}
-          onPress={() =>
-            navigation.navigate(goalsFeatureEnabled ? 'DailyTasks' : 'TasksComingSoon')
-          }
+          onPress={navigateToTasks}
           activeOpacity={0.85}
         >
           <Svg width={24} height={24} viewBox="0 0 24 24" fill="none">
