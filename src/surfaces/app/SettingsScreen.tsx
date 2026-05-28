@@ -8,6 +8,7 @@ import {
   View,
   StyleSheet,
   TextInput,
+  Switch,
   TouchableOpacity,
   KeyboardAvoidingView,
   Platform,
@@ -21,8 +22,9 @@ import {
   useObserveTimeState,
   useUpdateUserProfile,
   useObserveSubscription,
+  useAppVersion,
+  useRetentionNotifications,
 } from '../../hooks';
-import { getAppVersionUseCase } from '../../di';
 import {
   useTheme,
   Spacing,
@@ -83,6 +85,11 @@ export function SettingsScreen() {
   const { userProfile, timeState } = useObserveTimeState();
   const updateUserProfile = useUpdateUserProfile();
   const { isPremium } = useObserveSubscription();
+  const appVersion = useAppVersion();
+  const {
+    enabled: retentionRemindersEnabled,
+    setEnabled: setRetentionRemindersEnabled,
+  } = useRetentionNotifications();
   const theme = useTheme();
 
   const [birthInput, setBirthInput] = useState(userProfile.birthDate ?? '');
@@ -114,6 +121,10 @@ export function SettingsScreen() {
       updateUserProfile(birthInput, isNaN(age) || age <= 0 ? 80 : age);
       setShowEditProfile(false);
     }
+  };
+
+  const handleRetentionReminderToggle = (enabled: boolean) => {
+    setRetentionRemindersEnabled(enabled);
   };
 
   return (
@@ -287,11 +298,18 @@ export function SettingsScreen() {
                   Expected lifespan (years)
                 </Text>
                 <TextInput
-                  style={[styles.input, { borderColor: theme.divider }]}
+                  style={[
+                    styles.input,
+                    {
+                      borderColor: theme.divider,
+                      color: theme.textPrimary,
+                    },
+                  ]}
                   value={deathInput}
                   onChangeText={setDeathInput}
                   placeholder="80"
                   placeholderTextColor={theme.textSecondary}
+                  selectionColor={theme.percent}
                   keyboardType="number-pad"
                 />
                 <TouchableOpacity
@@ -316,7 +334,6 @@ export function SettingsScreen() {
               <TouchableOpacity
                 style={[
                   styles.row,
-                  styles.rowLast,
                   { borderBottomColor: theme.divider },
                 ]}
                 onPress={() => navigation.navigate('Widget')}
@@ -337,6 +354,36 @@ export function SettingsScreen() {
                   ›
                 </Text>
               </TouchableOpacity>
+              <View
+                style={[
+                  styles.row,
+                  styles.rowLast,
+                  { borderBottomColor: theme.divider },
+                ]}
+              >
+                <View style={styles.rowContent}>
+                  <Text variant="body" style={{ color: theme.textPrimary }}>
+                    Daily Time Reminders
+                  </Text>
+                  <Text
+                    variant="caption"
+                    style={[styles.rowSubtitle, { color: theme.textSecondary }]}
+                  >
+                    One useful reminder per day. Uses your real progress. No spam.
+                  </Text>
+                </View>
+                <Switch
+                  value={retentionRemindersEnabled}
+                  onValueChange={handleRetentionReminderToggle}
+                  trackColor={{
+                    false: theme.divider,
+                    true: 'rgba(232, 124, 32, 0.45)',
+                  }}
+                  thumbColor={
+                    retentionRemindersEnabled ? theme.percent : theme.textSecondary
+                  }
+                />
+              </View>
             </View>
 
             {/* Intentionality Focus card */}
@@ -413,11 +460,7 @@ export function SettingsScreen() {
                 App version
               </Text>
               <Text variant="body" color="primary" style={styles.versionValue}>
-                {(() => {
-                  const { version, buildNumber } =
-                    getAppVersionUseCase.execute();
-                  return buildNumber ? `${version} (${buildNumber})` : version;
-                })()}
+                {appVersion}
               </Text>
             </View>
           </ScrollView>

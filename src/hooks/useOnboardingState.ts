@@ -7,6 +7,7 @@ import {
   getOnboardingCompletedUseCase,
   setOnboardingCompletedUseCase,
 } from '../di';
+import { runOnboardingCompletionSideEffects } from '../services/onboardingCompletion';
 
 export function useOnboardingState() {
   const [hasCompleted, setHasCompleted] = useState(() =>
@@ -15,6 +16,7 @@ export function useOnboardingState() {
 
   const completeOnboarding = useCallback(() => {
     setOnboardingCompletedUseCase.execute();
+    runOnboardingCompletionSideEffects();
     setHasCompleted(true);
   }, []);
 
