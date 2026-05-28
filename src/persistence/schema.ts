@@ -70,6 +70,29 @@ export const STORAGE_KEYS = {
 
   // Onboarding (auth flow)
   ONBOARDING_COMPLETED: 'onboarding.completed',
+  ONBOARDING_COMPLETED_AT: 'onboarding.completedAt',
+  WIDGET_COACH_PENDING: 'engagement.widgetCoachPending',
+  DEFERRED_PAYWALL_SHOWN: 'engagement.deferredPaywallShown',
+  DAY2_NOTIFICATION_SCHEDULED: 'engagement.day2NotificationScheduled',
+
+  // Offline smart reflections / Time Coach
+  DAILY_REFLECTION_DATE: 'reflection.daily.date',
+  DAILY_REFLECTION_PAYLOAD: 'reflection.daily.payload',
+  DAILY_REFLECTION_DISMISSED_DATE: 'reflection.daily.dismissedDate',
+  REFLECTION_TONE: 'reflection.tone',
+
+  // Retention notifications (local, rotating schedule)
+  RETENTION_NOTIFICATIONS_ENABLED: 'retention.notifications.enabled',
+  RETENTION_NOTIFICATIONS_SCHEDULED_AT: 'retention.notifications.scheduledAt',
+  RETENTION_NOTIFICATIONS_LAST_APP_OPEN_DATE:
+    'retention.notifications.lastAppOpenDate',
+  RETENTION_NOTIFICATIONS_LAST_APP_OPEN_HOUR:
+    'retention.notifications.lastAppOpenHour',
+  RETENTION_NOTIFICATIONS_LAST_SENT_DATE:
+    'retention.notifications.lastSentDate',
+  RETENTION_NOTIFICATIONS_IDS: 'retention.notifications.ids',
+  RETENTION_NOTIFICATIONS_PERMISSION_REQUESTED:
+    'retention.notifications.permissionRequested',
 
   // App update checks
   UPDATE_LAST_CHECK_AT: 'update.lastCheckAt',
@@ -78,7 +101,7 @@ export const STORAGE_KEYS = {
   // Play subscription reconcile (expired/canceled)
   PLAY_ENTITLEMENT_RECONCILE_AT: 'billing.reconcileAt',
 
-  // Trial reminders (days 10, 13, 14)
+  // Trial reminders (last preview days)
   TRIAL_REMINDERS_SCHEDULED: 'trial.remindersScheduled',
   TRIAL_REMINDERS_INAPP_SHOWN: 'trial.remindersInAppShown',
 } as const;

@@ -4,17 +4,17 @@
 
 import type { IActivityRepository } from '../repository/IActivityRepository';
 import type { ITimeRepository } from '../repository/ITimeRepository';
-import { formatDateToIso } from '../../core/time/clock';
-import { projectRegret } from '../../core/activity/projectRegret';
-import { aggregateCategoryTotals } from '../../core/activity/aggregate';
-import { endOfDay } from '../../core/time/clock';
+import type { IActivityAnalysisService } from '../ports/IActivityAnalysisService';
+import type { IClock } from '../ports/IClock';
 
 const DAYS_FOR_PATTERN = 7;
 
 export class GetRegretProjectionUseCase {
   constructor(
     private readonly activityRepository: IActivityRepository,
-    private readonly timeRepository: ITimeRepository
+    private readonly timeRepository: ITimeRepository,
+    private readonly clock: IClock,
+    private readonly activityAnalysis: IActivityAnalysisService
   ) {}
 
   execute(): { projection: import('../../types').RegretProjection | null; hasEnoughData: boolean } {
@@ -28,10 +28,13 @@ export class GetRegretProjectionUseCase {
     for (let d = 0; d < DAYS_FOR_PATTERN; d++) {
       const dte = new Date(now);
       dte.setDate(dte.getDate() - d);
-      const iso = formatDateToIso(dte);
+      const iso = this.clock.formatDateToIso(dte);
       const blocks = this.activityRepository.getBlocksForDate(iso);
-      const refTime = iso === formatDateToIso(now) ? Date.now() : endOfDay(dte).getTime();
-      const totals = aggregateCategoryTotals(blocks, refTime);
+      const refTime =
+        iso === this.clock.formatDateToIso(now)
+          ? this.clock.nowMs()
+          : this.clock.endOfDayMs(dte);
+      const totals = this.activityAnalysis.aggregateCategoryTotals(blocks, refTime);
       totalNothingHours += totals.nothing;
       if (blocks.length > 0) daysWithData += 1;
     }
@@ -41,7 +44,12 @@ export class GetRegretProjectionUseCase {
 
     const avgNothingPerDay = totalNothingHours / DAYS_FOR_PATTERN;
     const deathAge = profile.deathAge ?? 80;
-    const projection = projectRegret(avgNothingPerDay, profile.birthDate, deathAge, 30);
+    const projection = this.activityAnalysis.projectRegret(
+      avgNothingPerDay,
+      profile.birthDate,
+      deathAge,
+      30
+    );
 
     return { projection, hasEnoughData: true };
   }

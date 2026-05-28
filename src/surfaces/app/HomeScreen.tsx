@@ -12,7 +12,13 @@ import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text, ScreenGradient, Card, ProgressLine } from '../../ui';
-import { useObserveTimeState, useGoalsFeatureEnabled, useAccessControl } from '../../hooks';
+import {
+  useObserveTimeState,
+  useGoalsFeatureEnabled,
+  useAccessControl,
+  useDailyReflection,
+} from '../../hooks';
+import { TimeCoachCard } from '../../components/reflections/TimeCoachCard';
 import { Spacing, FontFamily, getProgressColor, useTheme, Shadows } from '../../theme';
 import type { RootStackParamList } from '../../navigation/RootNavigator';
 
