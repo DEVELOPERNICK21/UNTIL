@@ -1,3 +1,3 @@
-## 2025-05-14 - Isolate high-frequency re-renders in HomeScreen
-**Learning:** High-frequency timers (e.g., 1s updates for "Today" progress) in a parent component cause the entire tree to re-render, even if other components only depend on low-frequency data (e.g., 1m updates).
-**Action:** Move high-frequency state into dedicated, memoized sub-components to isolate re-renders and use `useMemo`/`useCallback` to stabilize props for other memoized children.
+## 2025-05-22 - [Isolating high-frequency state updates]
+**Learning:** In React Native, high-frequency state updates (e.g., 1-second timers) in a screen-level component trigger re-renders for the entire component tree, including static or slow-changing components.
+**Action:** Isolate these updates into dedicated sub-components and use `React.memo` along with `useCallback` for props to ensure the rest of the screen remains static.

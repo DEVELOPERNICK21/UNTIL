@@ -117,7 +117,7 @@ function leftValueGlowStyle(hexColor: string) {
   };
 }
 
-const TimeBlock = memo(function TimeBlock({
+const TimeBlock = React.memo(function TimeBlock({
   title,
   passedLabel,
   leftLabel,
@@ -227,14 +227,13 @@ const TimeBlock = memo(function TimeBlock({
   );
 });
 
-/**
- * Optimized sub-component for the "Today" block to isolate 1s timer re-renders.
- */
-const TodayTimeBlock = memo(function TodayTimeBlock({
+interface TodayTimeBlockProps {
+  onPress?: () => void;
+}
+
+const TodayTimeBlock = React.memo(function TodayTimeBlock({
   onPress,
-}: {
-  onPress: () => void;
-}) {
+}: TodayTimeBlockProps) {
   const [liveNow, setLiveNow] = useState(() => new Date());
 
   useEffect(() => {
@@ -268,22 +267,47 @@ export function HomeScreen() {
   const goalsFeatureEnabled = useGoalsFeatureEnabled();
   const { canAccessLife } = useAccessControl();
 
-  const month = useMemo(
-    () => formatMonthPassedLeft(timeState.remainingDaysMonth ?? 0),
-    [timeState.remainingDaysMonth],
+  const handleDayPress = React.useCallback(
+    () => navigation.navigate('DayDetail'),
+    [navigation],
   );
-  const year = useMemo(
-    () => formatYearPassedLeft(timeState.remainingDaysYear ?? 0),
-    [timeState.remainingDaysYear],
+  const handleMonthPress = React.useCallback(
+    () => navigation.navigate('MonthDetail'),
+    [navigation],
   );
-  const life = useMemo(
+  const handleYearPress = React.useCallback(
+    () => navigation.navigate('YearDetail'),
+    [navigation],
+  );
+  const handleLifePress = React.useCallback(
+    () => navigation.navigate('Life'),
+    [navigation],
+  );
+  const handlePremiumPress = React.useCallback(
+    () => navigation.navigate('Premium'),
+    [navigation],
+  );
+  const handleSettingsPress = React.useCallback(
+    () => navigation.navigate('Settings'),
+    [navigation],
+  );
+  const handleFabPress = React.useCallback(
     () =>
-      formatLifePassedLeft(
-        timeState.life,
-        timeState.remainingDaysLife,
-        userProfile.deathAge ?? 80,
+      navigation.navigate(
+        goalsFeatureEnabled ? 'DailyTasks' : 'TasksComingSoon',
       ),
-    [timeState.life, timeState.remainingDaysLife, userProfile.deathAge],
+    [navigation, goalsFeatureEnabled],
+  );
+
+  const remainingDaysMonth = timeState.remainingDaysMonth ?? 0;
+  const remainingDaysYear = timeState.remainingDaysYear ?? 0;
+
+  const month = formatMonthPassedLeft(remainingDaysMonth);
+  const year = formatYearPassedLeft(remainingDaysYear);
+  const life = formatLifePassedLeft(
+    timeState.life,
+    timeState.remainingDaysLife,
+    userProfile.deathAge ?? 80,
   );
   const hasBirthDate = !!userProfile.birthDate;
 
@@ -313,7 +337,7 @@ export function HomeScreen() {
             Passed and left — one place.
           </Text>
 
-          <TodayTimeBlock onPress={navigateToDayDetail} />
+          <TodayTimeBlock onPress={handleDayPress} />
 
           <TimeBlock
             index={1}
@@ -323,7 +347,7 @@ export function HomeScreen() {
             progress={timeState.month}
             passedPct={month.passedPct}
             leftPct={month.leftPct}
-            onPress={navigateToMonthDetail}
+            onPress={handleMonthPress}
           />
 
           <TimeBlock
@@ -334,7 +358,7 @@ export function HomeScreen() {
             progress={timeState.year}
             passedPct={year.passedPct}
             leftPct={year.leftPct}
-            onPress={navigateToYearDetail}
+            onPress={handleYearPress}
           />
 
           {hasBirthDate ? (
@@ -347,7 +371,7 @@ export function HomeScreen() {
                 progress={timeState.life}
                 passedPct={life.passedPct}
                 leftPct={life.leftPct}
-                onPress={navigateToLife}
+                onPress={handleLifePress}
               />
             ) : (
               <Card style={styles.block}>
@@ -366,7 +390,7 @@ export function HomeScreen() {
                   variant="caption"
                   color="primary"
                   style={styles.settingsLink}
-                  onPress={navigateToPremium}
+                  onPress={handlePremiumPress}
                 >
                   Unlock Premium
                 </Text>
@@ -389,7 +413,7 @@ export function HomeScreen() {
                 variant="caption"
                 color="primary"
                 style={styles.settingsLink}
-                onPress={navigateToSettings}
+                onPress={handleSettingsPress}
               >
                 Open Settings
               </Text>
@@ -408,16 +432,17 @@ export function HomeScreen() {
           ) : null}
         </ScrollView>
 
-        <FAB
-          style={{
-            position: 'absolute',
-            right: Spacing[4],
-            bottom: Math.max(insets.bottom, Spacing[3]) + Spacing[2],
-          }}
-          onPress={() =>
-            navigation.navigate(goalsFeatureEnabled ? 'DailyTasks' : 'TasksComingSoon')
-          }
-          accessibilityLabel="Open daily tasks"
+        <TouchableOpacity
+          style={[
+            styles.fab,
+            {
+              backgroundColor: theme.percent,
+              right: Spacing[4],
+              bottom: Math.max(insets.bottom, Spacing[3]) + Spacing[2],
+            },
+          ]}
+          onPress={handleFabPress}
+          activeOpacity={0.85}
         >
           <Svg width={24} height={24} viewBox="0 0 24 24" fill="none">
             <Rect x={5} y={3} width={14} height={18} rx={2} stroke="#FFFFFF" strokeWidth={2} fill="none" />
