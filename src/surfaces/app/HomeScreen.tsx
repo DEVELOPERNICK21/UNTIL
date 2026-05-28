@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, memo } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   View,
   StyleSheet,
@@ -123,7 +123,7 @@ function leftValueGlowStyle(hexColor: string) {
   };
 }
 
-const TimeBlock = memo(function TimeBlock({
+function TimeBlock({
   title,
   passedLabel,
   leftLabel,
@@ -226,35 +226,6 @@ const TimeBlock = memo(function TimeBlock({
       )}
     </Animated.View>
   );
-});
-
-/**
- * Performance optimization: Isolates the 1-second timer to prevent
- * the entire HomeScreen from re-rendering every second.
- */
-function LiveTodayBlock({ onPress }: { onPress: () => void }) {
-  const [liveNow, setLiveNow] = useState(() => new Date());
-
-  useEffect(() => {
-    const tick = () => setLiveNow(new Date());
-    const id = setInterval(tick, 1000);
-    return () => clearInterval(id);
-  }, []);
-
-  const day = formatDayPassedLeftWithSeconds(liveNow);
-
-  return (
-    <TimeBlock
-      index={0}
-      title="Today"
-      passedLabel={day.passedStr}
-      leftLabel={day.leftStr}
-      progress={day.progress}
-      passedPct={day.passedPct}
-      leftPct={day.leftPct}
-      onPress={onPress}
-    />
-  );
 }
 
 export function HomeScreen() {
@@ -266,10 +237,18 @@ export function HomeScreen() {
   const goalsFeatureEnabled = useGoalsFeatureEnabled();
   const { canAccessLife } = useAccessControl();
   const dailyReflection = useDailyReflection();
+  const [liveNow, setLiveNow] = useState(() => new Date());
+
+  useEffect(() => {
+    const tick = () => setLiveNow(new Date());
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, []);
 
   const remainingDaysMonth = timeState.remainingDaysMonth ?? 0;
   const remainingDaysYear = timeState.remainingDaysYear ?? 0;
 
+  const day = formatDayPassedLeftWithSeconds(liveNow);
   const month = formatMonthPassedLeft(remainingDaysMonth);
   const year = formatYearPassedLeft(remainingDaysYear);
   const life = formatLifePassedLeft(
@@ -307,7 +286,16 @@ export function HomeScreen() {
             />
           ) : null}
 
-          <LiveTodayBlock onPress={() => navigation.navigate('DayDetail')} />
+          <TimeBlock
+            index={0}
+            title="Today"
+            passedLabel={day.passedStr}
+            leftLabel={day.leftStr}
+            progress={day.progress}
+            passedPct={day.passedPct}
+            leftPct={day.leftPct}
+            onPress={() => navigation.navigate('DayDetail')}
+          />
 
           <TimeBlock
             index={1}
