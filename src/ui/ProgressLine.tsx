@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, memo } from 'react';
 import { View, StyleSheet, useWindowDimensions, Animated, Easing } from 'react-native';
 import { useTheme } from '../theme';
 
@@ -13,7 +13,11 @@ const DOT_SIZE = 6;
 const ANIM_DURATION = 380;
 const EASE = Easing.out(Easing.cubic);
 
-export function ProgressLine({ progress, fillColor, style }: ProgressLineProps) {
+/**
+ * ProgressLine component with native driver animations for better performance.
+ * Memoized to prevent unnecessary re-renders.
+ */
+export const ProgressLine = memo(function ProgressLine({ progress, fillColor, style }: ProgressLineProps) {
   const theme = useTheme();
   const { width } = useWindowDimensions();
   const lineWidth = Math.min(width * 0.7, 280);
@@ -25,63 +29,76 @@ export function ProgressLine({ progress, fillColor, style }: ProgressLineProps) 
       toValue: clampedProgress,
       duration: ANIM_DURATION,
       easing: EASE,
-      useNativeDriver: false,
+      useNativeDriver: true,
     }).start();
   }, [clampedProgress, animValue]);
 
-  const fillWidth = animValue.interpolate({
+  const color = fillColor ?? theme.progressFill;
+
+  // Animate fill using translateX for native driver support
+  const fillTranslateX = animValue.interpolate({
+    inputRange: [0, 1],
+    outputRange: [-lineWidth, 0],
+  });
+
+  // Animate dot using translateX for native driver support
+  const dotTranslateX = animValue.interpolate({
     inputRange: [0, 1],
     outputRange: [0, lineWidth],
   });
 
-  const color = fillColor ?? theme.progressFill;
-
   return (
     <View style={[styles.wrapper, { width: lineWidth }, style]}>
-      <View style={[styles.track, { height: HEIGHT, backgroundColor: theme.progressTrack }]}>
+      <View
+        style={[
+          styles.track,
+          { height: HEIGHT, backgroundColor: theme.progressTrack, overflow: 'hidden' },
+        ]}
+      >
         <Animated.View
           style={[
-            styles.fillRow,
+            styles.fill,
             {
-              width: fillWidth,
+              width: lineWidth,
               height: HEIGHT,
+              backgroundColor: color,
+              transform: [{ translateX: fillTranslateX }],
             },
           ]}
-        >
-          <View style={[styles.fill, { flex: 1, height: HEIGHT, backgroundColor: color }]} />
-          <View
-            style={[
-              styles.dot,
-              {
-                width: DOT_SIZE,
-                height: DOT_SIZE,
-                borderRadius: DOT_SIZE / 2,
-                marginLeft: -DOT_SIZE / 2,
-                backgroundColor: color,
-              },
-            ]}
-          />
-        </Animated.View>
+        />
       </View>
+      <Animated.View
+        style={[
+          styles.dot,
+          {
+            width: DOT_SIZE,
+            height: DOT_SIZE,
+            borderRadius: DOT_SIZE / 2,
+            backgroundColor: color,
+            transform: [{ translateX: dotTranslateX }],
+          },
+        ]}
+      />
     </View>
   );
-}
+});
 
 const styles = StyleSheet.create({
   wrapper: {
-    alignItems: 'center',
+    justifyContent: 'center',
+    // Allow dot to be visible even when at the very beginning or end
+    overflow: 'visible',
   },
   track: {
     width: '100%',
     borderRadius: 999,
-    overflow: 'visible',
-  },
-  fillRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
   },
   fill: {
     borderRadius: 999,
   },
-  dot: {},
+  dot: {
+    position: 'absolute',
+    left: -DOT_SIZE / 2,
+    top: (HEIGHT - DOT_SIZE) / 2,
+  },
 });

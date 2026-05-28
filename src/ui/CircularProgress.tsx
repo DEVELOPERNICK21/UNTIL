@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { View, StyleSheet } from 'react-native';
 import Svg, { Circle, Defs, LinearGradient as SvgLinearGradient, Stop } from 'react-native-svg';
 import { Text } from './Text';
@@ -11,7 +11,11 @@ interface CircularProgressProps {
   label?: string;
 }
 
-export function CircularProgress({
+/**
+ * CircularProgress component with SVG-based progress visualization.
+ * Memoized to prevent unnecessary re-renders during high-frequency updates.
+ */
+export const CircularProgress = memo(function CircularProgress({
   progress,
   size = 80,
   strokeWidth = 10,
@@ -61,7 +65,7 @@ export function CircularProgress({
       </View>
     </View>
   );
-}
+});
 
 const styles = StyleSheet.create({
   container: {
