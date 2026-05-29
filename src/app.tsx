@@ -65,16 +65,32 @@ function reconcilePlayEntitlementIfNeeded(): void {
     });
 }
 
+/**
+ * Processes until://increment-counter?id=... deep links.
+ * Validates scheme, host, and id format for security.
+ */
 function handleIncrementCounterUrl(url: string | null): boolean {
   if (!url || typeof url !== 'string') return false;
-  const normalized = url.trim();
-  if (!normalized.includes('increment-counter') || !normalized.includes('id='))
-    return false;
-  const match = /id=([^&\s]+)/.exec(normalized);
-  const id = match?.[1];
-  if (!id) return false;
+
   try {
-    incrementCustomCounterUseCase.execute(decodeURIComponent(id));
+    const normalized = url.trim();
+    if (!normalized.startsWith('until://increment-counter')) {
+      return false;
+    }
+
+    const match = /[?&]id=([^&\s]+)/.exec(normalized);
+    const id = match?.[1];
+    if (!id) return false;
+
+    const decodedId = decodeURIComponent(id);
+
+    // Sentinel: Strict validation - alphanumeric only, max length 64.
+    // Prevents potential exploitation of untrusted deep link input.
+    if (!/^[a-zA-Z0-9]+$/.test(decodedId) || decodedId.length > 64) {
+      return false;
+    }
+
+    incrementCustomCounterUseCase.execute(decodedId);
     syncCustomCounters();
     return true;
   } catch {
