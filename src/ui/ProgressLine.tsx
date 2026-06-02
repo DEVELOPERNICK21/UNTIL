@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, memo, useMemo } from 'react';
 import { View, StyleSheet, useWindowDimensions, Animated, Easing } from 'react-native';
 import { useTheme } from '../theme';
 
@@ -13,7 +13,12 @@ const DOT_SIZE = 6;
 const ANIM_DURATION = 380;
 const EASE = Easing.out(Easing.cubic);
 
-export function ProgressLine({ progress, fillColor, style }: ProgressLineProps) {
+/**
+ * ProgressLine - A horizontal progress bar with a dot at the end.
+ * ⚡ OPTIMIZED: Uses React.memo and useNativeDriver: true for smooth, efficient animations
+ * that run on the native UI thread, avoiding JS thread bottlenecks.
+ */
+export const ProgressLine = memo(({ progress, fillColor, style }: ProgressLineProps) => {
   const theme = useTheme();
   const { width } = useWindowDimensions();
   const lineWidth = Math.min(width * 0.7, 280);
@@ -25,14 +30,16 @@ export function ProgressLine({ progress, fillColor, style }: ProgressLineProps) 
       toValue: clampedProgress,
       duration: ANIM_DURATION,
       easing: EASE,
-      useNativeDriver: false,
+      useNativeDriver: true, // Offload to native thread
     }).start();
   }, [clampedProgress, animValue]);
 
-  const fillWidth = animValue.interpolate({
+  // Interpolate for translateX to move the fill bar and dot together
+  // Mapping [0, 1] to [-lineWidth, 0] moves it from fully hidden to fully visible
+  const translateX = useMemo(() => animValue.interpolate({
     inputRange: [0, 1],
-    outputRange: [0, lineWidth],
-  });
+    outputRange: [-lineWidth, 0],
+  }), [animValue, lineWidth]);
 
   const color = fillColor ?? theme.progressFill;
 
@@ -43,8 +50,9 @@ export function ProgressLine({ progress, fillColor, style }: ProgressLineProps) 
           style={[
             styles.fillRow,
             {
-              width: fillWidth,
+              width: '100%',
               height: HEIGHT,
+              transform: [{ translateX }],
             },
           ]}
         >
@@ -65,7 +73,7 @@ export function ProgressLine({ progress, fillColor, style }: ProgressLineProps) 
       </View>
     </View>
   );
-}
+});
 
 const styles = StyleSheet.create({
   wrapper: {
@@ -74,7 +82,7 @@ const styles = StyleSheet.create({
   track: {
     width: '100%',
     borderRadius: 999,
-    overflow: 'visible',
+    overflow: 'hidden', // Required for translateX clipping
   },
   fillRow: {
     flexDirection: 'row',
