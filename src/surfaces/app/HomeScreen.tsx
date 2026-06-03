@@ -432,17 +432,15 @@ export function HomeScreen() {
           ) : null}
         </ScrollView>
 
-        <TouchableOpacity
+        <FAB
           style={[
             styles.fab,
             {
-              backgroundColor: theme.percent,
-              right: Spacing[4],
               bottom: Math.max(insets.bottom, Spacing[3]) + Spacing[2],
             },
           ]}
           onPress={handleFabPress}
-          activeOpacity={0.85}
+          accessibilityLabel="Open tasks and goals"
         >
           <Svg width={24} height={24} viewBox="0 0 24 24" fill="none">
             <Rect x={5} y={3} width={14} height={18} rx={2} stroke="#FFFFFF" strokeWidth={2} fill="none" />
@@ -520,11 +518,6 @@ const styles = StyleSheet.create({
   },
   fab: {
     position: 'absolute',
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    justifyContent: 'center',
-    alignItems: 'center',
-    ...Shadows.fab,
+    right: Spacing[4],
   },
 });
