@@ -227,8 +227,33 @@ const TimeBlock = React.memo(function TimeBlock({
   );
 });
 
-interface TodayTimeBlockProps {
-  onPress?: () => void;
+/**
+ * TodayTimeBlock isolates the 1-second timer to prevent the entire HomeScreen
+ * from re-rendering every second.
+ */
+function TodayTimeBlock({ index, onPress }: { index: number; onPress: () => void }) {
+  const [liveNow, setLiveNow] = useState(() => new Date());
+
+  useEffect(() => {
+    const tick = () => setLiveNow(new Date());
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, []);
+
+  const day = formatDayPassedLeftWithSeconds(liveNow);
+
+  return (
+    <TimeBlock
+      index={index}
+      title="Today"
+      passedLabel={day.passedStr}
+      leftLabel={day.leftStr}
+      progress={day.progress}
+      passedPct={day.passedPct}
+      leftPct={day.leftPct}
+      onPress={onPress}
+    />
+  );
 }
 
 const TodayTimeBlock = React.memo(function TodayTimeBlock({
@@ -266,38 +291,6 @@ export function HomeScreen() {
   const { userProfile, timeState } = useObserveTimeState();
   const goalsFeatureEnabled = useGoalsFeatureEnabled();
   const { canAccessLife } = useAccessControl();
-
-  const handleDayPress = React.useCallback(
-    () => navigation.navigate('DayDetail'),
-    [navigation],
-  );
-  const handleMonthPress = React.useCallback(
-    () => navigation.navigate('MonthDetail'),
-    [navigation],
-  );
-  const handleYearPress = React.useCallback(
-    () => navigation.navigate('YearDetail'),
-    [navigation],
-  );
-  const handleLifePress = React.useCallback(
-    () => navigation.navigate('Life'),
-    [navigation],
-  );
-  const handlePremiumPress = React.useCallback(
-    () => navigation.navigate('Premium'),
-    [navigation],
-  );
-  const handleSettingsPress = React.useCallback(
-    () => navigation.navigate('Settings'),
-    [navigation],
-  );
-  const handleFabPress = React.useCallback(
-    () =>
-      navigation.navigate(
-        goalsFeatureEnabled ? 'DailyTasks' : 'TasksComingSoon',
-      ),
-    [navigation, goalsFeatureEnabled],
-  );
 
   const remainingDaysMonth = timeState.remainingDaysMonth ?? 0;
   const remainingDaysYear = timeState.remainingDaysYear ?? 0;
@@ -337,7 +330,10 @@ export function HomeScreen() {
             Passed and left — one place.
           </Text>
 
-          <TodayTimeBlock onPress={handleDayPress} />
+          <TodayTimeBlock
+            index={0}
+            onPress={() => navigation.navigate('DayDetail')}
+          />
 
           <TimeBlock
             index={1}
