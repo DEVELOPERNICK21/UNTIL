@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { useTheme } from '../theme';
 
@@ -10,7 +10,11 @@ interface ProgressBarProps {
 
 const THUMB_SIZE = 12;
 
-export function ProgressBar({
+/**
+ * ProgressBar component displays a simple horizontal progress bar.
+ * Wrapped in React.memo to prevent unnecessary re-renders.
+ */
+export const ProgressBar = memo(function ProgressBar({
   progress,
   height = 10,
   showThumb = false,
@@ -56,7 +60,7 @@ export function ProgressBar({
       </View>
     </View>
   );
-}
+});
 
 const styles = StyleSheet.create({
   track: {
