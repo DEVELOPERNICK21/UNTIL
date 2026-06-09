@@ -10,14 +10,23 @@ interface FABProps {
   children: React.ReactNode;
   style?: ViewStyle;
   active?: boolean;
+  accessibilityLabel?: string;
 }
 
-export function FAB({ onPress, children, style, active = true }: FABProps) {
+export function FAB({
+  onPress,
+  children,
+  style,
+  active = true,
+  accessibilityLabel,
+}: FABProps) {
   const theme = useTheme();
   return (
     <TouchableOpacity
       onPress={onPress}
       activeOpacity={0.85}
+      accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel}
       style={[
         styles.fab,
         { backgroundColor: theme.divider },
@@ -25,9 +34,13 @@ export function FAB({ onPress, children, style, active = true }: FABProps) {
         style,
       ]}
     >
-      <Text variant="label" color="primary" style={styles.fabLabel}>
-        {children}
-      </Text>
+      {typeof children === 'string' ? (
+        <Text variant="label" color="primary" style={styles.fabLabel}>
+          {children}
+        </Text>
+      ) : (
+        children
+      )}
     </TouchableOpacity>
   );
 }

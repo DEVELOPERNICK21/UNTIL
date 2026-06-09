@@ -8,11 +8,7 @@ import {
   RefreshControl,
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
-import {
-  getDailyTaskStatsUseCase,
-  getWeeklyTaskStatsUseCase,
-  getMonthlyTaskStatsUseCase,
-} from '../../di';
+import { useTaskReportStats } from '../../hooks';
 import {
   Text,
   ScreenGradient,
@@ -74,20 +70,12 @@ export function TaskReportScreen() {
   }, []);
 
   const today = todayIso();
-  const now = new Date();
-
-  const dailyStats = useMemo(
-    () => getDailyTaskStatsUseCase.execute(today),
-    [today, refreshKey]
-  );
-  const weeklyStats = useMemo(
-    () => getWeeklyTaskStatsUseCase.execute(now),
-    [refreshKey]
-  );
-  const monthlyStats = useMemo(
-    () => getMonthlyTaskStatsUseCase.execute(now.getFullYear(), now.getMonth() + 1),
-    [now.getFullYear(), now.getMonth(), refreshKey]
-  );
+  const now = useMemo(() => new Date(), [refreshKey]);
+  const { dailyStats, weeklyStats, monthlyStats } = useTaskReportStats({
+    today,
+    now,
+    refreshKey,
+  });
 
   const dailyPieData: PieSegment[] = useMemo(() => {
     if (dailyStats.total === 0) return [{ value: 1, color: Colors.divider }];

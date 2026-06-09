@@ -2,7 +2,7 @@ import { Platform } from 'react-native';
 import { getString, setString } from '../persistence/mmkv';
 import { STORAGE_KEYS } from '../persistence/schema';
 import {
-  MONETIZATION_PAYWALL_COPY,
+  MONETIZATION_PRICING,
   MONETIZATION_TRIAL_DAYS,
   TRIAL_REMINDER_DAYS,
 } from '../config/monetization';
@@ -11,9 +11,16 @@ import { TRIAL_DURATION_MS } from '../config/accessConstants';
 const ONE_DAY_MS = 24 * 60 * 60 * 1000;
 
 function reminderCopyForDay(day: number): string {
-  if (day === 10) return MONETIZATION_PAYWALL_COPY.trialReminderDay10;
-  if (day === 13) return MONETIZATION_PAYWALL_COPY.trialReminderDay13;
-  return MONETIZATION_PAYWALL_COPY.trialReminderDay14;
+  const total = MONETIZATION_TRIAL_DAYS;
+  if (day >= total) {
+    return `Your free preview ends today. ₹${MONETIZATION_PRICING.yearlyInr}/year keeps month & life widgets — less than ${MONETIZATION_PRICING.yearlyPerDayDisplay}/day.`;
+  }
+  if (day === total - 1) {
+    return 'Last day tomorrow — subscribe to keep month & life widgets without interruption.';
+  }
+  const daysLeft = total - day;
+  const leftLabel = daysLeft === 1 ? '1 day' : `${daysLeft} days`;
+  return `${leftLabel} left in your Premium preview. Keep your Life screen and widgets.`;
 }
 
 function getInAppShownDays(): Set<number> {
@@ -66,7 +73,7 @@ export function getTrialReminderMessage(day: number): string {
   return reminderCopyForDay(day);
 }
 
-/** Schedule local notifications for trial days 10, 13, 14 (Android). */
+/** Schedule local notifications for last preview days (Android). */
 export async function scheduleTrialLocalNotifications(
   trialStartMs: number
 ): Promise<void> {

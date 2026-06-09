@@ -14,11 +14,16 @@ import {
 } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { runMigrations } from './persistence/migration';
-import { RootNavigator } from './navigation/RootNavigator';
 import { AuthNavigator } from './navigation/AuthNavigator';
 import { SplashScreen } from './surfaces/splash';
 import { useOnboardingState, useAppUpdateCheck, useTrialEndingReminder } from './hooks';
 import { TrialEndingModal } from './components/premium/TrialEndingModal';
+import { AppEngagementLayer } from './components/engagement/AppEngagementLayer';
+import { logAppOpen } from './services/analytics';
+import {
+  recordRetentionAppOpen,
+  scheduleRetentionNotifications,
+} from './services/retentionNotifications';
 import { recordOptionalUpdateDismissed } from './services/updateService';
 import { ThemeProvider, useTheme } from './theme';
 import {
@@ -79,9 +84,11 @@ function handleIncrementCounterUrl(url: string | null): boolean {
 
 /** Splash display duration (SSOT); passed to SplashScreen for aligned progress animation */
 const SPLASH_DURATION_MS = 1000;
+const ACTIVE_EVENT_DEBOUNCE_MS = 2000;
 
 function App() {
   const handledInitialUrl = useRef(false);
+  const lastActiveHandledAt = useRef(0);
   const [showSplash, setShowSplash] = useState(true);
 
   useEffect(() => {
@@ -108,6 +115,9 @@ function App() {
     }
     // Engagement tracking for event-based Life unlock.
     trackAppOpenUseCase.execute();
+    recordRetentionAppOpen();
+    logAppOpen().catch(() => {});
+    scheduleRetentionNotifications().catch(() => {});
     syncWidgetCache();
     syncCustomCounters();
     syncCountdowns();
@@ -132,8 +142,16 @@ function App() {
 
     const subAppState = AppState.addEventListener('change', state => {
       if (state === 'active') {
+        const activeAt = Date.now();
+        if (activeAt - lastActiveHandledAt.current < ACTIVE_EVENT_DEBOUNCE_MS) {
+          return;
+        }
+        lastActiveHandledAt.current = activeAt;
         // Count each time the user returns to foreground.
         trackAppOpenUseCase.execute();
+        recordRetentionAppOpen();
+        logAppOpen().catch(() => {});
+        scheduleRetentionNotifications().catch(() => {});
         verifySubscriptionUseCase.execute().then(() => syncPremiumStatus());
         reconcilePlayEntitlementIfNeeded();
         if (
@@ -250,7 +268,7 @@ function PostSplashContent() {
 }
 
 function AppContent() {
-  return <RootNavigator />;
+  return <AppEngagementLayer />;
 }
 
 export { App };

@@ -2,6 +2,10 @@ apply plugin: "com.android.application"
 apply plugin: "org.jetbrains.kotlin.android"
 apply plugin: "com.facebook.react"
 
+if (file("google-services.json").exists()) {
+    apply plugin: "com.google.gms.google-services"
+}
+
 // Fail early with clear instructions if release build is run without keystore (skip when CI provides CM_* vars)
 gradle.taskGraph.whenReady { taskGraph ->
     if (taskGraph.hasTask(":app:bundleRelease") || taskGraph.hasTask(":app:assembleRelease")) {
@@ -97,7 +101,7 @@ android {
         applicationId "app.until.time"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 9
+        versionCode 10
         versionName "1.1"
     }
     signingConfigs {

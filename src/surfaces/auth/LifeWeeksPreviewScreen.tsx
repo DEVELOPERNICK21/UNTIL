@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { View, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import {
   SafeAreaView,
@@ -15,7 +15,7 @@ import {
   getFontFamilyForWeight,
   Radius,
 } from '../../theme';
-import { useObserveTimeState } from '../../hooks';
+import { useAnalytics, useObserveTimeState } from '../../hooks';
 import type { AuthStackParamList } from '../../navigation/AuthNavigator';
 
 type AuthNav = NativeStackNavigationProp<
@@ -30,6 +30,7 @@ export function LifeWeeksPreviewScreen() {
   const insets = useSafeAreaInsets();
   const theme = useTheme();
   const { userProfile, timeState } = useObserveTimeState();
+  const { logEvent } = useAnalytics();
 
   const { totalWeeks, livedWeeks } = useMemo(() => {
     const deathAge = userProfile.deathAge;
@@ -50,6 +51,10 @@ export function LifeWeeksPreviewScreen() {
 
   const livedWeeksLabel = livedWeeks.toLocaleString();
   const totalWeeksLabel = totalWeeks.toLocaleString();
+
+  useEffect(() => {
+    logEvent('life_preview_seen');
+  }, [logEvent]);
 
   const handleEnterPresent = () => {
     navigation.navigate('OnboardingPaywall');

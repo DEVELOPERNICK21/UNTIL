@@ -1,5 +1,5 @@
 /**
- * Onboarding flow — 3 Stitch carousel steps, then IdentitySetup ("Your Journey").
+ * Onboarding flow — 3 carousel steps, then Home (birth date deferred to Settings).
  */
 
 import React, {
@@ -8,6 +8,7 @@ import React, {
   createContext,
   useContext,
   useRef,
+  useEffect,
 } from 'react';
 import {
   View,
@@ -26,8 +27,6 @@ import {
   SafeAreaView,
   useSafeAreaInsets,
 } from 'react-native-safe-area-context';
-import { useNavigation } from '@react-navigation/native';
-import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Text, Card, DotsGrid } from '../../ui';
 import {
   useTheme,
@@ -38,7 +37,7 @@ import {
   getFontFamilyForWeight,
 } from '../../theme';
 import { onboardingImages } from '../../assets/images';
-import type { AuthStackParamList } from '../../navigation/AuthNavigator';
+import { useAnalytics } from '../../hooks';
 
 type StepConfig = {
   title: string;
@@ -211,10 +210,8 @@ function LifeGridPreview() {
 }
 
 function OnboardingScreenInner() {
-  const navigation =
-    useNavigation<
-      NativeStackNavigationProp<AuthStackParamList, 'Onboarding'>
-    >();
+  const completeOnboarding = useOnboardingComplete();
+  const { logEvent } = useAnalytics();
   const { width, height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const theme = useTheme();
@@ -238,10 +235,14 @@ function OnboardingScreenInner() {
     [width],
   );
 
-  const goToIdentity = useCallback(() => {
+  useEffect(() => {
+    logEvent('onboarding_step', { step: safeStep + 1 });
+  }, [logEvent, safeStep]);
+
+  const finishOnboarding = useCallback(() => {
     Vibration.vibrate(10);
-    navigation.navigate('IdentitySetup');
-  }, [navigation]);
+    completeOnboarding();
+  }, [completeOnboarding]);
 
   const handleCta = useCallback(() => {
     Vibration.vibrate(10);
@@ -251,9 +252,9 @@ function OnboardingScreenInner() {
         animated: true,
       });
     } else {
-      goToIdentity();
+      finishOnboarding();
     }
-  }, [config.ctaGoesToNext, isLast, safeStep, goToIdentity]);
+  }, [config.ctaGoesToNext, isLast, safeStep, finishOnboarding]);
 
   const renderSlide = useCallback(
     ({ item, index }: { item: StepConfig; index: number }) => (
@@ -312,7 +313,7 @@ function OnboardingScreenInner() {
     <SafeAreaView
       style={[styles.container, { backgroundColor: theme.background }]}
     >
-      <BrandHeader onSkip={goToIdentity} />
+      <BrandHeader onSkip={finishOnboarding} />
 
       <View style={styles.pagerWrap}>
         <FlatList
@@ -349,7 +350,7 @@ function OnboardingScreenInner() {
           { paddingBottom: Math.max(insets.bottom, Spacing.lg) },
         ]}
       >
-        <TouchableOpacity onPress={goToIdentity} style={styles.footerSkip}>
+        <TouchableOpacity onPress={finishOnboarding} style={styles.footerSkip}>
           <Text variant="body" style={{ color: theme.textSecondary }}>
             ✕ Skip
           </Text>

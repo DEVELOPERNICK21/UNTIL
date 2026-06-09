@@ -12,8 +12,11 @@ import { MmkvCountdownRepository } from './infrastructure/repositories/MmkvCount
 import { MmkvTaskRepository } from './infrastructure/repositories/MmkvTaskRepository';
 import { MmkvMonthlyGoalRepository } from './infrastructure/repositories/MmkvMonthlyGoalRepository';
 import { MmkvOnboardingRepository } from './infrastructure/repositories/MmkvOnboardingRepository';
+import { MmkvReflectionRepository } from './infrastructure/repositories/MmkvReflectionRepository';
 import { AppUpdateServiceAdapter } from './infrastructure/adapters/AppUpdateServiceAdapter';
 import { AppVersionProviderAdapter } from './infrastructure/adapters/AppVersionProviderAdapter';
+import { ActivityAnalysisAdapter } from './infrastructure/adapters/ActivityAnalysisAdapter';
+import { ClockAdapter } from './infrastructure/adapters/ClockAdapter';
 import { ObserveTimeStateUseCase } from './domain/useCases/ObserveTimeStateUseCase';
 import { UpdateUserProfileUseCase } from './domain/useCases/UpdateUserProfileUseCase';
 import { ObserveSubscriptionUseCase } from './domain/useCases/ObserveSubscriptionUseCase';
@@ -61,7 +64,10 @@ import { SetOnboardingCompletedUseCase } from './domain/useCases/SetOnboardingCo
 import { DeviceIdProviderAdapter } from './infrastructure/adapters/DeviceIdProviderAdapter';
 import { LicenseVerificationServiceAdapter } from './infrastructure/adapters/LicenseVerificationServiceAdapter';
 import { GetAccessStateUseCase } from './domain/useCases/GetAccessStateUseCase';
+import { GetDailyReflectionUseCase } from './domain/useCases/GetDailyReflectionUseCase';
 import { TrackAppOpenUseCase } from './domain/useCases/TrackAppOpenUseCase';
+import { SyncTrialPreviewUseCase } from './domain/useCases/SyncTrialPreviewUseCase';
+import { TrialPreviewApiAdapter } from './infrastructure/adapters/TrialPreviewApiAdapter';
 import { TrackLifeScreenViewedUseCase } from './domain/useCases/TrackLifeScreenViewedUseCase';
 import { ApplyStorePurchaseUseCase } from './domain/useCases/ApplyStorePurchaseUseCase';
 import { PlayPurchaseVerificationServiceAdapter } from './infrastructure/adapters/PlayPurchaseVerificationServiceAdapter';
@@ -90,18 +96,37 @@ const countdownRepository = new MmkvCountdownRepository();
 const taskRepository = new MmkvTaskRepository();
 const monthlyGoalRepository = new MmkvMonthlyGoalRepository();
 const onboardingRepository = new MmkvOnboardingRepository();
+const reflectionRepository = new MmkvReflectionRepository();
 const appUpdateService = new AppUpdateServiceAdapter();
 const appVersionProvider = new AppVersionProviderAdapter();
 const deviceIdProvider = new DeviceIdProviderAdapter();
 const licenseVerificationService = new LicenseVerificationServiceAdapter();
 const playPurchaseVerificationService = new PlayPurchaseVerificationServiceAdapter();
+const trialPreviewService = new TrialPreviewApiAdapter();
+const clock = new ClockAdapter();
+const activityAnalysisService = new ActivityAnalysisAdapter();
+
+export const syncTrialPreviewUseCase = new SyncTrialPreviewUseCase(
+  subscriptionRepository,
+  deviceIdProvider,
+  trialPreviewService,
+  syncPremiumAfterEntitlementChange
+);
 
 export const observeTimeStateUseCase = new ObserveTimeStateUseCase(timeRepository);
 export const updateUserProfileUseCase = new UpdateUserProfileUseCase(timeRepository);
 export const observeSubscriptionUseCase = new ObserveSubscriptionUseCase(subscriptionRepository);
 export const updateSubscriptionUseCase = new UpdateSubscriptionUseCase(subscriptionRepository);
 export const getAccessStateUseCase = new GetAccessStateUseCase(subscriptionRepository);
-export const trackAppOpenUseCase = new TrackAppOpenUseCase(subscriptionRepository);
+export const getDailyReflectionUseCase = new GetDailyReflectionUseCase(
+  timeRepository,
+  subscriptionRepository,
+  reflectionRepository
+);
+export const trackAppOpenUseCase = new TrackAppOpenUseCase(
+  subscriptionRepository,
+  syncTrialPreviewUseCase
+);
 export const trackLifeScreenViewedUseCase = new TrackLifeScreenViewedUseCase(subscriptionRepository);
 export const applyStorePurchaseUseCase = new ApplyStorePurchaseUseCase(
   subscriptionRepository,
@@ -154,12 +179,25 @@ export async function ensurePlayBillingSession(): Promise<void> {
   playBillingAndroid.attachPurchaseListeners();
 }
 
-export const logActivityUseCase = new LogActivityUseCase(activityRepository);
-export const getCategoryTotalsUseCase = new GetCategoryTotalsUseCase(activityRepository);
-export const getRegretProjectionUseCase = new GetRegretProjectionUseCase(activityRepository, timeRepository);
+export const logActivityUseCase = new LogActivityUseCase(
+  activityRepository,
+  clock
+);
+export const getCategoryTotalsUseCase = new GetCategoryTotalsUseCase(
+  activityRepository,
+  clock
+);
+export const getRegretProjectionUseCase = new GetRegretProjectionUseCase(
+  activityRepository,
+  timeRepository,
+  clock,
+  activityAnalysisService
+);
 export const getInterventionStateUseCase = new GetInterventionStateUseCase(
   activityRepository,
-  getAccessStateUseCase
+  getAccessStateUseCase,
+  clock,
+  activityAnalysisService
 );
 export const syncWidgetUseCase = new SyncWidgetUseCase(timeRepository);
 export const getCustomCountersUseCase = new GetCustomCountersUseCase(customCounterRepository);

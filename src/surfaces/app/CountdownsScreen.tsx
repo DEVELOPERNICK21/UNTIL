@@ -11,14 +11,8 @@ import {
 import { useFocusEffect } from '@react-navigation/native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Text, ScreenGradient, Card } from '../../ui';
-import { useWidgetSyncActions } from '../../hooks';
-import {
-  getCountdownsUseCase,
-  addCountdownUseCase,
-  removeCountdownUseCase,
-} from '../../di';
+import { useCountdowns, useWidgetSyncActions } from '../../hooks';
 import { Spacing, Colors, Radius, Typography } from '../../theme';
-import type { RootStackParamList } from '../../navigation/RootNavigator';
 import type { Countdown } from '../../types';
 
 function toDateString(d: Date): string {
@@ -46,9 +40,7 @@ function formatDaysLeft(days: number): string {
 
 export function CountdownsScreen() {
   const { syncCountdowns } = useWidgetSyncActions();
-  const [countdowns, setCountdowns] = useState<Countdown[]>(() =>
-    getCountdownsUseCase.execute(),
-  );
+  const { countdowns, refresh, addCountdown, removeCountdown } = useCountdowns();
   const [newTitle, setNewTitle] = useState('');
   const [newDate, setNewDate] = useState(() => {
     const d = new Date();
@@ -57,10 +49,6 @@ export function CountdownsScreen() {
   });
   const [showPicker, setShowPicker] = useState(false);
   const hasDeadline = countdowns.length > 0;
-
-  const refresh = useCallback(() => {
-    setCountdowns(getCountdownsUseCase.execute());
-  }, []);
 
   useFocusEffect(
     useCallback(() => {
@@ -72,14 +60,13 @@ export function CountdownsScreen() {
     if (hasDeadline) return;
     const title = newTitle.trim() || 'Deadline';
     const dateStr = toDateString(newDate);
-    addCountdownUseCase.execute(title, dateStr);
+    addCountdown(title, dateStr);
     setNewTitle('');
     setNewDate(() => {
       const d = new Date();
       d.setDate(d.getDate() + 7);
       return d;
     });
-    refresh();
     syncCountdowns();
   };
 
@@ -90,8 +77,7 @@ export function CountdownsScreen() {
         text: 'Remove',
         style: 'destructive',
         onPress: () => {
-          removeCountdownUseCase.execute(item.id);
-          refresh();
+          removeCountdown(item.id);
           syncCountdowns();
         },
       },

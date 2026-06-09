@@ -3,15 +3,18 @@
  */
 
 import type { IActivityRepository } from '../repository/IActivityRepository';
+import type { IClock } from '../ports/IClock';
 import type { ActivityCategory } from '../../types';
-import { nowMs, formatDateToIso } from '../../core/time/clock';
 
 export class LogActivityUseCase {
-  constructor(private readonly repository: IActivityRepository) {}
+  constructor(
+    private readonly repository: IActivityRepository,
+    private readonly clock: IClock
+  ) {}
 
   startCategory(category: ActivityCategory): void {
-    const now = nowMs();
-    const dateIso = formatDateToIso(new Date());
+    const now = this.clock.nowMs();
+    const dateIso = this.clock.todayIso();
     const blocks = this.repository.getBlocksForDate(dateIso);
 
     const withEndedOngoing = blocks.map((b) =>
@@ -22,8 +25,8 @@ export class LogActivityUseCase {
   }
 
   endCurrentBlock(): void {
-    const now = nowMs();
-    const dateIso = formatDateToIso(new Date());
+    const now = this.clock.nowMs();
+    const dateIso = this.clock.todayIso();
     const blocks = this.repository.getBlocksForDate(dateIso);
 
     const updated = blocks.map((b) =>

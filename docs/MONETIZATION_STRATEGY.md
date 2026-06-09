@@ -15,7 +15,7 @@ When changing prices, paywall text, or what is free vs Premium, update **this fi
 | **Lifetime** | **₹1,499 once** | `lifetime_unlock` | Decoy + high ARPU (~15% mix); **≥3× yearly** |
 | **Student yearly** | **₹249/year** | `yearly_subscription_student` | Optional (flag `studentPlanEnabled`) |
 
-**Preview:** 14-day in-app preview (`TRIAL_DURATION_MS`) — same Premium as paid; **not** a Google Play billing trial. Subscriptions bill at the Play price when the user subscribes.
+**Preview:** 5-day in-app preview (`TRIAL_DURATION_MS`) — same Premium as paid; **not** a Google Play billing trial. Start is synced server-side per device (clearing app storage does not restart). Subscriptions bill at the Play price when the user subscribes.
 
 **Not sold:** Monthly on paywall (optional later per audit; user chose yearly + lifetime only).
 
@@ -37,7 +37,7 @@ When changing prices, paywall text, or what is free vs Premium, update **this fi
 - **Floating overlay** — month & life modes (Android)  
 - **Dynamic Island / Live Activity** — month & life (iOS)  
 - **Activity intervention** alerts (nothing-time limits)  
-- **14-day free app preview** (in-app only; do not imply a Play billing trial unless Console offers one)
+- **5-day free app preview** (in-app only; server-backed; do not imply a Play billing trial unless Console offers one)
 
 ---
 

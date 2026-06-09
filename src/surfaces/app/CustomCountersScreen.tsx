@@ -8,25 +8,17 @@ import {
   Alert,
   Platform,
 } from 'react-native';
-import { useNavigation, useFocusEffect } from '@react-navigation/native';
-import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useFocusEffect } from '@react-navigation/native';
 import { Text, ScreenGradient, Card } from '../../ui';
-import { useWidgetSyncActions } from '../../hooks';
-import { getCustomCountersUseCase, addCustomCounterUseCase, removeCustomCounterUseCase } from '../../di';
+import { useCustomCounters, useWidgetSyncActions } from '../../hooks';
 import { Spacing, Colors, Radius, Typography } from '../../theme';
-import type { RootStackParamList } from '../../navigation/RootNavigator';
 import type { CustomCounter } from '../../types';
 
 export function CustomCountersScreen() {
-  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList, 'CustomCounters'>>();
   const { syncCustomCounters } = useWidgetSyncActions();
-  const [counters, setCounters] = useState<CustomCounter[]>(() => getCustomCountersUseCase.execute());
+  const { counters, refresh, addCounter, removeCounter } = useCustomCounters();
   const [newTitle, setNewTitle] = useState('');
   const hasCounter = counters.length > 0;
-
-  const refresh = useCallback(() => {
-    setCounters(getCustomCountersUseCase.execute());
-  }, []);
 
   useFocusEffect(
     useCallback(() => {
@@ -38,9 +30,8 @@ export function CustomCountersScreen() {
     if (hasCounter) return;
     const title = newTitle.trim();
     if (!title) return;
-    addCustomCounterUseCase.execute(title);
+    addCounter(title);
     setNewTitle('');
-    refresh();
     syncCustomCounters();
   };
 
@@ -54,8 +45,7 @@ export function CustomCountersScreen() {
           text: 'Remove',
           style: 'destructive',
           onPress: () => {
-            removeCustomCounterUseCase.execute(counter.id);
-            refresh();
+            removeCounter(counter.id);
             syncCustomCounters();
           },
         },

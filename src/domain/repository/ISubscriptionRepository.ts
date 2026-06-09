@@ -26,7 +26,7 @@ export interface ISubscriptionRepository {
   getPurchaseToken(): string | null;
   setPurchaseToken(token: string | null): void;
 
-  /** First app open timestamp for 14-day trial (ms). */
+  /** First app open timestamp for in-app preview (ms). */
   getTrialStartDate(): number | null;
   setTrialStartDate(ms: number | null): void;
 

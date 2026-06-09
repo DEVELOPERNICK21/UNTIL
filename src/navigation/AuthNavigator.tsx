@@ -1,5 +1,5 @@
 /**
- * Auth stack — onboarding then login. Shown after splash when auth not completed.
+ * Auth stack — shortened onboarding, optional identity/paywall screens. Shown before main app.
  */
 
 import React from 'react';
@@ -9,7 +9,6 @@ import {
   OnboardingScreen,
   OnboardingCompleteContext,
 } from '../surfaces/onboarding';
-import { LoginScreen } from '../surfaces/auth/LoginScreen';
 import { IdentitySetupScreen } from '../surfaces/auth/IdentitySetupScreen';
 import { LifeWeeksPreviewScreen } from '../surfaces/auth/LifeWeeksPreviewScreen';
 import { OnboardingPaywallScreen } from '../surfaces/auth/OnboardingPaywallScreen';
@@ -19,7 +18,6 @@ export type AuthStackParamList = {
   IdentitySetup: undefined;
   LifeWeeksPreview: undefined;
   OnboardingPaywall: undefined;
-  Login: undefined;
 };
 
 const Stack = createNativeStackNavigator<AuthStackParamList>();
@@ -49,7 +47,6 @@ export function AuthNavigator({ onComplete }: AuthNavigatorProps) {
             name="OnboardingPaywall"
             component={OnboardingPaywallScreen}
           />
-          <Stack.Screen name="Login" component={LoginScreen} />
         </Stack.Navigator>
       </NavigationContainer>
     </OnboardingCompleteContext.Provider>

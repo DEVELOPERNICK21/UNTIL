@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useMemo, useCallback, memo } from 'react';
 import {
   View,
   StyleSheet,
@@ -11,7 +11,7 @@ import Svg, { Line, Rect } from 'react-native-svg';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Text, ScreenGradient, Card, ProgressLine } from '../../ui';
+import { Text, ScreenGradient, Card, ProgressLine, FAB } from '../../ui';
 import { useObserveTimeState, useGoalsFeatureEnabled, useAccessControl } from '../../hooks';
 import { Spacing, FontFamily, getProgressColor, useTheme, Shadows } from '../../theme';
 import type { RootStackParamList } from '../../navigation/RootNavigator';
@@ -212,7 +212,12 @@ const TimeBlock = React.memo(function TimeBlock({
   return (
     <Animated.View style={{ opacity }}>
       {onPress ? (
-        <TouchableOpacity onPress={onPress} activeOpacity={0.85}>
+        <TouchableOpacity
+          onPress={onPress}
+          activeOpacity={0.85}
+          accessibilityRole="button"
+          accessibilityLabel={`${title}: ${passedPct}% passed, ${leftPct}% left. Tap for details.`}
+        >
           {content}
         </TouchableOpacity>
       ) : (
@@ -251,6 +256,33 @@ function TodayTimeBlock({ index, onPress }: { index: number; onPress: () => void
   );
 }
 
+const TodayTimeBlock = React.memo(function TodayTimeBlock({
+  onPress,
+}: TodayTimeBlockProps) {
+  const [liveNow, setLiveNow] = useState(() => new Date());
+
+  useEffect(() => {
+    const tick = () => setLiveNow(new Date());
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, []);
+
+  const day = formatDayPassedLeftWithSeconds(liveNow);
+
+  return (
+    <TimeBlock
+      index={0}
+      title="Today"
+      passedLabel={day.passedStr}
+      leftLabel={day.leftStr}
+      progress={day.progress}
+      passedPct={day.passedPct}
+      leftPct={day.leftPct}
+      onPress={onPress}
+    />
+  );
+});
+
 export function HomeScreen() {
   const navigation =
     useNavigation<NativeStackNavigationProp<RootStackParamList, 'Home'>>();
@@ -271,6 +303,17 @@ export function HomeScreen() {
     userProfile.deathAge ?? 80,
   );
   const hasBirthDate = !!userProfile.birthDate;
+
+  const navigateToDayDetail = useCallback(() => navigation.navigate('DayDetail'), [navigation]);
+  const navigateToMonthDetail = useCallback(() => navigation.navigate('MonthDetail'), [navigation]);
+  const navigateToYearDetail = useCallback(() => navigation.navigate('YearDetail'), [navigation]);
+  const navigateToLife = useCallback(() => navigation.navigate('Life'), [navigation]);
+  const navigateToPremium = useCallback(() => navigation.navigate('Premium'), [navigation]);
+  const navigateToSettings = useCallback(() => navigation.navigate('Settings'), [navigation]);
+  const navigateToTasks = useCallback(
+    () => navigation.navigate(goalsFeatureEnabled ? 'DailyTasks' : 'TasksComingSoon'),
+    [navigation, goalsFeatureEnabled],
+  );
 
   return (
     <View style={styles.container}>
@@ -300,7 +343,7 @@ export function HomeScreen() {
             progress={timeState.month}
             passedPct={month.passedPct}
             leftPct={month.leftPct}
-            onPress={() => navigation.navigate('MonthDetail')}
+            onPress={handleMonthPress}
           />
 
           <TimeBlock
@@ -311,7 +354,7 @@ export function HomeScreen() {
             progress={timeState.year}
             passedPct={year.passedPct}
             leftPct={year.leftPct}
-            onPress={() => navigation.navigate('YearDetail')}
+            onPress={handleYearPress}
           />
 
           {hasBirthDate ? (
@@ -324,7 +367,7 @@ export function HomeScreen() {
                 progress={timeState.life}
                 passedPct={life.passedPct}
                 leftPct={life.leftPct}
-                onPress={() => navigation.navigate('Life')}
+                onPress={handleLifePress}
               />
             ) : (
               <Card style={styles.block}>
@@ -343,7 +386,7 @@ export function HomeScreen() {
                   variant="caption"
                   color="primary"
                   style={styles.settingsLink}
-                  onPress={() => navigation.navigate('Premium')}
+                  onPress={handlePremiumPress}
                 >
                   Unlock Premium
                 </Text>
@@ -366,7 +409,7 @@ export function HomeScreen() {
                 variant="caption"
                 color="primary"
                 style={styles.settingsLink}
-                onPress={() => navigation.navigate('Settings')}
+                onPress={handleSettingsPress}
               >
                 Open Settings
               </Text>
@@ -394,9 +437,7 @@ export function HomeScreen() {
               bottom: Math.max(insets.bottom, Spacing[3]) + Spacing[2],
             },
           ]}
-          onPress={() =>
-            navigation.navigate(goalsFeatureEnabled ? 'DailyTasks' : 'TasksComingSoon')
-          }
+          onPress={handleFabPress}
           activeOpacity={0.85}
         >
           <Svg width={24} height={24} viewBox="0 0 24 24" fill="none">
@@ -405,7 +446,7 @@ export function HomeScreen() {
             <Line x1={8} y1={12} x2={16} y2={12} stroke="#FFFFFF" strokeWidth={1.5} strokeLinecap="round" />
             <Line x1={8} y1={16} x2={14} y2={16} stroke="#FFFFFF" strokeWidth={1.5} strokeLinecap="round" />
           </Svg>
-        </TouchableOpacity>
+        </FAB>
       </ScreenGradient>
     </View>
   );

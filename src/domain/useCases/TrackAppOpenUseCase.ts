@@ -3,10 +3,14 @@
  */
 
 import type { ISubscriptionRepository } from '../repository/ISubscriptionRepository';
+import type { SyncTrialPreviewUseCase } from './SyncTrialPreviewUseCase';
 import { LIFE_EVENT_UNLOCK_MS } from '../../config/accessConstants';
 
 export class TrackAppOpenUseCase {
-  constructor(private readonly subscriptionRepository: ISubscriptionRepository) {}
+  constructor(
+    private readonly subscriptionRepository: ISubscriptionRepository,
+    private readonly syncTrialPreview?: SyncTrialPreviewUseCase
+  ) {}
 
   execute(now: number = Date.now()): void {
     if (this.subscriptionRepository.getTrialStartDate() == null) {
@@ -17,5 +21,7 @@ export class TrackAppOpenUseCase {
     if (count >= 3) {
       this.subscriptionRepository.setLifeUnlockUntil(now + LIFE_EVENT_UNLOCK_MS);
     }
+
+    void this.syncTrialPreview?.execute(now);
   }
 }

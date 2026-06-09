@@ -2,13 +2,18 @@
  * Premium paywall — shared body from monetization SSOT.
  */
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { View, StyleSheet, ScrollView, Platform } from 'react-native';
 import { Text, ScreenGradient } from '../../ui';
 import { PremiumPaywallBody } from '../../components/premium/PremiumPaywallBody';
 import { Spacing } from '../../theme';
+import { useAnalytics } from '../../hooks';
 
 export function PremiumScreen() {
+  const { logEvent } = useAnalytics();
+  useEffect(() => {
+    logEvent('premium_viewed');
+  }, [logEvent]);
   if (Platform.OS !== 'android') {
     return (
       <View style={styles.container}>
