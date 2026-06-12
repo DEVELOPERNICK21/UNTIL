@@ -105,6 +105,7 @@ export function HourCalculationScreen() {
                 autoCapitalize="words"
                 onSubmitEditing={handleSaveTitle}
                 returnKeyType="done"
+                maxLength={100}
               />
               <TouchableOpacity style={styles.primaryButton} onPress={handleSaveTitle}>
                 <Text variant="caption" style={styles.primaryButtonText}>Save</Text>

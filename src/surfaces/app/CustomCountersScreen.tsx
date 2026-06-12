@@ -79,6 +79,7 @@ export function CustomCountersScreen() {
               onSubmitEditing={handleAdd}
               returnKeyType="done"
               editable={!hasCounter}
+              maxLength={100}
             />
             <TouchableOpacity
               style={[styles.addButton, (!newTitle.trim() || hasCounter) && styles.addButtonDisabled]}

@@ -311,6 +311,7 @@ export function SettingsScreen() {
                   placeholderTextColor={theme.textSecondary}
                   selectionColor={theme.percent}
                   keyboardType="number-pad"
+                  maxLength={3}
                 />
                 <TouchableOpacity
                   style={[styles.saveBtn, { backgroundColor: theme.percent }]}

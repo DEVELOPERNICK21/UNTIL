@@ -240,6 +240,7 @@ export function GoalDetailScreen() {
               placeholder="Task title"
               placeholderTextColor={Colors.textSecondary}
               autoCapitalize="sentences"
+              maxLength={200}
             />
             <Text variant="caption" color="secondary" style={styles.categoryLabel}>Category</Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipScroll} contentContainerStyle={styles.chipContainer}>
@@ -284,6 +285,7 @@ export function GoalDetailScreen() {
               placeholder="Task title"
               placeholderTextColor={Colors.textSecondary}
               autoCapitalize="sentences"
+              maxLength={200}
             />
             <Text variant="caption" color="secondary" style={styles.categoryLabel}>Category</Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipScroll} contentContainerStyle={styles.chipContainer}>

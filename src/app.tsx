@@ -70,7 +70,8 @@ function handleIncrementCounterUrl(url: string | null): boolean {
   const normalized = url.trim();
   if (!normalized.includes('increment-counter') || !normalized.includes('id='))
     return false;
-  const match = /id=([^&\s]+)/.exec(normalized);
+  // Strict validation: alphanumeric ID, max 64 characters.
+  const match = /id=([a-zA-Z0-9]{1,64})(?:&|\s|$)/.exec(normalized);
   const id = match?.[1];
   if (!id) return false;
   try {
