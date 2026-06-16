@@ -11,7 +11,7 @@ interface DotsGridProps {
   gap?: number;
 }
 
-export function DotsGrid({
+export const DotsGrid = React.memo(function DotsGridComponent({
   rows = 10,
   cols = 10,
   fillCount = 0,
@@ -25,9 +25,9 @@ export function DotsGrid({
 
   return (
     <View style={[styles.grid, { gap }]}>
-      {Array.from({ length: rows }, (_, rowIndex) => (
+      {Array.from({ length: rows }, (_r, rowIndex) => (
         <View key={rowIndex} style={[styles.row, { gap }]}>
-          {Array.from({ length: cols }, (_, colIndex) => {
+          {Array.from({ length: cols }, (_c, colIndex) => {
             const index = rowIndex * cols + colIndex;
             const isFilled = index < filled;
             return (
@@ -49,7 +49,7 @@ export function DotsGrid({
       ))}
     </View>
   );
-}
+});
 
 const styles = StyleSheet.create({
   grid: {},

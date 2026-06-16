@@ -10,7 +10,7 @@ interface ProgressBarProps {
 
 const THUMB_SIZE = 12;
 
-export function ProgressBar({
+export const ProgressBar = React.memo(function ProgressBarComponent({
   progress,
   height = 10,
   showThumb = false,
@@ -33,7 +33,6 @@ export function ProgressBar({
           style={[
             styles.fill,
             {
-              flex: 1,
               height,
               backgroundColor: theme.progressFill,
             },
@@ -56,7 +55,7 @@ export function ProgressBar({
       </View>
     </View>
   );
-}
+});
 
 const styles = StyleSheet.create({
   track: {
@@ -71,6 +70,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   fill: {
+    flex: 1,
     borderRadius: 999,
   },
   thumb: {},
