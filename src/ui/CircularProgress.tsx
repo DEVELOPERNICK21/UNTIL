@@ -11,7 +11,7 @@ interface CircularProgressProps {
   label?: string;
 }
 
-export function CircularProgress({
+export const CircularProgress = React.memo(function CircularProgress({
   progress,
   size = 80,
   strokeWidth = 10,
@@ -61,7 +61,7 @@ export function CircularProgress({
       </View>
     </View>
   );
-}
+});
 
 const styles = StyleSheet.create({
   container: {

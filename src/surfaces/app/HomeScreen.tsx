@@ -231,7 +231,13 @@ const TimeBlock = React.memo(function TimeBlock({
  * TodayTimeBlock isolates the 1-second timer to prevent the entire HomeScreen
  * from re-rendering every second.
  */
-function TodayTimeBlock({ index, onPress }: { index: number; onPress: () => void }) {
+const TodayTimeBlock = React.memo(function TodayTimeBlock({
+  index = 0,
+  onPress,
+}: {
+  index?: number;
+  onPress: () => void;
+}) {
   const [liveNow, setLiveNow] = useState(() => new Date());
 
   useEffect(() => {
@@ -254,36 +260,9 @@ function TodayTimeBlock({ index, onPress }: { index: number; onPress: () => void
       onPress={onPress}
     />
   );
-}
-
-const TodayTimeBlock = React.memo(function TodayTimeBlock({
-  onPress,
-}: TodayTimeBlockProps) {
-  const [liveNow, setLiveNow] = useState(() => new Date());
-
-  useEffect(() => {
-    const tick = () => setLiveNow(new Date());
-    const id = setInterval(tick, 1000);
-    return () => clearInterval(id);
-  }, []);
-
-  const day = formatDayPassedLeftWithSeconds(liveNow);
-
-  return (
-    <TimeBlock
-      index={0}
-      title="Today"
-      passedLabel={day.passedStr}
-      leftLabel={day.leftStr}
-      progress={day.progress}
-      passedPct={day.passedPct}
-      leftPct={day.leftPct}
-      onPress={onPress}
-    />
-  );
 });
 
-export function HomeScreen() {
+export const HomeScreen = React.memo(function HomeScreen() {
   const navigation =
     useNavigation<NativeStackNavigationProp<RootStackParamList, 'Home'>>();
   const insets = useSafeAreaInsets();
@@ -332,7 +311,7 @@ export function HomeScreen() {
 
           <TodayTimeBlock
             index={0}
-            onPress={() => navigation.navigate('DayDetail')}
+            onPress={navigateToDayDetail}
           />
 
           <TimeBlock
@@ -343,7 +322,7 @@ export function HomeScreen() {
             progress={timeState.month}
             passedPct={month.passedPct}
             leftPct={month.leftPct}
-            onPress={handleMonthPress}
+            onPress={navigateToMonthDetail}
           />
 
           <TimeBlock
@@ -354,7 +333,7 @@ export function HomeScreen() {
             progress={timeState.year}
             passedPct={year.passedPct}
             leftPct={year.leftPct}
-            onPress={handleYearPress}
+            onPress={navigateToYearDetail}
           />
 
           {hasBirthDate ? (
@@ -367,7 +346,7 @@ export function HomeScreen() {
                 progress={timeState.life}
                 passedPct={life.passedPct}
                 leftPct={life.leftPct}
-                onPress={handleLifePress}
+                onPress={navigateToLife}
               />
             ) : (
               <Card style={styles.block}>
@@ -386,7 +365,7 @@ export function HomeScreen() {
                   variant="caption"
                   color="primary"
                   style={styles.settingsLink}
-                  onPress={handlePremiumPress}
+                  onPress={navigateToPremium}
                 >
                   Unlock Premium
                 </Text>
@@ -409,7 +388,7 @@ export function HomeScreen() {
                 variant="caption"
                 color="primary"
                 style={styles.settingsLink}
-                onPress={handleSettingsPress}
+                onPress={navigateToSettings}
               >
                 Open Settings
               </Text>
@@ -428,17 +407,14 @@ export function HomeScreen() {
           ) : null}
         </ScrollView>
 
-        <TouchableOpacity
-          style={[
-            styles.fab,
-            {
-              backgroundColor: theme.percent,
-              right: Spacing[4],
-              bottom: Math.max(insets.bottom, Spacing[3]) + Spacing[2],
-            },
-          ]}
-          onPress={handleFabPress}
-          activeOpacity={0.85}
+        <FAB
+          style={{
+            position: 'absolute',
+            right: Spacing[4],
+            bottom: Math.max(insets.bottom, Spacing[3]) + Spacing[2],
+          }}
+          onPress={navigateToTasks}
+          accessibilityLabel="Daily tasks"
         >
           <Svg width={24} height={24} viewBox="0 0 24 24" fill="none">
             <Rect x={5} y={3} width={14} height={18} rx={2} stroke="#FFFFFF" strokeWidth={2} fill="none" />
