@@ -68,13 +68,24 @@ function reconcilePlayEntitlementIfNeeded(): void {
 function handleIncrementCounterUrl(url: string | null): boolean {
   if (!url || typeof url !== 'string') return false;
   const normalized = url.trim();
-  if (!normalized.includes('increment-counter') || !normalized.includes('id='))
+
+  // 🛡️ Sentinel: Strict validation of deep link scheme and host.
+  // Expected format: until://increment-counter?id=...
+  if (!normalized.startsWith('until://increment-counter')) {
     return false;
-  const match = /id=([^&\s]+)/.exec(normalized);
+  }
+
+  // Use strict regex for id: alphanumeric only, max length 64 (mitigates injection/DoS).
+  const match = /[?&]id=([a-z0-9]{1,64})(&|$)/i.exec(normalized);
   const id = match?.[1];
-  if (!id) return false;
+
+  if (!id) {
+    return false;
+  }
+
   try {
-    incrementCustomCounterUseCase.execute(decodeURIComponent(id));
+    // No decodeURIComponent needed for validated alphanumeric ID.
+    incrementCustomCounterUseCase.execute(id);
     syncCustomCounters();
     return true;
   } catch {
