@@ -74,6 +74,9 @@ website/out
 # Stitch design exports (generated)
 stitch-output/
 
+# Local analytics overrides (PostHog API key)
+src/config/analytics.local.ts
+
 # Yarn
 .yarn/*
 !.yarn/patches
@@ -81,3 +84,4 @@ stitch-output/
 !.yarn/releases
 !.yarn/sdks
 !.yarn/versions
+.env

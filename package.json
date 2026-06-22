@@ -26,6 +26,7 @@
     "@react-navigation/native-stack": "^7.12.0",
     "@reduxjs/toolkit": "^2.11.2",
     "@shopify/react-native-skia": "^2.5.1",
+    "posthog-react-native": "^4.47.2",
     "react": "19.2.0",
     "react-hook-form": "^7.71.1",
     "react-native": "0.83.1",
@@ -68,6 +69,5 @@
   },
   "engines": {
     "node": ">=20"
-  },
-  "packageManager": "pnpm@10.30.3"
+  }
 }

@@ -3,7 +3,7 @@
  * Wires navigation, migrations
  */
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useMemo } from 'react';
 import {
   StatusBar,
   AppState,
@@ -13,13 +13,21 @@ import {
   BackHandler,
 } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { PostHogProvider } from 'posthog-react-native';
 import { runMigrations } from './persistence/migration';
 import { AuthNavigator } from './navigation/AuthNavigator';
 import { SplashScreen } from './surfaces/splash';
-import { useOnboardingState, useAppUpdateCheck, useTrialEndingReminder } from './hooks';
+import {
+  useOnboardingState,
+  useAppUpdateCheck,
+  useTrialEndingReminder,
+  useAnalyticsBootstrap,
+} from './hooks';
 import { TrialEndingModal } from './components/premium/TrialEndingModal';
 import { AppEngagementLayer } from './components/engagement/AppEngagementLayer';
 import { logAppOpen } from './services/analytics';
+import { initPostHogClient } from './services/posthogClient';
+import { POSTHOG_HOST, POSTHOG_ENABLED } from './config/analytics';
 import {
   recordRetentionAppOpen,
   scheduleRetentionNotifications,
@@ -90,6 +98,7 @@ function App() {
   const handledInitialUrl = useRef(false);
   const lastActiveHandledAt = useRef(0);
   const [showSplash, setShowSplash] = useState(true);
+  const posthogClient = useMemo(() => initPostHogClient(), []);
 
   useEffect(() => {
     const t = setTimeout(() => setShowSplash(false), SPLASH_DURATION_MS);
@@ -207,17 +216,35 @@ function App() {
     );
   }
 
+  const appTree = (
+    <ThemeProvider>
+      <PostSplashContent />
+    </ThemeProvider>
+  );
+
   return (
     <SafeAreaProvider>
-      <ThemeProvider>
-        <PostSplashContent />
-      </ThemeProvider>
+      {posthogClient && POSTHOG_ENABLED ? (
+        <PostHogProvider
+          client={posthogClient}
+          autocapture={{
+            captureScreens: false,
+            captureTouches: false,
+          }}
+          options={{ host: POSTHOG_HOST }}
+        >
+          {appTree}
+        </PostHogProvider>
+      ) : (
+        appTree
+      )}
     </SafeAreaProvider>
   );
 }
 
 /** After splash: show onboarding (auth stack) or main app based on completion. */
 function PostSplashContent() {
+  useAnalyticsBootstrap();
   const theme = useTheme();
   const { hasCompleted, completeOnboarding } = useOnboardingState();
   const { updateType, storeUrl, latestVersion } = useAppUpdateCheck();

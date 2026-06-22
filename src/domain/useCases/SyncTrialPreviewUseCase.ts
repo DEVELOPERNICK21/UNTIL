@@ -12,7 +12,8 @@ export class SyncTrialPreviewUseCase {
     private readonly subscriptionRepository: ISubscriptionRepository,
     private readonly deviceIdProvider: IDeviceIdProvider,
     private readonly trialPreviewService: ITrialPreviewService,
-    private readonly onTrialUpdated?: () => void
+    private readonly onTrialUpdated?: () => void,
+    private readonly onFirstTrialStart?: () => void
   ) {}
 
   async execute(now: number = Date.now()): Promise<void> {
@@ -21,6 +22,7 @@ export class SyncTrialPreviewUseCase {
     const localStart = this.subscriptionRepository.getTrialStartDate();
     if (localStart == null) {
       this.subscriptionRepository.setTrialStartDate(now);
+      this.onFirstTrialStart?.();
     }
 
     const deviceId = await this.deviceIdProvider.getDeviceId();

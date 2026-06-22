@@ -1806,6 +1806,18 @@
   resolved "https://registry.yarnpkg.com/@notifee/react-native/-/react-native-9.1.8.tgz#3d55cb3fbcc21f9e35931e366afdf64b294da891"
   integrity sha512-Az/dueoPerJsbbjRxu8a558wKY+gONUrfoy3Hs++5OqbeMsR0dYe6P+4oN6twrLFyzAhEA1tEoZRvQTFDRmvQg==
 
+"@posthog/core@^1.32.5":
+  version "1.32.5"
+  resolved "https://registry.yarnpkg.com/@posthog/core/-/core-1.32.5.tgz#49c629b161c138f5a51a388d79feea7dc4d5bc6d"
+  integrity sha512-Vmr6LZms7QEP1ljfTRRBVtLkeEHMrTmLECt0FXPLwUIgPwxOgvBdAYwRMWyP13WuN/XQweo1tJ9J1DxHNAF3qg==
+  dependencies:
+    "@posthog/types" "^1.386.4"
+
+"@posthog/types@^1.386.4":
+  version "1.386.4"
+  resolved "https://registry.yarnpkg.com/@posthog/types/-/types-1.386.4.tgz#80abf91f9c087d9d417629302259cb5c18122761"
+  integrity sha512-UgE9+5+wkZg7yc2MpW5G32/6zYW8fAbXJkG8WGnrb4X8OKWzNa9cWeNCd82vKok+TSoRpM4qiYQFtBSpJS1dsw==
+
 "@protobufjs/aspromise@^1.1.1", "@protobufjs/aspromise@^1.1.2":
   version "1.1.2"
   resolved "https://registry.yarnpkg.com/@protobufjs/aspromise/-/aspromise-1.1.2.tgz#9b8b0cc663d669a7d8f6f5d0893a14d348f30fbf"
@@ -6299,6 +6311,14 @@ possible-typed-array-names@^1.0.0:
   version "1.1.0"
   resolved "https://registry.npmjs.org/possible-typed-array-names/-/possible-typed-array-names-1.1.0.tgz"
   integrity sha512-/+5VFTchJDoVj3bhoqi6UeymcD00DAwb1nJwamzPvHEszJ4FpF6SNNbUbOS8yI56qHzdV8eK0qEfOSiodkTdxg==
+
+posthog-react-native@^4.47.2:
+  version "4.47.2"
+  resolved "https://registry.yarnpkg.com/posthog-react-native/-/posthog-react-native-4.47.2.tgz#f1ac5da333dc643eba716c58208cca7100e129b6"
+  integrity sha512-QdwGXjyoYdogt2a5UBJUzEEi7NeUnbvWuNqmmCaU8lbeXaj+4Y2+6ayE5+3jjmoucC4rOLR6SRK5ZXtMlxLIhQ==
+  dependencies:
+    "@posthog/core" "^1.32.5"
+    "@posthog/types" "^1.386.4"
 
 prelude-ls@^1.2.1:
   version "1.2.1"

@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, useMemo, useCallback, memo } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   View,
   StyleSheet,
@@ -11,10 +11,11 @@ import Svg, { Line, Rect } from 'react-native-svg';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Text, ScreenGradient, Card, ProgressLine, FAB } from '../../ui';
+import { Text, ScreenGradient, Card, ProgressLine } from '../../ui';
 import { useObserveTimeState, useGoalsFeatureEnabled, useAccessControl } from '../../hooks';
 import { Spacing, FontFamily, getProgressColor, useTheme, Shadows } from '../../theme';
 import type { RootStackParamList } from '../../navigation/RootNavigator';
+import { logAnalyticsEvent } from '../../services/analytics';
 
 function getDaysInMonth(): number {
   const d = new Date();
@@ -283,10 +284,10 @@ export function HomeScreen() {
     () => navigation.navigate('Life'),
     [navigation],
   );
-  const handlePremiumPress = React.useCallback(
-    () => navigation.navigate('Premium'),
-    [navigation],
-  );
+  const handlePremiumPress = React.useCallback(() => {
+    void logAnalyticsEvent('home_life_locked_tapped');
+    navigation.navigate('Premium');
+  }, [navigation]);
   const handleSettingsPress = React.useCallback(
     () => navigation.navigate('Settings'),
     [navigation],
@@ -310,17 +311,6 @@ export function HomeScreen() {
     userProfile.deathAge ?? 80,
   );
   const hasBirthDate = !!userProfile.birthDate;
-
-  const navigateToDayDetail = useCallback(() => navigation.navigate('DayDetail'), [navigation]);
-  const navigateToMonthDetail = useCallback(() => navigation.navigate('MonthDetail'), [navigation]);
-  const navigateToYearDetail = useCallback(() => navigation.navigate('YearDetail'), [navigation]);
-  const navigateToLife = useCallback(() => navigation.navigate('Life'), [navigation]);
-  const navigateToPremium = useCallback(() => navigation.navigate('Premium'), [navigation]);
-  const navigateToSettings = useCallback(() => navigation.navigate('Settings'), [navigation]);
-  const navigateToTasks = useCallback(
-    () => navigation.navigate(goalsFeatureEnabled ? 'DailyTasks' : 'TasksComingSoon'),
-    [navigation, goalsFeatureEnabled],
-  );
 
   return (
     <View style={styles.container}>
@@ -450,7 +440,7 @@ export function HomeScreen() {
             <Line x1={8} y1={12} x2={16} y2={12} stroke="#FFFFFF" strokeWidth={1.5} strokeLinecap="round" />
             <Line x1={8} y1={16} x2={14} y2={16} stroke="#FFFFFF" strokeWidth={1.5} strokeLinecap="round" />
           </Svg>
-        </FAB>
+        </TouchableOpacity>
       </ScreenGradient>
     </View>
   );

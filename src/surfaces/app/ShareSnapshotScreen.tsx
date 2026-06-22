@@ -23,6 +23,7 @@ import {
 } from '@shopify/react-native-skia';
 import Share from 'react-native-share';
 import RNFS from 'react-native-fs';
+import { logAnalyticsEvent } from '../../services/analytics';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text, ScreenGradient, Card } from '../../ui';
 import { useObserveTimeState } from '../../hooks';
@@ -208,6 +209,7 @@ export function ShareSnapshotScreen() {
       const filePath = `${RNFS.CachesDirectoryPath}/${fileName}`;
       await RNFS.writeFile(filePath, pngBase64, 'base64');
 
+      void logAnalyticsEvent('share_tapped');
       await Share.open({
         url: `file://${filePath}`,
         type: 'image/png',

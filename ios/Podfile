@@ -8,11 +8,12 @@ require Pod::Executable.execute_command('node', ['-p',
 platform :ios, min_ios_version_supported
 prepare_react_native_project!
 
-linkage = ENV['USE_FRAMEWORKS']
-if linkage != nil
-  Pod::UI.puts "Configuring Pod with #{linkage}ally linked Frameworks".green
-  use_frameworks! :linkage => linkage.to_sym
-end
+# Required by @react-native-firebase (firebase-ios-sdk). Do not use use_modular_headers! —
+# it breaks React-RuntimeHermes / system modules (UIKit, DarwinFoundation) on Xcode 16+.
+$RNFirebaseAsStaticFramework = true
+linkage = ENV['USE_FRAMEWORKS'] || 'static'
+Pod::UI.puts "Configuring Pod with #{linkage}ally linked Frameworks".green
+use_frameworks! :linkage => linkage.to_sym
 
 target 'UNTIL' do
   config = use_native_modules!
@@ -30,6 +31,15 @@ target 'UNTIL' do
       :mac_catalyst_enabled => false,
       # :ccache_enabled => true
     )
+
+    # Xcode 26+ / Apple Clang: fmt 11.0.2 consteval fails in format-inl.h (RN #55601).
+    installer.pods_project.targets.each do |target|
+      next unless target.name == 'fmt'
+
+      target.build_configurations.each do |build_config|
+        build_config.build_settings['CLANG_CXX_LANGUAGE_STANDARD'] = 'c++17'
+      end
+    end
 
     # @shopify/react-native-skia: xcframeworks must exist under libs/ios or Archive
     # fails with undefined Sk* symbols. The pod's prepare_command should copy them;

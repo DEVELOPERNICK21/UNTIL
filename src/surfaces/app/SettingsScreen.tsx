@@ -35,6 +35,7 @@ import {
   FontFamily,
 } from '../../theme';
 import type { RootStackParamList } from '../../navigation/RootNavigator';
+import { logAnalyticsEvent } from '../../services/analytics';
 
 function parseBirthDate(str: string): Date {
   if (!str || str.length < 10) return new Date(1990, 0, 1);
@@ -118,7 +119,11 @@ export function SettingsScreen() {
   const handleSave = () => {
     if (birthInput) {
       const age = parseInt(deathInput, 10);
+      const isFirstTimeSetting = !userProfile.birthDate;
       updateUserProfile(birthInput, isNaN(age) || age <= 0 ? 80 : age);
+      void logAnalyticsEvent('settings_birth_date_saved', {
+        is_first_time: isFirstTimeSetting,
+      });
       setShowEditProfile(false);
     }
   };

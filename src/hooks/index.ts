@@ -29,3 +29,4 @@ export { useTaskReportStats } from './useTaskReport';
 export { useMonthlyGoals } from './useMonthlyGoals';
 export { useGoalDetail } from './useGoalDetail';
 export { useAnalytics } from './useAnalytics';
+export { useAnalyticsBootstrap } from './useAnalyticsBootstrap';

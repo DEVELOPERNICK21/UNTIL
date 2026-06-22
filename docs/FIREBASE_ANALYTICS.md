@@ -1,6 +1,6 @@
 # Firebase Analytics & Crashlytics
 
-UNTIL logs product events via [`src/services/analytics.ts`](../src/services/analytics.ts). Events are sent to Firebase when native modules are installed and `google-services.json` is present.
+UNTIL logs product events via [`src/services/analytics.ts`](../src/services/analytics.ts). Events are sent to Firebase when native modules are installed and `google-services.json` is present. The same events are **dual-written to PostHog** when configured — see [`POSTHOG_ANALYTICS.md`](./POSTHOG_ANALYTICS.md).
 
 ## Setup (Android)
 

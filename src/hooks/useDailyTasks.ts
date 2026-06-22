@@ -13,6 +13,7 @@ import {
   toggleTaskUseCase,
   updateTaskUseCase,
 } from '../di';
+import { logAnalyticsEvent } from '../services/analytics';
 import type { DailyTask, DailyTaskStats } from '../types';
 
 export function useDailyTasks(date: string) {
@@ -32,16 +33,21 @@ export function useDailyTasks(date: string) {
     (task: Omit<DailyTask, 'id' | 'completed'>) => {
       addTaskUseCase.execute(task);
       refresh();
+      void logAnalyticsEvent('task_added');
     },
     [refresh]
   );
 
   const toggleTask = useCallback(
     (id: string) => {
+      const task = getTasksForDayUseCase.execute(date).find(t => t.id === id);
       toggleTaskUseCase.execute(id);
       refresh();
+      if (task && !task.completed) {
+        void logAnalyticsEvent('task_completed');
+      }
     },
-    [refresh]
+    [date, refresh]
   );
 
   const updateTask = useCallback(

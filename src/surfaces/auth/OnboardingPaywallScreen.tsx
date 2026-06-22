@@ -12,8 +12,9 @@ import { Text, ScreenGradient } from '../../ui';
 import { PremiumPaywallBody } from '../../components/premium/PremiumPaywallBody';
 import { useObserveTimeState } from '../../hooks';
 import { useOnboardingComplete } from '../onboarding';
-import { Spacing, Radius, useTheme } from '../../theme';
+import { Spacing, useTheme } from '../../theme';
 import { MONETIZATION_PAYWALL_COPY } from '../../config/monetization';
+import { logAnalyticsEvent } from '../../services/analytics';
 
 export function OnboardingPaywallScreen() {
   const insets = useSafeAreaInsets();
@@ -40,6 +41,7 @@ export function OnboardingPaywallScreen() {
               subheadline={subheadline}
               onPurchaseSuccess={completeAuth}
               showRestore={false}
+              source="onboarding_paywall"
             />
           </ScrollView>
           <View
@@ -48,7 +50,15 @@ export function OnboardingPaywallScreen() {
               { paddingBottom: Math.max(insets.bottom, Spacing[3]) },
             ]}
           >
-            <TouchableOpacity onPress={completeAuth} activeOpacity={0.7}>
+            <TouchableOpacity
+              onPress={() => {
+                void logAnalyticsEvent('onboarding_paywall_skipped', {
+                  life_percent: lifePercent,
+                });
+                completeAuth();
+              }}
+              activeOpacity={0.7}
+            >
               <Text variant="body" style={{ color: theme.textSecondary, textAlign: 'center' }}>
                 Continue with free Day & Year →
               </Text>

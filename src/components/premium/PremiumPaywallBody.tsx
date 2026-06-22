@@ -29,6 +29,10 @@ import {
   PREMIUM_BENEFITS,
   formatPreviewActiveBody,
 } from '../../config/monetization';
+import {
+  logAnalyticsEvent,
+  type AnalyticsPaywallSource,
+} from '../../services/analytics';
 
 function priceLabel(
   products: Array<{ productId: string; price: string }>,
@@ -44,6 +48,7 @@ export interface PremiumPaywallBodyProps {
   subheadline?: string;
   onPurchaseSuccess?: () => void;
   showRestore?: boolean;
+  source?: AnalyticsPaywallSource;
 }
 
 export function PremiumPaywallBody({
@@ -51,6 +56,7 @@ export function PremiumPaywallBody({
   subheadline = MONETIZATION_PAYWALL_COPY.subheadline,
   onPurchaseSuccess,
   showRestore = true,
+  source = 'unknown',
 }: PremiumPaywallBodyProps) {
   const theme = useTheme();
   const { isPremium } = useObserveSubscription();
@@ -107,19 +113,36 @@ export function PremiumPaywallBody({
         Alert.alert('Premium', 'Purchases are available on Android.');
         return;
       }
+      const priceDisplay = priceLabel(products, productId, '');
+      void logAnalyticsEvent('premium_purchase_started', {
+        plan_id: productId,
+        source,
+        price_display: priceDisplay,
+      });
       try {
         await requestPurchase(productId);
         onPurchaseSuccess?.();
       } catch (e: unknown) {
         const err = e as { code?: string; message?: string };
-        if (err?.code === ErrorCode.UserCancelled) return;
+        if (err?.code === ErrorCode.UserCancelled) {
+          void logAnalyticsEvent('premium_purchase_cancelled', {
+            plan_id: productId,
+            source,
+          });
+          return;
+        }
+        void logAnalyticsEvent('premium_purchase_failed', {
+          plan_id: productId,
+          source,
+          error_code: err?.code ?? 'unknown',
+        });
         Alert.alert(
           'Purchase failed',
           err?.message ?? 'Something went wrong. Check your connection and try again.'
         );
       }
     },
-    [requestPurchase, onPurchaseSuccess]
+    [requestPurchase, onPurchaseSuccess, products, source]
   );
 
   const onRestore = useCallback(async () => {
@@ -132,14 +155,17 @@ export function PremiumPaywallBody({
           ? 'Your purchase has been restored.'
           : 'No active purchase found for this Google account.'
       );
-      if (restored) onPurchaseSuccess?.();
+      if (restored) {
+        void logAnalyticsEvent('premium_restore_completed', { source });
+        onPurchaseSuccess?.();
+      }
     } catch (e: unknown) {
       const err = e as { message?: string };
       Alert.alert('Restore failed', err?.message ?? 'Try again later.');
     } finally {
       setRestoring(false);
     }
-  }, [restorePurchases, onPurchaseSuccess]);
+  }, [restorePurchases, onPurchaseSuccess, source]);
 
   if (Platform.OS !== 'android') {
     return (

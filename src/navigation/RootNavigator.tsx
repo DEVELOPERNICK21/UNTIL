@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { rootNavigationRef } from './rootNavigationRef';
+import { trackNavigationStateChange } from './useNavigationAnalytics';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { HomeScreen } from '../surfaces/app/HomeScreen';
 import { SettingsScreen } from '../surfaces/app/SettingsScreen';
@@ -296,7 +297,10 @@ export function RootNavigator() {
     headerShadowVisible: false,
   };
   return (
-    <NavigationContainer ref={rootNavigationRef}>
+    <NavigationContainer
+      ref={rootNavigationRef}
+      onStateChange={state => trackNavigationStateChange(state)}
+    >
       <Stack.Navigator screenOptions={screenOptions}>
         <Stack.Screen
           name="Home"

@@ -6,6 +6,7 @@ import {
   recordTrialReminderInAppShown,
   scheduleTrialLocalNotifications,
 } from '../services/trialReminders';
+import { logAnalyticsEvent } from '../services/analytics';
 
 export function useTrialEndingReminder() {
   const { isPremium } = useObserveSubscription();
@@ -23,6 +24,9 @@ export function useTrialEndingReminder() {
       access.trialStartDate,
       isPremium
     );
+    if (day != null) {
+      void logAnalyticsEvent('trial_reminder_shown', { trial_day: day });
+    }
     setReminderDay(day);
   }, [access.trialStartDate, isPremium, access.trialActive]);
 

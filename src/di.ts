@@ -77,6 +77,8 @@ import { PlayBillingRepository } from './infrastructure/repositories/PlayBilling
 import { NoOpPlayBillingRepository } from './infrastructure/repositories/NoOpPlayBillingRepository';
 import type { IPlayBillingRepository } from './domain/repository/IPlayBillingRepository';
 import { productIdToPurchaseType } from './domain/billing/mapProductId';
+import { logAnalyticsEvent } from './services/analytics';
+import { getTrialDurationDays } from './services/analyticsUserProperties';
 
 /** Avoid top-level import of WidgetSync (circular with this file). */
 function syncPremiumAfterEntitlementChange(): void {
@@ -110,7 +112,12 @@ export const syncTrialPreviewUseCase = new SyncTrialPreviewUseCase(
   subscriptionRepository,
   deviceIdProvider,
   trialPreviewService,
-  syncPremiumAfterEntitlementChange
+  syncPremiumAfterEntitlementChange,
+  () => {
+    void logAnalyticsEvent('trial_preview_started', {
+      trial_days: getTrialDurationDays(),
+    });
+  }
 );
 
 export const observeTimeStateUseCase = new ObserveTimeStateUseCase(timeRepository);
@@ -154,6 +161,9 @@ export const playBillingRepository: IPlayBillingRepository =
           if (!result.applied) {
             return;
           }
+          void logAnalyticsEvent('premium_purchase_completed', {
+            plan_id: purchase.productId,
+          });
           await instance.finalizePurchase(purchase);
         });
         playBillingAndroid = instance;

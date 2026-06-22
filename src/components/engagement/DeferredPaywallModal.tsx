@@ -63,6 +63,7 @@ export function DeferredPaywallModal({ visible, onClose }: DeferredPaywallModalP
             <PremiumPaywallBody
               headline={MONETIZATION_PAYWALL_COPY.onboardingPaywallTitle}
               subheadline={MONETIZATION_PAYWALL_COPY.onboardingPaywallSub}
+              source="deferred_paywall"
               onPurchaseSuccess={() => {
                 markDeferredPaywallShown();
                 onClose();

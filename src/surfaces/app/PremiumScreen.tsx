@@ -12,7 +12,7 @@ import { useAnalytics } from '../../hooks';
 export function PremiumScreen() {
   const { logEvent } = useAnalytics();
   useEffect(() => {
-    logEvent('premium_viewed');
+    logEvent('premium_viewed', { source: 'premium_screen' });
   }, [logEvent]);
   if (Platform.OS !== 'android') {
     return (
@@ -22,7 +22,7 @@ export function PremiumScreen() {
             <Text variant="sectionTitle" color="primary" style={styles.title}>
               Premium
             </Text>
-            <PremiumPaywallBody showRestore={false} />
+            <PremiumPaywallBody showRestore={false} source="premium_screen" />
           </ScrollView>
         </ScreenGradient>
       </View>
@@ -36,7 +36,7 @@ export function PremiumScreen() {
           contentContainerStyle={styles.content}
           showsVerticalScrollIndicator={false}
         >
-          <PremiumPaywallBody />
+          <PremiumPaywallBody source="premium_screen" />
         </ScrollView>
       </ScreenGradient>
     </View>

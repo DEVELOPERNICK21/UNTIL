@@ -1,0 +1,12 @@
+/**
+ * Copy to analytics.local.ts and set your PostHog project API key (phc_...).
+ * analytics.local.ts is gitignored — never commit real keys.
+ *
+ * Or set UNTIL_POSTHOG_API_KEY at build time (Metro replaces process.env when configured).
+ */
+
+export const POSTHOG_API_KEY = '';
+export const POSTHOG_HOST = 'https://us.i.posthog.com';
+
+/** Set true to send PostHog events from __DEV__ builds while testing. */
+export const POSTHOG_DEV_ENABLED = false;

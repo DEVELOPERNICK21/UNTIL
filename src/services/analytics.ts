@@ -1,7 +1,20 @@
 /**
- * Product analytics — Firebase when native modules + google-services are configured.
- * Safe no-op when unavailable (local dev without Firebase).
+ * Product analytics — Firebase + PostHog when configured.
+ * Safe no-op when unavailable (local dev without keys).
  */
+
+import {
+  capturePostHogEvent,
+  getPostHogClient,
+} from './posthogClient';
+
+export type AnalyticsPaywallSource =
+  | 'premium_screen'
+  | 'deferred_paywall'
+  | 'onboarding_paywall'
+  | 'trial_ending_modal'
+  | 'widget_gate'
+  | 'unknown';
 
 export type AnalyticsEventName =
   | 'app_open'
@@ -22,7 +35,24 @@ export type AnalyticsEventName =
   | 'reflection_birthdate_cta_tapped'
   | 'retention_notification_scheduled'
   | 'retention_notification_disabled'
-  | 'retention_notification_enabled';
+  | 'retention_notification_enabled'
+  | 'screen_view'
+  | 'premium_purchase_started'
+  | 'premium_purchase_completed'
+  | 'premium_purchase_failed'
+  | 'premium_purchase_cancelled'
+  | 'premium_restore_completed'
+  | 'share_tapped'
+  | 'task_completed'
+  | 'life_progress_viewed'
+  | 'trial_preview_started'
+  | 'trial_preview_ended'
+  | 'trial_reminder_shown'
+  | 'onboarding_paywall_skipped'
+  | 'task_added'
+  | 'settings_birth_date_saved'
+  | 'home_life_locked_tapped'
+  | 'goal_created';
 
 type EventParams = Record<string, string | number | boolean | undefined>;
 
@@ -35,6 +65,18 @@ function sanitizeParams(params?: EventParams): Record<string, string | number> {
     else out[k] = v;
   }
   return out;
+}
+
+function toPostHogProperties(
+  params?: EventParams
+): Record<string, string | number | boolean> | undefined {
+  if (!params) return undefined;
+  const out: Record<string, string | number | boolean> = {};
+  for (const [k, v] of Object.entries(params)) {
+    if (v === undefined) continue;
+    out[k] = v;
+  }
+  return Object.keys(out).length ? out : undefined;
 }
 
 function getAnalyticsModule(): {
@@ -91,14 +133,10 @@ function getCrashlyticsModule(): {
   }
 }
 
-export async function logAnalyticsEvent(
-  name: AnalyticsEventName,
-  params?: EventParams
+async function sendToFirebase(
+  name: string,
+  payload: Record<string, string | number>
 ): Promise<void> {
-  const payload = sanitizeParams(params);
-  if (__DEV__) {
-    console.log('[analytics]', name, payload);
-  }
   const analytics = getAnalyticsModule();
   if (!analytics) return;
   try {
@@ -106,6 +144,26 @@ export async function logAnalyticsEvent(
   } catch {
     /* Firebase not configured */
   }
+}
+
+function sendToPostHog(
+  name: string,
+  params?: EventParams
+): void {
+  if (!getPostHogClient()) return;
+  capturePostHogEvent(name, toPostHogProperties(params));
+}
+
+export async function logAnalyticsEvent(
+  name: AnalyticsEventName,
+  params?: EventParams
+): Promise<void> {
+  const payload = sanitizeParams(params);
+  if (__DEV__) {
+    console.log('[analytics]', name, params ?? payload);
+  }
+  sendToPostHog(name, params);
+  await sendToFirebase(name, payload);
 }
 
 export async function logAppOpen(): Promise<void> {

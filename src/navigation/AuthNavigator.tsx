@@ -5,6 +5,7 @@
 import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { trackNavigationStateChange } from './useNavigationAnalytics';
 import {
   OnboardingScreen,
   OnboardingCompleteContext,
@@ -29,7 +30,7 @@ interface AuthNavigatorProps {
 export function AuthNavigator({ onComplete }: AuthNavigatorProps) {
   return (
     <OnboardingCompleteContext.Provider value={onComplete}>
-      <NavigationContainer>
+      <NavigationContainer onStateChange={state => trackNavigationStateChange(state)}>
         <Stack.Navigator
           screenOptions={{
             headerShown: false,

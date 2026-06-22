@@ -16,6 +16,7 @@ import { useMonthlyGoals } from '../../hooks';
 import { Spacing, Colors, Radius, Typography } from '../../theme';
 import type { RootStackParamList } from '../../navigation/RootNavigator';
 import type { MonthlyGoal } from '../../types';
+import { logAnalyticsEvent } from '../../services/analytics';
 
 function currentMonthIso(): string {
   return new Date().toISOString().slice(0, 7); // YYYY-MM
@@ -50,10 +51,12 @@ export function MonthlyGoalsScreen() {
   const handleAdd = () => {
     const t = title.trim();
     if (!t) return;
+    const hasTarget = !!targetDescription.trim();
     addGoal({
       title: t,
       targetDescription: targetDescription.trim() || undefined,
     });
+    void logAnalyticsEvent('goal_created', { has_target_description: hasTarget });
     setModalVisible(false);
   };
 
