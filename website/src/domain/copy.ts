@@ -16,6 +16,21 @@ export const LANDING_COPY = {
     cta: 'Get the app',
   },
 
+  /** Cinematic scroll-pinned hero (GSAP) */
+  cinematicHero: {
+    tagline1: 'See your time,',
+    tagline2: 'not just the clock.',
+    brandName: 'UNTIL',
+    cardHeading: 'Time awareness, redefined.',
+    cardDescription:
+      'Until shows day, month, year, and life progress with widgets, deadlines, counters, and daily tasks — always visible on your home screen.',
+    metricValue: 247,
+    metricLabel: 'Days Left',
+    ctaHeading: 'Start seeing time clearly.',
+    ctaDescription:
+      'Available on Android now. iOS coming soon. Glanceable progress without opening the app.',
+  },
+
   /** Feature cards (with optional category for layout) */
   features: [
     {
@@ -122,7 +137,8 @@ export const LANDING_COPY = {
       },
       {
         title: 'Simple, serious design',
-        description: 'No ads, low friction, and focused visuals that keep attention on time.',
+        description:
+          'No ads, low friction, and focused visuals that keep attention on time.',
       },
     ],
   },
@@ -131,9 +147,27 @@ export const LANDING_COPY = {
   testimonials: {
     title: 'Loved by people who care about time',
     items: [
-      { quote: 'The day progress bar made me actually aware of how I spend hours. Simple and sobering.', author: 'Alex M.', role: 'iPhone user', stars: 5 },
-      { quote: 'Home screen widget shows my year progress. No opening the app — just a glance.', author: 'Sam K.', role: 'Android user', stars: 5 },
-      { quote: 'Life view hit different. One app that does time progress and countdowns well.', author: 'Jordan L.', role: 'Design lover', stars: 5 },
+      {
+        quote:
+          'The day progress bar made me actually aware of how I spend hours. Simple and sobering.',
+        author: 'Alex M.',
+        role: 'iPhone user',
+        stars: 5,
+      },
+      {
+        quote:
+          'Home screen widget shows my year progress. No opening the app — just a glance.',
+        author: 'Sam K.',
+        role: 'Android user',
+        stars: 5,
+      },
+      {
+        quote:
+          'Life view hit different. One app that does time progress and countdowns well.',
+        author: 'Jordan L.',
+        role: 'Design lover',
+        stars: 5,
+      },
     ],
   },
 
@@ -167,7 +201,8 @@ export const LANDING_COPY = {
     },
     community: {
       title: 'Join the community',
-      subtitle: 'Share feedback, get updates, and connect with others who care about time.',
+      subtitle:
+        'Share feedback, get updates, and connect with others who care about time.',
       cta: 'Coming soon',
     },
   },

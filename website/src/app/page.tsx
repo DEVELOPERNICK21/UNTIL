@@ -1,5 +1,6 @@
 import { HeroScreenshotShowcase } from '@/components/HeroScreenshotShowcase';
 import { AppScreenshots } from '@/components/AppScreenshots';
+import { CinematicHeroSection } from '@/components/CinematicHeroSection';
 import { LANDING_COPY, SITE_CONFIG } from '@/domain';
 
 export default function HomePage() {
@@ -18,6 +19,11 @@ export default function HomePage() {
 
   return (
     <>
+      {/* Cinematic scroll-pinned hero */}
+      <div className="landing-cinematic-hero">
+        <CinematicHeroSection />
+      </div>
+
       {/* Intro price line — limited time highlighted */}
       <section style={{ paddingTop: '1.5rem', paddingBottom: '0.5rem' }}>
         <p className="landing-intro-line">
@@ -396,7 +402,9 @@ export default function HomePage() {
               marginBottom: '1rem',
             }}
           >
-            <span className="landing-limited-time-text">{pricing.currencyNote}</span>
+            <span className="landing-limited-time-text">
+              {pricing.currencyNote}
+            </span>
           </p>
           <div
             style={{
