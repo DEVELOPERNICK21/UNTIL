@@ -128,7 +128,7 @@ function leftValueGlowStyle(hexColor: string) {
   };
 }
 
-const TimeBlock = React.memo(function TimeBlock({
+const TimeBlock = React.memo(function TimeBlockComponent({
   title,
   passedLabel,
   leftLabel,
@@ -242,7 +242,7 @@ const TimeBlock = React.memo(function TimeBlock({
  * TodayTimeBlock isolates the 1-second timer to prevent the entire HomeScreen
  * from re-rendering every second.
  */
-function TodayTimeBlock({
+const TodayTimeBlock = React.memo(function TodayTimeBlockComponent({
   index,
   onPress,
 }: {
@@ -271,33 +271,6 @@ function TodayTimeBlock({
       onPress={onPress}
     />
   );
-}
-
-const TodayTimeBlock = React.memo(function TodayTimeBlock({
-  onPress,
-}: TodayTimeBlockProps) {
-  const [liveNow, setLiveNow] = useState(() => new Date());
-
-  useEffect(() => {
-    const tick = () => setLiveNow(new Date());
-    const id = setInterval(tick, 1000);
-    return () => clearInterval(id);
-  }, []);
-
-  const day = formatDayPassedLeftWithSeconds(liveNow);
-
-  return (
-    <TimeBlock
-      index={0}
-      title="Today"
-      passedLabel={day.passedStr}
-      leftLabel={day.leftStr}
-      progress={day.progress}
-      passedPct={day.passedPct}
-      leftPct={day.leftPct}
-      onPress={onPress}
-    />
-  );
 });
 
 export function HomeScreen() {
@@ -309,10 +282,6 @@ export function HomeScreen() {
   const goalsFeatureEnabled = useGoalsFeatureEnabled();
   const { canAccessLife } = useAccessControl();
 
-  const handleDayPress = React.useCallback(
-    () => navigation.navigate('DayDetail'),
-    [navigation],
-  );
   const handleMonthPress = React.useCallback(
     () => navigation.navigate('MonthDetail'),
     [navigation],
