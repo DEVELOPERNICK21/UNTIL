@@ -128,7 +128,7 @@ function leftValueGlowStyle(hexColor: string) {
   };
 }
 
-const TimeBlock = React.memo(function TimeBlock({
+const TimeBlock = React.memo(function TimeBlockComponent({
   title,
   passedLabel,
   leftLabel,
@@ -242,7 +242,7 @@ const TimeBlock = React.memo(function TimeBlock({
  * TodayTimeBlock isolates the 1-second timer to prevent the entire HomeScreen
  * from re-rendering every second.
  */
-function TodayTimeBlock({
+const TodayTimeBlock = React.memo(function TodayTimeBlockComponent({
   index,
   onPress,
 }: {
@@ -262,33 +262,6 @@ function TodayTimeBlock({
   return (
     <TimeBlock
       index={index}
-      title="Today"
-      passedLabel={day.passedStr}
-      leftLabel={day.leftStr}
-      progress={day.progress}
-      passedPct={day.passedPct}
-      leftPct={day.leftPct}
-      onPress={onPress}
-    />
-  );
-}
-
-const TodayTimeBlock = React.memo(function TodayTimeBlock({
-  onPress,
-}: TodayTimeBlockProps) {
-  const [liveNow, setLiveNow] = useState(() => new Date());
-
-  useEffect(() => {
-    const tick = () => setLiveNow(new Date());
-    const id = setInterval(tick, 1000);
-    return () => clearInterval(id);
-  }, []);
-
-  const day = formatDayPassedLeftWithSeconds(liveNow);
-
-  return (
-    <TimeBlock
-      index={0}
       title="Today"
       passedLabel={day.passedStr}
       leftLabel={day.leftStr}
@@ -326,7 +299,7 @@ export function HomeScreen() {
     [navigation],
   );
   const handlePremiumPress = React.useCallback(() => {
-    void logAnalyticsEvent('home_life_locked_tapped');
+    logAnalyticsEvent('home_life_locked_tapped');
     navigation.navigate('Premium');
   }, [navigation]);
   const handleSettingsPress = React.useCallback(
@@ -370,7 +343,7 @@ export function HomeScreen() {
 
           <TodayTimeBlock
             index={0}
-            onPress={() => navigation.navigate('DayDetail')}
+            onPress={handleDayPress}
           />
 
           <TimeBlock

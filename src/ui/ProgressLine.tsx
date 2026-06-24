@@ -1,5 +1,11 @@
 import React, { useEffect, useRef } from 'react';
-import { View, StyleSheet, useWindowDimensions, Animated, Easing } from 'react-native';
+import {
+  View,
+  StyleSheet,
+  useWindowDimensions,
+  Animated,
+  Easing,
+} from 'react-native';
 import { useTheme } from '../theme';
 
 interface ProgressLineProps {
@@ -13,7 +19,15 @@ const DOT_SIZE = 6;
 const ANIM_DURATION = 380;
 const EASE = Easing.out(Easing.cubic);
 
-export function ProgressLine({ progress, fillColor, style }: ProgressLineProps) {
+/**
+ * ProgressLine component optimized with React.memo and native driver animations.
+ * Using translateX transforms instead of width avoids layout recalculations on every frame.
+ */
+function ProgressLineComponent({
+  progress,
+  fillColor,
+  style,
+}: ProgressLineProps) {
   const theme = useTheme();
   const { width } = useWindowDimensions();
   const lineWidth = Math.min(width * 0.7, 280);
@@ -25,63 +39,93 @@ export function ProgressLine({ progress, fillColor, style }: ProgressLineProps) 
       toValue: clampedProgress,
       duration: ANIM_DURATION,
       easing: EASE,
-      useNativeDriver: false,
+      useNativeDriver: true,
     }).start();
   }, [clampedProgress, animValue]);
 
-  const fillWidth = animValue.interpolate({
+  const fillTranslateX = animValue.interpolate({
     inputRange: [0, 1],
-    outputRange: [0, lineWidth],
+    outputRange: [-lineWidth, 0],
+  });
+
+  const dotTranslateX = animValue.interpolate({
+    inputRange: [0, 1],
+    outputRange: [-lineWidth / 2, lineWidth / 2],
   });
 
   const color = fillColor ?? theme.progressFill;
 
   return (
-    <View style={[styles.wrapper, { width: lineWidth }, style]}>
-      <View style={[styles.track, { height: HEIGHT, backgroundColor: theme.progressTrack }]}>
+    <View
+      style={[styles.wrapper, { width: lineWidth }, style]}
+      accessible={true}
+      accessibilityRole="progressbar"
+      accessibilityValue={{ min: 0, max: 100, now: Math.round(clampedProgress * 100) }}
+    >
+      <View
+        style={[
+          styles.track,
+          { height: HEIGHT, backgroundColor: theme.progressTrack },
+        ]}
+      >
         <Animated.View
           style={[
-            styles.fillRow,
+            styles.fill,
             {
-              width: fillWidth,
+              width: lineWidth,
               height: HEIGHT,
+              backgroundColor: color,
+              transform: [{ translateX: fillTranslateX }],
             },
           ]}
-        >
-          <View style={[styles.fill, { flex: 1, height: HEIGHT, backgroundColor: color }]} />
-          <View
-            style={[
-              styles.dot,
-              {
-                width: DOT_SIZE,
-                height: DOT_SIZE,
-                borderRadius: DOT_SIZE / 2,
-                marginLeft: -DOT_SIZE / 2,
-                backgroundColor: color,
-              },
-            ]}
-          />
-        </Animated.View>
+        />
       </View>
+      <Animated.View
+        style={[
+          styles.dotContainer,
+          {
+            transform: [{ translateX: dotTranslateX }],
+          },
+        ]}
+      >
+        <View
+          style={[
+            styles.dot,
+            {
+              width: DOT_SIZE,
+              height: DOT_SIZE,
+              borderRadius: DOT_SIZE / 2,
+              backgroundColor: color,
+            },
+          ]}
+        />
+      </Animated.View>
     </View>
   );
 }
 
+export const ProgressLine = React.memo(ProgressLineComponent);
+
 const styles = StyleSheet.create({
   wrapper: {
     alignItems: 'center',
+    justifyContent: 'center',
+    height: HEIGHT + 4, // Extra padding for the dot
   },
   track: {
     width: '100%',
     borderRadius: 999,
-    overflow: 'visible',
-  },
-  fillRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    overflow: 'hidden',
   },
   fill: {
     borderRadius: 999,
+  },
+  dotContainer: {
+    position: 'absolute',
+    width: DOT_SIZE,
+    height: DOT_SIZE,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   dot: {},
 });

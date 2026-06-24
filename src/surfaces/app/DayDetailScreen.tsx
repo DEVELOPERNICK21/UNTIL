@@ -1,13 +1,31 @@
 import React, { useEffect, useState } from 'react';
-import { View, StyleSheet, ScrollView, TouchableOpacity, Dimensions, Alert } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
-import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { Text, ScreenGradient, Card, ProgressLine, CircularProgress } from '../../ui';
-import { useObserveTimeState } from '../../hooks';
-import { Spacing, Colors, Typography, FontFamily, getProgressColor } from '../../theme';
-import type { RootStackParamList } from '../../navigation/RootNavigator';
+import {
+  View,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  Dimensions,
+  Alert,
+} from 'react-native';
+import {
+  Text,
+  ScreenGradient,
+  Card,
+  ProgressLine,
+  CircularProgress,
+} from '../../ui';
+import {
+  Spacing,
+  Colors,
+  Typography,
+  FontFamily,
+  getProgressColor,
+} from '../../theme';
 
-const RING_SIZE = Math.min(220, Dimensions.get('window').width - Spacing[4] * 2 - 32);
+const RING_SIZE = Math.min(
+  220,
+  Dimensions.get('window').width - Spacing[4] * 2 - 32,
+);
 
 function formatTime(date: Date) {
   const startDate = new Date(date);
@@ -31,10 +49,12 @@ function formatTime(date: Date) {
   };
 }
 
-export function DayDetailScreen() {
-  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList, 'DayDetail'>>();
+/**
+ * LiveDayStats isolates high-frequency (1-second) state updates.
+ * This prevents the entire DayDetailScreen from re-rendering every second.
+ */
+const LiveDayStats = React.memo(function LiveDayStatsInternal() {
   const [live, setLive] = useState(() => new Date());
-  const { timeState } = useObserveTimeState();
 
   useEffect(() => {
     const t = setInterval(() => setLive(new Date()), 1000);
@@ -47,57 +67,80 @@ export function DayDetailScreen() {
   const pctLeft = 100 - pctDone;
 
   return (
+    <>
+      <View style={styles.ringWrap}>
+        <CircularProgress
+          progress={progress}
+          size={RING_SIZE}
+          strokeWidth={14}
+          label={`${pctDone}%`}
+        />
+      </View>
+
+      <View style={styles.statsRow}>
+        <View style={styles.statBox}>
+          <Text variant="caption" color="secondary" style={styles.statLabel}>
+            PASSED
+          </Text>
+          <Text variant="title" color="primary" style={styles.passedValue}>
+            {passed}
+          </Text>
+        </View>
+        <View style={styles.statBox}>
+          <Text variant="caption" color="secondary" style={styles.statLabel}>
+            LEFT
+          </Text>
+          <Text
+            variant="title"
+            color="primary"
+            style={[styles.leftValue, { color: progressColor }]}
+          >
+            {left}
+          </Text>
+        </View>
+      </View>
+
+      <Card style={styles.card}>
+        <View style={styles.percentRow}>
+          <Text variant="body" color="secondary">
+            {pctDone}% of the day passed · {pctLeft}% left
+          </Text>
+        </View>
+        <ProgressLine
+          progress={progress}
+          fillColor={progressColor}
+          style={styles.progress}
+        />
+      </Card>
+    </>
+  );
+});
+
+export function DayDetailScreen() {
+  return (
     <View style={styles.container}>
       <ScreenGradient>
         <ScrollView
           contentContainerStyle={styles.content}
           showsVerticalScrollIndicator={false}
         >
-          <Text variant="sectionTitle" color="secondary" style={styles.overhead}>
+          <Text
+            variant="sectionTitle"
+            color="secondary"
+            style={styles.overhead}
+          >
             Today
           </Text>
 
-          <View style={styles.ringWrap}>
-            <CircularProgress
-              progress={progress}
-              size={RING_SIZE}
-              strokeWidth={14}
-              label={`${pctDone}%`}
-            />
-          </View>
-
-          <View style={styles.statsRow}>
-            <View style={styles.statBox}>
-              <Text variant="caption" color="secondary" style={styles.statLabel}>
-                PASSED
-              </Text>
-              <Text variant="title" color="primary" style={styles.passedValue}>
-                {passed}
-              </Text>
-            </View>
-            <View style={styles.statBox}>
-              <Text variant="caption" color="secondary" style={styles.statLabel}>
-                LEFT
-              </Text>
-              <Text variant="title" color="primary" style={[styles.leftValue, { color: progressColor }]}>
-                {left}
-              </Text>
-            </View>
-          </View>
-
-          <Card style={styles.card}>
-            <View style={styles.percentRow}>
-              <Text variant="body" color="secondary">
-                {pctDone}% of the day passed · {pctLeft}% left
-              </Text>
-            </View>
-            <ProgressLine progress={progress} fillColor={progressColor} style={styles.progress} />
-          </Card>
+          <LiveDayStats />
 
           <TouchableOpacity
             style={styles.cta}
             onPress={() => {
-              Alert.alert('Coming soon', 'Daily tasks will be available in a future update.');
+              Alert.alert(
+                'Coming soon',
+                'Daily tasks will be available in a future update.',
+              );
             }}
           >
             <Text variant="sectionTitle" color="primary">
