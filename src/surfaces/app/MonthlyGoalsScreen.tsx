@@ -150,6 +150,7 @@ export function MonthlyGoalsScreen() {
               placeholder="Goal title (e.g. Gain 5 kg)"
               placeholderTextColor={Colors.textSecondary}
               autoCapitalize="sentences"
+              maxLength={100}
             />
             <TextInput
               style={[styles.input, styles.inputArea]}
@@ -158,6 +159,7 @@ export function MonthlyGoalsScreen() {
               placeholder="Target (optional, e.g. increase 5 kg this month)"
               placeholderTextColor={Colors.textSecondary}
               multiline
+              maxLength={500}
             />
             <View style={styles.modalActions}>
               <TouchableOpacity style={styles.modalButton} onPress={() => setModalVisible(false)}>

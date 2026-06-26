@@ -109,6 +109,7 @@ export function CountdownsScreen() {
               placeholderTextColor={Colors.textSecondary}
               autoCapitalize="words"
               editable={!hasDeadline}
+              maxLength={100}
             />
             <TouchableOpacity
               style={styles.dateButton}
