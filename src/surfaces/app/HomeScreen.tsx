@@ -128,7 +128,7 @@ function leftValueGlowStyle(hexColor: string) {
   };
 }
 
-const TimeBlock = React.memo(function TimeBlock({
+const TimeBlock = React.memo(function TimeBlockComponent({
   title,
   passedLabel,
   leftLabel,
@@ -242,38 +242,13 @@ const TimeBlock = React.memo(function TimeBlock({
  * TodayTimeBlock isolates the 1-second timer to prevent the entire HomeScreen
  * from re-rendering every second.
  */
-function TodayTimeBlock({
-  index,
-  onPress,
-}: {
+interface TodayTimeBlockProps {
   index: number;
   onPress: () => void;
-}) {
-  const [liveNow, setLiveNow] = useState(() => new Date());
-
-  useEffect(() => {
-    const tick = () => setLiveNow(new Date());
-    const id = setInterval(tick, 1000);
-    return () => clearInterval(id);
-  }, []);
-
-  const day = formatDayPassedLeftWithSeconds(liveNow);
-
-  return (
-    <TimeBlock
-      index={index}
-      title="Today"
-      passedLabel={day.passedStr}
-      leftLabel={day.leftStr}
-      progress={day.progress}
-      passedPct={day.passedPct}
-      leftPct={day.leftPct}
-      onPress={onPress}
-    />
-  );
 }
 
-const TodayTimeBlock = React.memo(function TodayTimeBlock({
+const TodayTimeBlock = React.memo(function TodayTimeBlockComponent({
+  index,
   onPress,
 }: TodayTimeBlockProps) {
   const [liveNow, setLiveNow] = useState(() => new Date());
@@ -288,7 +263,7 @@ const TodayTimeBlock = React.memo(function TodayTimeBlock({
 
   return (
     <TimeBlock
-      index={0}
+      index={index}
       title="Today"
       passedLabel={day.passedStr}
       leftLabel={day.leftStr}
@@ -326,7 +301,7 @@ export function HomeScreen() {
     [navigation],
   );
   const handlePremiumPress = React.useCallback(() => {
-    void logAnalyticsEvent('home_life_locked_tapped');
+    logAnalyticsEvent('home_life_locked_tapped').catch(() => {});
     navigation.navigate('Premium');
   }, [navigation]);
   const handleSettingsPress = React.useCallback(
@@ -368,10 +343,7 @@ export function HomeScreen() {
             Passed and left — one place.
           </Text>
 
-          <TodayTimeBlock
-            index={0}
-            onPress={() => navigation.navigate('DayDetail')}
-          />
+          <TodayTimeBlock index={0} onPress={handleDayPress} />
 
           <TimeBlock
             index={1}
@@ -427,6 +399,8 @@ export function HomeScreen() {
                 <Text
                   variant="caption"
                   color="primary"
+                  accessibilityRole="button"
+                  accessibilityLabel="Unlock Premium features"
                   style={styles.settingsLink}
                   onPress={handlePremiumPress}
                 >
@@ -450,6 +424,8 @@ export function HomeScreen() {
               <Text
                 variant="caption"
                 color="primary"
+                accessibilityRole="button"
+                accessibilityLabel="Open settings to set birth date"
                 style={styles.settingsLink}
                 onPress={handleSettingsPress}
               >
@@ -486,6 +462,8 @@ export function HomeScreen() {
           ]}
           onPress={handleFabPress}
           activeOpacity={0.85}
+          accessibilityRole="button"
+          accessibilityLabel="Daily tasks"
         >
           <Svg width={24} height={24} viewBox="0 0 24 24" fill="none">
             <Rect

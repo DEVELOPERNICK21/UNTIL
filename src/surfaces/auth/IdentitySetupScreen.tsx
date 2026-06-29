@@ -76,10 +76,7 @@ export function IdentitySetupScreen() {
   const birthDateStr = useMemo(() => toBirthDateString(birthDate), [birthDate]);
 
   const handleLifespanChange = useCallback((next: number) => {
-    setLifespan(prev => {
-      if (prev !== next) Vibration.vibrate(5);
-      return next;
-    });
+    setLifespan(next);
   }, []);
 
   const submitProfile = useCallback(
@@ -95,7 +92,7 @@ export function IdentitySetupScreen() {
         setIsSubmitting(false);
       }
     },
-    [isSubmitting, updateUserProfile, navigation],
+    [isSubmitting, updateUserProfile, navigation, logEvent],
   );
 
   const handleViewMyLife = () => {
@@ -235,6 +232,7 @@ export function IdentitySetupScreen() {
                 maximumValue={LIFESPAN_MAX}
                 onValueChange={handleLifespanChange}
                 step={1}
+                accessibilityLabel="Expected lifespan in years"
               />
               <View style={styles.sliderLabels}>
                 <Text variant="micro" style={{ color: theme.textSecondary }}>
