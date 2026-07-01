@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import {
   View,
   StyleSheet,
@@ -15,9 +15,14 @@ import { useWidgetSyncActions } from '../../hooks';
 import { Spacing, Colors, Radius, Typography } from '../../theme';
 import type { RootStackParamList } from '../../navigation/RootNavigator';
 
-function formatElapsed(totalElapsedMs: number, startTimeMs: number, isRunning: boolean): string {
+function formatElapsed(
+  totalElapsedMs: number,
+  startTimeMs: number,
+  isRunning: boolean,
+): string {
   const now = Date.now();
-  const totalMs = totalElapsedMs + (isRunning && startTimeMs > 0 ? now - startTimeMs : 0);
+  const totalMs =
+    totalElapsedMs + (isRunning && startTimeMs > 0 ? now - startTimeMs : 0);
   const totalSec = Math.floor(totalMs / 1000);
   const h = Math.floor(totalSec / 3600);
   const m = Math.floor((totalSec % 3600) / 60);
@@ -25,38 +30,92 @@ function formatElapsed(totalElapsedMs: number, startTimeMs: number, isRunning: b
   return `${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
 }
 
+interface LiveElapsedSectionProps {
+  isRunning: boolean;
+  startTimeMs: number;
+  totalElapsedMs: number;
+  onReset: () => void;
+}
+
+/**
+ * LiveElapsedSection isolates the 1-second timer to prevent the entire
+ * HourCalculationScreen from re-rendering every second.
+ */
+const LiveElapsedSection = React.memo(function LiveElapsedSection({
+  isRunning,
+  startTimeMs,
+  totalElapsedMs,
+  onReset,
+}: LiveElapsedSectionProps) {
+  // We use a dummy state to trigger re-renders every second when isRunning is true.
+  const [, setTicks] = useState(0);
+
+  useEffect(() => {
+    if (!isRunning) return;
+    const interval = setInterval(() => {
+      setTicks((t) => t + 1);
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [isRunning]);
+
+  const elapsedDisplay = formatElapsed(totalElapsedMs, startTimeMs, isRunning);
+
+  return (
+    <Card style={styles.card}>
+      <Text variant="caption" color="secondary" style={styles.label}>
+        Current time
+      </Text>
+      <Text variant="title" color="primary" style={styles.elapsed}>
+        {elapsedDisplay}
+      </Text>
+      {isRunning && (
+        <Text variant="caption" color="secondary" style={styles.runningHint}>
+          Running — tap widget to stop
+        </Text>
+      )}
+      <TouchableOpacity style={styles.resetButton} onPress={onReset}>
+        <Text variant="caption" style={styles.resetButtonText}>
+          Reset to 0:00:00
+        </Text>
+      </TouchableOpacity>
+    </Card>
+  );
+});
+
 export function HourCalculationScreen() {
-  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList, 'HourCalculation'>>();
-  const { getHourCalculationState, syncHourCalculationWidget } = useWidgetSyncActions();
+  const navigation =
+    useNavigation<NativeStackNavigationProp<RootStackParamList, 'HourCalculation'>>();
+  const { getHourCalculationState, syncHourCalculationWidget } =
+    useWidgetSyncActions();
   const [state, setState] = useState(() => getHourCalculationState());
   const [titleInput, setTitleInput] = useState(state.title);
+
+  // Use a ref for titleInput to keep handleSaveTitle and handleReset stable,
+  // preventing unnecessary re-renders of the memoized LiveElapsedSection.
+  const titleInputRef = useRef(titleInput);
+  useEffect(() => {
+    titleInputRef.current = titleInput;
+  }, [titleInput]);
 
   const refresh = useCallback(() => {
     const next = getHourCalculationState();
     setState(next);
     setTitleInput(next.title);
-  }, []);
+  }, [getHourCalculationState]);
 
   useFocusEffect(
     useCallback(() => {
       refresh();
-    }, [refresh])
+    }, [refresh]),
   );
 
-  // Update displayed elapsed time every second when running
-  useEffect(() => {
-    if (!state.isRunning) return;
-    const interval = setInterval(() => setState(getHourCalculationState()), 1000);
-    return () => clearInterval(interval);
-  }, [state.isRunning]);
-
-  const handleSaveTitle = () => {
-    const title = titleInput.trim() || 'Hour timer';
+  const handleSaveTitle = useCallback(() => {
+    const title = titleInputRef.current.trim() || 'Hour timer';
     syncHourCalculationWidget({ title });
     refresh();
-  };
+  }, [syncHourCalculationWidget, refresh]);
 
-  const handleReset = () => {
+  const handleReset = useCallback(() => {
     Alert.alert(
       'Reset timer',
       'Reset elapsed time to zero? The widget will show 0:00:00.',
@@ -66,15 +125,16 @@ export function HourCalculationScreen() {
           text: 'Reset',
           style: 'destructive',
           onPress: () => {
-            syncHourCalculationWidget({ reset: true, title: titleInput.trim() || state.title });
+            syncHourCalculationWidget({
+              reset: true,
+              title: titleInputRef.current.trim() || state.title,
+            });
             refresh();
           },
         },
-      ]
+      ],
     );
-  };
-
-  const elapsedDisplay = formatElapsed(state.totalElapsedMs, state.startTimeMs, state.isRunning);
+  }, [syncHourCalculationWidget, state.title, refresh]);
 
   return (
     <View style={styles.container}>
@@ -88,7 +148,8 @@ export function HourCalculationScreen() {
             Hour calculation
           </Text>
           <Text variant="body" color="secondary" style={styles.subtitle}>
-            Set a title (e.g. Office hour), then add the Hour calculation widget. Tap the widget to start, tap again to stop. One timer only.
+            Set a title (e.g. Office hour), then add the Hour calculation
+            widget. Tap the widget to start, tap again to stop. One timer only.
           </Text>
 
           <Card style={styles.card}>
@@ -106,28 +167,23 @@ export function HourCalculationScreen() {
                 onSubmitEditing={handleSaveTitle}
                 returnKeyType="done"
               />
-              <TouchableOpacity style={styles.primaryButton} onPress={handleSaveTitle}>
-                <Text variant="caption" style={styles.primaryButtonText}>Save</Text>
+              <TouchableOpacity
+                style={styles.primaryButton}
+                onPress={handleSaveTitle}
+              >
+                <Text variant="caption" style={styles.primaryButtonText}>
+                  Save
+                </Text>
               </TouchableOpacity>
             </View>
           </Card>
 
-          <Card style={styles.card}>
-            <Text variant="caption" color="secondary" style={styles.label}>
-              Current time
-            </Text>
-            <Text variant="title" color="primary" style={styles.elapsed}>
-              {elapsedDisplay}
-            </Text>
-            {state.isRunning && (
-              <Text variant="caption" color="secondary" style={styles.runningHint}>
-                Running — tap widget to stop
-              </Text>
-            )}
-            <TouchableOpacity style={styles.resetButton} onPress={handleReset}>
-              <Text variant="caption" style={styles.resetButtonText}>Reset to 0:00:00</Text>
-            </TouchableOpacity>
-          </Card>
+          <LiveElapsedSection
+            isRunning={state.isRunning}
+            startTimeMs={state.startTimeMs}
+            totalElapsedMs={state.totalElapsedMs}
+            onReset={handleReset}
+          />
 
           <Text variant="caption" color="secondary" style={styles.hint}>
             {Platform.OS === 'ios'
