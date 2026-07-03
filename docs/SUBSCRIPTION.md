@@ -61,9 +61,17 @@ Activate a license on this device. One device only.
 
 **Error codes:** `invalid_license`, `already_activated`, `network_error`, `unknown`
 
-### GET /verify?licenseKey=...&deviceId=...
+### POST /verify
 
 Verify license is still valid.
+
+**Request:**
+```json
+{
+  "licenseKey": "XXXX-XXXX-XXXX-XXXX",
+  "deviceId": "unique-device-id-from-app"
+}
+```
 
 **Response (valid):**
 ```json
