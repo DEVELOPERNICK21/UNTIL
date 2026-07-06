@@ -4,7 +4,7 @@
  */
 
 import React, { useRef, useCallback, useState } from 'react';
-import { View, StyleSheet, PanResponder } from 'react-native';
+import { View, StyleSheet, PanResponder, Vibration } from 'react-native';
 import { useTheme, Spacing } from '../theme';
 
 const TRACK_HEIGHT = 4;
@@ -16,6 +16,7 @@ export interface SliderProps {
   maximumValue: number;
   onValueChange: (value: number) => void;
   step?: number;
+  accessibilityLabel?: string;
 }
 
 export function Slider({
@@ -24,10 +25,13 @@ export function Slider({
   maximumValue,
   onValueChange,
   step = 1,
+  accessibilityLabel,
 }: SliderProps) {
   const theme = useTheme();
   const [trackWidth, setTrackWidth] = useState(0);
   const trackWidthRef = useRef(0);
+  const valueRef = useRef(value);
+  valueRef.current = value;
 
   const clamp = useCallback(
     (v: number) => {
@@ -47,8 +51,11 @@ export function Slider({
         const w = trackWidthRef.current;
         if (w <= 0) return;
         const progress = Math.max(0, Math.min(1, g.x0 / w));
-        startValueRef.current = minimumValue + progress * (maximumValue - minimumValue);
-        onValueChange(clamp(startValueRef.current));
+        startValueRef.current =
+          minimumValue + progress * (maximumValue - minimumValue);
+        const next = clamp(startValueRef.current);
+        if (next !== valueRef.current) Vibration.vibrate(5);
+        onValueChange(next);
       },
       onPanResponderMove: (_, g) => {
         const w = trackWidthRef.current;
@@ -56,7 +63,9 @@ export function Slider({
         const deltaProgress = g.dx / w;
         const range = maximumValue - minimumValue;
         const newVal = startValueRef.current + deltaProgress * range;
-        onValueChange(clamp(newVal));
+        const next = clamp(newVal);
+        if (next !== valueRef.current) Vibration.vibrate(5);
+        onValueChange(next);
       },
     })
   ).current;
@@ -76,7 +85,38 @@ export function Slider({
   }, []);
 
   return (
-    <View style={styles.wrap} onLayout={handleLayout} {...panResponder.panHandlers}>
+    <View
+      style={styles.wrap}
+      onLayout={handleLayout}
+      {...panResponder.panHandlers}
+      accessibilityRole="adjustable"
+      accessibilityLabel={accessibilityLabel}
+      accessibilityValue={{
+        min: minimumValue,
+        max: maximumValue,
+        now: value,
+      }}
+      onAccessibilityAction={event => {
+        switch (event.nativeEvent.actionName) {
+          case 'increment': {
+            const next = clamp(value + step);
+            if (next !== value) {
+              Vibration.vibrate(5);
+              onValueChange(next);
+            }
+            break;
+          }
+          case 'decrement': {
+            const next = clamp(value - step);
+            if (next !== value) {
+              Vibration.vibrate(5);
+              onValueChange(next);
+            }
+            break;
+          }
+        }
+      }}
+    >
       <View style={[styles.track, { backgroundColor: theme.progressTrack }]}>
         <View
           style={[
