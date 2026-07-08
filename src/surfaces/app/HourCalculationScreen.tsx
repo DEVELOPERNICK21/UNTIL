@@ -8,12 +8,10 @@ import {
   Alert,
   Platform,
 } from 'react-native';
-import { useNavigation, useFocusEffect } from '@react-navigation/native';
-import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useFocusEffect } from '@react-navigation/native';
 import { Text, ScreenGradient, Card } from '../../ui';
 import { useWidgetSyncActions } from '../../hooks';
 import { Spacing, Colors, Radius, Typography } from '../../theme';
-import type { RootStackParamList } from '../../navigation/RootNavigator';
 
 function formatElapsed(totalElapsedMs: number, startTimeMs: number, isRunning: boolean): string {
   const now = Date.now();
@@ -25,9 +23,58 @@ function formatElapsed(totalElapsedMs: number, startTimeMs: number, isRunning: b
   return `${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
 }
 
+interface LiveElapsedSectionProps {
+  totalElapsedMs: number;
+  startTimeMs: number;
+  isRunning: boolean;
+  onReset: () => void;
+}
+
+/**
+ * LiveElapsedSection isolates the 1-second timer to prevent the entire
+ * HourCalculationScreen from re-rendering every second.
+ */
+const LiveElapsedSectionComponent = React.memo(function LiveElapsedSection({
+  totalElapsedMs,
+  startTimeMs,
+  isRunning,
+  onReset,
+}: LiveElapsedSectionProps) {
+  const [, setTick] = useState(0);
+
+  useEffect(() => {
+    if (!isRunning) return;
+    const interval = setInterval(() => setTick(t => t + 1), 1000);
+    return () => clearInterval(interval);
+  }, [isRunning]);
+
+  const elapsedDisplay = formatElapsed(totalElapsedMs, startTimeMs, isRunning);
+
+  return (
+    <Card style={styles.card}>
+      <Text variant="caption" color="secondary" style={styles.label}>
+        Current time
+      </Text>
+      <Text variant="title" color="primary" style={styles.elapsed}>
+        {elapsedDisplay}
+      </Text>
+      {isRunning && (
+        <Text variant="caption" color="secondary" style={styles.runningHint}>
+          Running — tap widget to stop
+        </Text>
+      )}
+      <TouchableOpacity style={styles.resetButton} onPress={onReset}>
+        <Text variant="caption" style={styles.resetButtonText}>
+          Reset to 0:00:00
+        </Text>
+      </TouchableOpacity>
+    </Card>
+  );
+});
+
 export function HourCalculationScreen() {
-  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList, 'HourCalculation'>>();
-  const { getHourCalculationState, syncHourCalculationWidget } = useWidgetSyncActions();
+  const { getHourCalculationState, syncHourCalculationWidget } =
+    useWidgetSyncActions();
   const [state, setState] = useState(() => getHourCalculationState());
   const [titleInput, setTitleInput] = useState(state.title);
 
@@ -35,20 +82,13 @@ export function HourCalculationScreen() {
     const next = getHourCalculationState();
     setState(next);
     setTitleInput(next.title);
-  }, []);
+  }, [getHourCalculationState]);
 
   useFocusEffect(
     useCallback(() => {
       refresh();
-    }, [refresh])
+    }, [refresh]),
   );
-
-  // Update displayed elapsed time every second when running
-  useEffect(() => {
-    if (!state.isRunning) return;
-    const interval = setInterval(() => setState(getHourCalculationState()), 1000);
-    return () => clearInterval(interval);
-  }, [state.isRunning]);
 
   const handleSaveTitle = () => {
     const title = titleInput.trim() || 'Hour timer';
@@ -66,15 +106,16 @@ export function HourCalculationScreen() {
           text: 'Reset',
           style: 'destructive',
           onPress: () => {
-            syncHourCalculationWidget({ reset: true, title: titleInput.trim() || state.title });
+            syncHourCalculationWidget({
+              reset: true,
+              title: titleInput.trim() || state.title,
+            });
             refresh();
           },
         },
-      ]
+      ],
     );
   };
-
-  const elapsedDisplay = formatElapsed(state.totalElapsedMs, state.startTimeMs, state.isRunning);
 
   return (
     <View style={styles.container}>
@@ -88,7 +129,8 @@ export function HourCalculationScreen() {
             Hour calculation
           </Text>
           <Text variant="body" color="secondary" style={styles.subtitle}>
-            Set a title (e.g. Office hour), then add the Hour calculation widget. Tap the widget to start, tap again to stop. One timer only.
+            Set a title (e.g. Office hour), then add the Hour calculation
+            widget. Tap the widget to start, tap again to stop. One timer only.
           </Text>
 
           <Card style={styles.card}>
@@ -106,28 +148,23 @@ export function HourCalculationScreen() {
                 onSubmitEditing={handleSaveTitle}
                 returnKeyType="done"
               />
-              <TouchableOpacity style={styles.primaryButton} onPress={handleSaveTitle}>
-                <Text variant="caption" style={styles.primaryButtonText}>Save</Text>
+              <TouchableOpacity
+                style={styles.primaryButton}
+                onPress={handleSaveTitle}
+              >
+                <Text variant="caption" style={styles.primaryButtonText}>
+                  Save
+                </Text>
               </TouchableOpacity>
             </View>
           </Card>
 
-          <Card style={styles.card}>
-            <Text variant="caption" color="secondary" style={styles.label}>
-              Current time
-            </Text>
-            <Text variant="title" color="primary" style={styles.elapsed}>
-              {elapsedDisplay}
-            </Text>
-            {state.isRunning && (
-              <Text variant="caption" color="secondary" style={styles.runningHint}>
-                Running — tap widget to stop
-              </Text>
-            )}
-            <TouchableOpacity style={styles.resetButton} onPress={handleReset}>
-              <Text variant="caption" style={styles.resetButtonText}>Reset to 0:00:00</Text>
-            </TouchableOpacity>
-          </Card>
+          <LiveElapsedSectionComponent
+            totalElapsedMs={state.totalElapsedMs}
+            startTimeMs={state.startTimeMs}
+            isRunning={state.isRunning}
+            onReset={handleReset}
+          />
 
           <Text variant="caption" color="secondary" style={styles.hint}>
             {Platform.OS === 'ios'
