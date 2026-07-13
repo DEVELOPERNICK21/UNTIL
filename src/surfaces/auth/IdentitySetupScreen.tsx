@@ -76,10 +76,7 @@ export function IdentitySetupScreen() {
   const birthDateStr = useMemo(() => toBirthDateString(birthDate), [birthDate]);
 
   const handleLifespanChange = useCallback((next: number) => {
-    setLifespan(prev => {
-      if (prev !== next) Vibration.vibrate(5);
-      return next;
-    });
+    setLifespan(next);
   }, []);
 
   const submitProfile = useCallback(
@@ -95,7 +92,7 @@ export function IdentitySetupScreen() {
         setIsSubmitting(false);
       }
     },
-    [isSubmitting, updateUserProfile, navigation],
+    [isSubmitting, updateUserProfile, navigation, logEvent],
   );
 
   const handleViewMyLife = () => {
@@ -172,6 +169,9 @@ export function IdentitySetupScreen() {
               ]}
               onPress={() => setShowPicker(true)}
               activeOpacity={0.85}
+              accessibilityLabel={`Birth date: ${formatDisplayDate(
+                birthDate,
+              )}. Tap to change.`}
             >
               <Text
                 variant="title"
@@ -263,7 +263,11 @@ export function IdentitySetupScreen() {
             { paddingBottom: Math.max(insets.bottom, Spacing.lg) },
           ]}
         >
-          <TouchableOpacity onPress={handleSkip} style={styles.footerSkip}>
+          <TouchableOpacity
+            onPress={handleSkip}
+            style={styles.footerSkip}
+            accessibilityLabel="Skip identity setup"
+          >
             <Text variant="body" style={{ color: theme.textSecondary }}>
               ✕ Skip
             </Text>

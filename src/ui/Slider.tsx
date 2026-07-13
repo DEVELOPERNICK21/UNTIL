@@ -3,8 +3,8 @@
  * Uses theme.percent for fill and thumb; respects min/max and step.
  */
 
-import React, { useRef, useCallback, useState } from 'react';
-import { View, StyleSheet, PanResponder } from 'react-native';
+import React, { useRef, useCallback, useState, useEffect } from 'react';
+import { View, StyleSheet, PanResponder, Vibration } from 'react-native';
 import { useTheme, Spacing } from '../theme';
 
 const TRACK_HEIGHT = 4;
@@ -29,13 +29,31 @@ export function Slider({
   const [trackWidth, setTrackWidth] = useState(0);
   const trackWidthRef = useRef(0);
 
+  // Use a ref to store current props to avoid stale closures in PanResponder
+  const propsRef = useRef({ value, minimumValue, maximumValue, step, onValueChange });
+  useEffect(() => {
+    propsRef.current = { value, minimumValue, maximumValue, step, onValueChange };
+  }, [value, minimumValue, maximumValue, step, onValueChange]);
+
   const clamp = useCallback(
     (v: number) => {
-      let n = Math.max(minimumValue, Math.min(maximumValue, v));
-      if (step > 0) n = Math.round(n / step) * step;
+      const { minimumValue: min, maximumValue: max, step: s } = propsRef.current;
+      let n = Math.max(min, Math.min(max, v));
+      if (s > 0) n = Math.round(n / s) * s;
       return n;
     },
-    [minimumValue, maximumValue, step]
+    []
+  );
+
+  const handleValueChange = useCallback(
+    (newValue: number) => {
+      const clamped = clamp(newValue);
+      if (clamped !== propsRef.current.value) {
+        Vibration.vibrate(5);
+        propsRef.current.onValueChange(clamped);
+      }
+    },
+    [clamp]
   );
 
   const startValueRef = useRef(value);
@@ -44,19 +62,21 @@ export function Slider({
       onStartShouldSetPanResponder: () => true,
       onMoveShouldSetPanResponder: () => true,
       onPanResponderGrant: (_, g) => {
+        const { minimumValue: min, maximumValue: max } = propsRef.current;
         const w = trackWidthRef.current;
         if (w <= 0) return;
         const progress = Math.max(0, Math.min(1, g.x0 / w));
-        startValueRef.current = minimumValue + progress * (maximumValue - minimumValue);
-        onValueChange(clamp(startValueRef.current));
+        startValueRef.current = min + progress * (max - min);
+        handleValueChange(startValueRef.current);
       },
       onPanResponderMove: (_, g) => {
+        const { minimumValue: min, maximumValue: max } = propsRef.current;
         const w = trackWidthRef.current;
         if (w <= 0) return;
         const deltaProgress = g.dx / w;
-        const range = maximumValue - minimumValue;
+        const range = max - min;
         const newVal = startValueRef.current + deltaProgress * range;
-        onValueChange(clamp(newVal));
+        handleValueChange(newVal);
       },
     })
   ).current;
@@ -76,7 +96,27 @@ export function Slider({
   }, []);
 
   return (
-    <View style={styles.wrap} onLayout={handleLayout} {...panResponder.panHandlers}>
+    <View
+      style={styles.wrap}
+      onLayout={handleLayout}
+      {...panResponder.panHandlers}
+      accessibilityRole="adjustable"
+      accessibilityValue={{
+        min: minimumValue,
+        max: maximumValue,
+        now: value,
+      }}
+      onAccessibilityAction={event => {
+        switch (event.nativeEvent.actionName) {
+          case 'increment':
+            handleValueChange(value + step);
+            break;
+          case 'decrement':
+            handleValueChange(value - step);
+            break;
+        }
+      }}
+    >
       <View style={[styles.track, { backgroundColor: theme.progressTrack }]}>
         <View
           style={[
