@@ -7,11 +7,11 @@ import { SITE_CONFIG } from '@/domain';
 export const metadata: Metadata = {
   title: `${SITE_CONFIG.appName} — ${SITE_CONFIG.tagline}`,
   description:
-    'See your time across day, month, year, and life. Widgets, deadlines, counters, daily tasks, and share snapshots in one app.',
+    'See your time across day, month, year, and life. Ember companion, home widgets, Wear OS Day %, deadlines, tasks, and share snapshots.',
   openGraph: {
     title: SITE_CONFIG.appName,
     description:
-      'Time awareness app with widgets, deadlines, counters, tasks, and shareable snapshots.',
+      'Time awareness with Ember, widgets, Wear OS Day %, deadlines, counters, tasks, and shareable snapshots.',
   },
 };
 
