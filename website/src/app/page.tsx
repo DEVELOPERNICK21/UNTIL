@@ -1,6 +1,7 @@
 import { HeroScreenshotShowcase } from '@/components/HeroScreenshotShowcase';
 import { AppScreenshots } from '@/components/AppScreenshots';
 import { CinematicHeroSection } from '@/components/CinematicHeroSection';
+import { EmberCompanion } from '@/components/EmberCompanion';
 import { LANDING_COPY, SITE_CONFIG } from '@/domain';
 
 export default function HomePage() {
@@ -480,6 +481,8 @@ export default function HomePage() {
           {hero.cta}
         </a>
       </section>
+
+      <EmberCompanion />
     </>
   );
 }
