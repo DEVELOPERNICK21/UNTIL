@@ -71,6 +71,10 @@ export const LANDING_COPY = {
     },
   ],
 
+  /** Blurb above the screenshot gallery on the home page */
+  screenshotsBlurb:
+    'Day, month, year, and life progress — widgets with Ember, countdowns, counters, and Wear OS Day % on Android.',
+
   /** Value prop bullets — "That's why Until exists" (ChatPal-style) */
   valueProps: {
     tagline: "That's why Until exists",
@@ -112,7 +116,12 @@ export const LANDING_COPY = {
       {
         question: 'What can I put on widgets?',
         answer:
-          'You can show day, month, year, life, deadlines, daily task progress, custom counters, and hour timer state. Widget options vary by device and platform.',
+          'You can show day, month, year, life, deadlines, daily task progress, custom counters, and hour timer state. Day and Daily Tasks widgets also show Ember, whose mood follows day progress. Widget options vary by device and platform.',
+      },
+      {
+        question: 'Does Until work on Wear OS?',
+        answer:
+          'Yes. On Android, UNTIL syncs Day % to Wear OS so you can add a tile or complication on a compatible watch. Open the phone app so Day data stays fresh. iOS (and Apple Watch) are coming soon.',
       },
       {
         question: 'Who is Until for?',
@@ -140,7 +149,7 @@ export const LANDING_COPY = {
       {
         title: 'Built for surfaces',
         description:
-          'Widgets first, plus Dynamic Island on iOS and floating overlay on Android.',
+          'Widgets first (with Ember on Day and Tasks), Wear OS Day % on Android watches, Dynamic Island on iOS, and floating overlay on Android.',
       },
       {
         title: 'Action + reflection',

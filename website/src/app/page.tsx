@@ -9,6 +9,7 @@ export default function HomePage() {
     hero,
     valueProps,
     features,
+    screenshotsBlurb,
     whyChoose,
     testimonials,
     faq,
@@ -173,8 +174,7 @@ export default function HomePage() {
             marginBottom: '1.5rem',
           }}
         >
-          Day, month, year, and life progress. Widgets, countdowns, and counters
-          on iPhone and Android.
+          {screenshotsBlurb}
         </p>
         <AppScreenshots />
       </section>
