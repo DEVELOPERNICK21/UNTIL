@@ -227,4 +227,14 @@ export const LANDING_COPY = {
       cta: 'Coming soon',
     },
   },
+
+  emberCompanion: {
+    ariaLabel: 'Ember, UNTIL companion',
+    whispers: [
+      'I\u2019m Ember — I travel with you while you look around.',
+      'Your day is still soft. UNTIL keeps it glanceable on your home screen.',
+      'When you\u2019re ready, Android has widgets, Ember, and Wear OS Day %.',
+      'No rush. Scroll a little more — I\u2019ll stay nearby.',
+    ],
+  },
 } as const;
