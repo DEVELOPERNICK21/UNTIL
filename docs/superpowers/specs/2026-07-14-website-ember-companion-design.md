@@ -72,12 +72,12 @@ On the marketing landing page (`/`), after the cinematic hero, show an app-faith
 
 ## Success criteria
 
-- [ ] Landing shows Ember only after cinematic hero section is past
-- [ ] Ember lazily follows pointer (desktop); reduced-motion parks it
-- [ ] Visual reads as Ember (orb + face + mood colors)
-- [ ] Click shows a whisper from SSOT copy; dismiss works
-- [ ] Privacy/terms pages have no companion
-- [ ] No GSAP dependency for companion motion
+- [x] Landing shows Ember only after cinematic hero section is past
+- [x] Ember lazily follows pointer (desktop); reduced-motion parks it
+- [x] Visual reads as Ember (orb + face + mood colors)
+- [x] Click shows a whisper from SSOT copy; dismiss works
+- [x] Privacy/terms pages have no companion
+- [x] No GSAP dependency for companion motion
 
 ## Risks
 
