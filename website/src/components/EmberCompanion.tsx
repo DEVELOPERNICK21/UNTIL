@@ -70,7 +70,18 @@ export function EmberCompanion() {
   const raf = useRef<number | null>(null);
   const visibleOk = useRef(true);
   const whisperTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const bounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const whisperIndex = useRef(0);
+
+  const clearWhisperTimer = useCallback(() => {
+    if (whisperTimer.current) clearTimeout(whisperTimer.current);
+    whisperTimer.current = null;
+  }, []);
+
+  const clearBounceTimer = useCallback(() => {
+    if (bounceTimer.current) clearTimeout(bounceTimer.current);
+    bounceTimer.current = null;
+  }, []);
 
   useEffect(() => {
     const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -106,7 +117,10 @@ export function EmberCompanion() {
   }, []);
 
   const tick = useCallback(() => {
-    if (!visibleOk.current || reduceMotion) return;
+    if (!visibleOk.current || reduceMotion) {
+      raf.current = null;
+      return;
+    }
     const p = pos.current;
     const t = target.current;
     p.x += (t.x - p.x) * LERP;
@@ -159,16 +173,21 @@ export function EmberCompanion() {
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setWhisper(null);
+      if (e.key === 'Escape') {
+        setWhisper(null);
+        clearWhisperTimer();
+      }
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, []);
+  }, [clearWhisperTimer]);
 
-  const clearWhisperTimer = () => {
-    if (whisperTimer.current) clearTimeout(whisperTimer.current);
-    whisperTimer.current = null;
-  };
+  useEffect(() => {
+    return () => {
+      clearWhisperTimer();
+      clearBounceTimer();
+    };
+  }, [clearWhisperTimer, clearBounceTimer]);
 
   const onActivate = () => {
     if (whisper) {
@@ -180,7 +199,8 @@ export function EmberCompanion() {
     whisperIndex.current += 1;
     setWhisper(line);
     setBounce(true);
-    window.setTimeout(() => setBounce(false), 420);
+    clearBounceTimer();
+    bounceTimer.current = setTimeout(() => setBounce(false), 420);
     clearWhisperTimer();
     whisperTimer.current = setTimeout(() => setWhisper(null), WHISPER_MS);
   };
@@ -194,6 +214,7 @@ export function EmberCompanion() {
         bounce ? ' ember-companion--bounce' : ''
       }`}
       ref={rootRef}
+      aria-hidden={!active}
       style={
         reduceMotion
           ? undefined
@@ -212,6 +233,8 @@ export function EmberCompanion() {
         className="ember-companion-btn"
         aria-label={ariaLabel}
         onClick={onActivate}
+        disabled={!active}
+        tabIndex={active ? 0 : -1}
       >
         <svg
           width={SIZE}
