@@ -4,3 +4,8 @@ export type { IActivityRepository, CategoryTotalsResult } from './IActivityRepos
 export type { ITaskRepository } from './ITaskRepository';
 export type { IMonthlyGoalRepository } from './IMonthlyGoalRepository';
 export type { IOnboardingRepository } from './IOnboardingRepository';
+export type {
+  EngagementModalState,
+  IEngagementRepository,
+} from './IEngagementRepository';
+export type { IPresenceRepository } from './IPresenceRepository';

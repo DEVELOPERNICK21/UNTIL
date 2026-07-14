@@ -1,13 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { View, StyleSheet, ScrollView, TouchableOpacity, Dimensions, Alert } from 'react-native';
+import { StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { Text, ScreenGradient, Card, ProgressLine, CircularProgress } from '../../ui';
-import { useObserveTimeState } from '../../hooks';
-import { Spacing, Colors, Typography, FontFamily, getProgressColor } from '../../theme';
+import { Text } from '../../ui';
+import { PeriodDetailScreen } from './PeriodDetailScreen';
+import { useObserveTimeState, useGoalsFeatureEnabled } from '../../hooks';
+import { Spacing } from '../../theme';
 import type { RootStackParamList } from '../../navigation/RootNavigator';
-
-const RING_SIZE = Math.min(220, Dimensions.get('window').width - Spacing[4] * 2 - 32);
 
 function formatTime(date: Date) {
   const startDate = new Date(date);
@@ -32,9 +31,11 @@ function formatTime(date: Date) {
 }
 
 export function DayDetailScreen() {
-  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList, 'DayDetail'>>();
+  const navigation =
+    useNavigation<NativeStackNavigationProp<RootStackParamList, 'DayDetail'>>();
   const [live, setLive] = useState(() => new Date());
-  const { timeState } = useObserveTimeState();
+  const goalsFeatureEnabled = useGoalsFeatureEnabled();
+  useObserveTimeState();
 
   useEffect(() => {
     const t = setInterval(() => setLive(new Date()), 1000);
@@ -42,127 +43,49 @@ export function DayDetailScreen() {
   }, []);
 
   const { passed, left, progress } = formatTime(live);
-  const progressColor = getProgressColor(progress);
   const pctDone = Math.round(progress * 100);
   const pctLeft = 100 - pctDone;
 
   return (
-    <View style={styles.container}>
-      <ScreenGradient>
-        <ScrollView
-          contentContainerStyle={styles.content}
-          showsVerticalScrollIndicator={false}
+    <PeriodDetailScreen
+      kind="day"
+      title="Today"
+      progress={progress}
+      passedLabel={passed}
+      leftLabel={left}
+      passedCaption="PASSED"
+      leftCaption="LEFT"
+      summary={`${pctDone}% of the day passed · ${pctLeft}% left`}
+      liveHint="Updates every second"
+      footer={
+        <TouchableOpacity
+          style={styles.cta}
+          onPress={() => {
+            if (goalsFeatureEnabled) {
+              navigation.navigate('DailyTasks');
+            } else {
+              Alert.alert(
+                'Coming soon',
+                'Daily tasks will be available in a future update.',
+              );
+            }
+          }}
         >
-          <Text variant="sectionTitle" color="secondary" style={styles.overhead}>
-            Today
+          <Text variant="sectionTitle" color="primary">
+            Today&apos;s tasks
           </Text>
-
-          <View style={styles.ringWrap}>
-            <CircularProgress
-              progress={progress}
-              size={RING_SIZE}
-              strokeWidth={14}
-              label={`${pctDone}%`}
-            />
-          </View>
-
-          <View style={styles.statsRow}>
-            <View style={styles.statBox}>
-              <Text variant="caption" color="secondary" style={styles.statLabel}>
-                PASSED
-              </Text>
-              <Text variant="title" color="primary" style={styles.passedValue}>
-                {passed}
-              </Text>
-            </View>
-            <View style={styles.statBox}>
-              <Text variant="caption" color="secondary" style={styles.statLabel}>
-                LEFT
-              </Text>
-              <Text variant="title" color="primary" style={[styles.leftValue, { color: progressColor }]}>
-                {left}
-              </Text>
-            </View>
-          </View>
-
-          <Card style={styles.card}>
-            <View style={styles.percentRow}>
-              <Text variant="body" color="secondary">
-                {pctDone}% of the day passed · {pctLeft}% left
-              </Text>
-            </View>
-            <ProgressLine progress={progress} fillColor={progressColor} style={styles.progress} />
-          </Card>
-
-          <TouchableOpacity
-            style={styles.cta}
-            onPress={() => {
-              Alert.alert('Coming soon', 'Daily tasks will be available in a future update.');
-            }}
-          >
-            <Text variant="sectionTitle" color="primary">
-              Today&apos;s tasks
-            </Text>
-            <Text variant="caption" color="secondary">
-              Add and tick off your daily tasks →
-            </Text>
-          </TouchableOpacity>
-        </ScrollView>
-      </ScreenGradient>
-    </View>
+          <Text variant="caption" color="secondary">
+            Add and tick off your daily tasks →
+          </Text>
+        </TouchableOpacity>
+      }
+    />
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
-  content: {
-    paddingHorizontal: Spacing[4],
-    paddingTop: Spacing[4],
-    paddingBottom: Spacing[7],
-  },
-  overhead: {
-    textAlign: 'center',
-    marginBottom: Spacing[4],
-    letterSpacing: 1.2,
-  },
-  ringWrap: {
-    alignItems: 'center',
-    marginBottom: Spacing[5],
-  },
-  statsRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    marginBottom: Spacing[4],
-  },
-  statBox: {
-    alignItems: 'center',
-  },
-  statLabel: {
-    letterSpacing: 0.8,
-    marginBottom: 4,
-    fontSize: Typography.badge,
-  },
-  passedValue: {
-    fontSize: Typography.greeting,
-    fontFamily: FontFamily.medium,
-  },
-  leftValue: {
-    fontSize: Typography.greeting,
-    fontFamily: FontFamily.medium,
-  },
-  card: {
-    marginBottom: Spacing[4],
-  },
-  percentRow: {
-    marginBottom: Spacing[2],
-  },
-  progress: {
-    marginTop: Spacing[1],
-  },
   cta: {
+    marginTop: Spacing[2],
     paddingVertical: Spacing[3],
-    paddingHorizontal: Spacing[3],
-    backgroundColor: Colors.cardLighter,
-    borderRadius: 16,
   },
 });

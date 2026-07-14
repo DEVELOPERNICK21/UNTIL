@@ -122,6 +122,8 @@ export interface Countdown {
   id: string;
   title: string;
   date: string;
+  /** ISO date (YYYY-MM-DD) when countdown was created */
+  createdAt?: string;
 }
 
 /** Task categories for daily task list (separate from ActivityCategory). */

@@ -2,7 +2,26 @@
 
 How to add or modify widgets for iOS and Android. Use this doc when creating a new widget.
 
-**Related:** [Dynamic Island Live Activity](DynamicIslandLiveActivity.md) – design for iOS Live Activity / Dynamic Island (day, month, year, daily tasks, hour calc, life).
+**Related:** [Dynamic Island Live Activity](DynamicIslandLiveActivity.md) – design for iOS Live Activity / Dynamic Island (day, month, year, daily tasks, hour calc, life).  
+**Apple Watch:** [APPLE_WATCH.md](./APPLE_WATCH.md) – Day % circular complication + watch detail (v1).  
+**Wear OS:** [WEAR_OS.md](./WEAR_OS.md) – Day % tile + complication + detail on Android watches.  
+**Ember Phase 1:** [superpowers/specs/2026-07-14-ember-widgets-phase1-design.md](./superpowers/specs/2026-07-14-ember-widgets-phase1-design.md).
+
+---
+
+## Visual SSOT (Phase 1)
+
+| Token | Value | Use |
+|-------|-------|-----|
+| Passed / ring | `#BB86FC` | Progress arcs, passed dots |
+| Current / accent | `#E87C20` | Current hour knob, leftover % |
+| Done label | `#FF3B30` | “Done” copy (Android Day) |
+| Left label | `#34C759` | “Left” copy |
+| Ember moods | dawn/open/mid/late/dusk palettes | Match `src/ui/Ember.tsx` — Day ring center + Tasks corner |
+
+Glass: dark fill + light stroke + ~16dp corners (`widget_background` / `WidgetGlassBackground`). No live blur.
+
+**Ember placement:** Day = center of ring; Daily Tasks = corner mark; empty/sync = Ember + soft line. Not on Year/Life/Counter/Hour in Phase 1.
 
 ---
 

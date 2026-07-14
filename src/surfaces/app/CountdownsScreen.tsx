@@ -22,22 +22,6 @@ function toDateString(d: Date): string {
   return `${y}-${m}-${day}`;
 }
 
-function getDaysLeft(targetDate: string): number {
-  const target = new Date(targetDate);
-  const today = new Date();
-  target.setHours(0, 0, 0, 0);
-  today.setHours(0, 0, 0, 0);
-  return Math.ceil((target.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-}
-
-function formatDaysLeft(days: number): string {
-  if (days > 1) return `${days} days left`;
-  if (days === 1) return '1 day left';
-  if (days === 0) return 'Today';
-  if (days === -1) return '1 day ago';
-  return `${Math.abs(days)} days ago`;
-}
-
 export function CountdownsScreen() {
   const { syncCountdowns } = useWidgetSyncActions();
   const { countdowns, refresh, addCountdown, removeCountdown } = useCountdowns();
@@ -168,9 +152,7 @@ export function CountdownsScreen() {
               your home screen.
             </Text>
           ) : (
-            countdowns.map(item => {
-              const days = getDaysLeft(item.date);
-              return (
+            countdowns.map(item => (
                 <Card key={item.id} style={styles.card}>
                   <View style={styles.row}>
                     <View style={styles.rowLeft}>
@@ -182,7 +164,7 @@ export function CountdownsScreen() {
                         {item.title}
                       </Text>
                       <Text variant="caption" color="secondary">
-                        {item.date} · {formatDaysLeft(days)}
+                        {item.date} · {item.daysLabel}
                       </Text>
                     </View>
                     <TouchableOpacity
@@ -196,8 +178,7 @@ export function CountdownsScreen() {
                     </TouchableOpacity>
                   </View>
                 </Card>
-              );
-            })
+              ))
           )}
 
           <Text variant="caption" color="secondary" style={styles.hint}>

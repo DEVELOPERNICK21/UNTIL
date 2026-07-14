@@ -29,6 +29,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
       launchOptions: launchOptions
     )
 
+    WatchConnectivityBridge.start()
+
     return true
   }
 }

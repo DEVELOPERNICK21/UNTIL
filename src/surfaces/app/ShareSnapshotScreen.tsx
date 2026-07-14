@@ -209,12 +209,22 @@ export function ShareSnapshotScreen() {
       const filePath = `${RNFS.CachesDirectoryPath}/${fileName}`;
       await RNFS.writeFile(filePath, pngBase64, 'base64');
 
-      void logAnalyticsEvent('share_tapped');
+      void logAnalyticsEvent('share_tapped', {
+        source_screen: 'ShareSnapshot',
+        share_type: 'snapshot',
+        focus,
+        method: 'native_share_sheet',
+      });
       await Share.open({
         url: `file://${filePath}`,
         type: 'image/png',
         message: quote,
         failOnCancel: false,
+      });
+      void logAnalyticsEvent('share_completed', {
+        source_screen: 'ShareSnapshot',
+        share_type: 'snapshot',
+        focus,
       });
     } catch (error) {
       console.warn('Share snapshot failed', error);
@@ -233,6 +243,7 @@ export function ShareSnapshotScreen() {
     miniLabelFont,
     brandFont,
     quote,
+    focus,
   ]);
 
   const renderCircularProgressPath = (

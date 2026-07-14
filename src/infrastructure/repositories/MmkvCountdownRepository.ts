@@ -41,6 +41,7 @@ export class MmkvCountdownRepository implements ICountdownRepository {
       id: randomId(),
       title: (title || 'Deadline').trim() || 'Deadline',
       date: date || new Date().toISOString().slice(0, 10),
+      createdAt: new Date().toISOString().slice(0, 10),
     };
     // Single-item mode: keep exactly one deadline.
     saveCountdowns([countdown]);

@@ -5,6 +5,7 @@
 import { Platform } from 'react-native';
 import { getNumber, getString, setString } from '../persistence/mmkv';
 import { STORAGE_KEYS } from '../persistence/schema';
+import { requestNotificationPermission } from './notificationPermission';
 
 const ONE_DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -22,7 +23,7 @@ export async function scheduleDay2ReengagementNotification(): Promise<void> {
   try {
     const notifee = require('@notifee/react-native').default;
     const { TriggerType } = require('@notifee/react-native');
-    await notifee.requestPermission();
+    await requestNotificationPermission('onboarding_day2');
     await notifee.createChannel({
       id: 'engagement',
       name: 'Reminders',

@@ -1,7 +1,7 @@
 # Ember on home widgets + Day UX pass (Phase 1)
 
 **Date:** 2026-07-14  
-**Status:** Approved for implementation planning  
+**Status:** Implemented (Phase 1)  
 **Choice:** Placement **D — Combo** + Phase 1 UX (hero hierarchy, unify Day, color/glass SSOT, empty-state Ember)
 
 ## Goal
@@ -93,12 +93,12 @@ Examples (final strings in implementation):
 
 ## Success criteria
 
-- [ ] Day widget shows Ember in ring center on iOS + Android; mood changes with day progress after refresh
-- [ ] Daily Tasks shows corner Ember without covering primary metrics
-- [ ] Empty/sync states show Ember + one line where those states exist today
-- [ ] Day glance hierarchy is clearer (one hero + one support); iOS/Android primary readout aligned
-- [ ] Widget glass/progress colors documented and matched across Day/Tasks at least
-- [ ] No new continuous animation / battery-heavy timeline hacks
+- [x] Day widget shows Ember in ring center on iOS + Android; mood changes with day progress after refresh
+- [x] Daily Tasks shows corner Ember without covering primary metrics
+- [x] Empty/sync states show Ember + one line where those states exist today
+- [x] Day glance hierarchy is clearer (one hero + one support); iOS/Android primary readout aligned
+- [x] Widget glass/progress colors documented and matched across Day/Tasks at least
+- [x] No new continuous animation / battery-heavy timeline hacks
 
 ## Phase 2 (explicit backlog)
 

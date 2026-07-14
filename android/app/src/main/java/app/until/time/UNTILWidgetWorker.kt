@@ -273,6 +273,16 @@ class UNTILWidgetWorker(
                     scheduleStopwatchTick(context)
                 }
             }
+
+            WearDaySync.push(
+                context = context,
+                dayProgress = cache.dayProgress,
+                dayPercentDone = cache.dayPercentDone,
+                dayPercentLeft = cache.dayPercentLeft,
+                startOfDay = cache.startOfDay,
+                endOfDay = cache.endOfDay,
+                dayRemainingMinutes = cache.dayRemainingMinutes,
+            )
         }
 
         private fun loadWidgetCache(context: Context): WidgetCache? {
@@ -503,13 +513,14 @@ class UNTILWidgetWorker(
         private fun buildDailyTasksRemoteViews(context: Context, payload: DailyTasksPayload?, cache: WidgetCache): RemoteViews {
             val views = RemoteViews(context.packageName, R.layout.widget_daily_tasks_flipper)
             // Page 0: Daily tasks
-            if (payload != null && payload.total >= 0) {
+            if (payload != null && payload.total > 0) {
                 views.setTextViewText(R.id.widget_daily_tasks_value, "${payload.completed}/${payload.total}")
-                val progress = if (payload.total > 0) (payload.completed * 100 / payload.total).coerceIn(0, 100) else 0
+                val progress = (payload.completed * 100 / payload.total).coerceIn(0, 100)
                 views.setProgressBar(R.id.widget_daily_tasks_progress, 100, progress, false)
-                val pct = if (payload.total > 0) (payload.completed * 100 / payload.total).coerceIn(0, 100) else 0
+                val pct = (payload.completed * 100 / payload.total).coerceIn(0, 100)
                 views.setTextViewText(R.id.widget_daily_tasks_sub, "$pct% · ${payload.pending} pending")
                 views.setViewVisibility(R.id.widget_daily_tasks_sub, android.view.View.VISIBLE)
+                views.setTextViewText(R.id.widget_daily_tasks_label, "done")
                 val pieBitmap = createDailyTasksPieBitmap(payload.completed, payload.total)
                 if (pieBitmap != null && !pieBitmap.isRecycled) {
                     views.setImageViewBitmap(R.id.widget_daily_tasks_pie, pieBitmap)
@@ -528,15 +539,26 @@ class UNTILWidgetWorker(
                     }
                 }
             } else {
-                views.setTextViewText(R.id.widget_daily_tasks_value, "0/0")
+                views.setTextViewText(R.id.widget_daily_tasks_value, "—")
+                views.setTextViewText(R.id.widget_daily_tasks_label, "quiet day")
                 views.setProgressBar(R.id.widget_daily_tasks_progress, 100, 0, false)
-                views.setViewVisibility(R.id.widget_daily_tasks_sub, android.view.View.GONE)
+                views.setTextViewText(
+                    R.id.widget_daily_tasks_sub,
+                    "Nothing listed yet — a quiet day is still a day.",
+                )
+                views.setViewVisibility(R.id.widget_daily_tasks_sub, android.view.View.VISIBLE)
                 val pieBitmap = createDailyTasksPieBitmap(0, 0)
                 if (pieBitmap != null && !pieBitmap.isRecycled) {
                     views.setImageViewBitmap(R.id.widget_daily_tasks_pie, pieBitmap)
                 }
                 widgetDailyTasksCatIds.forEach { views.setViewVisibility(it, android.view.View.GONE) }
             }
+            try {
+                val ember = createEmberBitmap(cache.dayProgress.coerceIn(0.0, 1.0))
+                if (ember != null && !ember.isRecycled) {
+                    views.setImageViewBitmap(R.id.widget_daily_tasks_ember, ember)
+                }
+            } catch (_: Exception) { }
             // Page 1: Day progress
             val dDone = cache.dayPercentDone.coerceIn(0, 100)
             val dLeft = cache.dayPercentLeft.coerceIn(0, 100)
@@ -675,12 +697,10 @@ class UNTILWidgetWorker(
                 val remainingSec = ((end - nowMs) / 1000).toInt().coerceIn(0, Int.MAX_VALUE)
                 val passedH = passedSec / 3600
                 val passedM = (passedSec % 3600) / 60
-                val passedS = passedSec % 60
                 val leftH = remainingSec / 3600
                 val leftM = (remainingSec % 3600) / 60
-                val leftS = remainingSec % 60
-                val passedText = context.getString(R.string.widget_day_time_passed_sec_format, passedH, passedM, passedS)
-                val leftText = context.getString(R.string.widget_day_time_left_sec_format, leftH, leftM, leftS)
+                val passedText = context.getString(R.string.widget_day_time_passed_format, passedH, passedM)
+                val leftText = context.getString(R.string.widget_day_time_left_format, leftH, leftM)
                 return passedText to leftText
             }
             val pm = cache.dayPassedMinutes
@@ -688,20 +708,18 @@ class UNTILWidgetWorker(
             val passedText = if (pm != null) {
                 val h = pm / 60
                 val m = pm % 60
-                val s = 0
-                context.getString(R.string.widget_day_time_passed_sec_format, h, m, s)
+                context.getString(R.string.widget_day_time_passed_format, h, m)
             } else {
                 val h = (dProgress * 24.0).toInt().coerceIn(0, 24)
-                context.getString(R.string.widget_day_time_passed_sec_format, h, 0, 0)
+                context.getString(R.string.widget_day_time_passed_format, h, 0)
             }
             val leftText = if (rm != null) {
                 val h = rm / 60
                 val m = rm % 60
-                val s = 0
-                context.getString(R.string.widget_day_time_left_sec_format, h, m, s)
+                context.getString(R.string.widget_day_time_left_format, h, m)
             } else {
                 val h = (24 - (dProgress * 24.0).toInt().coerceIn(0, 24)).coerceIn(0, 24)
-                context.getString(R.string.widget_day_time_left_sec_format, h, 0, 0)
+                context.getString(R.string.widget_day_time_left_format, h, 0)
             }
             return passedText to leftText
         }
@@ -845,7 +863,13 @@ class UNTILWidgetWorker(
                             )
                             views.setTextViewText(R.id.widget_life_passed, "")
                             views.setTextViewText(R.id.widget_life_left, "")
-                            views.setTextViewText(R.id.widget_life_percent, "0%")
+                            views.setTextViewText(R.id.widget_life_percent, "")
+                            try {
+                                val ember = createEmberBitmap(cache.dayProgress.coerceIn(0.0, 1.0), sizePx = 160)
+                                if (ember != null && !ember.isRecycled) {
+                                    views.setImageViewBitmap(R.id.widget_life_dots, ember)
+                                }
+                            } catch (_: Exception) { }
                         } else {
                             val clamped = lifeProgress.coerceIn(0.0, 1.0)
                             val consumedPct = lifePercent.coerceIn(0, 100)
@@ -987,8 +1011,117 @@ class UNTILWidgetWorker(
                     canvas.drawCircle(kx, ky, 6.5f, currentPaint)
                 }
 
+                // Ember companion in ring center (static mood glyph)
+                drawEmberFace(canvas, center, center, ringRadius * 0.48f, clamped)
+
                 bitmap
             } catch (e: Exception) {
+                null
+            }
+        }
+
+        /** Mood colors aligned with in-app Ember (`src/ui/Ember.tsx`). */
+        private fun emberMoodColors(progress: Double): IntArray {
+            val p = progress.coerceIn(0.0, 1.0)
+            // hi, mid, deep
+            return when {
+                p < 0.15 -> intArrayOf(
+                    Color.parseColor("#FDE68A"),
+                    Color.parseColor("#F59E0B"),
+                    Color.parseColor("#B45309"),
+                )
+                p < 0.4 -> intArrayOf(
+                    Color.parseColor("#FDA4AF"),
+                    Color.parseColor("#FB7185"),
+                    Color.parseColor("#E11D48"),
+                )
+                p < 0.65 -> intArrayOf(
+                    Color.parseColor("#FDBA74"),
+                    Color.parseColor("#E87C20"),
+                    Color.parseColor("#C2410C"),
+                )
+                p < 0.85 -> intArrayOf(
+                    Color.parseColor("#C4B5FD"),
+                    Color.parseColor("#8B5CF6"),
+                    Color.parseColor("#5B21B6"),
+                )
+                else -> intArrayOf(
+                    Color.parseColor("#A5B4FC"),
+                    Color.parseColor("#6366F1"),
+                    Color.parseColor("#312E81"),
+                )
+            }
+        }
+
+        private fun drawEmberFace(
+            canvas: Canvas,
+            cx: Float,
+            cy: Float,
+            radius: Float,
+            progress: Double,
+        ) {
+            val colors = emberMoodColors(progress)
+            val glow = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                style = Paint.Style.FILL
+                color = colors[1]
+                alpha = 70
+            }
+            canvas.drawCircle(cx, cy, radius * 1.18f, glow)
+
+            val body = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                style = Paint.Style.FILL
+                shader = android.graphics.RadialGradient(
+                    cx - radius * 0.25f,
+                    cy - radius * 0.3f,
+                    radius * 1.1f,
+                    intArrayOf(Color.WHITE, colors[0], colors[1], colors[2]),
+                    floatArrayOf(0f, 0.28f, 0.65f, 1f),
+                    android.graphics.Shader.TileMode.CLAMP,
+                )
+            }
+            canvas.drawCircle(cx, cy, radius, body)
+
+            val eyePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                style = Paint.Style.FILL
+                color = Color.parseColor("#FFF8E7")
+            }
+            val pupil = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                style = Paint.Style.FILL
+                color = colors[2]
+            }
+            val eyeY = cy - radius * 0.08f
+            val eyeOff = radius * 0.28f
+            val eyeR = radius * 0.12f
+            canvas.drawCircle(cx - eyeOff, eyeY, eyeR, eyePaint)
+            canvas.drawCircle(cx + eyeOff, eyeY, eyeR, eyePaint)
+            canvas.drawCircle(cx - eyeOff, eyeY, eyeR * 0.45f, pupil)
+            canvas.drawCircle(cx + eyeOff, eyeY, eyeR * 0.45f, pupil)
+
+            val smile = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                style = Paint.Style.STROKE
+                strokeWidth = (radius * 0.1f).coerceAtLeast(2f)
+                strokeCap = Paint.Cap.ROUND
+                color = Color.WHITE
+                alpha = 220
+            }
+            val smileRect = android.graphics.RectF(
+                cx - radius * 0.38f,
+                cy + radius * 0.02f,
+                cx + radius * 0.38f,
+                cy + radius * 0.55f,
+            )
+            canvas.drawArc(smileRect, 25f, 130f, false, smile)
+        }
+
+        /** Small Ember bitmap for Tasks corner (~28–32dp @xxhdpi). */
+        private fun createEmberBitmap(progress: Double, sizePx: Int = 96): Bitmap? {
+            return try {
+                val bitmap = Bitmap.createBitmap(sizePx, sizePx, Bitmap.Config.ARGB_8888)
+                val canvas = Canvas(bitmap)
+                val c = sizePx / 2f
+                drawEmberFace(canvas, c, c, c * 0.72f, progress)
+                bitmap
+            } catch (_: Exception) {
                 null
             }
         }

@@ -19,17 +19,25 @@ Gradle applies the Google Services plugin only when `android/app/google-services
 
 ## Events
 
-| Event | When |
-|-------|------|
-| `app_open` | App launch / foreground |
-| `onboarding_step` | Carousel step (1–3) |
-| `onboarding_complete` | User reaches Home (short onboarding) |
-| `identity_setup_complete` | Optional Settings path |
-| `life_preview_seen` | Optional life-weeks preview |
-| `onboarding_paywall_seen` | Deferred paywall |
-| `widget_coach_shown` / `widget_coach_dismissed` | Widget coach modal |
-| `widget_add_tapped` | Coach CTA |
-| `premium_viewed` | Premium screen |
+| Event | When | Key properties |
+|-------|------|----------------|
+| `app_open` | App launch / foreground | — |
+| `onboarding_step` | Carousel step (1–3) | `step`, `step_name` |
+| `onboarding_complete` | User reaches Home | `exit_type`, `step`, `step_name` |
+| `identity_setup_complete` | Optional Settings path | — |
+| `life_preview_seen` | Optional life-weeks preview | — |
+| `onboarding_paywall_seen` | Deferred paywall | `deferred` |
+| `widget_coach_shown` / `widget_coach_dismissed` | Widget coach modal | `dismiss_reason` |
+| `widget_add_tapped` | Coach CTA | `source` |
+| `premium_viewed` | Paywall shown | `source` |
+| `premium_purchase_*` | Google Play billing funnel | `plan_id`, `source`, `error_code`, `payment_provider` |
+| `countdown_created` / `countdown_completed` | Deadline widget actions | `days_until`, `days_used` |
+| `share_tapped` / `share_completed` | Share snapshot | `source_screen`, `focus` |
+| `notification_permission_result` | Android notification permission | `granted`, `source` |
+| `feature_coach_*` / `share_prompt_*` | Feature discovery & share prompts | `target`, `dismiss_reason` |
+| `trial_preview_started` / `trial_preview_ended` | In-app preview lifecycle | `converted`, `trial_days` |
+
+PostHog also receives **Application Installed** via SDK lifecycle autocapture (see PostHog doc).
 
 ## Crashlytics
 

@@ -30,6 +30,7 @@ export function DeferredPaywallModal({ visible, onClose }: DeferredPaywallModalP
     if (visible) {
       void logAnalyticsEvent('deferred_paywall_shown');
       void logAnalyticsEvent('onboarding_paywall_seen', { deferred: true });
+      void logAnalyticsEvent('premium_viewed', { source: 'deferred_paywall' });
     }
   }, [visible]);
 

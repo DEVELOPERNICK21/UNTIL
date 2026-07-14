@@ -2,25 +2,17 @@ import { Platform } from 'react-native';
 import { getString, setString } from '../persistence/mmkv';
 import { STORAGE_KEYS } from '../persistence/schema';
 import {
-  MONETIZATION_PRICING,
-  MONETIZATION_TRIAL_DAYS,
+  FALLBACK_YEARLY_PRICE,
   TRIAL_REMINDER_DAYS,
+  formatPreviewEndingMessage,
 } from '../config/monetization';
 import { TRIAL_DURATION_MS } from '../config/accessConstants';
+import { requestNotificationPermission } from './notificationPermission';
 
 const ONE_DAY_MS = 24 * 60 * 60 * 1000;
 
 function reminderCopyForDay(day: number): string {
-  const total = MONETIZATION_TRIAL_DAYS;
-  if (day >= total) {
-    return `Your free preview ends today. ₹${MONETIZATION_PRICING.yearlyInr}/year keeps month & life widgets — less than ${MONETIZATION_PRICING.yearlyPerDayDisplay}/day.`;
-  }
-  if (day === total - 1) {
-    return 'Last day tomorrow — subscribe to keep month & life widgets without interruption.';
-  }
-  const daysLeft = total - day;
-  const leftLabel = daysLeft === 1 ? '1 day' : `${daysLeft} days`;
-  return `${leftLabel} left in your Premium preview. Keep your Life screen and widgets.`;
+  return formatPreviewEndingMessage(day, FALLBACK_YEARLY_PRICE);
 }
 
 function getInAppShownDays(): Set<number> {
@@ -69,8 +61,11 @@ export function recordTrialReminderInAppShown(day: number): void {
   markInAppShown(day);
 }
 
-export function getTrialReminderMessage(day: number): string {
-  return reminderCopyForDay(day);
+export function getTrialReminderMessage(
+  day: number,
+  yearlyPrice: string = FALLBACK_YEARLY_PRICE
+): string {
+  return formatPreviewEndingMessage(day, yearlyPrice);
 }
 
 /** Schedule local notifications for last preview days (Android). */
@@ -82,10 +77,10 @@ export async function scheduleTrialLocalNotifications(
 
   try {
     const notifee = require('@notifee/react-native').default;
-    await notifee.requestPermission();
+    await requestNotificationPermission('trial_reminder');
     await notifee.createChannel({
       id: 'trial',
-      name: 'Trial reminders',
+      name: 'Preview reminders',
     });
 
     const ids: string[] = [];
@@ -95,7 +90,7 @@ export async function scheduleTrialLocalNotifications(
 
       const id = await notifee.createTriggerNotification(
         {
-          title: 'UNTIL Premium trial',
+          title: 'UNTIL free preview',
           body: reminderCopyForDay(day),
           android: { channelId: 'trial' },
         },

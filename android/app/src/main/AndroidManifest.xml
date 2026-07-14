@@ -152,6 +152,18 @@
         android:exported="false"
         android:foregroundServiceType="dataSync" />
 
+      <service
+        android:name=".WearSyncRequestService"
+        android:exported="true">
+        <intent-filter>
+          <action android:name="com.google.android.gms.wearable.MESSAGE_RECEIVED" />
+          <data
+            android:host="*"
+            android:pathPrefix="/until/day/request"
+            android:scheme="wear" />
+        </intent-filter>
+      </service>
+
       <receiver
         android:name=".WidgetBootReceiver"
         android:exported="true"

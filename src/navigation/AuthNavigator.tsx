@@ -10,6 +10,7 @@ import {
   OnboardingScreen,
   OnboardingCompleteContext,
 } from '../surfaces/onboarding';
+import type { OnboardingExitParams } from '../services/onboardingCompletion';
 import { IdentitySetupScreen } from '../surfaces/auth/IdentitySetupScreen';
 import { LifeWeeksPreviewScreen } from '../surfaces/auth/LifeWeeksPreviewScreen';
 import { OnboardingPaywallScreen } from '../surfaces/auth/OnboardingPaywallScreen';
@@ -24,7 +25,7 @@ export type AuthStackParamList = {
 const Stack = createNativeStackNavigator<AuthStackParamList>();
 
 interface AuthNavigatorProps {
-  onComplete: () => void;
+  onComplete: (params?: OnboardingExitParams) => void;
 }
 
 export function AuthNavigator({ onComplete }: AuthNavigatorProps) {

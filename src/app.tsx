@@ -32,6 +32,7 @@ import {
   recordRetentionAppOpen,
   scheduleRetentionNotifications,
 } from './services/retentionNotifications';
+import { schedulePresenceStreakSaver } from './services/presenceStreakNotifications';
 import { recordOptionalUpdateDismissed } from './services/updateService';
 import { ThemeProvider, useTheme } from './theme';
 import {
@@ -47,7 +48,8 @@ import {
   incrementCustomCounterUseCase,
   replaceCustomCountersFromSyncUseCase,
   verifySubscriptionUseCase,
-  trackAppOpenUseCase,
+  runAppOpenSideEffectsUseCase,
+  getPresenceStreakUseCase,
   ensurePlayBillingSession,
   reconcilePlayEntitlementUseCase,
 } from './di';
@@ -59,6 +61,10 @@ import { ForceUpdateModal } from './components/update/ForceUpdateModal';
 import { OptionalUpdateModal } from './components/update/OptionalUpdateModal';
 
 runMigrations();
+
+function refreshPresenceStreakSaver(): void {
+  void schedulePresenceStreakSaver(getPresenceStreakUseCase.execute());
+}
 
 function reconcilePlayEntitlementIfNeeded(): void {
   if (Platform.OS !== 'android' || !shouldReconcilePlayEntitlement()) {
@@ -123,7 +129,8 @@ function App() {
       reconcilePlayEntitlementIfNeeded();
     }
     // Engagement tracking for event-based Life unlock.
-    trackAppOpenUseCase.execute();
+    runAppOpenSideEffectsUseCase.execute();
+    refreshPresenceStreakSaver();
     recordRetentionAppOpen();
     logAppOpen().catch(() => {});
     scheduleRetentionNotifications().catch(() => {});
@@ -157,7 +164,8 @@ function App() {
         }
         lastActiveHandledAt.current = activeAt;
         // Count each time the user returns to foreground.
-        trackAppOpenUseCase.execute();
+        runAppOpenSideEffectsUseCase.execute();
+        refreshPresenceStreakSaver();
         recordRetentionAppOpen();
         logAppOpen().catch(() => {});
         scheduleRetentionNotifications().catch(() => {});
