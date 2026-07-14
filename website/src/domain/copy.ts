@@ -12,7 +12,7 @@ export const LANDING_COPY = {
     title: 'See your time.',
     headline: 'Day, month, year, and life - always visible.',
     subtitle:
-      'Track progress, deadlines, counters, tasks, and shareable snapshots. Built for home screen glanceability.',
+      'Track progress with Ember, home widgets, Wear OS Day %, deadlines, tasks, and shareable snapshots — glanceable without opening the app.',
     cta: 'Get the app',
   },
 
@@ -23,12 +23,12 @@ export const LANDING_COPY = {
     brandName: 'UNTIL',
     cardHeading: 'Time awareness, redefined.',
     cardDescription:
-      'Until shows day, month, year, and life progress with widgets, deadlines, counters, and daily tasks — always visible on your home screen.',
+      'Until shows day, month, year, and life progress with Ember on widgets, Wear OS Day %, deadlines, counters, and daily tasks — always visible when you need a glance.',
     metricValue: 247,
     metricLabel: 'Days Left',
     ctaHeading: 'Start seeing time clearly.',
     ctaDescription:
-      'Available on Android now. iOS coming soon. Glanceable progress without opening the app.',
+      'Available on Android now. iOS coming soon. Widgets, Ember, and Wear OS Day % without opening the app.',
   },
 
   /** Feature cards (with optional category for layout) */
@@ -43,7 +43,19 @@ export const LANDING_COPY = {
       category: 'Widgets',
       title: 'Home + lock screen widgets',
       description:
-        'Today, month, year, life, deadlines, tasks, counters, and hour timer on your home screen.',
+        'Today, month, year, life, deadlines, tasks, counters, and hour timer — with Ember on Day and Daily Tasks widgets.',
+    },
+    {
+      category: 'Companion',
+      title: 'Meet Ember',
+      description:
+        'A calm companion in the app and on widgets. Ember’s mood follows your day progress — soft presence, not another notification.',
+    },
+    {
+      category: 'Wrist',
+      title: 'Day % on Wear OS',
+      description:
+        'Glance Day % from a Wear OS tile or complication on Android watches. Synced from your phone after you open UNTIL.',
     },
     {
       category: 'Focus',
