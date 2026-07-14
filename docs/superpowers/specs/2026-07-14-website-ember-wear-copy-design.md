@@ -60,11 +60,11 @@ Update the public marketing site so it reflects the new Android Play release: Em
 
 ## Success criteria
 
-- [ ] Landing feature grid shows Ember (Companion) and Wear OS (Wrist)
-- [ ] Widgets / why / FAQ copy accurately describe Ember on Day & Tasks and Wear Day %
-- [ ] iOS still reads as coming soon; Android remains the install CTA
-- [ ] No new components or cinematic hero restructure
-- [ ] Copy remains in domain SSOT (`copy.ts`); no duplicated marketing strings reinvented in components
+- [x] Landing feature grid shows Ember (Companion) and Wear OS (Wrist)
+- [x] Widgets / why / FAQ copy accurately describe Ember on Day & Tasks and Wear Day %
+- [x] iOS still reads as coming soon; Android remains the install CTA
+- [x] No new components or cinematic hero restructure
+- [x] Copy remains in domain SSOT (`copy.ts`); no duplicated marketing strings reinvented in components
 
 ## Risks
 
