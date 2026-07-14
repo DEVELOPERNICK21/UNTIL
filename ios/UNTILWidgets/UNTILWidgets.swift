@@ -17,7 +17,7 @@ struct WidgetCache: Codable {
     let dayHoursLeft: Double
     let dayPassedMinutes: Int?
     let dayRemainingMinutes: Int?
-    /// Start of current day (Unix ms). Used with current time for realtime seconds.
+    /// Start of current day (Unix ms). Used with current time for h/m readout.
     let startOfDay: Int64?
     /// End of current day (Unix ms).
     let endOfDay: Int64?
@@ -209,6 +209,106 @@ private enum Design {
     static let smallLabelSize: CGFloat = 11
 }
 
+// MARK: - Ember glyph (static mood companion for widgets; mirrors src/ui/Ember.tsx bands)
+private enum EmberMood {
+    case dawn, open, mid, late, dusk
+
+    static func from(progress: Double) -> EmberMood {
+        let p = min(1, max(0, progress))
+        if p < 0.15 { return .dawn }
+        if p < 0.4 { return .open }
+        if p < 0.65 { return .mid }
+        if p < 0.85 { return .late }
+        return .dusk
+    }
+
+    var hi: Color {
+        switch self {
+        case .dawn: return Color(red: 0xFD/255, green: 0xE6/255, blue: 0x8A/255)
+        case .open: return Color(red: 0xFD/255, green: 0xA4/255, blue: 0xAF/255)
+        case .mid: return Color(red: 0xFD/255, green: 0xBA/255, blue: 0x74/255)
+        case .late: return Color(red: 0xC4/255, green: 0xB5/255, blue: 0xFD/255)
+        case .dusk: return Color(red: 0xA5/255, green: 0xB4/255, blue: 0xFC/255)
+        }
+    }
+
+    var mid: Color {
+        switch self {
+        case .dawn: return Color(red: 0xF5/255, green: 0x9E/255, blue: 0x0B/255)
+        case .open: return Color(red: 0xFB/255, green: 0x71/255, blue: 0x85/255)
+        case .mid: return Design.currentDot
+        case .late: return Color(red: 0x8B/255, green: 0x5C/255, blue: 0xF6/255)
+        case .dusk: return Color(red: 0x63/255, green: 0x66/255, blue: 0xF1/255)
+        }
+    }
+
+    var deep: Color {
+        switch self {
+        case .dawn: return Color(red: 0xB4/255, green: 0x53/255, blue: 0x09/255)
+        case .open: return Color(red: 0xE1/255, green: 0x1D/255, blue: 0x48/255)
+        case .mid: return Color(red: 0xC2/255, green: 0x41/255, blue: 0x0C/255)
+        case .late: return Color(red: 0x5B/255, green: 0x21/255, blue: 0xB6/255)
+        case .dusk: return Color(red: 0x31/255, green: 0x2E/255, blue: 0x81/255)
+        }
+    }
+}
+
+private struct EmberGlyph: View {
+    var progress: Double = 0.35
+    var size: CGFloat = 40
+
+    private var mood: EmberMood { EmberMood.from(progress: progress) }
+
+    var body: some View {
+        ZStack {
+            Circle()
+                .fill(mood.mid.opacity(0.35))
+                .frame(width: size * 1.15, height: size * 1.15)
+
+            Circle()
+                .fill(
+                    RadialGradient(
+                        colors: [.white.opacity(0.95), mood.hi, mood.mid, mood.deep],
+                        center: UnitPoint(x: 0.35, y: 0.28),
+                        startRadius: 0,
+                        endRadius: size * 0.55
+                    )
+                )
+                .frame(width: size, height: size)
+
+            HStack(spacing: size * 0.22) {
+                Circle().fill(Color(red: 1, green: 0.97, blue: 0.9)).frame(width: size * 0.14, height: size * 0.16)
+                Circle().fill(Color(red: 1, green: 0.97, blue: 0.9)).frame(width: size * 0.14, height: size * 0.16)
+            }
+            .offset(y: -size * 0.06)
+
+            Capsule()
+                .stroke(Color.white.opacity(0.85), lineWidth: max(1.5, size * 0.05))
+                .frame(width: size * 0.42, height: size * 0.18)
+                .offset(y: size * 0.18)
+        }
+        .frame(width: size * 1.2, height: size * 1.2)
+        .accessibilityLabel("Ember companion")
+    }
+}
+
+private struct EmberEmptyStateView: View {
+    var progress: Double = 0.35
+    var message: String
+
+    var body: some View {
+        VStack(spacing: 10) {
+            EmberGlyph(progress: progress, size: 44)
+            Text(message)
+                .font(.system(size: Design.labelSize))
+                .foregroundColor(Design.grayLabel)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 12)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+}
+
 // MARK: - Widget Provider
 /// Shared provider for widgets that don't need per-second or per-minute updates.
 /// Used when a dedicated provider (Day, MonthYear, etc.) is more appropriate.
@@ -266,10 +366,9 @@ struct MonthYearWidgetProvider: TimelineProvider {
     }
 }
 
-/// Day widget only: uses multiple timeline entries (one per second) so passed/left time shows seconds in realtime
-/// without relying on the system re-calling getTimeline every second (which is throttled).
+/// Day widget: minute-level timeline (h/m readout; no per-second refresh).
 struct DayWidgetProvider: TimelineProvider {
-    private static let entriesPerTimeline = 60
+    private static let entriesPerTimeline = 30
 
     private func loadWidgetCache(at now: Date = Date()) -> WidgetCache? {
         guard let json = WidgetCacheReader.loadJSON() else { return nil }
@@ -292,11 +391,11 @@ struct DayWidgetProvider: TimelineProvider {
         let now = Date()
         var entries: [UNTILWidgetEntry] = []
         for offset in 0..<Self.entriesPerTimeline {
-            guard let date = calendar.date(byAdding: .second, value: offset, to: now) else { continue }
+            guard let date = calendar.date(byAdding: .minute, value: offset, to: now) else { continue }
             let cache = loadWidgetCache(at: date)
             entries.append(UNTILWidgetEntry(date: date, cache: cache))
         }
-        let nextRefresh = calendar.date(byAdding: .second, value: Self.entriesPerTimeline, to: now) ?? now
+        let nextRefresh = calendar.date(byAdding: .minute, value: Self.entriesPerTimeline, to: now) ?? now
         let timeline = Timeline(entries: entries, policy: .after(nextRefresh))
         completion(timeline)
     }
@@ -525,11 +624,15 @@ private struct DailyTasksWidgetView: View {
         let pct = total > 0 ? Int(round(progress * 100)) : 0
 
         return VStack(alignment: .leading, spacing: 0) {
-            Text("TODAY'S TASKS")
-                .font(.system(size: 10, weight: .semibold))
-                .foregroundColor(Design.grayLabel)
-                .tracking(1.2)
-                .padding(.bottom, 12)
+            HStack(alignment: .center, spacing: 8) {
+                Text("TODAY'S TASKS")
+                    .font(.system(size: 10, weight: .semibold))
+                    .foregroundColor(Design.grayLabel)
+                    .tracking(1.2)
+                Spacer(minLength: 0)
+                EmberGlyph(progress: entry.dayCache?.dayProgress ?? 0.35, size: 26)
+            }
+            .padding(.bottom, 12)
 
             HStack(alignment: .center, spacing: 16) {
                 DailyTasksPieShape(completed: completed, total: total, size: family == .systemSmall ? 72 : 88, innerRatio: 0.58)
@@ -583,11 +686,11 @@ private struct DailyTasksWidgetView: View {
     }
 
     private var placeholderView: some View {
-        Text("Add tasks in Until")
-            .font(.system(size: Design.labelSize))
-            .foregroundColor(Design.grayLabel)
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .padding(20)
+        EmberEmptyStateView(
+            progress: entry.dayCache?.dayProgress ?? 0.35,
+            message: "Nothing listed yet — a quiet day is still a day."
+        )
+        .padding(12)
     }
 }
 
@@ -668,6 +771,9 @@ private struct DayDotsView: View {
                             y: center + ringRadius * CGFloat(sin(knobAngle.radians))
                         )
                 }
+
+                EmberGlyph(progress: progress, size: max(28, ringRadius * 0.78))
+                    .position(x: center, y: center)
             }
         }
         .aspectRatio(1, contentMode: .fit)
@@ -920,6 +1026,8 @@ private struct DayRingView: View {
                     y: ringRadius * CGFloat(sin(knobAngle.radians))
                 )
             }
+
+            EmberGlyph(progress: progress, size: max(36, size * 0.32))
         }
         .frame(width: size, height: size)
     }
@@ -933,14 +1041,13 @@ private func dayTimePassedText(_ cache: WidgetCache, now: Date = Date()) -> Stri
         let passedSec = max(0, min(Int(nowSec - startSec), Int(Double(end - start) / 1000)))
         let h = passedSec / 3600
         let m = (passedSec % 3600) / 60
-        let s = passedSec % 60
-        return "\(h)h \(m)m \(s)s"
+        return "\(h)h \(m)m passed"
     }
     if let pm = cache.dayPassedMinutes {
         let h = pm / 60, m = pm % 60
-        return "\(h)h \(m)m 0s"
+        return "\(h)h \(m)m passed"
     }
-    return "\(Int(cache.dayHoursPassed))h 0m 0s"
+    return "\(Int(cache.dayHoursPassed))h 0m passed"
 }
 
 private func dayTimeLeftText(_ cache: WidgetCache, now: Date = Date()) -> String {
@@ -950,20 +1057,19 @@ private func dayTimeLeftText(_ cache: WidgetCache, now: Date = Date()) -> String
         let remainingSec = max(0, Int(endSec - nowSec))
         let h = remainingSec / 3600
         let m = (remainingSec % 3600) / 60
-        let s = remainingSec % 60
-        return "\(h)h \(m)m \(s)s"
+        return "\(h)h \(m)m left"
     }
     if let rm = cache.dayRemainingMinutes {
         let h = rm / 60, m = rm % 60
-        return "\(h)h \(m)m 0s"
+        return "\(h)h \(m)m left"
     }
-    return "\(Int(cache.dayHoursLeft))h 0m 0s"
+    return "\(Int(cache.dayHoursLeft))h 0m left"
 }
 
 // MARK: - Day Metrics View (right side metrics for large layout)
 private struct DayMetricsView: View {
     let cache: WidgetCache
-    /// Use entry date for realtime seconds; nil falls back to cache-only.
+    /// Use entry date for live h/m; nil falls back to cache-only.
     var now: Date = Date()
 
     var body: some View {
@@ -1287,47 +1393,37 @@ struct DayWidgetView: View {
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
 
                 case .systemSmall:
-                    // Compact layout: circular ring with dots, minimal text
+                    // Hero: ring + Ember; support: leftover %
                     VStack(spacing: 10) {
                         DayDotsView(progress: cache.dayProgress)
                             .frame(maxWidth: .infinity)
                             .layoutPriority(1)
 
-                        Text("\(cache.dayPercentDone)%")
-                            .font(.system(size: 16, weight: .bold))
+                        Text("\(cache.dayPercentLeft)% left")
+                            .font(.system(size: 15, weight: .bold))
                             .foregroundColor(Design.percent)
                     }
                     .padding(20)
 
                 default: // .systemMedium
-                    // Standard layout: circular ring with dots, full metrics
-                    VStack(spacing: 14) {
+                    // Hero: ring + Ember; one support row
+                    VStack(spacing: 12) {
                         DayDotsView(progress: cache.dayProgress)
                             .frame(maxWidth: .infinity)
                             .layoutPriority(1)
 
-                        HStack(spacing: 10) {
-                            Text("\(cache.dayPercentDone)% Done")
-                                .font(.system(size: 14, weight: .bold))
-                                .foregroundColor(Design.passed)
-                            Text("\(cache.dayPercentLeft)% Left")
-                                .font(.system(size: 14, weight: .bold))
-                                .foregroundColor(Design.left)
-                        }
-
-                        HStack(spacing: 10) {
-                            Text(dayTimePassedText(cache, now: entry.date))
-                                .font(.system(size: 13))
-                                .foregroundColor(Design.grayLabel)
-                            Text(dayTimeLeftText(cache, now: entry.date))
-                                .font(.system(size: 13, weight: .bold))
-                                .foregroundColor(Design.lightText)
-                        }
+                        Text("\(cache.dayPercentLeft)% left · \(dayTimeLeftText(cache, now: entry.date))")
+                            .font(.system(size: 13, weight: .semibold))
+                            .foregroundColor(Design.lightText)
+                            .multilineTextAlignment(.center)
                     }
                     .padding(20)
                 }
             } else {
-                placeholderView
+                EmberEmptyStateView(
+                    progress: 0.32,
+                    message: "Open UNTIL — Ember is waiting with today’s light."
+                )
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -1335,10 +1431,10 @@ struct DayWidgetView: View {
     }
 
     private var placeholderView: some View {
-        Text("Open Until to sync")
-            .font(.system(size: Design.labelSize))
-            .foregroundColor(.gray)
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
+        EmberEmptyStateView(
+            progress: 0.32,
+            message: "Open UNTIL — Ember is waiting with today’s light."
+        )
     }
 }
 
@@ -1405,10 +1501,10 @@ struct MonthWidgetView: View {
     }
 
     private var placeholderView: some View {
-        Text("Open Until to sync")
-            .font(.system(size: Design.labelSize))
-            .foregroundColor(.gray)
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
+        EmberEmptyStateView(
+            progress: 0.32,
+            message: "Open UNTIL — Ember is waiting with today’s light."
+        )
     }
 }
 
@@ -1482,10 +1578,10 @@ struct YearWidgetView: View {
     }
 
     private var placeholderView: some View {
-        Text("Open Until to sync")
-            .font(.system(size: Design.labelSize))
-            .foregroundColor(.gray)
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
+        EmberEmptyStateView(
+            progress: 0.32,
+            message: "Open UNTIL — Ember is waiting with today’s light."
+        )
     }
 }
 
@@ -1564,31 +1660,53 @@ struct LifeWidgetView: View {
         }
 
         return AnyView(
-            VStack(spacing: 8) {
-                Text("Your life")
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundColor(Design.lightText)
-                Text("Set birth date in Until")
-                    .font(.system(size: 12))
-                    .foregroundColor(Design.grayLabel)
-            }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            EmberEmptyStateView(
+                progress: cache.dayProgress,
+                message: "Set birth date in UNTIL to see life progress."
+            )
         )
     }
 
     private var placeholderView: some View {
-        Text("Open Until to sync")
-            .font(.system(size: Design.labelSize))
-            .foregroundColor(.gray)
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
+        EmberEmptyStateView(
+            progress: 0.32,
+            message: "Open UNTIL — Ember is waiting with today’s light."
+        )
     }
 }
 
-// MARK: - Shared widget background (edge-to-edge, no strips)
+// MARK: - Shared widget background (glass look-alike; WidgetKit has no true blur)
+private struct WidgetGlassBackground: View {
+    var body: some View {
+        ZStack {
+            Design.background
+            LinearGradient(
+                colors: [
+                    Color.white.opacity(0.10),
+                    Color.white.opacity(0.02),
+                    Color.black.opacity(0.35),
+                ],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+            LinearGradient(
+                colors: [
+                    Color(red: 0xE8 / 255, green: 0x7C / 255, blue: 0x20 / 255).opacity(0.12),
+                    Color.clear,
+                ],
+                startPoint: .topTrailing,
+                endPoint: .center
+            )
+        }
+    }
+}
+
 private extension View {
     func widgetBackground() -> some View {
-        background(Design.background.ignoresSafeArea())
-        .containerBackground(Design.background, for: .widget)
+        background(WidgetGlassBackground().ignoresSafeArea())
+            .containerBackground(for: .widget) {
+                WidgetGlassBackground()
+            }
     }
 }
 

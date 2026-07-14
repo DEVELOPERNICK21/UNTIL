@@ -28,9 +28,9 @@ export const Colors = {
   accent: '#EDEDED',
   success: '#22AA22',
   percent: '#E87C20',
-  glassBg: 'rgba(42, 42, 42, 0.5)',
-  glassBorder: 'rgba(255, 255, 255, 0.08)',
-  glassHighlight: 'rgba(255, 255, 255, 0.04)',
+  glassBg: 'rgba(255, 255, 255, 0.07)',
+  glassBorder: 'rgba(255, 255, 255, 0.14)',
+  glassHighlight: 'rgba(255, 255, 255, 0.08)',
 } as const;
 
 /** Splash screen palette — light theme, single SSOT for splash UI */
@@ -140,6 +140,13 @@ export const Shadows = {
     shadowRadius: 12,
     elevation: 4,
   },
+  glass: {
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.35,
+    shadowRadius: 20,
+    elevation: 8,
+  },
   fab: {
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
@@ -166,3 +173,12 @@ export const typography = {} as const;
 export const colors = {} as const;
 
 export { ThemeProvider, useTheme } from './ThemeContext';
+export {
+  feelForPeriod,
+  homeHeroSupport,
+  timeOfDayLabel,
+  wearDayWhisper,
+  progressBand,
+} from './emotionalCopy';
+export { emberInsightForRoute, pickEmberTip, emberTipPoolForRoute, emberSupportsRoute } from './emberInsights';
+export type { EmberInsight } from './emberInsights';

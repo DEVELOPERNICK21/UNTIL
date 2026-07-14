@@ -13,6 +13,7 @@ import { getNumber, getString, setNumber, setString } from '../persistence/mmkv'
 import { STORAGE_KEYS } from '../persistence/schema';
 import { logAnalyticsEvent } from './analytics';
 import { getTrialDayIndex } from './trialReminders';
+import { requestNotificationPermission } from './notificationPermission';
 
 const CHANNEL_ID = 'retention';
 const DEFAULT_ENABLED = false;
@@ -92,12 +93,7 @@ async function requestRetentionNotificationPermissionOnce(): Promise<void> {
     return;
   }
   setString(STORAGE_KEYS.RETENTION_NOTIFICATIONS_PERMISSION_REQUESTED, '1');
-  try {
-    const notifee = require('@notifee/react-native').default;
-    await notifee.requestPermission();
-  } catch {
-    /* Permission prompt unavailable */
-  }
+  await requestNotificationPermission('settings_retention');
 }
 
 export async function cancelRetentionNotifications(): Promise<void> {

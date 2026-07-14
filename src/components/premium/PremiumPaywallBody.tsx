@@ -10,6 +10,7 @@ import {
   Platform,
   Alert,
   ActivityIndicator,
+  Linking,
 } from 'react-native';
 import { ErrorCode } from 'react-native-iap';
 import { Text, Card } from '../../ui';
@@ -27,12 +28,19 @@ import {
   MONETIZATION_PRICING,
   PAYWALL_TRUST_SIGNALS,
   PREMIUM_BENEFITS,
+  LEGAL_URLS,
+  buildSubscriptionDisclosure,
   formatPreviewActiveBody,
 } from '../../config/monetization';
 import {
   logAnalyticsEvent,
   type AnalyticsPaywallSource,
 } from '../../services/analytics';
+import {
+  clearPendingPurchase,
+  setPendingPurchase,
+  setPurchaseSuccessListener,
+} from '../../services/purchaseAnalyticsContext';
 
 function priceLabel(
   products: Array<{ productId: string; price: string }>,
@@ -77,6 +85,13 @@ export function PremiumPaywallBody({
     }
   }, [getProducts]);
 
+  useEffect(() => {
+    setPurchaseSuccessListener(() => {
+      onPurchaseSuccess?.();
+    });
+    return () => setPurchaseSuccessListener(null);
+  }, [onPurchaseSuccess]);
+
   const yearlyPrice = useMemo(
     () => priceLabel(products, productIds.yearly, FALLBACK_YEARLY_PRICE),
     [products, productIds.yearly]
@@ -107,6 +122,31 @@ export function PremiumPaywallBody({
     [isPremium, access.trialActive]
   );
 
+  const subscriptionDisclosure = useMemo(
+    () =>
+      buildSubscriptionDisclosure({
+        yearlyPrice,
+        monthlyPrice,
+        lifetimePrice,
+        trialActive: !isPremium && access.trialActive,
+        trialEndsAtMs: access.trialEndsAt,
+      }),
+    [
+      yearlyPrice,
+      monthlyPrice,
+      lifetimePrice,
+      isPremium,
+      access.trialActive,
+      access.trialEndsAt,
+    ]
+  );
+
+  const openLegalUrl = useCallback((url: string) => {
+    void Linking.openURL(url).catch(() => {
+      Alert.alert('Could not open link', url);
+    });
+  }, []);
+
   const onBuy = useCallback(
     async (productId: string) => {
       if (Platform.OS !== 'android') {
@@ -114,6 +154,11 @@ export function PremiumPaywallBody({
         return;
       }
       const priceDisplay = priceLabel(products, productId, '');
+      setPendingPurchase({
+        plan_id: productId,
+        source,
+        price_display: priceDisplay,
+      });
       void logAnalyticsEvent('premium_purchase_started', {
         plan_id: productId,
         source,
@@ -121,20 +166,24 @@ export function PremiumPaywallBody({
       });
       try {
         await requestPurchase(productId);
-        onPurchaseSuccess?.();
       } catch (e: unknown) {
         const err = e as { code?: string; message?: string };
         if (err?.code === ErrorCode.UserCancelled) {
+          clearPendingPurchase();
           void logAnalyticsEvent('premium_purchase_cancelled', {
             plan_id: productId,
             source,
           });
           return;
         }
+        clearPendingPurchase();
         void logAnalyticsEvent('premium_purchase_failed', {
           plan_id: productId,
           source,
+          price_display: priceDisplay,
           error_code: err?.code ?? 'unknown',
+          error_message: err?.message ?? 'Unknown error',
+          payment_provider: 'google_play',
         });
         Alert.alert(
           'Purchase failed',
@@ -142,7 +191,7 @@ export function PremiumPaywallBody({
         );
       }
     },
-    [requestPurchase, onPurchaseSuccess, products, source]
+    [requestPurchase, products, source]
   );
 
   const onRestore = useCallback(async () => {
@@ -218,6 +267,22 @@ export function PremiumPaywallBody({
           </View>
         ))}
       </View>
+
+      <Card style={{ ...styles.disclosureCard, borderColor: theme.divider }}>
+        <Text variant="caption" color="secondary" style={styles.benefitsHeading}>
+          {MONETIZATION_PAYWALL_COPY.subscriptionDisclosureTitle.toUpperCase()}
+        </Text>
+        {subscriptionDisclosure.map(line => (
+          <Text
+            key={line}
+            variant="caption"
+            color="secondary"
+            style={styles.disclosureLine}
+          >
+            · {line}
+          </Text>
+        ))}
+      </Card>
 
       {loading && <ActivityIndicator color={theme.textPrimary} style={styles.loader} />}
 
@@ -324,6 +389,21 @@ export function PremiumPaywallBody({
       <Text variant="caption" color="secondary" style={styles.legal}>
         {MONETIZATION_PAYWALL_COPY.freeForeverLine} {MONETIZATION_PAYWALL_COPY.regionalNote}
       </Text>
+      <View style={styles.legalLinks}>
+        <TouchableOpacity onPress={() => openLegalUrl(LEGAL_URLS.terms)} activeOpacity={0.7}>
+          <Text variant="caption" color="secondary" style={styles.legalLink}>
+            Terms of Service
+          </Text>
+        </TouchableOpacity>
+        <Text variant="caption" color="secondary">
+          {' · '}
+        </Text>
+        <TouchableOpacity onPress={() => openLegalUrl(LEGAL_URLS.privacy)} activeOpacity={0.7}>
+          <Text variant="caption" color="secondary" style={styles.legalLink}>
+            Privacy Policy
+          </Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 }
@@ -344,6 +424,13 @@ const styles = StyleSheet.create({
   benefitRow: { flexDirection: 'row', marginBottom: Spacing[1] },
   benefitBullet: { width: 22, color: '#22AA22' },
   benefitText: { flex: 1, lineHeight: 20 },
+  disclosureCard: {
+    padding: Spacing[3],
+    marginBottom: Spacing[4],
+    borderWidth: 1,
+    borderRadius: 12,
+  },
+  disclosureLine: { lineHeight: 18, marginBottom: Spacing[1] },
   loader: { marginVertical: Spacing[2] },
   cta: {
     padding: Spacing[4],
@@ -372,5 +459,12 @@ const styles = StyleSheet.create({
   },
   trustBlock: { marginBottom: Spacing[3] },
   trustLine: { lineHeight: 18, marginBottom: 2 },
-  legal: { lineHeight: 18 },
+  legal: { lineHeight: 18, marginBottom: Spacing[2] },
+  legalLinks: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    marginBottom: Spacing[2],
+  },
+  legalLink: { textDecorationLine: 'underline' },
 });

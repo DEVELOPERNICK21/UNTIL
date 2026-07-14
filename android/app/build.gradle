@@ -101,7 +101,7 @@ android {
         applicationId "app.until.time"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 11
+        versionCode 14
         versionName "1.1"
     }
     signingConfigs {
@@ -153,4 +153,5 @@ dependencies {
 
     implementation("androidx.work:work-runtime-ktx:2.9.0")
     implementation("io.github.zhongwuzw:mmkv:2.2.4")
+    implementation("com.google.android.gms:play-services-wearable:19.0.0")
 }

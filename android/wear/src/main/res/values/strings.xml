@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">UNTIL</string>
+    <string name="day_tile_label">UNTIL Day</string>
+    <string name="day_complication_label">UNTIL Day</string>
+</resources>

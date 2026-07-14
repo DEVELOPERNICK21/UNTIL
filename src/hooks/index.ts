@@ -30,3 +30,6 @@ export { useMonthlyGoals } from './useMonthlyGoals';
 export { useGoalDetail } from './useGoalDetail';
 export { useAnalytics } from './useAnalytics';
 export { useAnalyticsBootstrap } from './useAnalyticsBootstrap';
+export { useEngagementModals } from './useEngagementModals';
+export { useReduceMotion } from './useReduceMotion';
+export { usePresenceStreak } from './usePresenceStreak';

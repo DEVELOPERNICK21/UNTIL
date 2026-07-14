@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
 import { Text } from '../../ui';
-import { Colors, Spacing, Radius, Typography } from '../../theme';
+import { Colors, Spacing, Radius, Typography, Shadows } from '../../theme';
 
 type WidgetConfig = {
   type: 'day' | 'month' | 'year' | 'life';
@@ -17,29 +17,26 @@ interface Props {
 }
 
 export function WidgetPreview({ config }: Props) {
+  const isLight = config.theme === 'light';
   const backgroundColor =
     config.theme === 'amoled'
       ? '#000000'
       : config.theme === 'dark'
-      ? Colors.surfaceDark
-      : Colors.surface;
+        ? 'rgba(255, 255, 255, 0.07)'
+        : 'rgba(255, 255, 255, 0.82)';
 
-  const textColor =
-    config.theme === 'amoled' || config.theme === 'dark'
-      ? Colors.textOnDark
-      : Colors.textPrimary;
-
-  const accentColor =
-    config.theme === 'light'
-      ? Colors.accent
-      : config.theme === 'dark'
-      ? Colors.accentSoft
-      : Colors.accent;
+  const textColor = isLight ? Colors.textPrimary : Colors.textPrimary;
+  const mutedDot = isLight ? Colors.divider : 'rgba(255, 255, 255, 0.22)';
+  const borderColor = isLight
+    ? 'rgba(255, 255, 255, 0.55)'
+    : Colors.glassBorder;
+  const accentColor = Colors.percent;
+  const sheenColor = isLight
+    ? 'rgba(255, 255, 255, 0.45)'
+    : Colors.glassHighlight;
 
   const titleStyle =
-    config.font === 'emotional'
-      ? styles.titleEmotional
-      : styles.titleClean;
+    config.font === 'emotional' ? styles.titleEmotional : styles.titleClean;
 
   const percent = {
     day: 42,
@@ -56,8 +53,9 @@ export function WidgetPreview({ config }: Props) {
   }[config.type];
 
   return (
-    <View style={[styles.container]}>
-      <View style={[styles.card, { backgroundColor }]}>
+    <View style={styles.container}>
+      <View style={[styles.card, { backgroundColor, borderColor }, Shadows.glass]}>
+        <View style={[styles.sheen, { backgroundColor: sheenColor }]} />
         <View style={styles.headerRow}>
           <Text style={[styles.label, { color: textColor }]}>{label}</Text>
           <View style={[styles.pill, { borderColor: accentColor }]}>
@@ -72,9 +70,7 @@ export function WidgetPreview({ config }: Props) {
             <Text style={[styles.percent, titleStyle, { color: textColor }]}>
               {percent}%
             </Text>
-            <Text style={[styles.caption, { color: textColor }]}>
-              done
-            </Text>
+            <Text style={[styles.caption, { color: textColor }]}>done</Text>
           </View>
           {config.layout === 'detailed' && (
             <View style={styles.metaBlock}>
@@ -85,12 +81,7 @@ export function WidgetPreview({ config }: Props) {
                 </Text>
               </View>
               <View style={styles.metaRow}>
-                <View
-                  style={[
-                    styles.dot,
-                    { backgroundColor: Colors.borderSubtle },
-                  ]}
-                />
+                <View style={[styles.dot, { backgroundColor: mutedDot }]} />
                 <Text style={[styles.metaText, { color: textColor }]}>
                   {100 - percent}% remaining
                 </Text>
@@ -116,10 +107,17 @@ const styles = StyleSheet.create({
     padding: Spacing.lg,
   },
   card: {
-    borderRadius: Radius.xl,
+    borderRadius: Radius.lg,
     padding: Spacing.lg,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: Colors.borderSubtle,
+    borderWidth: 1,
+    overflow: 'hidden',
+  },
+  sheen: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: '40%',
   },
   headerRow: {
     flexDirection: 'row',
@@ -130,6 +128,7 @@ const styles = StyleSheet.create({
   label: {
     fontSize: Typography.caption,
     letterSpacing: 1,
+    textTransform: 'uppercase',
   },
   pill: {
     paddingHorizontal: Spacing.sm,
@@ -192,4 +191,3 @@ const styles = StyleSheet.create({
     fontSize: Typography.body,
   },
 });
-

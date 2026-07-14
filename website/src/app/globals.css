@@ -227,3 +227,79 @@ section {
   margin-bottom: 1rem;
   margin-right: 0;
 }
+
+/* Ember companion (landing only) */
+.ember-companion {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 60;
+  pointer-events: none;
+  will-change: transform;
+  transition: opacity 0.45s ease;
+}
+
+.ember-companion--hidden {
+  opacity: 0;
+  visibility: hidden;
+}
+
+.ember-companion--parked {
+  top: auto;
+  left: auto;
+  right: 1.25rem;
+  bottom: 1.5rem;
+  transform: none !important;
+  will-change: auto;
+}
+
+.ember-companion-btn {
+  pointer-events: auto;
+  border: none;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+  border-radius: 999px;
+  line-height: 0;
+  filter: drop-shadow(0 8px 18px rgba(0, 0, 0, 0.35));
+}
+
+.ember-companion-btn:focus-visible {
+  outline: 2px solid var(--text, #fff);
+  outline-offset: 4px;
+}
+
+.ember-companion--bounce .ember-companion-btn {
+  animation: ember-bounce 0.42s ease;
+}
+
+@keyframes ember-bounce {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  40% {
+    transform: scale(1.12);
+  }
+  70% {
+    transform: scale(0.96);
+  }
+}
+
+.ember-companion-whisper {
+  pointer-events: auto;
+  position: absolute;
+  bottom: calc(100% + 10px);
+  left: 50%;
+  transform: translateX(-50%);
+  min-width: 160px;
+  max-width: 220px;
+  padding: 0.65rem 0.8rem;
+  border-radius: 12px;
+  background: rgba(20, 16, 28, 0.92);
+  color: #f5f0ea;
+  font-size: 0.85rem;
+  line-height: 1.35;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  text-align: center;
+}

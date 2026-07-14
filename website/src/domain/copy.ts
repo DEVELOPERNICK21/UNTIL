@@ -12,7 +12,7 @@ export const LANDING_COPY = {
     title: 'See your time.',
     headline: 'Day, month, year, and life - always visible.',
     subtitle:
-      'Track progress, deadlines, counters, tasks, and shareable snapshots. Built for home screen glanceability.',
+      'Track progress with Ember, home widgets, Wear OS Day %, deadlines, tasks, and shareable snapshots — glanceable without opening the app.',
     cta: 'Get the app',
   },
 
@@ -23,12 +23,12 @@ export const LANDING_COPY = {
     brandName: 'UNTIL',
     cardHeading: 'Time awareness, redefined.',
     cardDescription:
-      'Until shows day, month, year, and life progress with widgets, deadlines, counters, and daily tasks — always visible on your home screen.',
+      'Until shows day, month, year, and life progress with Ember on widgets, Wear OS Day %, deadlines, counters, and daily tasks — always visible when you need a glance.',
     metricValue: 247,
     metricLabel: 'Days Left',
     ctaHeading: 'Start seeing time clearly.',
     ctaDescription:
-      'Available on Android now. iOS coming soon. Glanceable progress without opening the app.',
+      'Available on Android now. iOS coming soon. Widgets, Ember, and Wear OS Day % without opening the app.',
   },
 
   /** Feature cards (with optional category for layout) */
@@ -43,7 +43,19 @@ export const LANDING_COPY = {
       category: 'Widgets',
       title: 'Home + lock screen widgets',
       description:
-        'Today, month, year, life, deadlines, tasks, counters, and hour timer on your home screen.',
+        'Today, month, year, life, deadlines, tasks, counters, and hour timer — with Ember on Day and Daily Tasks widgets.',
+    },
+    {
+      category: 'Companion',
+      title: 'Meet Ember',
+      description:
+        'A calm companion in the app and on widgets. Ember’s mood follows your day progress — soft presence, not another notification.',
+    },
+    {
+      category: 'Wrist',
+      title: 'Day % on Wear OS',
+      description:
+        'Glance Day % from a Wear OS tile or complication on Android watches. Synced from your phone after you open UNTIL.',
     },
     {
       category: 'Focus',
@@ -58,6 +70,10 @@ export const LANDING_COPY = {
         'Generate a clean story-style image of your progress to post or send in one tap.',
     },
   ],
+
+  /** Blurb above the screenshot gallery on the home page */
+  screenshotsBlurb:
+    'Day, month, year, and life progress — widgets with Ember, countdowns, counters, and Wear OS Day % on Android.',
 
   /** Value prop bullets — "That's why Until exists" (ChatPal-style) */
   valueProps: {
@@ -100,7 +116,12 @@ export const LANDING_COPY = {
       {
         question: 'What can I put on widgets?',
         answer:
-          'You can show day, month, year, life, deadlines, daily task progress, custom counters, and hour timer state. Widget options vary by device and platform.',
+          'You can show day, month, year, life, deadlines, daily task progress, custom counters, and hour timer state. Day and Daily Tasks widgets also show Ember, whose mood follows day progress. Widget options vary by device and platform.',
+      },
+      {
+        question: 'Does Until work on Wear OS?',
+        answer:
+          'Yes. On Android, UNTIL syncs Day % to Wear OS so you can add a tile or complication on a compatible watch. Open the phone app so Day data stays fresh. iOS (and Apple Watch) are coming soon.',
       },
       {
         question: 'Who is Until for?',
@@ -128,7 +149,7 @@ export const LANDING_COPY = {
       {
         title: 'Built for surfaces',
         description:
-          'Widgets first, plus Dynamic Island on iOS and floating overlay on Android.',
+          'Widgets first (with Ember on Day and Tasks), Wear OS Day % on Android watches, Dynamic Island on iOS, and floating overlay on Android.',
       },
       {
         title: 'Action + reflection',
@@ -205,5 +226,15 @@ export const LANDING_COPY = {
         'Share feedback, get updates, and connect with others who care about time.',
       cta: 'Coming soon',
     },
+  },
+
+  emberCompanion: {
+    ariaLabel: 'Ember, UNTIL companion',
+    whispers: [
+      'I\u2019m Ember — I travel with you while you look around.',
+      'Your day is still soft. UNTIL keeps it glanceable on your home screen.',
+      'When you\u2019re ready, Android has widgets, Ember, and Wear OS Day %.',
+      'No rush. Scroll a little more — I\u2019ll stay nearby.',
+    ],
   },
 } as const;

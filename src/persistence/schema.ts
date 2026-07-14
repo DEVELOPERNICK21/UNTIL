@@ -104,6 +104,28 @@ export const STORAGE_KEYS = {
   // Trial reminders (last preview days)
   TRIAL_REMINDERS_SCHEDULED: 'trial.remindersScheduled',
   TRIAL_REMINDERS_INAPP_SHOWN: 'trial.remindersInAppShown',
+
+  // Purchase analytics (pending paywall context for async listener)
+  PENDING_PURCHASE_CONTEXT: 'billing.pendingPurchaseContext',
+
+  // Countdown completion + share prompt
+  COUNTDOWN_COMPLETED_FIRED: 'engagement.countdownCompletedFired',
+  SHARE_PROMPT_PENDING: 'engagement.sharePromptPending',
+
+  // Feature discovery coach (after 3rd app open)
+  FEATURE_COACH_PENDING: 'engagement.featureCoachPending',
+  FEATURE_COACH_SHOWN: 'engagement.featureCoachShown',
+
+  // Presence streak (daily “noticed” habit — Duolingo-style spine, soft tone)
+  PRESENCE_STREAK_COUNT: 'engagement.presenceStreakCount',
+  PRESENCE_STREAK_LONGEST: 'engagement.presenceStreakLongest',
+  PRESENCE_STREAK_LAST_DATE: 'engagement.presenceStreakLastDate',
+  PRESENCE_STREAK_FREEZE: 'engagement.presenceStreakFreeze',
+  PRESENCE_STREAK_SAVER_ID: 'engagement.presenceStreakSaverId',
+
+  // Ember companion tip memory (first-auto + rotation)
+  EMBER_TIP_INTRO_SEEN: 'engagement.emberTipIntroSeen',
+  EMBER_TIP_CURSOR: 'engagement.emberTipCursor',
 } as const;
 
 export const DEFAULTS = {

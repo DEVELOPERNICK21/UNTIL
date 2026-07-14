@@ -12,6 +12,8 @@ import { MmkvCountdownRepository } from './infrastructure/repositories/MmkvCount
 import { MmkvTaskRepository } from './infrastructure/repositories/MmkvTaskRepository';
 import { MmkvMonthlyGoalRepository } from './infrastructure/repositories/MmkvMonthlyGoalRepository';
 import { MmkvOnboardingRepository } from './infrastructure/repositories/MmkvOnboardingRepository';
+import { MmkvEngagementRepository } from './infrastructure/repositories/MmkvEngagementRepository';
+import { MmkvPresenceRepository } from './infrastructure/repositories/MmkvPresenceRepository';
 import { MmkvReflectionRepository } from './infrastructure/repositories/MmkvReflectionRepository';
 import { AppUpdateServiceAdapter } from './infrastructure/adapters/AppUpdateServiceAdapter';
 import { AppVersionProviderAdapter } from './infrastructure/adapters/AppVersionProviderAdapter';
@@ -66,6 +68,15 @@ import { LicenseVerificationServiceAdapter } from './infrastructure/adapters/Lic
 import { GetAccessStateUseCase } from './domain/useCases/GetAccessStateUseCase';
 import { GetDailyReflectionUseCase } from './domain/useCases/GetDailyReflectionUseCase';
 import { TrackAppOpenUseCase } from './domain/useCases/TrackAppOpenUseCase';
+import { RunAppOpenSideEffectsUseCase } from './domain/useCases/RunAppOpenSideEffectsUseCase';
+import { GetEngagementModalStateUseCase } from './domain/useCases/GetEngagementModalStateUseCase';
+import { SetWidgetCoachPendingUseCase } from './domain/useCases/SetWidgetCoachPendingUseCase';
+import { ClearWidgetCoachPendingUseCase } from './domain/useCases/ClearWidgetCoachPendingUseCase';
+import { MarkFeatureCoachShownUseCase } from './domain/useCases/MarkFeatureCoachShownUseCase';
+import { ClearSharePromptPendingUseCase } from './domain/useCases/ClearSharePromptPendingUseCase';
+import { CheckCountdownCompletionUseCase } from './domain/useCases/CheckCountdownCompletionUseCase';
+import { RecordPresenceUseCase } from './domain/useCases/RecordPresenceUseCase';
+import { GetPresenceStreakUseCase } from './domain/useCases/GetPresenceStreakUseCase';
 import { SyncTrialPreviewUseCase } from './domain/useCases/SyncTrialPreviewUseCase';
 import { TrialPreviewApiAdapter } from './infrastructure/adapters/TrialPreviewApiAdapter';
 import { TrackLifeScreenViewedUseCase } from './domain/useCases/TrackLifeScreenViewedUseCase';
@@ -79,6 +90,11 @@ import type { IPlayBillingRepository } from './domain/repository/IPlayBillingRep
 import { productIdToPurchaseType } from './domain/billing/mapProductId';
 import { logAnalyticsEvent } from './services/analytics';
 import { getTrialDurationDays } from './services/analyticsUserProperties';
+import {
+  clearPendingPurchase,
+  consumePendingPurchase,
+  notifyPurchaseSuccess,
+} from './services/purchaseAnalyticsContext';
 
 /** Avoid top-level import of WidgetSync (circular with this file). */
 function syncPremiumAfterEntitlementChange(): void {
@@ -98,6 +114,8 @@ const countdownRepository = new MmkvCountdownRepository();
 const taskRepository = new MmkvTaskRepository();
 const monthlyGoalRepository = new MmkvMonthlyGoalRepository();
 const onboardingRepository = new MmkvOnboardingRepository();
+const engagementRepository = new MmkvEngagementRepository();
+const presenceRepository = new MmkvPresenceRepository();
 const reflectionRepository = new MmkvReflectionRepository();
 const appUpdateService = new AppUpdateServiceAdapter();
 const appVersionProvider = new AppVersionProviderAdapter();
@@ -116,6 +134,7 @@ export const syncTrialPreviewUseCase = new SyncTrialPreviewUseCase(
   () => {
     void logAnalyticsEvent('trial_preview_started', {
       trial_days: getTrialDurationDays(),
+      source: 'in_app_preview',
     });
   }
 );
@@ -134,6 +153,39 @@ export const trackAppOpenUseCase = new TrackAppOpenUseCase(
   subscriptionRepository,
   syncTrialPreviewUseCase
 );
+export const checkCountdownCompletionUseCase = new CheckCountdownCompletionUseCase(
+  countdownRepository,
+  engagementRepository,
+  event => {
+    void logAnalyticsEvent('countdown_completed', event);
+  }
+);
+export const recordPresenceUseCase = new RecordPresenceUseCase(presenceRepository);
+export const getPresenceStreakUseCase = new GetPresenceStreakUseCase(
+  presenceRepository,
+);
+export const runAppOpenSideEffectsUseCase = new RunAppOpenSideEffectsUseCase(
+  trackAppOpenUseCase,
+  subscriptionRepository,
+  engagementRepository,
+  checkCountdownCompletionUseCase,
+  recordPresenceUseCase,
+);
+export const getEngagementModalStateUseCase = new GetEngagementModalStateUseCase(
+  engagementRepository
+);
+export const setWidgetCoachPendingUseCase = new SetWidgetCoachPendingUseCase(
+  engagementRepository
+);
+export const clearWidgetCoachPendingUseCase = new ClearWidgetCoachPendingUseCase(
+  engagementRepository
+);
+export const markFeatureCoachShownUseCase = new MarkFeatureCoachShownUseCase(
+  engagementRepository
+);
+export const clearSharePromptPendingUseCase = new ClearSharePromptPendingUseCase(
+  engagementRepository
+);
 export const trackLifeScreenViewedUseCase = new TrackLifeScreenViewedUseCase(subscriptionRepository);
 export const applyStorePurchaseUseCase = new ApplyStorePurchaseUseCase(
   subscriptionRepository,
@@ -142,30 +194,78 @@ export const applyStorePurchaseUseCase = new ApplyStorePurchaseUseCase(
 );
 
 let playBillingAndroid: PlayBillingRepository | undefined;
+
+function logPurchaseFailed(
+  planId: string,
+  errorCode: string,
+  errorMessage: string,
+  pending?: ReturnType<typeof consumePendingPurchase>
+): void {
+  const ctx = pending === undefined ? consumePendingPurchase() : pending;
+  void logAnalyticsEvent('premium_purchase_failed', {
+    plan_id: planId || ctx?.plan_id || 'unknown',
+    source: ctx?.source ?? 'unknown',
+    price_display: ctx?.price_display ?? '',
+    error_code: errorCode,
+    error_message: errorMessage,
+    payment_provider: 'google_play',
+  });
+  clearPendingPurchase();
+}
+
 export const playBillingRepository: IPlayBillingRepository =
   Platform.OS === 'android'
     ? (() => {
         let instance: PlayBillingRepository;
-        instance = new PlayBillingRepository(async purchase => {
-          if (purchase.purchaseState === 'pending') {
-            return;
+        instance = new PlayBillingRepository(
+          async purchase => {
+            if (purchase.purchaseState === 'pending') {
+              return;
+            }
+            if (!productIdToPurchaseType(purchase.productId)) {
+              return;
+            }
+            const wasTrialActive = getAccessStateUseCase.execute().trialActive;
+            const pending = consumePendingPurchase();
+            const result = await applyStorePurchaseUseCase.execute({
+              productId: purchase.productId,
+              purchaseToken: purchase.purchaseToken ?? null,
+              transactionDate: purchase.transactionDate,
+            });
+            if (!result.applied) {
+              logPurchaseFailed(
+                purchase.productId,
+                'verification_failed',
+                result.error ?? 'Purchase verification failed',
+                pending
+              );
+              return;
+            }
+            void logAnalyticsEvent('premium_purchase_completed', {
+              plan_id: purchase.productId,
+              source: pending?.source ?? 'unknown',
+              price_display: pending?.price_display ?? '',
+              payment_provider: 'google_play',
+            });
+            if (wasTrialActive) {
+              void logAnalyticsEvent('trial_preview_ended', {
+                converted: 1,
+                plan_id: purchase.productId,
+              });
+            }
+            notifyPurchaseSuccess();
+            await instance.finalizePurchase(purchase);
+          },
+          (message, code) => {
+            const pending = consumePendingPurchase();
+            logPurchaseFailed(
+              pending?.plan_id ?? 'unknown',
+              code ?? 'unknown',
+              message,
+              pending
+            );
           }
-          if (!productIdToPurchaseType(purchase.productId)) {
-            return;
-          }
-          const result = await applyStorePurchaseUseCase.execute({
-            productId: purchase.productId,
-            purchaseToken: purchase.purchaseToken ?? null,
-            transactionDate: purchase.transactionDate,
-          });
-          if (!result.applied) {
-            return;
-          }
-          void logAnalyticsEvent('premium_purchase_completed', {
-            plan_id: purchase.productId,
-          });
-          await instance.finalizePurchase(purchase);
-        });
+        );
         playBillingAndroid = instance;
         return instance;
       })()
@@ -216,7 +316,10 @@ export const removeCustomCounterUseCase = new RemoveCustomCounterUseCase(customC
 export const incrementCustomCounterUseCase = new IncrementCustomCounterUseCase(customCounterRepository);
 export const replaceCustomCountersFromSyncUseCase = new ReplaceCustomCountersFromSyncUseCase(customCounterRepository);
 export const getCountdownsUseCase = new GetCountdownsUseCase(countdownRepository);
-export const addCountdownUseCase = new AddCountdownUseCase(countdownRepository);
+export const addCountdownUseCase = new AddCountdownUseCase(
+  countdownRepository,
+  engagementRepository
+);
 export const removeCountdownUseCase = new RemoveCountdownUseCase(countdownRepository);
 export const getTasksForDayUseCase = new GetTasksForDayUseCase(taskRepository, monthlyGoalRepository);
 export const addTaskUseCase = new AddTaskUseCase(taskRepository);

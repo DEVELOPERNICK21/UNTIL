@@ -1,0 +1,55 @@
+plugins {
+    id("com.android.application")
+    id("org.jetbrains.kotlin.android")
+}
+
+android {
+    namespace "app.until.time.watch"
+    compileSdk rootProject.ext.compileSdkVersion
+
+    defaultConfig {
+        // Distinct from phone app.until.time — installing the phone APK on Wear causes a white screen.
+        applicationId "app.until.time.watch"
+        minSdk 30
+        targetSdk rootProject.ext.targetSdkVersion
+        versionCode 13
+        versionName "1.1"
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro"
+        }
+        debug {
+            minifyEnabled false
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+    kotlinOptions {
+        jvmTarget = "17"
+    }
+    buildFeatures {
+        viewBinding false
+    }
+}
+
+dependencies {
+    implementation("androidx.core:core-ktx:1.15.0")
+    implementation("androidx.appcompat:appcompat:1.7.0")
+    implementation("com.google.android.gms:play-services-wearable:19.0.0")
+    implementation("androidx.wear:wear:1.3.0")
+    implementation("androidx.wear.tiles:tiles:1.4.1")
+    implementation("com.google.android.gms:play-services-wearable:19.0.0")
+    implementation("androidx.wear:wear:1.3.0")
+    implementation("androidx.wear.protolayout:protolayout:1.2.1")
+    implementation("com.google.guava:guava:33.0.0-android")
+    implementation("androidx.concurrent:concurrent-futures:1.2.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.9.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.9.0")
+    implementation("androidx.wear.watchface:watchface-complications-data-source-ktx:1.2.1")
+}

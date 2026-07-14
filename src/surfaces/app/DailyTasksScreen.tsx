@@ -12,13 +12,15 @@ import {
   RefreshControl,
   Pressable,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useDailyTasks, useWidgetSyncActions } from '../../hooks';
 import type { RootStackParamList } from '../../navigation/RootNavigator';
 import { Text, ScreenGradient, Card, ProgressLine } from '../../ui';
 import { Spacing, Colors, Radius, Typography, FontFamily } from '../../theme';
 import type { DailyTask, TaskCategory } from '../../types';
+import { EmberLocalDock } from '../../components/engagement/EmberLocalDock';
+import { setEmberModalCovering } from '../../services/emberSurface';
 
 const TASK_CATEGORIES: { value: TaskCategory; label: string }[] = [
   { value: 'health', label: 'Health' },
@@ -194,6 +196,14 @@ export function DailyTasksScreen() {
   const [editingTask, setEditingTask] = React.useState<DailyTask | null>(null);
   const [editTitle, setEditTitle] = React.useState('');
   const [editCategory, setEditCategory] = React.useState<TaskCategory>('other');
+
+  useFocusEffect(
+    useCallback(() => {
+      // Local dock on this screen (add form); keep global Ember suppressed.
+      setEmberModalCovering(true);
+      return () => setEmberModalCovering(false);
+    }, []),
+  );
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);
@@ -512,6 +522,7 @@ export function DailyTasksScreen() {
                 </View>
               </Pressable>
             </Pressable>
+            <EmberLocalDock place="DailyTasksAdd" autoIntro />
           </Modal>
 
           {stats.total > 0 && stats.completed === stats.total && (
@@ -525,6 +536,9 @@ export function DailyTasksScreen() {
           )}
         </ScrollView>
       </ScreenGradient>
+      {editingTask == null ? (
+        <EmberLocalDock place="DailyTasks" autoIntro />
+      ) : null}
     </View>
   );
 }

@@ -18,7 +18,7 @@ export function initPostHogClient(): PostHog | null {
   if (!sharedClient) {
     sharedClient = new PostHog(POSTHOG_API_KEY, {
       host: POSTHOG_HOST,
-      captureAppLifecycleEvents: false,
+      captureAppLifecycleEvents: true,
       enableSessionReplay: false,
     });
   }

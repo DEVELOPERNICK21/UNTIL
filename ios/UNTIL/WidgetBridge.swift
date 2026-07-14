@@ -39,6 +39,7 @@ class WidgetBridge: NSObject {
     defaults.set(json, forKey: widgetCacheKey)
     defaults.synchronize()
     WidgetCenter.shared.reloadAllTimelines()
+    WatchConnectivityBridge.shared.pushDayFromWidgetCacheJSON(json)
   }
 
   @objc func setCustomCounters(_ json: String) {

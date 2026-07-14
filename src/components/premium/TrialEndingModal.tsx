@@ -1,10 +1,16 @@
-import React from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { Modal, View, StyleSheet, TouchableOpacity } from 'react-native';
 import { Text } from '../../ui';
 import { Spacing, Radius, useTheme } from '../../theme';
 import { getTrialReminderMessage } from '../../services/trialReminders';
 import { recordPaywallDismissed } from '../../services/paywallPrompt';
 import { navigateToPremium } from '../../navigation/rootNavigationRef';
+import { logAnalyticsEvent } from '../../services/analytics';
+import { usePurchase } from '../../hooks/usePurchase';
+import {
+  FALLBACK_YEARLY_PRICE,
+  MONETIZATION_PAYWALL_COPY,
+} from '../../config/monetization';
 
 interface TrialEndingModalProps {
   visible: boolean;
@@ -18,6 +24,19 @@ export function TrialEndingModal({
   onDismiss,
 }: TrialEndingModalProps) {
   const theme = useTheme();
+  const { products, productIds, getProducts } = usePurchase();
+
+  useEffect(() => {
+    if (visible) {
+      void getProducts().catch(() => {});
+      void logAnalyticsEvent('premium_viewed', { source: 'trial_ending_modal' });
+    }
+  }, [visible, getProducts]);
+
+  const yearlyPrice = useMemo(() => {
+    const match = products.find(p => p.productId === productIds.yearly);
+    return match?.price ?? FALLBACK_YEARLY_PRICE;
+  }, [products, productIds.yearly]);
 
   if (!visible) return null;
 
@@ -37,10 +56,14 @@ export function TrialEndingModal({
       <View style={styles.backdrop}>
         <View style={[styles.card, { backgroundColor: theme.cardBaseAlpha }]}>
           <Text variant="title" style={{ color: theme.textPrimary, marginBottom: Spacing[2] }}>
-            Free preview ending soon
+            Free app preview ending soon
           </Text>
-          <Text variant="body" style={{ color: theme.textSecondary, marginBottom: Spacing[4] }}>
-            {getTrialReminderMessage(trialDay)}
+          <Text variant="body" style={{ color: theme.textSecondary, marginBottom: Spacing[2] }}>
+            {getTrialReminderMessage(trialDay, yearlyPrice)}
+          </Text>
+          <Text variant="caption" style={{ color: theme.textSecondary, marginBottom: Spacing[4] }}>
+            {MONETIZATION_PAYWALL_COPY.previewEndingNoChargeNote}{' '}
+            {MONETIZATION_PAYWALL_COPY.previewEndingCancelNote}
           </Text>
           <TouchableOpacity
             style={[styles.primary, { backgroundColor: theme.percent }]}
@@ -48,7 +71,7 @@ export function TrialEndingModal({
             activeOpacity={0.9}
           >
             <Text variant="sectionTitle" style={styles.primaryLabel}>
-              View Premium plans
+              View Premium plans ({yearlyPrice}/year)
             </Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.secondary} onPress={handleLater} activeOpacity={0.7}>
@@ -76,6 +99,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: Spacing[2],
   },
-  primaryLabel: { color: '#FFFFFF' },
+  primaryLabel: { color: '#FFFFFF', textAlign: 'center' },
   secondary: { alignItems: 'center', paddingVertical: Spacing[2] },
 });

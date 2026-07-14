@@ -40,13 +40,8 @@ import {
   getFontFamilyForWeight,
 } from '../theme';
 import { useThemeStore } from '../stores/themeStore';
-import {
-  MoonIcon,
-  ProfileIcon,
-  SettingsIcon,
-  ShareIcon,
-  SunIcon,
-} from '../assets/icons';
+import { ProfileIcon, SettingsIcon, ShareIcon } from '../assets/icons';
+import { ThemeModeGlyph } from '../ui';
 
 export type RootStackParamList = {
   Home: undefined;
@@ -182,19 +177,12 @@ function ThemeToggleHeaderButton({
       <Animated.View
         style={{ transform: [{ rotate: rotation }, { scale: scaleAnim }] }}
       >
-        {resolvedTheme === 'dark' ? (
-          <SunIcon
-            width={THEME_ICON_SIZE}
-            height={THEME_ICON_SIZE}
-            color={theme.percent}
-          />
-        ) : (
-          <MoonIcon
-            width={THEME_ICON_SIZE}
-            height={THEME_ICON_SIZE}
-            color={theme.textSecondary}
-          />
-        )}
+        <ThemeModeGlyph
+          mode={resolvedTheme}
+          size={THEME_ICON_SIZE}
+          accent={theme.percent}
+          moonColor={theme.textSecondary}
+        />
       </Animated.View>
     </TouchableOpacity>
   );

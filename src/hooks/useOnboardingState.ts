@@ -8,15 +8,16 @@ import {
   setOnboardingCompletedUseCase,
 } from '../di';
 import { runOnboardingCompletionSideEffects } from '../services/onboardingCompletion';
+import type { OnboardingExitParams } from '../services/onboardingCompletion';
 
 export function useOnboardingState() {
   const [hasCompleted, setHasCompleted] = useState(() =>
     getOnboardingCompletedUseCase.execute()
   );
 
-  const completeOnboarding = useCallback(() => {
+  const completeOnboarding = useCallback((params?: OnboardingExitParams) => {
     setOnboardingCompletedUseCase.execute();
-    runOnboardingCompletionSideEffects();
+    runOnboardingCompletionSideEffects(params);
     setHasCompleted(true);
   }, []);
 

@@ -52,7 +52,17 @@ export type AnalyticsEventName =
   | 'task_added'
   | 'settings_birth_date_saved'
   | 'home_life_locked_tapped'
-  | 'goal_created';
+  | 'goal_created'
+  | 'countdown_created'
+  | 'countdown_completed'
+  | 'share_completed'
+  | 'notification_permission_result'
+  | 'feature_coach_shown'
+  | 'feature_coach_dismissed'
+  | 'feature_coach_cta_tapped'
+  | 'share_prompt_shown'
+  | 'share_prompt_dismissed'
+  | 'share_prompt_tapped';
 
 type EventParams = Record<string, string | number | boolean | undefined>;
 

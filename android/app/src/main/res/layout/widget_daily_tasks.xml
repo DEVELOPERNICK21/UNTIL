@@ -8,16 +8,31 @@
     android:padding="20dp"
     android:gravity="start">
 
-    <TextView
-        android:id="@+id/widget_daily_tasks_title"
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:textColor="#AAAAAA"
-        android:textSize="10sp"
-        android:textAllCaps="true"
-        android:letterSpacing="0.12"
-        android:text="TODAY'S TASKS"
-        android:layout_marginBottom="12dp" />
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:layout_marginBottom="12dp">
+
+        <TextView
+            android:id="@+id/widget_daily_tasks_title"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:textColor="#AAAAAA"
+            android:textSize="10sp"
+            android:textAllCaps="true"
+            android:letterSpacing="0.12"
+            android:text="TODAY'S TASKS" />
+
+        <ImageView
+            android:id="@+id/widget_daily_tasks_ember"
+            android:layout_width="28dp"
+            android:layout_height="28dp"
+            android:contentDescription="@null"
+            android:scaleType="fitCenter" />
+    </LinearLayout>
 
     <LinearLayout
         android:layout_width="match_parent"

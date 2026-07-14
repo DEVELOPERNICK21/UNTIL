@@ -3,8 +3,7 @@ import { Modal, View, StyleSheet, TouchableOpacity, Platform } from 'react-nativ
 import { Text } from '../../ui';
 import { Spacing, Radius, useTheme } from '../../theme';
 import { rootNavigationRef } from '../../navigation/rootNavigationRef';
-import { clearWidgetCoachPending } from '../../services/onboardingCompletion';
-import { logAnalyticsEvent } from '../../services/analytics';
+import { useAnalytics } from '../../hooks/useAnalytics';
 
 interface WidgetCoachModalProps {
   visible: boolean;
@@ -13,12 +12,12 @@ interface WidgetCoachModalProps {
 
 export function WidgetCoachModal({ visible, onDismiss }: WidgetCoachModalProps) {
   const theme = useTheme();
+  const { logEvent } = useAnalytics();
 
   if (!visible) return null;
 
   const handleAddWidget = () => {
-    logAnalyticsEvent('widget_add_tapped', { source: 'coach' }).catch(() => {});
-    clearWidgetCoachPending();
+    logEvent('widget_add_tapped', { source: 'coach' });
     onDismiss();
     if (rootNavigationRef.isReady()) {
       rootNavigationRef.navigate('Widget');
@@ -26,8 +25,7 @@ export function WidgetCoachModal({ visible, onDismiss }: WidgetCoachModalProps) 
   };
 
   const handleLater = () => {
-    logAnalyticsEvent('widget_coach_dismissed').catch(() => {});
-    clearWidgetCoachPending();
+    logEvent('widget_coach_dismissed', { dismiss_reason: 'tapped_not_now' });
     onDismiss();
   };
 
