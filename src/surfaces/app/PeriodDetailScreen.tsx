@@ -62,8 +62,8 @@ export type PeriodDetailProps = {
   kind: PeriodGlyphKind;
   title: string;
   progress: number;
-  passedLabel: string;
-  leftLabel: string;
+  passedLabel: string | React.ReactNode;
+  leftLabel: string | React.ReactNode;
   passedCaption: string;
   leftCaption: string;
   summary: string;
@@ -75,7 +75,7 @@ export type PeriodDetailProps = {
  * Shared playful shell for Day / Month / Year / Life detail screens.
  * Each kind has a light personality beat; Reduce Motion calms loops.
  */
-export function PeriodDetailScreen({
+export const PeriodDetailScreen = React.memo(function PeriodDetailScreenInternal({
   kind,
   title,
   progress,
@@ -362,7 +362,7 @@ export function PeriodDetailScreen({
       </ScreenGradient>
     </View>
   );
-}
+});
 
 const styles = StyleSheet.create({
   container: { flex: 1 },

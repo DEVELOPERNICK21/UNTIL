@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, memo } from 'react';
 import { StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -30,19 +30,25 @@ function formatTime(date: Date) {
   };
 }
 
-export function DayDetailScreen() {
-  const navigation =
-    useNavigation<NativeStackNavigationProp<RootStackParamList, 'DayDetail'>>();
+const LiveDayStats = memo(({ type }: { type: 'passed' | 'left' }) => {
   const [live, setLive] = useState(() => new Date());
-  const goalsFeatureEnabled = useGoalsFeatureEnabled();
-  useObserveTimeState();
 
   useEffect(() => {
     const t = setInterval(() => setLive(new Date()), 1000);
     return () => clearInterval(t);
   }, []);
 
-  const { passed, left, progress } = formatTime(live);
+  const { passed, left } = formatTime(live);
+  return <React.Fragment>{type === 'passed' ? passed : left}</React.Fragment>;
+});
+
+export function DayDetailScreen() {
+  const navigation =
+    useNavigation<NativeStackNavigationProp<RootStackParamList, 'DayDetail'>>();
+  const goalsFeatureEnabled = useGoalsFeatureEnabled();
+  const { timeState } = useObserveTimeState();
+
+  const progress = timeState.day ?? 0;
   const pctDone = Math.round(progress * 100);
   const pctLeft = 100 - pctDone;
 
@@ -51,8 +57,8 @@ export function DayDetailScreen() {
       kind="day"
       title="Today"
       progress={progress}
-      passedLabel={passed}
-      leftLabel={left}
+      passedLabel={<LiveDayStats type="passed" />}
+      leftLabel={<LiveDayStats type="left" />}
       passedCaption="PASSED"
       leftCaption="LEFT"
       summary={`${pctDone}% of the day passed · ${pctLeft}% left`}
