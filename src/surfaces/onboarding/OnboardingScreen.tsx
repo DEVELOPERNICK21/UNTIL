@@ -1,1274 +1,698 @@
 /**
- * Onboarding — animated welcome + interactive Day demo + widget preview.
+ * Psychology quiz funnel with interactive Ember / day / widget beats.
  */
 
-import React, {
-  useState,
-  useCallback,
-  createContext,
-  useContext,
-  useRef,
-  useEffect,
-  useMemo,
-} from 'react';
+import React, { useCallback, useEffect, useRef } from 'react';
 import {
   View,
   StyleSheet,
   TouchableOpacity,
-  useWindowDimensions,
-  FlatList,
-  NativeSyntheticEvent,
-  NativeScrollEvent,
-  Vibration,
-  Pressable,
+  ScrollView,
   Animated,
-  Easing,
-  PanResponder,
+  Vibration,
 } from 'react-native';
-import Svg, { Circle } from 'react-native-svg';
 import {
   SafeAreaView,
   useSafeAreaInsets,
 } from 'react-native-safe-area-context';
-import { Text, ScreenGradient, PeriodGlyph, Ember } from '../../ui';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { Text, ScreenGradient, Ember } from '../../ui';
 import {
   useTheme,
   Spacing,
   Typography,
-  Radius,
   Weight,
   getFontFamilyForWeight,
-  Shadows,
+  Radius,
 } from '../../theme';
-import { useAnalytics } from '../../hooks';
+import { useAnalytics, useOnboardingFunnel } from '../../hooks';
+import type { AuthStackParamList } from '../../navigation/AuthNavigator';
+import type {
+  OnboardingCadence,
+  OnboardingDrain,
+  OnboardingFunnelStep,
+  OnboardingGoal,
+  OnboardingReadiness,
+  OnboardingValues,
+} from '../../types';
+import { FunnelProgressBar } from './FunnelProgressBar';
+import { QuizOptionList } from './QuizOptionList';
+import { InteractiveWelcome } from './InteractiveWelcome';
+import { InteractiveDayDemo } from './InteractiveDayDemo';
+import { InteractiveWidgets } from './InteractiveWidgets';
+import { useCtaPressScale, useEnter } from './onboardingMotion';
+import {
+  CADENCE_OPTIONS,
+  DRAIN_OPTIONS,
+  GOAL_OPTIONS,
+  QUIZ_PROMPTS,
+  READINESS_OPTIONS,
+  VALUES_OPTIONS,
+} from './quizContent';
 
-type StepConfig = {
-  stepName: string;
-  cta: string;
-  ctaGoesToNext: boolean;
-};
+type AuthNav = NativeStackNavigationProp<AuthStackParamList, 'Onboarding'>;
 
-const STEPS: StepConfig[] = [
-  {
-    stepName: 'welcome',
-    cta: 'Show me how it works',
-    ctaGoesToNext: true,
-  },
-  {
-    stepName: 'live_day_demo',
-    cta: 'Next',
-    ctaGoesToNext: true,
-  },
-  {
-    stepName: 'widgets_start',
-    cta: 'Get started',
-    ctaGoesToNext: false,
-  },
+const STACK_STEPS: OnboardingFunnelStep[] = [
+  'identity',
+  'life_weeks',
+  'paywall',
 ];
 
-const PASSED = '#EF4444';
-const LEFT = '#22C55E';
-
-const FEATURES = [
-  {
-    id: 'day',
-    label: 'Day %',
-    glyph: 'day' as const,
-    blurb: 'Live ring of today’s passed and left time.',
-  },
-  {
-    id: 'widgets',
-    label: 'Widgets',
-    glyph: 'month' as const,
-    blurb: 'Home screen glances — no app open needed.',
-  },
-  {
-    id: 'life',
-    label: 'Life view',
-    glyph: 'life' as const,
-    blurb: 'Your life progress, once you set a birth date.',
-  },
+const BACK_HIDDEN: OnboardingFunnelStep[] = [
+  'brand',
+  'loader',
+  'results',
+  'identity',
+  'life_weeks',
+  'paywall',
 ];
 
-const AnimatedCircle = Animated.createAnimatedComponent(Circle);
+const DEMO_STEPS: OnboardingFunnelStep[] = [
+  'brand',
+  'day_demo',
+  'widgets_demo',
+];
 
-const OnboardingCompleteContext = createContext<
-  ((params?: {
-    exit_type: 'skipped' | 'completed';
-    step: number;
-    step_name: string;
-  }) => void) | null
->(null);
-
-export function useOnboardingComplete() {
-  const cb = useContext(OnboardingCompleteContext);
-  if (!cb) throw new Error('Must be used inside AuthNavigator');
-  return cb;
-}
-
-function useLiveDayClock(enabled: boolean) {
-  const [now, setNow] = useState(() => Date.now());
-
-  useEffect(() => {
-    if (!enabled) return;
-    const id = setInterval(() => setNow(Date.now()), 1000);
-    return () => clearInterval(id);
-  }, [enabled]);
-
-  return useMemo(() => {
-    const date = new Date(now);
-    const start = new Date(date);
-    start.setHours(0, 0, 0, 0);
-    const end = new Date(start);
-    end.setDate(end.getDate() + 1);
-    const total = end.getTime() - start.getTime();
-    const elapsed = Math.min(total, Math.max(0, now - start.getTime()));
-    const remaining = Math.max(0, end.getTime() - now);
-    const progress = total > 0 ? elapsed / total : 0;
-    const remH = Math.floor(remaining / (1000 * 60 * 60));
-    const remM = Math.floor((remaining % (1000 * 60 * 60)) / (1000 * 60));
-    const remS = Math.floor((remaining % (1000 * 60)) / 1000);
-    return {
-      progress,
-      percentDone: Math.round(progress * 100),
-      remainingLabel: `${remH}h ${remM}m ${remS}s`,
-    };
-  }, [now]);
-}
-
-function useEnter(active: boolean, delay = 0) {
-  const opacity = useRef(new Animated.Value(0)).current;
-  const y = useRef(new Animated.Value(22)).current;
-
-  useEffect(() => {
-    if (!active) {
-      opacity.setValue(0);
-      y.setValue(22);
-      return;
-    }
-    Animated.parallel([
-      Animated.timing(opacity, {
-        toValue: 1,
-        duration: 520,
-        delay,
-        easing: Easing.out(Easing.cubic),
-        useNativeDriver: true,
-      }),
-      Animated.timing(y, {
-        toValue: 0,
-        duration: 560,
-        delay,
-        easing: Easing.out(Easing.cubic),
-        useNativeDriver: true,
-      }),
-    ]).start();
-  }, [active, delay, opacity, y]);
-
-  return { opacity, transform: [{ translateY: y }] };
-}
-
-function BrandHeader({ onSkip }: { onSkip: () => void }) {
-  const theme = useTheme();
-  return (
-    <View style={styles.brandHeader}>
-      <Text
-        variant="sectionTitle"
-        style={[styles.brandTitle, { color: theme.textPrimary }]}
-      >
-        UNTIL
-      </Text>
-      <TouchableOpacity onPress={onSkip} hitSlop={12} accessibilityRole="button">
-        <Text variant="body" style={{ color: theme.textSecondary }}>
-          Skip
-        </Text>
-      </TouchableOpacity>
-    </View>
-  );
-}
-
-function WelcomeSlide({ width, active }: { width: number; active: boolean }) {
-  const theme = useTheme();
-  const [selected, setSelected] = useState<string | null>(null);
-  const glow = useRef(new Animated.Value(0)).current;
-  const brandScale = useRef(new Animated.Value(0.92)).current;
-  const brandOpacity = useRef(new Animated.Value(0)).current;
-  const headline = useEnter(active, 120);
-  const body = useEnter(active, 220);
-  const chips = useEnter(active, 340);
-
-  useEffect(() => {
-    if (!active) return;
-    Animated.parallel([
-      Animated.spring(brandScale, {
-        toValue: 1,
-        friction: 6,
-        tension: 80,
-        useNativeDriver: true,
-      }),
-      Animated.timing(brandOpacity, {
-        toValue: 1,
-        duration: 480,
-        useNativeDriver: true,
-      }),
-    ]).start();
-
-    const loop = Animated.loop(
-      Animated.sequence([
-        Animated.timing(glow, {
-          toValue: 1,
-          duration: 1800,
-          easing: Easing.inOut(Easing.sin),
-          useNativeDriver: true,
-        }),
-        Animated.timing(glow, {
-          toValue: 0,
-          duration: 1800,
-          easing: Easing.inOut(Easing.sin),
-          useNativeDriver: true,
-        }),
-      ]),
-    );
-    loop.start();
-    return () => loop.stop();
-  }, [active, brandScale, brandOpacity, glow]);
-
-  return (
-    <View style={[styles.slide, { width }]}>
-      <View style={styles.welcomeHero}>
-        <Animated.View
-          pointerEvents="none"
-          style={[
-            styles.welcomeGlow,
-            {
-              backgroundColor: theme.percent,
-              opacity: glow.interpolate({
-                inputRange: [0, 1],
-                outputRange: [0.1, 0.22],
-              }),
-              transform: [
-                {
-                  scale: glow.interpolate({
-                    inputRange: [0, 1],
-                    outputRange: [0.92, 1.12],
-                  }),
-                },
-              ],
-            },
-          ]}
-        />
-
-        <Animated.View
-          style={{ opacity: brandOpacity, transform: [{ scale: brandScale }] }}
-        >
-          <View style={styles.welcomeEmberRow}>
-            <Ember progress={0.32} size={64} />
-          </View>
-          <Text
-            variant="micro"
-            style={[styles.eyebrow, { color: theme.percent }]}
-          >
-            WELCOME
-          </Text>
-          <Text
-            variant="display"
-            style={[styles.welcomeBrand, { color: theme.textPrimary }]}
-          >
-            UNTIL
-          </Text>
-        </Animated.View>
-
-        <Animated.View style={headline}>
-          <Text
-            variant="headline"
-            style={[styles.welcomeHeadline, { color: theme.textPrimary }]}
-          >
-            See how much of your day is left.
-          </Text>
-        </Animated.View>
-
-        <Animated.View style={body}>
-          <Text
-            variant="body"
-            style={[styles.welcomeBody, { color: theme.textSecondary }]}
-          >
-            Not to rush you — to notice what remains. Day, month, year, and life,
-            on screen and as home widgets.
-          </Text>
-        </Animated.View>
-
-        <Animated.View style={[styles.featureRow, chips]}>
-          {FEATURES.map((f, i) => {
-            const on = selected === f.id;
-            return (
-              <Pressable
-                key={f.id}
-                onPress={() => {
-                  Vibration.vibrate(8);
-                  setSelected(on ? null : f.id);
-                }}
-                style={[
-                  styles.featureChip,
-                  {
-                    borderColor: on ? theme.percent : theme.glassBorder,
-                    backgroundColor: on
-                      ? 'rgba(232, 124, 32, 0.14)'
-                      : theme.glassBg,
-                    transform: [{ scale: on ? 1.04 : 1 }],
-                  },
-                  Shadows.card,
-                ]}
-              >
-                <PeriodGlyph
-                  kind={f.glyph}
-                  size={28}
-                  progress={0.35 + i * 0.18}
-                  pressed={on}
-                  animated={active}
-                />
-                <Text
-                  variant="caption"
-                  style={{
-                    color: on ? theme.percent : theme.textPrimary,
-                    marginTop: 6,
-                    fontFamily: getFontFamilyForWeight(Weight.medium),
-                  }}
-                >
-                  {f.label}
-                </Text>
-              </Pressable>
-            );
-          })}
-        </Animated.View>
-
-        {selected ? (
-          <Animated.View
-            style={[
-              styles.featureBlurb,
-              {
-                borderColor: theme.glassBorder,
-                backgroundColor: theme.glassBg,
-              },
-            ]}
-          >
-            <Text variant="body" style={{ color: theme.textSecondary }}>
-              {FEATURES.find(f => f.id === selected)?.blurb}
-            </Text>
-          </Animated.View>
-        ) : (
-          <Text
-            variant="caption"
-            style={[styles.tapCue, { color: theme.textMuted }]}
-          >
-            Tap a chip to explore
-          </Text>
-        )}
-      </View>
-    </View>
-  );
-}
-
-function LiveDayRing({
-  progress,
-  size = 200,
-  interactive,
-}: {
-  progress: number;
-  size?: number;
-  interactive: boolean;
-}) {
-  const theme = useTheme();
-  const stroke = 14;
-  const radius = (size - stroke) / 2;
-  const circumference = 2 * Math.PI * radius;
-  const live = Math.min(1, Math.max(0, progress));
-
-  const [scrubbing, setScrubbing] = useState(false);
-  const [display, setDisplay] = useState(live);
-  const ring = useRef(new Animated.Value(live)).current;
-  const pulse = useRef(new Animated.Value(1)).current;
-  const rotateHint = useRef(new Animated.Value(0)).current;
-
-  useEffect(() => {
-    if (scrubbing) return;
-    setDisplay(live);
-    Animated.timing(ring, {
-      toValue: live,
-      duration: 450,
-      easing: Easing.out(Easing.cubic),
-      useNativeDriver: false,
-    }).start();
-  }, [live, scrubbing, ring]);
-
-  useEffect(() => {
-    const loop = Animated.loop(
-      Animated.sequence([
-        Animated.timing(pulse, {
-          toValue: 1.03,
-          duration: 1400,
-          easing: Easing.inOut(Easing.sin),
-          useNativeDriver: true,
-        }),
-        Animated.timing(pulse, {
-          toValue: 1,
-          duration: 1400,
-          easing: Easing.inOut(Easing.sin),
-          useNativeDriver: true,
-        }),
-      ]),
-    );
-    loop.start();
-    const spin = Animated.loop(
-      Animated.timing(rotateHint, {
-        toValue: 1,
-        duration: 8000,
-        easing: Easing.linear,
-        useNativeDriver: true,
-      }),
-    );
-    spin.start();
-    return () => {
-      loop.stop();
-      spin.stop();
-    };
-  }, [pulse, rotateHint]);
-
-  const pan = useMemo(
-    () =>
-      PanResponder.create({
-        onStartShouldSetPanResponder: () => interactive,
-        onMoveShouldSetPanResponder: () => interactive,
-        onPanResponderGrant: () => {
-          setScrubbing(true);
-          Vibration.vibrate(6);
-        },
-        onPanResponderMove: (_, g) => {
-          // Horizontal drag maps to 0–1 progress (playable preview)
-          const delta = g.dx / (size * 0.9);
-          const next = Math.min(1, Math.max(0, live + delta));
-          setDisplay(next);
-          ring.setValue(next);
-        },
-        onPanResponderRelease: () => {
-          setScrubbing(false);
-          Vibration.vibrate(8);
-          Animated.spring(ring, {
-            toValue: live,
-            friction: 7,
-            tension: 60,
-            useNativeDriver: false,
-          }).start();
-          setDisplay(live);
-        },
-        onPanResponderTerminate: () => {
-          setScrubbing(false);
-          setDisplay(live);
-          ring.setValue(live);
-        },
-      }),
-    [interactive, live, ring, size],
-  );
-
-  const dashOffset = ring.interpolate({
-    inputRange: [0, 1],
-    outputRange: [circumference, 0],
-  });
-  const percent = Math.round(display * 100);
-  const orbitRotate = rotateHint.interpolate({
-    inputRange: [0, 1],
-    outputRange: ['0deg', '360deg'],
-  });
-
-  return (
-    <Animated.View
-      {...pan.panHandlers}
-      style={{
-        width: size,
-        height: size,
-        alignItems: 'center',
-        justifyContent: 'center',
-        transform: [{ scale: pulse }],
-      }}
-    >
-      <Svg width={size} height={size} style={StyleSheet.absoluteFill}>
-        <Circle
-          cx={size / 2}
-          cy={size / 2}
-          r={radius}
-          stroke={LEFT}
-          strokeWidth={stroke}
-          fill="none"
-          strokeOpacity={0.9}
-        />
-        <AnimatedCircle
-          cx={size / 2}
-          cy={size / 2}
-          r={radius}
-          stroke={PASSED}
-          strokeWidth={stroke}
-          fill="none"
-          strokeDasharray={`${circumference} ${circumference}`}
-          strokeDashoffset={dashOffset}
-          strokeLinecap="round"
-          rotation={-90}
-          origin={`${size / 2}, ${size / 2}`}
-        />
-      </Svg>
-
-      <Animated.View
-        pointerEvents="none"
-        style={[
-          StyleSheet.absoluteFillObject,
-          { transform: [{ rotate: orbitRotate }] },
-        ]}
-      >
-        <View
-          style={[
-            styles.orbitTick,
-            {
-              backgroundColor: theme.percent,
-              top: stroke / 2,
-              left: size / 2 - 4,
-            },
-          ]}
-        />
-      </Animated.View>
-
-      <Text
-        variant="micro"
-        style={{ color: theme.textSecondary, letterSpacing: 2 }}
-      >
-        {scrubbing ? 'PREVIEW' : 'TODAY'}
-      </Text>
-      <Text
-        variant="timer"
-        style={[styles.livePercent, { color: theme.percent }]}
-      >
-        {percent}%
-      </Text>
-      <Text variant="caption" style={{ color: theme.textSecondary }}>
-        {scrubbing ? 'Release to return live' : 'of the day passed'}
-      </Text>
-    </Animated.View>
-  );
-}
-
-function LiveDayDemoSlide({
-  width,
-  active,
-}: {
-  width: number;
-  active: boolean;
-}) {
-  const theme = useTheme();
-  const clock = useLiveDayClock(active);
-  const [highlightWidgets, setHighlightWidgets] = useState(false);
-  const title = useEnter(active, 40);
-  const sub = useEnter(active, 120);
-  const ringEnter = useEnter(active, 180);
-  const metrics = useEnter(active, 280);
-  const hint = useEnter(active, 360);
-  const hintPulse = useRef(new Animated.Value(1)).current;
-
-  useEffect(() => {
-    if (!highlightWidgets) return;
-    const loop = Animated.loop(
-      Animated.sequence([
-        Animated.timing(hintPulse, {
-          toValue: 1.03,
-          duration: 600,
-          useNativeDriver: true,
-        }),
-        Animated.timing(hintPulse, {
-          toValue: 1,
-          duration: 600,
-          useNativeDriver: true,
-        }),
-      ]),
-    );
-    loop.start();
-    return () => loop.stop();
-  }, [highlightWidgets, hintPulse]);
-
-  return (
-    <View style={[styles.slide, { width }]}>
-      <View style={styles.demoBody}>
-        <Animated.View style={title}>
-          <Text
-            variant="micro"
-            style={[styles.eyebrow, { color: theme.percent }]}
-          >
-            LIVE DEMO
-          </Text>
-          <Text
-            variant="display"
-            style={[styles.slideTitle, { color: theme.textPrimary }]}
-          >
-            This is today, updating live.
-          </Text>
-        </Animated.View>
-
-        <Animated.View style={sub}>
-          <Text
-            variant="body"
-            style={[styles.slideSubtitle, { color: theme.textSecondary }]}
-          >
-            Drag the ring left or right to preview — it snaps back to real time.
-          </Text>
-        </Animated.View>
-
-        <Animated.View style={[styles.ringWrap, ringEnter]}>
-          <LiveDayRing progress={clock.progress} interactive={active} />
-        </Animated.View>
-
-        <Animated.View style={[styles.metricsRow, metrics]}>
-          <View style={styles.metric}>
-            <View style={[styles.metricDot, { backgroundColor: PASSED }]} />
-            <Text variant="caption" style={{ color: theme.textSecondary }}>
-              Passed
-            </Text>
-            <Text variant="sectionTitle" style={{ color: theme.textPrimary }}>
-              {clock.percentDone}%
-            </Text>
-          </View>
-          <View style={styles.metric}>
-            <View style={[styles.metricDot, { backgroundColor: LEFT }]} />
-            <Text variant="caption" style={{ color: theme.textSecondary }}>
-              Left
-            </Text>
-            <Text variant="sectionTitle" style={{ color: theme.textPrimary }}>
-              {clock.remainingLabel}
-            </Text>
-          </View>
-        </Animated.View>
-
-        <Animated.View style={[{ transform: [{ scale: hintPulse }] }, hint]}>
-          <Pressable
-            onPress={() => {
-              Vibration.vibrate(8);
-              setHighlightWidgets(v => !v);
-            }}
-            style={[
-              styles.widgetHint,
-              {
-                borderColor: highlightWidgets ? theme.percent : theme.glassBorder,
-                backgroundColor: highlightWidgets
-                  ? 'rgba(232, 124, 32, 0.14)'
-                  : theme.glassBg,
-              },
-            ]}
-          >
-            <Text
-              variant="caption"
-              style={{
-                color: highlightWidgets ? theme.percent : theme.textSecondary,
-                textAlign: 'center',
-              }}
-            >
-              {highlightWidgets
-                ? 'Yes — this same Day view can live on your home screen as a widget.'
-                : 'Tap: Where does this go? → Home screen widgets'}
-            </Text>
-          </Pressable>
-        </Animated.View>
-      </View>
-    </View>
-  );
-}
-
-function WidgetMock({
-  title,
-  value,
-  accent,
-  progress,
-  selected,
-  onPress,
-  enterDelay,
-  active,
-}: {
-  title: string;
-  value: string;
-  accent: string;
-  progress: number;
-  selected: boolean;
-  onPress: () => void;
-  enterDelay: number;
-  active: boolean;
-}) {
-  const theme = useTheme();
-  const enter = useEnter(active, enterDelay);
-  const bob = useRef(new Animated.Value(0)).current;
-
-  useEffect(() => {
-    if (!active) return;
-    const loop = Animated.loop(
-      Animated.sequence([
-        Animated.timing(bob, {
-          toValue: 1,
-          duration: 1600 + enterDelay,
-          easing: Easing.inOut(Easing.sin),
-          useNativeDriver: true,
-        }),
-        Animated.timing(bob, {
-          toValue: 0,
-          duration: 1600 + enterDelay,
-          easing: Easing.inOut(Easing.sin),
-          useNativeDriver: true,
-        }),
-      ]),
-    );
-    loop.start();
-    return () => loop.stop();
-  }, [active, bob, enterDelay]);
-
-  return (
-    <Animated.View
-      style={[
-        enter,
-        {
-          flex: 1,
-          transform: [
-            ...(enter.transform ?? []),
-            {
-              translateY: bob.interpolate({
-                inputRange: [0, 1],
-                outputRange: [0, -4],
-              }),
-            },
-            { scale: selected ? 1.04 : 1 },
-          ],
-        },
-      ]}
-    >
-      <Pressable
-        onPress={onPress}
-        style={[
-          styles.widgetCard,
-          {
-            backgroundColor: theme.glassBg,
-            borderColor: selected ? accent : theme.glassBorder,
-            ...Shadows.glass,
-          },
-        ]}
-      >
-        <Text
-          variant="micro"
-          style={{ color: theme.textSecondary, letterSpacing: 1 }}
-        >
-          {title}
-        </Text>
-        <Text
-          variant="title"
-          style={{
-            color: accent,
-            marginTop: 4,
-            fontFamily: getFontFamilyForWeight(Weight.semibold),
-          }}
-        >
-          {value}
-        </Text>
-        <View style={[styles.widgetBarTrack, { backgroundColor: PASSED }]}>
-          <View
-            style={[
-              styles.widgetBarFill,
-              {
-                width: `${Math.round(progress * 100)}%`,
-                backgroundColor: LEFT,
-              },
-            ]}
-          />
-        </View>
-        {selected ? (
-          <Text
-            variant="micro"
-            style={{ color: accent, marginTop: 8, textAlign: 'center' }}
-          >
-            Add from your home screen
-          </Text>
-        ) : null}
-      </Pressable>
-    </Animated.View>
-  );
-}
-
-function WidgetsSlide({ width, active }: { width: number; active: boolean }) {
-  const theme = useTheme();
-  const clock = useLiveDayClock(active);
-  const [focus, setFocus] = useState<'DAY' | 'YEAR' | null>(null);
-  const title = useEnter(active, 40);
-  const sub = useEnter(active, 120);
-  const phone = useEnter(active, 200);
-  const phoneScale = useRef(new Animated.Value(0.94)).current;
-
-  useEffect(() => {
-    if (!active) {
-      phoneScale.setValue(0.94);
-      return;
-    }
-    Animated.spring(phoneScale, {
-      toValue: 1,
-      friction: 7,
-      tension: 70,
-      useNativeDriver: true,
-    }).start();
-  }, [active, phoneScale]);
-
-  return (
-    <View style={[styles.slide, { width }]}>
-      <View style={styles.demoBody}>
-        <Animated.View style={title}>
-          <Text
-            variant="micro"
-            style={[styles.eyebrow, { color: theme.percent }]}
-          >
-            ON YOUR HOME SCREEN
-          </Text>
-          <Text
-            variant="display"
-            style={[styles.slideTitle, { color: theme.textPrimary }]}
-          >
-            Glance. Stay aware.
-          </Text>
-        </Animated.View>
-
-        <Animated.View style={sub}>
-          <Text
-            variant="body"
-            style={[styles.slideSubtitle, { color: theme.textSecondary }]}
-          >
-            Tap a preview widget — then add the real ones from your home screen.
-          </Text>
-        </Animated.View>
-
-        <Animated.View
-          style={[
-            phone,
-            {
-              transform: [
-                ...(phone.transform ?? []),
-                { scale: phoneScale },
-              ],
-            },
-          ]}
-        >
-          <View
-            style={[
-              styles.phoneFrame,
-              {
-                borderColor: theme.glassBorder,
-                backgroundColor: theme.backgroundAlt,
-              },
-            ]}
-          >
-            <View
-              style={[styles.phoneNotch, { backgroundColor: theme.divider }]}
-            />
-            <View style={styles.widgetGrid}>
-              <WidgetMock
-                title="DAY"
-                value={`${clock.percentDone}%`}
-                accent={theme.percent}
-                progress={clock.progress}
-                selected={focus === 'DAY'}
-                onPress={() => {
-                  Vibration.vibrate(8);
-                  setFocus(f => (f === 'DAY' ? null : 'DAY'));
-                }}
-                enterDelay={260}
-                active={active}
-              />
-              <WidgetMock
-                title="YEAR"
-                value="53%"
-                accent={LEFT}
-                progress={0.53}
-                selected={focus === 'YEAR'}
-                onPress={() => {
-                  Vibration.vibrate(8);
-                  setFocus(f => (f === 'YEAR' ? null : 'YEAR'));
-                }}
-                enterDelay={360}
-                active={active}
-              />
-            </View>
-            <Text
-              variant="micro"
-              style={{
-                color: theme.textSecondary,
-                textAlign: 'center',
-                marginTop: Spacing.md,
-              }}
-            >
-              Home screen preview
-            </Text>
-          </View>
-        </Animated.View>
-      </View>
-    </View>
-  );
-}
-
-function OnboardingScreenInner() {
-  const completeOnboarding = useOnboardingComplete();
-  const { logEvent } = useAnalytics();
-  const { width } = useWindowDimensions();
+export function OnboardingScreen() {
+  const navigation = useNavigation<AuthNav>();
   const insets = useSafeAreaInsets();
   const theme = useTheme();
-  const flatListRef = useRef<FlatList>(null);
-  const [step, setStep] = useState(0);
-  const safeStep = Math.min(Math.max(0, step), STEPS.length - 1);
-  const config = STEPS[safeStep];
-  const isLast = safeStep === STEPS.length - 1;
-  const ctaScale = useRef(new Animated.Value(1)).current;
+  const { logEvent } = useAnalytics();
+  const {
+    step,
+    answers,
+    progress,
+    encouragement,
+    resultCards,
+    setStep,
+    advance,
+    goBack,
+    patchAnswers,
+    sync,
+  } = useOnboardingFunnel();
 
-  const onScroll = useCallback(
-    (e: NativeSyntheticEvent<NativeScrollEvent>) => {
-      const x = e.nativeEvent.contentOffset.x;
-      const index = Math.round(x / width);
-      setStep(Math.min(Math.max(0, index), STEPS.length - 1));
-    },
-    [width],
+  const loaderStarted = useRef(false);
+  const { scale: ctaScale, bounce: bounceCta } = useCtaPressScale();
+
+  useFocusEffect(
+    useCallback(() => {
+      sync();
+    }, [sync])
   );
 
   useEffect(() => {
-    logEvent('onboarding_step', {
-      step: safeStep + 1,
-      step_name: config.stepName,
-    });
-  }, [logEvent, safeStep, config.stepName]);
+    logEvent('onboarding_step_view', { step });
+  }, [step, logEvent]);
 
-  const finishOnboarding = useCallback(
-    (exitType: 'skipped' | 'completed') => {
-      Vibration.vibrate(10);
-      completeOnboarding({
-        exit_type: exitType,
-        step: safeStep + 1,
-        step_name: config.stepName,
-      });
-    },
-    [completeOnboarding, safeStep, config.stepName],
-  );
-
-  const handleSkip = useCallback(() => {
-    finishOnboarding('skipped');
-  }, [finishOnboarding]);
-
-  const handleCta = useCallback(() => {
-    Vibration.vibrate(10);
-    Animated.sequence([
-      Animated.timing(ctaScale, {
-        toValue: 0.96,
-        duration: 80,
-        useNativeDriver: true,
-      }),
-      Animated.spring(ctaScale, {
-        toValue: 1,
-        friction: 5,
-        useNativeDriver: true,
-      }),
-    ]).start();
-    if (config.ctaGoesToNext && !isLast) {
-      flatListRef.current?.scrollToIndex({
-        index: safeStep + 1,
-        animated: true,
-      });
-    } else {
-      finishOnboarding('completed');
+  useEffect(() => {
+    if (step === 'identity') {
+      navigation.navigate('IdentitySetup');
+      return;
     }
-  }, [
-    config.ctaGoesToNext,
-    isLast,
-    safeStep,
-    finishOnboarding,
-    ctaScale,
-  ]);
+    if (step === 'life_weeks') {
+      navigation.navigate('LifeWeeksPreview');
+      return;
+    }
+    if (step === 'paywall') {
+      navigation.navigate('OnboardingPaywall');
+    }
+  }, [step, navigation]);
 
-  const renderSlide = useCallback(
-    ({ index }: { item: StepConfig; index: number }) => {
-      if (index === 0) {
-        return <WelcomeSlide width={width} active={safeStep === 0} />;
-      }
-      if (index === 1) {
-        return <LiveDayDemoSlide width={width} active={safeStep === 1} />;
-      }
-      return <WidgetsSlide width={width} active={safeStep === 2} />;
-    },
-    [width, safeStep],
-  );
+  useEffect(() => {
+    if (step !== 'loader') {
+      loaderStarted.current = false;
+      return;
+    }
+    if (loaderStarted.current) return;
+    loaderStarted.current = true;
+    const id = setTimeout(() => {
+      setStep('results');
+    }, 2600);
+    return () => clearTimeout(id);
+  }, [step, setStep]);
 
-  const keyExtractor = useCallback((_: StepConfig, i: number) => String(i), []);
+  const showProgress = !STACK_STEPS.includes(step) && step !== 'brand';
+  const showBack = !BACK_HIDDEN.includes(step);
+  const showContinue = DEMO_STEPS.includes(step) || step === 'interstitial';
+
+  const handleBack = () => {
+    if (step === 'q_values') {
+      setStep('life_weeks');
+      return;
+    }
+    goBack();
+  };
+
+  const handleContinue = () => {
+    Vibration.vibrate(10);
+    bounceCta();
+    if (step === 'interstitial') {
+      setStep('identity');
+      return;
+    }
+    advance();
+  };
+
+  const selectAndAdvance = <T extends string>(
+    field: keyof typeof answers,
+    value: T,
+    analyticsStep: string
+  ) => {
+    patchAnswers({ [field]: value } as Partial<typeof answers>);
+    logEvent('onboarding_answer', { step: analyticsStep, value });
+    setTimeout(() => advance(), 160);
+  };
+
+  const renderBody = () => {
+    switch (step) {
+      case 'brand':
+        return (
+          <InteractiveWelcome
+            active
+            title={QUIZ_PROMPTS.brandTitle}
+            subtitle={QUIZ_PROMPTS.brandSub}
+          />
+        );
+
+      case 'day_demo':
+        return <InteractiveDayDemo active />;
+
+      case 'widgets_demo':
+        return <InteractiveWidgets active />;
+
+      case 'q_goal':
+        return (
+          <QuestionLayout title={QUIZ_PROMPTS.q_goal} emberProgress={0.28}>
+            <QuizOptionList
+              options={GOAL_OPTIONS}
+              selected={answers.goal}
+              onSelect={(value: OnboardingGoal) =>
+                selectAndAdvance('goal', value, 'q_goal')
+              }
+            />
+          </QuestionLayout>
+        );
+
+      case 'q_drain':
+        return (
+          <QuestionLayout title={QUIZ_PROMPTS.q_drain} emberProgress={0.42}>
+            <QuizOptionList
+              options={DRAIN_OPTIONS}
+              selected={answers.timeDrain}
+              onSelect={(value: OnboardingDrain) =>
+                selectAndAdvance('timeDrain', value, 'q_drain')
+              }
+            />
+          </QuestionLayout>
+        );
+
+      case 'interstitial':
+        return <InterstitialBeat />;
+
+      case 'q_values':
+        return (
+          <QuestionLayout title={QUIZ_PROMPTS.q_values} emberProgress={0.55}>
+            <QuizOptionList
+              options={VALUES_OPTIONS}
+              selected={answers.valuesPriority}
+              onSelect={(value: OnboardingValues) =>
+                selectAndAdvance('valuesPriority', value, 'q_values')
+              }
+            />
+          </QuestionLayout>
+        );
+
+      case 'q_cadence':
+        return (
+          <QuestionLayout title={QUIZ_PROMPTS.q_cadence} emberProgress={0.68}>
+            <QuizOptionList
+              options={CADENCE_OPTIONS}
+              selected={answers.cadence}
+              onSelect={(value: OnboardingCadence) =>
+                selectAndAdvance('cadence', value, 'q_cadence')
+              }
+            />
+          </QuestionLayout>
+        );
+
+      case 'q_readiness':
+        return (
+          <QuestionLayout title={QUIZ_PROMPTS.q_readiness} emberProgress={0.8}>
+            <QuizOptionList
+              options={READINESS_OPTIONS}
+              selected={answers.readiness}
+              onSelect={(value: OnboardingReadiness) =>
+                selectAndAdvance('readiness', value, 'q_readiness')
+              }
+            />
+          </QuestionLayout>
+        );
+
+      case 'loader':
+        return <LoaderBeat />;
+
+      case 'results':
+        return (
+          <ResultsBeat
+            cards={resultCards}
+            onBack={() => setStep('q_readiness')}
+            onContinue={() => {
+              logEvent('onboarding_results_view', {
+                goal: answers.goal,
+                drain: answers.timeDrain,
+                cadence: answers.cadence,
+              });
+              Vibration.vibrate(10);
+              setStep('paywall');
+            }}
+          />
+        );
+
+      default:
+        return (
+          <View style={styles.centerBlock}>
+            <Ember progress={0.5} size={56} />
+          </View>
+        );
+    }
+  };
 
   return (
-    <View style={[styles.container, { backgroundColor: theme.background }]}>
+    <View style={styles.container}>
       <ScreenGradient>
-        <SafeAreaView style={styles.safe} edges={['top']}>
-          <BrandHeader onSkip={handleSkip} />
-
-          <View style={styles.pagerWrap}>
-            <FlatList
-              ref={flatListRef}
-              data={STEPS}
-              renderItem={renderSlide}
-              keyExtractor={keyExtractor}
-              horizontal
-              pagingEnabled
-              showsHorizontalScrollIndicator={false}
-              onMomentumScrollEnd={onScroll}
-              onScrollToIndexFailed={info => {
-                setTimeout(
-                  () =>
-                    flatListRef.current?.scrollToIndex({
-                      index: info.index,
-                      animated: false,
-                    }),
-                  100,
-                );
-              }}
-              bounces={false}
-              getItemLayout={(_, index) => ({
-                length: width,
-                offset: width * index,
-                index,
-              })}
-            />
-          </View>
-
-          <View style={styles.dotsRow}>
-            {STEPS.map((_, i) => {
-              const active = i === safeStep;
-              return (
-                <Animated.View
-                  key={i}
-                  style={[
-                    styles.dot,
-                    active
-                      ? [styles.dotActive, { backgroundColor: theme.percent }]
-                      : [
-                          styles.dotInactive,
-                          { backgroundColor: theme.progressTrack },
-                        ],
-                  ]}
-                />
-              );
-            })}
-          </View>
-
+        <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
           <View
             style={[
-              styles.footer,
-              { paddingBottom: Math.max(insets.bottom, Spacing.lg) },
+              styles.header,
+              { paddingTop: Spacing[2], paddingHorizontal: Spacing[4] },
             ]}
           >
-            <Animated.View style={{ transform: [{ scale: ctaScale }] }}>
+            {showBack ? (
               <TouchableOpacity
-                style={[styles.ctaFull, { backgroundColor: theme.percent }]}
-                onPress={handleCta}
-                activeOpacity={0.9}
-                accessibilityRole="button"
+                onPress={handleBack}
+                hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+                style={styles.backHit}
               >
-                <Text variant="sectionTitle" style={styles.ctaFullLabel}>
-                  {config.cta}
+                <Text variant="body" style={{ color: theme.textPrimary }}>
+                  ‹
                 </Text>
               </TouchableOpacity>
-            </Animated.View>
+            ) : (
+              <View style={styles.backHit} />
+            )}
+            <View style={styles.headerCenter}>
+              <FunnelProgressBar
+                progress={progress}
+                visible={showProgress}
+                encouragement={encouragement}
+              />
+            </View>
+            <View style={styles.backHit} />
           </View>
+          <ScrollView
+            contentContainerStyle={[
+              styles.scroll,
+              {
+                paddingBottom:
+                  Math.max(insets.bottom, Spacing[4]) +
+                  (showContinue ? 88 : Spacing[4]),
+              },
+            ]}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+          >
+            {renderBody()}
+          </ScrollView>
+
+          {showContinue ? (
+            <View
+              style={[
+                styles.footer,
+                { paddingBottom: Math.max(insets.bottom, Spacing[3]) },
+              ]}
+            >
+              <Animated.View style={{ transform: [{ scale: ctaScale }] }}>
+                <TouchableOpacity
+                  style={[styles.ctaFull, { backgroundColor: theme.percent }]}
+                  onPress={handleContinue}
+                  activeOpacity={0.9}
+                >
+                  <Text variant="sectionTitle" style={styles.ctaFullLabel}>
+                    {step === 'brand'
+                      ? 'Show me how it works'
+                      : step === 'day_demo'
+                        ? 'Next'
+                        : step === 'widgets_demo'
+                          ? 'Build my time map'
+                          : 'Continue'}
+                  </Text>
+                </TouchableOpacity>
+              </Animated.View>
+            </View>
+          ) : null}
         </SafeAreaView>
       </ScreenGradient>
     </View>
   );
 }
 
+function QuestionLayout({
+  title,
+  emberProgress,
+  children,
+}: {
+  title: string;
+  emberProgress: number;
+  children: React.ReactNode;
+}) {
+  const theme = useTheme();
+  const titleEnter = useEnter(true, 40);
+  const emberEnter = useEnter(true, 0);
+  const bodyEnter = useEnter(true, 120);
+
+  return (
+    <View style={styles.questionBlock}>
+      <Animated.View style={[styles.emberCenter, emberEnter]}>
+        <Ember progress={emberProgress} size={48} />
+      </Animated.View>
+      <Animated.View style={titleEnter}>
+        <Text
+          variant="sectionTitle"
+          style={[
+            styles.questionTitle,
+            {
+              color: theme.textPrimary,
+              fontFamily: getFontFamilyForWeight(Weight.semibold),
+            },
+          ]}
+        >
+          {title}
+        </Text>
+      </Animated.View>
+      <Animated.View style={bodyEnter}>{children}</Animated.View>
+    </View>
+  );
+}
+
+function InterstitialBeat() {
+  const theme = useTheme();
+  const title = useEnter(true, 60);
+  const ember = useEnter(true, 0);
+
+  return (
+    <View style={styles.centerBlock}>
+      <Animated.View style={ember}>
+        <Ember progress={0.48} size={72} />
+      </Animated.View>
+      <Animated.View style={title}>
+        <Text
+          variant="sectionTitle"
+          style={[
+            styles.title,
+            {
+              color: theme.textPrimary,
+              fontFamily: getFontFamilyForWeight(Weight.semibold),
+              fontSize: Typography.sectionTitle,
+            },
+          ]}
+        >
+          {QUIZ_PROMPTS.interstitial}
+        </Text>
+      </Animated.View>
+    </View>
+  );
+}
+
+function LoaderBeat() {
+  const theme = useTheme();
+  const title = useEnter(true, 80);
+  const pulse = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    const loop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulse, {
+          toValue: 1.06,
+          duration: 700,
+          useNativeDriver: true,
+        }),
+        Animated.timing(pulse, {
+          toValue: 1,
+          duration: 700,
+          useNativeDriver: true,
+        }),
+      ])
+    );
+    loop.start();
+    return () => loop.stop();
+  }, [pulse]);
+
+  return (
+    <View style={styles.centerBlock}>
+      <Animated.View style={{ transform: [{ scale: pulse }] }}>
+        <Ember progress={0.62} size={80} />
+      </Animated.View>
+      <Animated.View style={title}>
+        <Text
+          variant="sectionTitle"
+          style={[
+            styles.title,
+            {
+              color: theme.textPrimary,
+              marginTop: Spacing[4],
+              fontFamily: getFontFamilyForWeight(Weight.semibold),
+            },
+          ]}
+        >
+          {QUIZ_PROMPTS.loaderTitle}
+        </Text>
+        <Text
+          variant="caption"
+          style={{
+            color: theme.textSecondary,
+            textAlign: 'center',
+            marginTop: Spacing[2],
+          }}
+        >
+          Matching your answers to a weekly plan…
+        </Text>
+      </Animated.View>
+    </View>
+  );
+}
+
+function ResultsBeat({
+  cards,
+  onBack,
+  onContinue,
+}: {
+  cards: { id: string; text: string }[];
+  onBack: () => void;
+  onContinue: () => void;
+}) {
+  const theme = useTheme();
+  const header = useEnter(true, 40);
+  const { scale, bounce } = useCtaPressScale();
+
+  return (
+    <View style={styles.resultsBlock}>
+      <Animated.View style={header}>
+        <Ember progress={0.88} size={64} />
+        <Text
+          variant="display"
+          style={[
+            styles.title,
+            {
+              color: theme.textPrimary,
+              marginTop: Spacing[3],
+              fontFamily: getFontFamilyForWeight(Weight.bold),
+            },
+          ]}
+        >
+          {QUIZ_PROMPTS.resultsTitle}
+        </Text>
+        <Text
+          variant="body"
+          style={[styles.subtitle, { color: theme.textSecondary }]}
+        >
+          {QUIZ_PROMPTS.resultsSub}
+        </Text>
+      </Animated.View>
+
+      <View style={styles.cards}>
+        {cards.map((card, index) => (
+          <ResultCard key={card.id} text={card.text} index={index} />
+        ))}
+      </View>
+
+      <View style={styles.resultsFooter}>
+        <TouchableOpacity
+          style={[styles.halfBtn, { borderColor: theme.divider }]}
+          onPress={onBack}
+          activeOpacity={0.75}
+        >
+          <Text style={{ color: theme.textPrimary }}>Back</Text>
+        </TouchableOpacity>
+        <Animated.View style={[{ flex: 1 }, { transform: [{ scale }] }]}>
+          <TouchableOpacity
+            style={[
+              styles.halfBtnFill,
+              {
+                backgroundColor: theme.percent,
+                borderColor: theme.percent,
+              },
+            ]}
+            onPress={() => {
+              bounce();
+              onContinue();
+            }}
+            activeOpacity={0.9}
+          >
+            <Text
+              style={{
+                color: '#0E0E10',
+                fontFamily: getFontFamilyForWeight(Weight.semibold),
+              }}
+            >
+              Continue
+            </Text>
+          </TouchableOpacity>
+        </Animated.View>
+      </View>
+    </View>
+  );
+}
+
+function ResultCard({ text, index }: { text: string; index: number }) {
+  const theme = useTheme();
+  const enter = useEnter(true, 120 + index * 90);
+
+  return (
+    <Animated.View
+      style={[
+        styles.resultCard,
+        enter,
+        {
+          backgroundColor: theme.cardBase,
+          borderColor: theme.divider,
+        },
+      ]}
+    >
+      <Text style={{ color: theme.percent, marginRight: Spacing[2] }}>✓</Text>
+      <Text
+        variant="body"
+        style={{
+          color: theme.textPrimary,
+          flex: 1,
+          fontFamily: getFontFamilyForWeight(Weight.medium),
+        }}
+      >
+        {text}
+      </Text>
+    </Animated.View>
+  );
+}
+
 const styles = StyleSheet.create({
   container: { flex: 1 },
   safe: { flex: 1 },
-  brandHeader: {
+  header: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.sm,
-    minHeight: 44,
   },
-  brandTitle: {
-    letterSpacing: 2,
-    fontFamily: getFontFamilyForWeight(Weight.semibold),
-  },
-  pagerWrap: { flex: 1 },
-  slide: {
-    flex: 1,
-    paddingHorizontal: Spacing.lg,
-  },
-  welcomeHero: {
-    flex: 1,
+  backHit: {
+    width: 36,
+    height: 36,
+    alignItems: 'center',
     justifyContent: 'center',
-    paddingBottom: Spacing.xl,
   },
-  welcomeEmberRow: {
-    marginBottom: Spacing.md,
-  },
-  welcomeGlow: {
-    position: 'absolute',
-    width: 280,
-    height: 280,
-    borderRadius: 140,
-    top: '10%',
-    alignSelf: 'center',
-  },
-  eyebrow: {
-    letterSpacing: 2,
-    marginBottom: Spacing.sm,
-  },
-  welcomeBrand: {
-    fontSize: Typography.large + 8,
-    letterSpacing: 4,
-    fontFamily: getFontFamilyForWeight(Weight.bold),
-    marginBottom: Spacing.md,
-  },
-  welcomeHeadline: {
-    marginBottom: Spacing.md,
-    lineHeight: Typography.headline * 1.25,
-  },
-  welcomeBody: {
-    lineHeight: Typography.body * 1.55,
-    marginBottom: Spacing.lg,
-    maxWidth: 340,
-  },
-  featureRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: Spacing.sm,
-  },
-  featureChip: {
-    alignItems: 'center',
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
-    borderRadius: Radius.lg,
-    borderWidth: 1,
-    minWidth: 96,
-  },
-  featureBlurb: {
-    marginTop: Spacing.md,
-    padding: Spacing.md,
-    borderRadius: Radius.md,
-    borderWidth: 1,
-  },
-  tapCue: {
-    marginTop: Spacing.md,
-  },
-  demoBody: {
+  headerCenter: {
     flex: 1,
-    paddingTop: Spacing.sm,
+    paddingHorizontal: Spacing[2],
   },
-  slideTitle: {
-    marginBottom: Spacing.sm,
-    lineHeight: Typography.display * 1.2,
+  scroll: {
+    flexGrow: 1,
+    paddingHorizontal: Spacing[4],
   },
-  slideSubtitle: {
-    lineHeight: Typography.body * 1.5,
-    marginBottom: Spacing.md,
-  },
-  ringWrap: {
+  centerBlock: {
     alignItems: 'center',
-    marginVertical: Spacing.md,
+    gap: Spacing[3],
+    paddingVertical: Spacing[6],
   },
-  livePercent: {
-    fontFamily: getFontFamilyForWeight(Weight.semibold),
-    marginVertical: 2,
+  questionBlock: {
+    gap: Spacing[3],
+    paddingVertical: Spacing[4],
   },
-  orbitTick: {
-    position: 'absolute',
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-  },
-  metricsRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    marginBottom: Spacing.md,
-  },
-  metric: {
+  emberCenter: {
     alignItems: 'center',
-    gap: 4,
+    marginBottom: Spacing[1],
   },
-  metricDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
+  questionTitle: {
+    textAlign: 'center',
+    marginBottom: Spacing[2],
   },
-  widgetHint: {
-    borderWidth: 1,
-    borderRadius: Radius.md,
-    paddingVertical: Spacing.md,
-    paddingHorizontal: Spacing.md,
+  title: {
+    textAlign: 'center',
   },
-  phoneFrame: {
-    marginTop: Spacing.md,
-    borderRadius: Radius.lg,
-    borderWidth: 1,
-    padding: Spacing.md,
-    paddingTop: Spacing.lg,
-  },
-  phoneNotch: {
-    alignSelf: 'center',
-    width: 64,
-    height: 6,
-    borderRadius: 3,
-    marginBottom: Spacing.md,
-  },
-  widgetGrid: {
-    flexDirection: 'row',
-    gap: Spacing.sm,
-  },
-  widgetCard: {
-    borderRadius: Radius.md,
-    borderWidth: 1,
-    padding: Spacing.md,
-  },
-  widgetBarTrack: {
-    height: 6,
-    borderRadius: 3,
-    marginTop: Spacing.sm,
-    overflow: 'hidden',
-  },
-  widgetBarFill: {
-    height: '100%',
-    borderRadius: 3,
-  },
-  dotsRow: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    gap: Spacing.sm,
-    marginBottom: Spacing.sm,
-  },
-  dot: {
-    height: 4,
-    borderRadius: 2,
-  },
-  dotActive: {
-    width: 28,
-  },
-  dotInactive: {
-    width: 8,
+  subtitle: {
+    textAlign: 'center',
+    marginBottom: Spacing[2],
   },
   footer: {
-    paddingHorizontal: Spacing.lg,
-    paddingTop: Spacing.sm,
+    paddingHorizontal: Spacing[4],
+    paddingTop: Spacing[2],
   },
   ctaFull: {
+    borderRadius: Radius.lg,
+    paddingVertical: Spacing[3],
     alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: Spacing.md,
-    borderRadius: Radius.full,
-    minHeight: 52,
   },
   ctaFullLabel: {
+    color: '#0E0E10',
     fontFamily: getFontFamilyForWeight(Weight.semibold),
-    color: '#FFFFFF',
+  },
+  resultsBlock: {
+    alignItems: 'center',
+    gap: Spacing[3],
+    paddingVertical: Spacing[4],
+  },
+  cards: {
+    width: '100%',
+    gap: Spacing[2],
+    marginTop: Spacing[2],
+  },
+  resultCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderRadius: Radius.lg,
+    paddingVertical: Spacing[3],
+    paddingHorizontal: Spacing[3],
+  },
+  resultsFooter: {
+    flexDirection: 'row',
+    gap: Spacing[2],
+    width: '100%',
+    marginTop: Spacing[4],
+    alignItems: 'center',
+  },
+  halfBtn: {
+    flex: 1,
+    borderWidth: 1,
+    borderRadius: Radius.lg,
+    paddingVertical: Spacing[3],
+    alignItems: 'center',
+  },
+  halfBtnFill: {
+    borderWidth: 1,
+    borderRadius: Radius.lg,
+    paddingVertical: Spacing[3],
+    alignItems: 'center',
   },
 });
 
-export function OnboardingScreen() {
-  return <OnboardingScreenInner />;
-}
-
-export { OnboardingCompleteContext };
+export {
+  OnboardingCompleteContext,
+  useOnboardingComplete,
+} from './OnboardingCompleteContext';
