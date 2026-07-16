@@ -29,7 +29,7 @@ export const ONBOARDING_FUNNEL_STEPS: readonly OnboardingFunnelStep[] = [
 ] as const;
 
 /** Steps that show the top progress bar (excludes brand + paywall). */
-export const ONBOARDING_PROGRESS_STEPS: readonly OnboardingFunnelStep[] = [
+export const ONBOARDING_PROGRESS_STEPS = [
   'day_demo',
   'widgets_demo',
   'q_goal',
@@ -43,6 +43,8 @@ export const ONBOARDING_PROGRESS_STEPS: readonly OnboardingFunnelStep[] = [
   'loader',
   'results',
 ] as const;
+
+export type OnboardingProgressStep = (typeof ONBOARDING_PROGRESS_STEPS)[number];
 
 const RECLAIM_HOURS: Record<OnboardingDrain, number> = {
   social: 21,
@@ -107,10 +109,7 @@ export function buildResultCards(
 }
 
 /** Display progress per progress-bar step — goal gradient (head start + late ramp). */
-const FUNNEL_PROGRESS_BY_STEP: Record<
-  (typeof ONBOARDING_PROGRESS_STEPS)[number],
-  number
-> = {
+const FUNNEL_PROGRESS_BY_STEP: Record<OnboardingProgressStep, number> = {
   day_demo: 0.18,
   widgets_demo: 0.28,
   q_goal: 0.35,
@@ -129,7 +128,7 @@ export function getFunnelProgress(step: OnboardingFunnelStep): number {
   if (!(ONBOARDING_PROGRESS_STEPS as readonly string[]).includes(step)) {
     return 0;
   }
-  return FUNNEL_PROGRESS_BY_STEP[step as (typeof ONBOARDING_PROGRESS_STEPS)[number]];
+  return FUNNEL_PROGRESS_BY_STEP[step as OnboardingProgressStep];
 }
 
 const ENCOURAGEMENT_EARLY = new Set<OnboardingFunnelStep>([

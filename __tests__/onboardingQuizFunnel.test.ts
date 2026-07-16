@@ -82,14 +82,18 @@ describe('onboarding quiz funnel', () => {
     expect(getFunnelEncouragement('brand')).toBeNull();
     expect(getFunnelEncouragement('paywall')).toBeNull();
     expect(getFunnelEncouragement('day_demo')).toBe("You're underway");
+    expect(getFunnelEncouragement('widgets_demo')).toBe("You're underway");
+    expect(getFunnelEncouragement('q_goal')).toBe("You're underway");
     expect(getFunnelEncouragement('q_drain')).toBe("You're underway");
     expect(getFunnelEncouragement('interstitial')).toBe(
       'Your time map is forming'
     );
+    expect(getFunnelEncouragement('identity')).toBe('Your time map is forming');
     expect(getFunnelEncouragement('life_weeks')).toBe(
       'Your time map is forming'
     );
     expect(getFunnelEncouragement('q_values')).toBe('Almost ready');
+    expect(getFunnelEncouragement('q_cadence')).toBe('Almost ready');
     expect(getFunnelEncouragement('q_readiness')).toBe('Almost ready');
     expect(getFunnelEncouragement('loader')).toBe('Your plan is ready');
     expect(getFunnelEncouragement('results')).toBe('Your plan is ready');
