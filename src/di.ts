@@ -63,6 +63,17 @@ import { ActivateLicenseUseCase } from './domain/useCases/ActivateLicenseUseCase
 import { VerifySubscriptionUseCase } from './domain/useCases/VerifySubscriptionUseCase';
 import { GetOnboardingCompletedUseCase } from './domain/useCases/GetOnboardingCompletedUseCase';
 import { SetOnboardingCompletedUseCase } from './domain/useCases/SetOnboardingCompletedUseCase';
+import { GetOnboardingFunnelStepUseCase } from './domain/useCases/GetOnboardingFunnelStepUseCase';
+import { SetOnboardingFunnelStepUseCase } from './domain/useCases/SetOnboardingFunnelStepUseCase';
+import { GetOnboardingQuizAnswersUseCase } from './domain/useCases/GetOnboardingQuizAnswersUseCase';
+import { PatchOnboardingQuizAnswersUseCase } from './domain/useCases/PatchOnboardingQuizAnswersUseCase';
+import { GetOnboardingResultCardsUseCase } from './domain/useCases/GetOnboardingResultCardsUseCase';
+import {
+  AdvanceOnboardingFunnelUseCase,
+  GetOnboardingFunnelEncouragementUseCase,
+  GetOnboardingFunnelProgressUseCase,
+  RewindOnboardingFunnelUseCase,
+} from './domain/useCases/OnboardingFunnelNavigationUseCases';
 import { DeviceIdProviderAdapter } from './infrastructure/adapters/DeviceIdProviderAdapter';
 import { LicenseVerificationServiceAdapter } from './infrastructure/adapters/LicenseVerificationServiceAdapter';
 import { GetAccessStateUseCase } from './domain/useCases/GetAccessStateUseCase';
@@ -362,3 +373,27 @@ export const verifySubscriptionUseCase = new VerifySubscriptionUseCase(
 );
 export const getOnboardingCompletedUseCase = new GetOnboardingCompletedUseCase(onboardingRepository);
 export const setOnboardingCompletedUseCase = new SetOnboardingCompletedUseCase(onboardingRepository);
+export const getOnboardingFunnelStepUseCase = new GetOnboardingFunnelStepUseCase(
+  onboardingRepository
+);
+export const setOnboardingFunnelStepUseCase = new SetOnboardingFunnelStepUseCase(
+  onboardingRepository
+);
+export const getOnboardingQuizAnswersUseCase = new GetOnboardingQuizAnswersUseCase(
+  onboardingRepository
+);
+export const patchOnboardingQuizAnswersUseCase =
+  new PatchOnboardingQuizAnswersUseCase(onboardingRepository);
+export const getOnboardingResultCardsUseCase = new GetOnboardingResultCardsUseCase(
+  onboardingRepository
+);
+export const advanceOnboardingFunnelUseCase = new AdvanceOnboardingFunnelUseCase(
+  onboardingRepository
+);
+export const rewindOnboardingFunnelUseCase = new RewindOnboardingFunnelUseCase(
+  onboardingRepository
+);
+export const getOnboardingFunnelProgressUseCase =
+  new GetOnboardingFunnelProgressUseCase(onboardingRepository);
+export const getOnboardingFunnelEncouragementUseCase =
+  new GetOnboardingFunnelEncouragementUseCase(onboardingRepository);
