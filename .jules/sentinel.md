@@ -1,0 +1,4 @@
+## 2025-02-14 - [Insecure Deep Link Handling for Counter Increments]
+**Vulnerability:** The deep link URL parser in `src/app.tsx` for `handleIncrementCounterUrl` used a permissive regex `/id=([^&\s]+)/` without checking the scheme or host. This allowed any arbitrary URL with an `id=` parameter to be processed, creating potential input validation and injection risks.
+**Learning:** Custom URL schemes and deep links are untrusted entry points and must be validated with strict defense-in-depth principles. Merely checking if a URL string contains certain substring is insufficient.
+**Prevention:** Always enforce strict scheme/host checks (e.g. `until://increment-counter`) and parse query parameters safely, validating values against a strict schema (e.g., matching the exact length and character set of the generated IDs) before passing them to internal use cases.

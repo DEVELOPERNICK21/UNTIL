@@ -35,6 +35,7 @@ import {
 import { schedulePresenceStreakSaver } from './services/presenceStreakNotifications';
 import { recordOptionalUpdateDismissed } from './services/updateService';
 import { ThemeProvider, useTheme } from './theme';
+import { parseIncrementCounterUrl } from './utils';
 import {
   syncWidgetCache,
   syncCustomCounters,
@@ -80,15 +81,10 @@ function reconcilePlayEntitlementIfNeeded(): void {
 }
 
 function handleIncrementCounterUrl(url: string | null): boolean {
-  if (!url || typeof url !== 'string') return false;
-  const normalized = url.trim();
-  if (!normalized.includes('increment-counter') || !normalized.includes('id='))
-    return false;
-  const match = /id=([^&\s]+)/.exec(normalized);
-  const id = match?.[1];
+  const id = parseIncrementCounterUrl(url);
   if (!id) return false;
   try {
-    incrementCustomCounterUseCase.execute(decodeURIComponent(id));
+    incrementCustomCounterUseCase.execute(id);
     syncCustomCounters();
     return true;
   } catch {
