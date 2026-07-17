@@ -57,7 +57,7 @@ export function TimeCoachCard({
     <Card style={styles.card} lighter>
       <View style={styles.headerRow}>
         <Text variant="caption" color="secondary" style={styles.overline}>
-          TIME COACH
+          {reflection.category === 'weekly' ? 'WEEKLY REFLECTION' : 'TIME COACH'}
         </Text>
         <TouchableOpacity onPress={handleDismiss} hitSlop={10}>
           <Text variant="caption" color="secondary">

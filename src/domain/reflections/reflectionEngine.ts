@@ -1,3 +1,4 @@
+import { personalizeWeeklyReflectionMessage } from '../../core/onboarding/personalizedInsights';
 import {
   BIRTH_DATE_PROMPT,
   REFLECTION_TEMPLATES,
@@ -36,6 +37,14 @@ function canUseLifeReflection(input: ReflectionInput): boolean {
 export function selectReflectionCategory(input: ReflectionInput): ReflectionCategory {
   const hour = input.date.getHours();
 
+  if (
+    input.date.getDay() === 0 &&
+    hour < 18 &&
+    input.dayProgress < 0.75
+  ) {
+    return 'weekly';
+  }
+
   if (hour >= 18 || input.dayProgress >= 0.75) {
     return 'day';
   }
@@ -68,6 +77,9 @@ function enrichMessage(
   if (category === 'life' && typeof input.lifeProgress === 'number') {
     return `${percent(input.lifeProgress)}% of your expected life has passed. ${message}`;
   }
+  if (category === 'weekly' && typeof input.lifeProgress === 'number') {
+    return message;
+  }
   return message;
 }
 
@@ -97,16 +109,20 @@ export function generateDailyReflection(input: ReflectionInput): DailyReflection
   }
 
   const category = selectReflectionCategory({ ...input, tone });
-  const template =
+  const template = REFLECTION_TEMPLATES[category][tone];
+  const baseMessage =
     category === 'weekly'
-      ? REFLECTION_TEMPLATES.day[tone]
-      : REFLECTION_TEMPLATES[category][tone];
+      ? personalizeWeeklyReflectionMessage(template.message, input.quizAnswers, {
+          hasBirthDate: input.hasBirthDate,
+          lifeProgress: input.lifeProgress,
+        })
+      : template.message;
 
   return {
     id: `${dateKey}-${category}-${tone}`,
     dateKey,
     title: template.title,
-    message: enrichMessage(category, template.message, input),
+    message: enrichMessage(category, baseMessage, input),
     category,
     tone,
     premium: category === 'life',

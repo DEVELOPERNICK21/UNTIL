@@ -31,6 +31,8 @@ private const val CUSTOM_COUNTERS_KEY = "custom.counters"
 private const val COUNTDOWNS_KEY = "countdowns"
 private const val DAILY_TASKS_WIDGET_KEY = "daily.tasks.widget"
 private const val HOUR_CALCULATION_WIDGET_KEY = "hour.calculation.widget"
+private const val PREMIUM_EFFECTIVE_KEY = "premium.effectiveAccess"
+private const val PREMIUM_IS_ACTIVE_KEY = "premium.isActive"
 private const val MMKV_ID = "until-storage"
 private const val WORK_NAME = "UNTILWidgetUpdate"
 private const val DAY_TICK_WORK_NAME = "UNTILDayWidgetTick"
@@ -293,6 +295,21 @@ class UNTILWidgetWorker(
                 parseCache(json)
             } catch (e: Exception) {
                 null
+            }
+        }
+
+        /** Paid or active in-app preview — written by JS `syncPremiumStatus`. */
+        private fun loadEffectivePremium(context: Context): Boolean {
+            return try {
+                MMKV.initialize(context)
+                val mmkv = MMKV.mmkvWithID(MMKV_ID) ?: return false
+                if (mmkv.containsKey(PREMIUM_EFFECTIVE_KEY)) {
+                    mmkv.decodeBool(PREMIUM_EFFECTIVE_KEY, false)
+                } else {
+                    mmkv.decodeBool(PREMIUM_IS_ACTIVE_KEY, false)
+                }
+            } catch (e: Exception) {
+                false
             }
         }
 
@@ -753,6 +770,7 @@ class UNTILWidgetWorker(
                     lifePercent = if (obj.has("lifePercent") && !obj.isNull("lifePercent")) {
                         obj.optInt("lifePercent", 0)
                     } else null,
+                    accentColor = obj.optString("accentColor", "").takeIf { it.isNotBlank() },
                     updatedAt = obj.optLong("updatedAt", 0L)
                 )
             } catch (e: Exception) {
@@ -784,8 +802,25 @@ class UNTILWidgetWorker(
             )
         }
 
+        private const val DEFAULT_ACCENT_HEX = "#E87C20"
+
+        private fun resolveAccentColor(cache: WidgetCache): Int {
+            val hex = cache.accentColor?.trim().orEmpty()
+            return try {
+                if (hex.matches(Regex("^#[0-9A-Fa-f]{6}$"))) {
+                    Color.parseColor(hex)
+                } else {
+                    Color.parseColor(DEFAULT_ACCENT_HEX)
+                }
+            } catch (_: Exception) {
+                Color.parseColor(DEFAULT_ACCENT_HEX)
+            }
+        }
+
         private fun buildRemoteViews(context: Context, layoutId: Int, cache: WidgetCache): RemoteViews {
             val views = RemoteViews(context.packageName, layoutId)
+            val hasPremium = loadEffectivePremium(context)
+            val accent = resolveAccentColor(cache)
             try {
                 when (layoutId) {
                     R.layout.widget_day -> {
@@ -794,12 +829,14 @@ class UNTILWidgetWorker(
                         val dProgress = cache.dayProgress.coerceIn(0.0, 1.0)
                         views.setTextViewText(R.id.widget_day_done, context.getString(R.string.widget_day_done_format, dDone))
                         views.setTextViewText(R.id.widget_day_left, context.getString(R.string.widget_day_left_format, dLeft))
+                        views.setTextColor(R.id.widget_day_done, accent)
+                        views.setTextColor(R.id.widget_day_left, accent)
                         // Time passed/left: use SSOT from cache (minutes) when present, else compute from progress
                         val (passedText, leftText) = dayTimeTexts(context, cache, dProgress)
                         views.setTextViewText(R.id.widget_day_hours_passed, passedText)
                         views.setTextViewText(R.id.widget_day_hours_left, leftText)
                         try {
-                            val dotsBitmap = createDayDotsBitmap(context, dProgress)
+                            val dotsBitmap = createDayDotsBitmap(context, dProgress, accent)
                             if (dotsBitmap != null && !dotsBitmap.isRecycled) {
                                 views.setImageViewBitmap(R.id.widget_day_dots, dotsBitmap)
                             }
@@ -808,6 +845,15 @@ class UNTILWidgetWorker(
                         }
                     }
                     R.layout.widget_month -> {
+                        if (!hasPremium) {
+                            views.setTextViewText(R.id.widget_month_passed, "")
+                            views.setTextViewText(R.id.widget_month_left, "")
+                            views.setTextViewText(
+                                R.id.widget_month_percent,
+                                context.getString(R.string.widget_month_locked),
+                            )
+                            views.setProgressBar(R.id.widget_month_progress, 100, 0, false)
+                        } else {
                         val mPassed = cache.monthDaysPassed.coerceIn(0, 31)
                         val mLeft = cache.monthDaysLeft.coerceIn(0, 31)
                         val mPct = cache.monthPercent.coerceIn(0, 100)
@@ -815,15 +861,17 @@ class UNTILWidgetWorker(
                         views.setTextViewText(R.id.widget_month_passed, context.getString(R.string.widget_month_passed_format, mPassed))
                         views.setTextViewText(R.id.widget_month_left, context.getString(R.string.widget_month_left_format, mLeft))
                         views.setTextViewText(R.id.widget_month_percent, context.getString(R.string.widget_month_percent_format, mPct))
+                        views.setTextColor(R.id.widget_month_percent, accent)
                         // Month progress bar (keep day widget as circular only)
                         views.setProgressBar(R.id.widget_month_progress, 100, (mProgress * 100).toInt().coerceIn(0, 100), false)
                         try {
-                            val dotsBitmap = createMonthDotsBitmap(context, cache.monthIndex)
+                            val dotsBitmap = createMonthDotsBitmap(context, cache.monthIndex, accent)
                             if (dotsBitmap != null && !dotsBitmap.isRecycled) {
                                 views.setImageViewBitmap(R.id.widget_month_dots, dotsBitmap)
                             }
                         } catch (e: Exception) {
                             // Dots optional; text already set so widget still shows data
+                        }
                         }
                     }
                     R.layout.widget_year -> {
@@ -841,9 +889,10 @@ class UNTILWidgetWorker(
                             context.getString(R.string.widget_year_left_format, yearLeft, yearLeftPct)
                         )
                         views.setTextViewText(R.id.widget_year_percent, context.getString(R.string.widget_year_percent_format, yearConsumedPct))
+                        views.setTextColor(R.id.widget_year_percent, accent)
                         views.setProgressBar(R.id.widget_year_progress, 100, yearConsumedPct, false)
                         try {
-                            val dotsBitmap = createYearDotsBitmap(context, yearProgressClamped, yearPassed)
+                            val dotsBitmap = createYearDotsBitmap(context, yearProgressClamped, yearPassed, accent)
                             if (dotsBitmap != null && !dotsBitmap.isRecycled) {
                                 views.setImageViewBitmap(R.id.widget_year_dots, dotsBitmap)
                             }
@@ -856,7 +905,23 @@ class UNTILWidgetWorker(
                         val lifeProgress = cache.lifeProgress
                         val remainingDaysLife = cache.remainingDaysLife
                         val lifePercent = cache.lifePercent
-                        if (lifeProgress == null || remainingDaysLife == null || lifePercent == null) {
+                        if (
+                            !hasPremium &&
+                            lifeProgress != null &&
+                            remainingDaysLife != null &&
+                            lifePercent != null
+                        ) {
+                            views.setTextViewText(
+                                R.id.widget_life_label,
+                                context.getString(R.string.widget_life_locked),
+                            )
+                            views.setTextViewText(
+                                R.id.widget_life_passed,
+                                context.getString(R.string.widget_premium_unlock_line),
+                            )
+                            views.setTextViewText(R.id.widget_life_left, "")
+                            views.setTextViewText(R.id.widget_life_percent, "")
+                        } else if (lifeProgress == null || remainingDaysLife == null || lifePercent == null) {
                             views.setTextViewText(
                                 R.id.widget_life_label,
                                 "${context.getString(R.string.widget_life_empty_line1)}\n${context.getString(R.string.widget_life_empty_line2)}",
@@ -897,11 +962,13 @@ class UNTILWidgetWorker(
                                 R.id.widget_life_percent,
                                 context.getString(R.string.widget_life_percent_format, consumedPct),
                             )
+                            views.setTextColor(R.id.widget_life_percent, accent)
 
                             try {
                                 val dotsBitmap = createLifeYearsDotsBitmap(
                                     progress = clamped,
                                     totalYears = totalYears,
+                                    accentColor = accent,
                                 )
                                 if (dotsBitmap != null && !dotsBitmap.isRecycled) {
                                     views.setImageViewBitmap(R.id.widget_life_dots, dotsBitmap)
@@ -925,8 +992,12 @@ class UNTILWidgetWorker(
         }
 
 
-        /** Day dots: 24 dots (one per hour). Purple = passed, Orange = current, Gray = remaining */
-        private fun createDayDotsBitmap(context: Context, dayProgress: Double): Bitmap? {
+        /** Day dots: 24 dots (one per hour). Purple = passed, Accent = current, Gray = remaining */
+        private fun createDayDotsBitmap(
+            context: Context,
+            dayProgress: Double,
+            accentColor: Int = Color.parseColor(DEFAULT_ACCENT_HEX),
+        ): Bitmap? {
             return try {
                 val clamped = dayProgress.coerceIn(0.0, 1.0)
                 val totalDots = 24
@@ -954,7 +1025,7 @@ class UNTILWidgetWorker(
                 }
                 val currentPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
                     style = Paint.Style.FILL
-                    color = Color.parseColor("#E87C20")
+                    color = accentColor
                 }
                 val dotPassedPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
                     style = Paint.Style.FILL
@@ -1126,8 +1197,12 @@ class UNTILWidgetWorker(
             }
         }
 
-        /** Month dots: 12 dots = Jan..Dec. Orange = current month (monthIndex 1–12). */
-        private fun createMonthDotsBitmap(context: Context, monthIndex: Int): Bitmap? {
+        /** Month dots: 12 dots = Jan..Dec. Accent = current month (monthIndex 1–12). */
+        private fun createMonthDotsBitmap(
+            context: Context,
+            monthIndex: Int,
+            accentColor: Int = Color.parseColor(DEFAULT_ACCENT_HEX),
+        ): Bitmap? {
             return try {
                 val totalDots = 12
                 val cols = 6
@@ -1141,7 +1216,7 @@ class UNTILWidgetWorker(
                     color = Color.parseColor("#BB86FC")
                 }
                 val currentPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-                    color = Color.parseColor("#E87C20")
+                    color = accentColor
                 }
                 val remainingPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
                     color = Color.parseColor("#666666")
@@ -1182,8 +1257,13 @@ class UNTILWidgetWorker(
             }
         }
 
-        /** Year dots: 365 dots. Purple = passed, Orange = current day, Gray = remaining */
-        private fun createYearDotsBitmap(context: Context, yearProgress: Double, yearDaysPassed: Int): Bitmap? {
+        /** Year dots: 365 dots. Purple = passed, Accent = current day, Gray = remaining */
+        private fun createYearDotsBitmap(
+            context: Context,
+            yearProgress: Double,
+            yearDaysPassed: Int,
+            accentColor: Int = Color.parseColor(DEFAULT_ACCENT_HEX),
+        ): Bitmap? {
             return try {
                 val cols = 25
                 val totalDots = 365
@@ -1203,7 +1283,7 @@ class UNTILWidgetWorker(
                     color = Color.parseColor("#BB86FC")
                 }
                 val currentPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-                    color = Color.parseColor("#E87C20")
+                    color = accentColor
                 }
                 val remainingPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
                     color = Color.parseColor("#666666")
@@ -1240,8 +1320,12 @@ class UNTILWidgetWorker(
             }
         }
 
-        /** Life dots: 1 dot per life year (max 120). Purple = lived, Orange = current year, Gray = remaining. */
-        private fun createLifeYearsDotsBitmap(progress: Double, totalYears: Int): Bitmap? {
+        /** Life dots: 1 dot per life year (max 120). Purple = lived, Accent = current year, Gray = remaining. */
+        private fun createLifeYearsDotsBitmap(
+            progress: Double,
+            totalYears: Int,
+            accentColor: Int = Color.parseColor(DEFAULT_ACCENT_HEX),
+        ): Bitmap? {
             return try {
                 val dots = totalYears.coerceIn(1, 120)
                 val cols = 12
@@ -1264,7 +1348,7 @@ class UNTILWidgetWorker(
                     isDither = false
                 }
                 val currentPaint = Paint().apply {
-                    color = Color.parseColor("#E87C20")
+                    color = accentColor
                     isAntiAlias = false
                     isDither = false
                 }
@@ -1376,5 +1460,6 @@ private data class WidgetCache(
     val lifeProgress: Double? = null,
     val remainingDaysLife: Int? = null,
     val lifePercent: Int? = null,
+    val accentColor: String? = null,
     val updatedAt: Long = 0L
 )

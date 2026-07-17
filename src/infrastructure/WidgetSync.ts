@@ -20,13 +20,25 @@ import {
   setBoolean,
 } from '../persistence/mmkv';
 import { TRIAL_DURATION_MS } from '../config/accessConstants';
+import { getWidgetAccentColor } from '../config/widgetAccents';
+
+const DEFAULT_ACCENT_HEX = getWidgetAccentColor('ember');
 
 function todayIso(): string {
   return new Date().toISOString().slice(0, 10);
 }
 
+function readAccentColorForNative(): string {
+  const stored = getString(STORAGE_KEYS.WIDGET_ACCENT_COLOR);
+  if (stored && /^#[0-9A-Fa-f]{6}$/.test(stored)) return stored;
+  return DEFAULT_ACCENT_HEX;
+}
+
 export function syncWidgetCache(): void {
-  const cache = syncWidgetUseCase.execute();
+  const cache = {
+    ...syncWidgetUseCase.execute(),
+    accentColor: readAccentColorForNative(),
+  };
   const json = JSON.stringify(cache);
   setString(STORAGE_KEYS.WIDGET_CACHE, json);
   const { WidgetBridge } = NativeModules;
@@ -53,6 +65,7 @@ function readEffectivePremiumForNativeBridge(): boolean {
 
 export function syncPremiumStatus(): void {
   const effectivePremium = readEffectivePremiumForNativeBridge();
+  setBoolean(STORAGE_KEYS.PREMIUM_EFFECTIVE_ACCESS, effectivePremium);
   const { WidgetBridge } = NativeModules;
   if (Platform.OS === 'ios' && WidgetBridge?.setPremiumStatus) {
     WidgetBridge.setPremiumStatus(effectivePremium);

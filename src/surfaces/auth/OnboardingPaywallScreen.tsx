@@ -22,8 +22,9 @@ export function OnboardingPaywallScreen() {
   const completeAuth = useOnboardingComplete();
   const { timeState } = useObserveTimeState();
 
-  const lifePercent = Math.round((timeState.life ?? 0) * 100);
-  const subheadline = `${MONETIZATION_PAYWALL_COPY.onboardingPaywallSub}\n\nYou have lived about ${lifePercent}% of your expected life.`;
+  const lifeProgress =
+    typeof timeState.life === 'number' ? timeState.life : undefined;
+  const lifePercent = Math.round((lifeProgress ?? 0) * 100);
 
   return (
     <View style={styles.container}>
@@ -38,8 +39,15 @@ export function OnboardingPaywallScreen() {
           >
             <PremiumPaywallBody
               headline={MONETIZATION_PAYWALL_COPY.onboardingPaywallTitle}
-              subheadline={subheadline}
-              onPurchaseSuccess={completeAuth}
+              subheadline={MONETIZATION_PAYWALL_COPY.onboardingPaywallSub}
+              lifeProgress={lifeProgress}
+              onPurchaseSuccess={() =>
+                completeAuth({
+                  exit_type: 'completed',
+                  step: 11,
+                  step_name: 'paywall_purchase',
+                })
+              }
               showRestore={false}
               source="onboarding_paywall"
             />
@@ -55,12 +63,16 @@ export function OnboardingPaywallScreen() {
                 void logAnalyticsEvent('onboarding_paywall_skipped', {
                   life_percent: lifePercent,
                 });
-                completeAuth();
+                completeAuth({
+                  exit_type: 'skipped',
+                  step: 11,
+                  step_name: 'paywall_maybe_later',
+                });
               }}
               activeOpacity={0.7}
             >
               <Text variant="body" style={{ color: theme.textSecondary, textAlign: 'center' }}>
-                Continue with free Day & Year →
+                Maybe later
               </Text>
             </TouchableOpacity>
           </View>

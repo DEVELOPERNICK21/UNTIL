@@ -143,8 +143,9 @@ To support "move to new device":
 
 ---
 
-## Native Widget Gating (Future)
+## Native widget & overlay gating (shipped)
 
-- **iOS**: `WidgetCacheReader.isPremium` reads from UserDefaults.
-- **Android**: Worker reads `premium.isActive` from MMKV.
-- When building premium widget views and `!isPremium`, show "Upgrade to Premium" placeholder.
+- **Effective premium** = paid **or** active in-app preview. JS writes `premium.effectiveAccess` to MMKV (`WidgetSync.syncPremiumStatus`) and iOS App Group (`WidgetBridge.setPremiumStatus`).
+- **iOS**: `MonthWidgetView` and `LifeWidgetView` read `WidgetCacheReader.isPremium`; locked state shows upgrade placeholder.
+- **Android**: `UNTILWidgetWorker` reads `premium.effectiveAccess` (falls back to `premium.isActive`); Month/Life widgets show lock copy when not entitled.
+- **Android overlay**: `UNTILOverlayService` coerces `month`/`life` overlay types to `day` when not entitled.

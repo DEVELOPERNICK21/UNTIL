@@ -50,6 +50,7 @@ import {
   READINESS_OPTIONS,
   VALUES_OPTIONS,
 } from './quizContent';
+import { onboardingStepViewProps } from '../../config/analyticsFunnels';
 
 type AuthNav = NativeStackNavigationProp<AuthStackParamList, 'Onboarding'>;
 
@@ -102,7 +103,7 @@ export function OnboardingScreen() {
   );
 
   useEffect(() => {
-    logEvent('onboarding_step_view', { step });
+    logEvent('onboarding_step_view', onboardingStepViewProps(step));
   }, [step, logEvent]);
 
   useEffect(() => {
@@ -160,7 +161,10 @@ export function OnboardingScreen() {
     analyticsStep: string
   ) => {
     patchAnswers({ [field]: value } as Partial<typeof answers>);
-    logEvent('onboarding_answer', { step: analyticsStep, value });
+    logEvent('onboarding_answer', {
+      ...onboardingStepViewProps(analyticsStep as typeof step),
+      value,
+    });
     setTimeout(() => advance(), 160);
   };
 
@@ -599,7 +603,7 @@ const styles = StyleSheet.create({
   safe: { flex: 1 },
   header: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
   },
   backHit: {
     width: 36,
@@ -610,6 +614,7 @@ const styles = StyleSheet.create({
   headerCenter: {
     flex: 1,
     paddingHorizontal: Spacing[2],
+    justifyContent: 'flex-start',
   },
   scroll: {
     flexGrow: 1,

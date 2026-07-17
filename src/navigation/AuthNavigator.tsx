@@ -1,5 +1,5 @@
 /**
- * Auth stack — shortened onboarding, optional identity/paywall screens. Shown before main app.
+ * Auth stack — psychology quiz funnel + identity/life/paywall. Shown before main app.
  */
 
 import React from 'react';

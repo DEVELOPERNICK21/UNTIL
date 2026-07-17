@@ -30,6 +30,8 @@
     <string name="widget_life_left_years_compact_format">%1$sy left</string>
     <string name="widget_life_percent_format">%d%% of life</string>
     <string name="widget_life_locked">Premium required</string>
+    <string name="widget_month_locked">Month · Premium</string>
+    <string name="widget_premium_unlock_line">Open Until to upgrade</string>
     <string name="widget_life_empty_line1">Set birth date in UNTIL</string>
     <string name="widget_life_empty_line2">to see life progress.</string>
 </resources>

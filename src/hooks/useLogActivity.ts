@@ -15,5 +15,12 @@ export function useLogActivity() {
     logActivityUseCase.endCurrentBlock();
   }, []);
 
-  return { startCategory, endCurrent };
+  const addPastBlock = useCallback(
+    (category: ActivityCategory, durationMinutes: number) => {
+      logActivityUseCase.addPastBlock(category, durationMinutes);
+    },
+    []
+  );
+
+  return { startCategory, endCurrent, addPastBlock };
 }

@@ -36,6 +36,8 @@ struct WidgetCache: Codable {
     let remainingDaysLife: Int?
     /// Life percent 0–100.
     let lifePercent: Int?
+    /// Hex accent for percent/current markers (e.g. #E87C20). Optional.
+    let accentColor: String?
     let updatedAt: Int64
 
     init(from decoder: Decoder) throws {
@@ -61,6 +63,7 @@ struct WidgetCache: Codable {
         lifeProgress = try c.decodeIfPresent(Double.self, forKey: .lifeProgress)
         remainingDaysLife = try c.decodeIfPresent(Int.self, forKey: .remainingDaysLife)
         lifePercent = try c.decodeIfPresent(Int.self, forKey: .lifePercent)
+        accentColor = try c.decodeIfPresent(String.self, forKey: .accentColor)
         updatedAt = try c.decode(Int64.self, forKey: .updatedAt)
     }
 
@@ -86,6 +89,7 @@ struct WidgetCache: Codable {
         lifeProgress: Double?,
         remainingDaysLife: Int?,
         lifePercent: Int?,
+        accentColor: String? = nil,
         updatedAt: Int64
     ) {
         self.dayProgress = dayProgress
@@ -109,6 +113,7 @@ struct WidgetCache: Codable {
         self.lifeProgress = lifeProgress
         self.remainingDaysLife = remainingDaysLife
         self.lifePercent = lifePercent
+        self.accentColor = accentColor
         self.updatedAt = updatedAt
     }
 
@@ -185,6 +190,7 @@ struct WidgetCache: Codable {
             lifeProgress: lifeProgress,
             remainingDaysLife: remainingDaysLife,
             lifePercent: lifePercent,
+            accentColor: accentColor,
             updatedAt: updatedAt
         )
     }
@@ -192,13 +198,16 @@ struct WidgetCache: Codable {
 
 // MARK: - Design Tokens
 private enum Design {
+    private static let defaultAccent = Color(red: 0xE8/255, green: 0x7C/255, blue: 0x20/255) // #E87C20 Ember
+    private static var resolvedAccent: Color = defaultAccent
+
     static let background = Color.black
     static let passed = Color(red: 0xFF/255, green: 0x3B/255, blue: 0x30/255)      // #FF3B30 red
     static let left = Color(red: 0x34/255, green: 0xC7/255, blue: 0x59/255)        // #34C759 green
-    static let percent = Color(red: 0xE9/255, green: 0xA2/255, blue: 0x3A/255)     // #E9A23A orange/gold
-    static let progressOrange = Color(red: 0xE8/255, green: 0x7C/255, blue: 0x20/255) // #E87C20
+    static var percent: Color { resolvedAccent }
+    static var progressOrange: Color { resolvedAccent }
     static let passedDot = Color(red: 0xBB/255, green: 0x86/255, blue: 0xFC/255)   // #BB86FC purple
-    static let currentDot = Color(red: 0xE8/255, green: 0x7C/255, blue: 0x20/255)  // #E87C20 orange
+    static var currentDot: Color { resolvedAccent }
     static let remainingDot = Color(red: 0x66/255, green: 0x66/255, blue: 0x66/255) // #666666 gray
     static let grayLabel = Color(red: 0xAA/255, green: 0xAA/255, blue: 0xAA/255)   // #AAAAAA
     static let lightText = Color(red: 0xEE/255, green: 0xEE/255, blue: 0xEE/255)     // #EEEEEE
@@ -207,6 +216,26 @@ private enum Design {
     static let valueSize: CGFloat = 18
     static let bigPercentSize: CGFloat = 20
     static let smallLabelSize: CGFloat = 11
+
+    static func applyAccent(from cache: WidgetCache?) {
+        if let hex = cache?.accentColor, let color = Color(untilHex: hex) {
+            resolvedAccent = color
+        } else {
+            resolvedAccent = defaultAccent
+        }
+    }
+}
+
+private extension Color {
+    init?(untilHex hex: String) {
+        var cleaned = hex.trimmingCharacters(in: .whitespacesAndNewlines)
+        if cleaned.hasPrefix("#") { cleaned.removeFirst() }
+        guard cleaned.count == 6, let value = UInt32(cleaned, radix: 16) else { return nil }
+        let r = Double((value >> 16) & 0xFF) / 255
+        let g = Double((value >> 8) & 0xFF) / 255
+        let b = Double(value & 0xFF) / 255
+        self = Color(red: r, green: g, blue: b)
+    }
 }
 
 // MARK: - Ember glyph (static mood companion for widgets; mirrors src/ui/Ember.tsx bands)
@@ -309,6 +338,22 @@ private struct EmberEmptyStateView: View {
     }
 }
 
+private struct PremiumLockedWidgetView: View {
+    var message: String
+
+    var body: some View {
+        VStack(spacing: 10) {
+            EmberGlyph(progress: 0.28, size: 40)
+            Text(message)
+                .font(.system(size: Design.labelSize, weight: .semibold))
+                .foregroundColor(Design.grayLabel)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 12)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+}
+
 // MARK: - Widget Provider
 /// Shared provider for widgets that don't need per-second or per-minute updates.
 /// Used when a dedicated provider (Day, MonthYear, etc.) is more appropriate.
@@ -317,7 +362,9 @@ struct UNTILWidgetProvider: TimelineProvider {
         guard let json = WidgetCacheReader.loadJSON() else { return nil }
         guard let data = json.data(using: .utf8) else { return nil }
         guard let cache = try? JSONDecoder().decode(WidgetCache.self, from: data) else { return nil }
-        return cache.freshForDisplay(at: now)
+        let fresh = cache.freshForDisplay(at: now)
+        Design.applyAccent(from: fresh)
+        return fresh
     }
 
     func placeholder(in context: Context) -> UNTILWidgetEntry {
@@ -344,7 +391,9 @@ struct MonthYearWidgetProvider: TimelineProvider {
         guard let json = WidgetCacheReader.loadJSON() else { return nil }
         guard let data = json.data(using: .utf8) else { return nil }
         guard let cache = try? JSONDecoder().decode(WidgetCache.self, from: data) else { return nil }
-        return cache.freshForDisplay(at: now)
+        let fresh = cache.freshForDisplay(at: now)
+        Design.applyAccent(from: fresh)
+        return fresh
     }
 
     func placeholder(in context: Context) -> UNTILWidgetEntry {
@@ -374,7 +423,9 @@ struct DayWidgetProvider: TimelineProvider {
         guard let json = WidgetCacheReader.loadJSON() else { return nil }
         guard let data = json.data(using: .utf8) else { return nil }
         guard let cache = try? JSONDecoder().decode(WidgetCache.self, from: data) else { return nil }
-        return cache.freshForDisplay(at: now)
+        let fresh = cache.freshForDisplay(at: now)
+        Design.applyAccent(from: fresh)
+        return fresh
     }
 
     func placeholder(in context: Context) -> UNTILWidgetEntry {
@@ -438,7 +489,9 @@ struct DailyTasksWidgetProvider: TimelineProvider {
         guard let json = WidgetCacheReader.loadJSON() else { return nil }
         guard let data = json.data(using: .utf8) else { return nil }
         guard let cache = try? JSONDecoder().decode(WidgetCache.self, from: data) else { return nil }
-        return cache.freshForDisplay(at: now)
+        let fresh = cache.freshForDisplay(at: now)
+        Design.applyAccent(from: fresh)
+        return fresh
     }
 
     func placeholder(in context: Context) -> DailyTasksWidgetEntry {
@@ -1445,7 +1498,11 @@ struct MonthWidgetView: View {
 
     var body: some View {
         Group {
-            if let cache = entry.cache {
+            if !WidgetCacheReader.isPremium {
+                PremiumLockedWidgetView(
+                    message: "Month widget is Premium.\nOpen Until to upgrade."
+                )
+            } else if let cache = entry.cache {
                 switch family {
                 case .accessoryInline:
                     MonthAccessoryInlineView(cache: cache)
@@ -1592,7 +1649,11 @@ struct LifeWidgetView: View {
 
     var body: some View {
         Group {
-            if let cache = entry.cache {
+            if !WidgetCacheReader.isPremium {
+                PremiumLockedWidgetView(
+                    message: "Life widget is Premium.\nOpen Until to upgrade."
+                )
+            } else if let cache = entry.cache {
                 switch family {
                 case .accessoryInline:
                     LifeAccessoryInlineView(cache: cache)

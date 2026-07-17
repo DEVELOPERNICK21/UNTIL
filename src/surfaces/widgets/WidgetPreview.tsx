@@ -2,15 +2,8 @@ import React from 'react';
 import { View, StyleSheet } from 'react-native';
 import { Text } from '../../ui';
 import { Colors, Spacing, Radius, Typography, Shadows } from '../../theme';
-
-type WidgetConfig = {
-  type: 'day' | 'month' | 'year' | 'life';
-  theme: 'light' | 'dark' | 'amoled';
-  layout: 'minimal' | 'detailed';
-  font: 'clean' | 'emotional';
-  showMessage: boolean;
-  message: string;
-};
+import { getWidgetAccentColor } from '../../config/widgetAccents';
+import type { WidgetConfig } from '../../domain/widget/WidgetConfig';
 
 interface Props {
   config: WidgetConfig;
@@ -30,7 +23,7 @@ export function WidgetPreview({ config }: Props) {
   const borderColor = isLight
     ? 'rgba(255, 255, 255, 0.55)'
     : Colors.glassBorder;
-  const accentColor = Colors.percent;
+  const accentColor = getWidgetAccentColor(config.accent);
   const sheenColor = isLight
     ? 'rgba(255, 255, 255, 0.45)'
     : Colors.glassHighlight;

@@ -24,6 +24,8 @@ import {
   useObserveSubscription,
   useAppVersion,
   useRetentionNotifications,
+  useAccessControl,
+  useDailyNothingLimit,
 } from '../../hooks';
 import {
   useTheme,
@@ -91,6 +93,8 @@ export function SettingsScreen() {
     enabled: retentionRemindersEnabled,
     setEnabled: setRetentionRemindersEnabled,
   } = useRetentionNotifications();
+  const { hasPremiumBundle } = useAccessControl();
+  const { limitHours, setLimitHours } = useDailyNothingLimit();
   const theme = useTheme();
 
   const [birthInput, setBirthInput] = useState(userProfile.birthDate ?? '');
@@ -362,6 +366,75 @@ export function SettingsScreen() {
               <View
                 style={[
                   styles.row,
+                  { borderBottomColor: theme.divider },
+                ]}
+              >
+                <View style={styles.rowContent}>
+                  <Text variant="body" style={{ color: theme.textPrimary }}>
+                    Lost-time alert limit
+                  </Text>
+                  <Text
+                    variant="caption"
+                    style={[styles.rowSubtitle, { color: theme.textSecondary }]}
+                  >
+                    {hasPremiumBundle
+                      ? 'Red alert when wasted hours hit this daily cap.'
+                      : 'Premium — nudge when you lose too much of today.'}
+                  </Text>
+                  {hasPremiumBundle ? (
+                    <View style={styles.limitChips}>
+                      {[1, 2, 3].map((h) => (
+                        <TouchableOpacity
+                          key={h}
+                          style={[
+                            styles.limitChip,
+                            {
+                              borderColor:
+                                limitHours === h ? theme.percent : theme.divider,
+                              backgroundColor:
+                                limitHours === h
+                                  ? 'rgba(232, 124, 32, 0.14)'
+                                  : 'transparent',
+                            },
+                          ]}
+                          onPress={() => {
+                            setLimitHours(h);
+                            void logAnalyticsEvent('intervention_limit_changed', {
+                              hours: h,
+                            });
+                          }}
+                          activeOpacity={0.8}
+                        >
+                          <Text
+                            variant="caption"
+                            style={{
+                              color:
+                                limitHours === h
+                                  ? theme.percent
+                                  : theme.textSecondary,
+                            }}
+                          >
+                            {h}h
+                          </Text>
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                  ) : null}
+                </View>
+                {!hasPremiumBundle ? (
+                  <TouchableOpacity
+                    onPress={() => navigation.navigate('Premium')}
+                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                  >
+                    <Text style={[styles.chevron, { color: theme.textSecondary }]}>
+                      ›
+                    </Text>
+                  </TouchableOpacity>
+                ) : null}
+              </View>
+              <View
+                style={[
+                  styles.row,
                   styles.rowLast,
                   { borderBottomColor: theme.divider },
                 ]}
@@ -547,6 +620,17 @@ const styles = StyleSheet.create({
   },
   rowSubtitle: {
     marginTop: 2,
+  },
+  limitChips: {
+    flexDirection: 'row',
+    gap: Spacing[2],
+    marginTop: Spacing[2],
+  },
+  limitChip: {
+    paddingVertical: Spacing[1],
+    paddingHorizontal: Spacing[3],
+    borderRadius: Radius.md,
+    borderWidth: 1,
   },
   chevron: {
     fontSize: Typography.title,

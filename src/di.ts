@@ -15,6 +15,7 @@ import { MmkvOnboardingRepository } from './infrastructure/repositories/MmkvOnbo
 import { MmkvEngagementRepository } from './infrastructure/repositories/MmkvEngagementRepository';
 import { MmkvPresenceRepository } from './infrastructure/repositories/MmkvPresenceRepository';
 import { MmkvReflectionRepository } from './infrastructure/repositories/MmkvReflectionRepository';
+import { MmkvStudentVerificationRepository } from './infrastructure/repositories/MmkvStudentVerificationRepository';
 import { AppUpdateServiceAdapter } from './infrastructure/adapters/AppUpdateServiceAdapter';
 import { AppVersionProviderAdapter } from './infrastructure/adapters/AppVersionProviderAdapter';
 import { ActivityAnalysisAdapter } from './infrastructure/adapters/ActivityAnalysisAdapter';
@@ -27,6 +28,8 @@ import { LogActivityUseCase } from './domain/useCases/LogActivityUseCase';
 import { GetCategoryTotalsUseCase } from './domain/useCases/GetCategoryTotalsUseCase';
 import { GetRegretProjectionUseCase } from './domain/useCases/GetRegretProjectionUseCase';
 import { GetInterventionStateUseCase } from './domain/useCases/GetInterventionStateUseCase';
+import { GetDailyLimitNothingUseCase } from './domain/useCases/GetDailyLimitNothingUseCase';
+import { SetDailyLimitNothingUseCase } from './domain/useCases/SetDailyLimitNothingUseCase';
 import { SyncWidgetUseCase } from './domain/useCases/SyncWidgetUseCase';
 import { GetCustomCountersUseCase } from './domain/useCases/GetCustomCountersUseCase';
 import { AddCustomCounterUseCase } from './domain/useCases/AddCustomCounterUseCase';
@@ -78,6 +81,7 @@ import { DeviceIdProviderAdapter } from './infrastructure/adapters/DeviceIdProvi
 import { LicenseVerificationServiceAdapter } from './infrastructure/adapters/LicenseVerificationServiceAdapter';
 import { GetAccessStateUseCase } from './domain/useCases/GetAccessStateUseCase';
 import { GetDailyReflectionUseCase } from './domain/useCases/GetDailyReflectionUseCase';
+import { VerifyStudentEmailUseCase } from './domain/useCases/VerifyStudentEmailUseCase';
 import { TrackAppOpenUseCase } from './domain/useCases/TrackAppOpenUseCase';
 import { RunAppOpenSideEffectsUseCase } from './domain/useCases/RunAppOpenSideEffectsUseCase';
 import { GetEngagementModalStateUseCase } from './domain/useCases/GetEngagementModalStateUseCase';
@@ -128,6 +132,7 @@ const onboardingRepository = new MmkvOnboardingRepository();
 const engagementRepository = new MmkvEngagementRepository();
 const presenceRepository = new MmkvPresenceRepository();
 const reflectionRepository = new MmkvReflectionRepository();
+const studentVerificationRepository = new MmkvStudentVerificationRepository();
 const appUpdateService = new AppUpdateServiceAdapter();
 const appVersionProvider = new AppVersionProviderAdapter();
 const deviceIdProvider = new DeviceIdProviderAdapter();
@@ -158,7 +163,11 @@ export const getAccessStateUseCase = new GetAccessStateUseCase(subscriptionRepos
 export const getDailyReflectionUseCase = new GetDailyReflectionUseCase(
   timeRepository,
   subscriptionRepository,
-  reflectionRepository
+  reflectionRepository,
+  onboardingRepository
+);
+export const verifyStudentEmailUseCase = new VerifyStudentEmailUseCase(
+  studentVerificationRepository
 );
 export const trackAppOpenUseCase = new TrackAppOpenUseCase(
   subscriptionRepository,
@@ -319,6 +328,12 @@ export const getInterventionStateUseCase = new GetInterventionStateUseCase(
   getAccessStateUseCase,
   clock,
   activityAnalysisService
+);
+export const getDailyLimitNothingUseCase = new GetDailyLimitNothingUseCase(
+  activityRepository
+);
+export const setDailyLimitNothingUseCase = new SetDailyLimitNothingUseCase(
+  activityRepository
 );
 export const syncWidgetUseCase = new SyncWidgetUseCase(timeRepository);
 export const getCustomCountersUseCase = new GetCustomCountersUseCase(customCounterRepository);

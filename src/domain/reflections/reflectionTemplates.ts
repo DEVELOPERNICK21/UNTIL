@@ -6,7 +6,7 @@ export interface ReflectionTemplate {
 }
 
 type TemplateMap = Record<
-  Exclude<ReflectionCategory, 'weekly'>,
+  ReflectionCategory,
   Record<ReflectionTone, ReflectionTemplate>
 >;
 
@@ -57,6 +57,18 @@ export const REFLECTION_TEMPLATES: TemplateMap = {
       title: 'Remember the horizon',
       message:
         'Your life has a horizon. Do not spend today on autopilot. Choose deliberately.',
+    },
+  },
+  weekly: {
+    quiet: {
+      title: 'Week in review',
+      message:
+        'Seven days passed whether you noticed or not. Name one moment worth repeating this week.',
+    },
+    radical: {
+      title: 'Do not waste another week',
+      message:
+        'Another week is gone. Stop treating Mondays as reset buttons. Change one pattern now.',
     },
   },
 };

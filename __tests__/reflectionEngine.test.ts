@@ -5,6 +5,7 @@ import {
 import { GetDailyReflectionUseCase } from '../src/domain/useCases/GetDailyReflectionUseCase';
 import type { ReflectionPersistence } from '../src/domain/reflections/reflectionTypes';
 import type { ITimeRepository } from '../src/domain/repository/ITimeRepository';
+import type { IOnboardingRepository } from '../src/domain/repository/IOnboardingRepository';
 import type { ISubscriptionRepository } from '../src/domain/repository/ISubscriptionRepository';
 
 const evening = new Date(2026, 4, 25, 21, 0, 0);
@@ -65,6 +66,18 @@ function makeTimeRepository(): ITimeRepository {
     },
     setUserProfile: () => {},
     subscribe: () => () => {},
+  };
+}
+
+function makeOnboardingRepository(): IOnboardingRepository {
+  return {
+    getCompleted: () => true,
+    setCompleted: () => {},
+    getFunnelStep: () => 'results',
+    setFunnelStep: () => {},
+    getQuizAnswers: () => ({ goal: 'focus', timeDrain: 'social' }),
+    setQuizAnswers: () => {},
+    patchQuizAnswers: patch => ({ goal: 'focus', timeDrain: 'social', ...patch }),
   };
 }
 
@@ -131,6 +144,21 @@ describe('reflectionEngine', () => {
     expect(reflection.premium).toBe(true);
   });
 
+  it('selects weekly reflection on Sunday morning', () => {
+    const sundayMorning = new Date(2026, 6, 19, 10, 0, 0);
+    const reflection = generateDailyReflection(
+      baseInput({
+        date: sundayMorning,
+        dayProgress: 0.4,
+        quizAnswers: { goal: 'health' },
+      })
+    );
+
+    expect(reflection.category).toBe('weekly');
+    expect(reflection.title).toBe('Week in review');
+    expect(reflection.message).toContain('health and energy');
+  });
+
   it('makes radical tone stronger than quiet tone', () => {
     const quiet = generateDailyReflection(baseInput({ tone: 'quiet' }));
     const radical = generateDailyReflection(baseInput({ tone: 'radical' }));
@@ -145,7 +173,8 @@ describe('GetDailyReflectionUseCase', () => {
     const useCase = new GetDailyReflectionUseCase(
       makeTimeRepository(),
       makeSubscriptionRepository(true),
-      persistence
+      persistence,
+      makeOnboardingRepository()
     );
 
     const first = useCase.execute(new Date(2026, 4, 25, 9, 0, 0));
@@ -159,7 +188,8 @@ describe('GetDailyReflectionUseCase', () => {
     const useCase = new GetDailyReflectionUseCase(
       makeTimeRepository(),
       makeSubscriptionRepository(true),
-      persistence
+      persistence,
+      makeOnboardingRepository()
     );
 
     const first = useCase.execute(new Date(2026, 4, 25, 9, 0, 0));

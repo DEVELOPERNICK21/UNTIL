@@ -14,6 +14,11 @@ import { Colors, Spacing, Radius, Typography } from '../../theme';
 import { WidgetPreview } from '../widgets/WidgetPreview';
 import { useWidgetConfig, useAccessControl } from '../../hooks';
 import { isPremiumWidgetConfigType } from '../../config/widgetGating';
+import {
+  WIDGET_ACCENTS,
+  getWidgetAccentColor,
+  isPremiumWidgetAccent,
+} from '../../config/widgetAccents';
 import type { RootStackParamList } from '../../navigation/RootNavigator';
 
 const PRESET_MESSAGES = [
@@ -33,6 +38,7 @@ export function WidgetCustomizationScreen() {
     setTheme,
     setLayout,
     setFont,
+    setAccent,
     setShowMessage,
     setMessage,
   } = useWidgetConfig();
@@ -67,6 +73,27 @@ export function WidgetCustomizationScreen() {
       setType(value as typeof config.type);
     },
     [hasPremiumBundle, promptPremiumForWidget, setType, config.type]
+  );
+
+  const handleSelectAccent = useCallback(
+    (value: string) => {
+      if (isPremiumWidgetAccent(value) && !hasPremiumBundle) {
+        Alert.alert(
+          'Premium accent',
+          'Color accents are part of Premium. Upgrade to personalize your widgets.',
+          [
+            { text: 'Not now', style: 'cancel' },
+            {
+              text: 'View Premium',
+              onPress: () => navigation.navigate('Premium'),
+            },
+          ]
+        );
+        return;
+      }
+      setAccent(value as typeof config.accent);
+    },
+    [hasPremiumBundle, navigation, setAccent, config.accent]
   );
 
   const handleAddWidget = useCallback(() => {
@@ -143,6 +170,51 @@ export function WidgetCustomizationScreen() {
             selected={config.font}
             onSelect={value => setFont(value as any)}
           />
+        </View>
+
+        <View style={styles.section}>
+          <View style={styles.accentHeaderRow}>
+            <SectionLabel label="Accent color" />
+            {!hasPremiumBundle && (
+              <Text variant="caption" color="secondary" style={styles.premiumTag}>
+                PREMIUM
+              </Text>
+            )}
+          </View>
+          <View style={styles.accentRow}>
+            {WIDGET_ACCENTS.map(option => {
+              const isActive = option.key === config.accent;
+              const locked = option.premium && !hasPremiumBundle;
+              return (
+                <TouchableOpacity
+                  key={option.key}
+                  activeOpacity={0.8}
+                  onPress={() => handleSelectAccent(option.key)}
+                  style={styles.accentItem}
+                >
+                  <View
+                    style={[
+                      styles.accentSwatch,
+                      { backgroundColor: option.color },
+                      isActive && styles.accentSwatchActive,
+                      locked && styles.accentSwatchLocked,
+                    ]}
+                  >
+                    {locked && (
+                      <Text style={styles.accentLockGlyph}>•</Text>
+                    )}
+                  </View>
+                  <Text
+                    variant="caption"
+                    color={isActive ? 'primary' : 'secondary'}
+                    style={styles.accentLabel}
+                  >
+                    {option.label}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
         </View>
 
         <View style={styles.section}>
@@ -302,6 +374,48 @@ const styles = StyleSheet.create({
   sectionLabel: {
     marginBottom: Spacing.xs,
     letterSpacing: 1,
+  },
+  accentHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  premiumTag: {
+    letterSpacing: 1,
+    marginBottom: Spacing.xs,
+  },
+  accentRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    columnGap: Spacing.md,
+    rowGap: Spacing.sm,
+  },
+  accentItem: {
+    alignItems: 'center',
+    width: 56,
+  },
+  accentSwatch: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    borderWidth: 2,
+    borderColor: 'transparent',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  accentSwatchActive: {
+    borderColor: Colors.textPrimary,
+  },
+  accentSwatchLocked: {
+    opacity: 0.5,
+  },
+  accentLockGlyph: {
+    color: '#FFFFFF',
+    fontSize: 18,
+    fontWeight: '700',
+  },
+  accentLabel: {
+    marginTop: 4,
   },
   pillRow: {
     flexDirection: 'row',

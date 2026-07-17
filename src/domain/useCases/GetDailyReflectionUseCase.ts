@@ -7,6 +7,7 @@ import type {
   ReflectionPersistence,
   ReflectionTone,
 } from '../reflections/reflectionTypes';
+import type { IOnboardingRepository } from '../repository/IOnboardingRepository';
 import type { ISubscriptionRepository } from '../repository/ISubscriptionRepository';
 import type { ITimeRepository } from '../repository/ITimeRepository';
 
@@ -24,7 +25,8 @@ export class GetDailyReflectionUseCase {
   constructor(
     private readonly timeRepository: ITimeRepository,
     private readonly subscriptionRepository: ISubscriptionRepository,
-    private readonly persistence: ReflectionPersistence
+    private readonly persistence: ReflectionPersistence,
+    private readonly onboardingRepository: IOnboardingRepository
   ) {}
 
   execute(date: Date = new Date()): DailyReflectionState {
@@ -78,6 +80,7 @@ export class GetDailyReflectionUseCase {
       hasBirthDate: Boolean(userProfile.birthDate),
       hasPremiumBundle: canUsePremiumReflections,
       tone,
+      quizAnswers: this.onboardingRepository.getQuizAnswers(),
     };
     const reflection = generateDailyReflection(input);
     this.persistence.setDailyReflectionDate(reflection.dateKey);

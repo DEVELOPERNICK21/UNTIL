@@ -1,3 +1,5 @@
+import type { OnboardingQuizAnswers } from '../../types';
+
 export type ReflectionCategory = 'day' | 'month' | 'year' | 'life' | 'weekly';
 export type ReflectionTone = 'quiet' | 'radical';
 export type ReflectionAction = 'setBirthDate';
@@ -22,6 +24,7 @@ export interface ReflectionInput {
   hasBirthDate: boolean;
   hasPremiumBundle: boolean;
   tone: ReflectionTone;
+  quizAnswers?: OnboardingQuizAnswers;
 }
 
 export interface DailyReflectionState {

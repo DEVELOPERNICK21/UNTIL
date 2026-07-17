@@ -26,7 +26,7 @@ import RNFS from 'react-native-fs';
 import { logAnalyticsEvent } from '../../services/analytics';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text, ScreenGradient, Card } from '../../ui';
-import { useObserveTimeState } from '../../hooks';
+import { useAccessControl, useObserveTimeState } from '../../hooks';
 import {
   useTheme,
   Spacing,
@@ -72,6 +72,7 @@ export function ShareSnapshotScreen() {
   const insets = useSafeAreaInsets();
   const theme = useTheme();
   const { timeState } = useObserveTimeState();
+  const { hasPremiumBundle } = useAccessControl();
   const canvasRef = useCanvasRef();
   const exportCanvasRef = useCanvasRef();
   const [focus, setFocus] = useState<FocusKey>('day');
@@ -190,7 +191,8 @@ export function ShareSnapshotScreen() {
         !lineFont ||
         !miniPercentFont ||
         !miniLabelFont ||
-        !brandFont
+        !brandFont ||
+        !brandByFont
       ) {
         Alert.alert(
           'Share unavailable',
@@ -218,14 +220,44 @@ export function ShareSnapshotScreen() {
       await Share.open({
         url: `file://${filePath}`,
         type: 'image/png',
-        message: quote,
+        message: `${quote}\n\nbuilt with UNTIL — until-app.com`,
         failOnCancel: false,
       });
       void logAnalyticsEvent('share_completed', {
         source_screen: 'ShareSnapshot',
         share_type: 'snapshot',
         focus,
+        referral_watermark: true,
       });
+      if (!hasPremiumBundle) {
+        void logAnalyticsEvent('post_share_upgrade_prompt_shown', {
+          focus,
+        });
+        Alert.alert(
+          'Keep this feeling on your home screen',
+          'Premium keeps Month & Life widgets, overlay, and intervention alerts visible after you share.',
+          [
+            {
+              text: 'Maybe later',
+              style: 'cancel',
+              onPress: () => {
+                void logAnalyticsEvent('post_share_upgrade_prompt_dismissed', {
+                  focus,
+                });
+              },
+            },
+            {
+              text: 'See Premium',
+              onPress: () => {
+                void logAnalyticsEvent('post_share_upgrade_prompt_tapped', {
+                  focus,
+                });
+                navigation.navigate('Premium');
+              },
+            },
+          ],
+        );
+      }
     } catch (error) {
       console.warn('Share snapshot failed', error);
       Alert.alert(
@@ -242,8 +274,11 @@ export function ShareSnapshotScreen() {
     miniPercentFont,
     miniLabelFont,
     brandFont,
+    brandByFont,
     quote,
     focus,
+    hasPremiumBundle,
+    navigation,
   ]);
 
   const renderCircularProgressPath = (
@@ -303,14 +338,15 @@ export function ShareSnapshotScreen() {
     () => ({
       paddingX: 110,
       brandTopY: 140,
-      quoteTopY: 320,
-      ringCenterY: 860,
+      quoteTopY: 280,
+      ringCenterY: 820,
       // Export ring slightly smaller so mini pies breathe.
       ringRadius: 285,
-      primaryLineY: 1265,
-      miniPieY: 1480,
+      primaryLineY: 1220,
+      miniPieY: 1420,
       // Mini pies slightly larger in export.
       miniPieSize: 210,
+      watermarkY: 1820,
     }),
     [],
   );
@@ -566,7 +602,7 @@ export function ShareSnapshotScreen() {
                 ))}
               </View>
               <Text variant="caption" style={styles.branding}>
-                UNTIL
+                built with UNTIL
               </Text>
             </Card>
           </View>
@@ -610,68 +646,7 @@ export function ShareSnapshotScreen() {
                 );
               })()}
 
-            {/* Branding (top lockup) */}
-            {brandFont && (
-              <>
-                {brandByFont && (
-                  <SkiaText
-                    x={centerXForText(
-                      brandByFont,
-                      exportSize.width,
-                      'Created by',
-                    )}
-                    y={exportLayout.brandTopY}
-                    text="Created by"
-                    font={brandByFont}
-                    color="rgba(255,255,255,0.55)"
-                  />
-                )}
-                {(() => {
-                  const logoSize = 78;
-                  const gap = 18;
-                  const r = logoSize / 2;
-                  const untilText = 'UNTIL';
-                  const textW = brandFont.getTextWidth(untilText) ?? 0;
-                  const lockupW = logoSize + gap + textW;
-                  const startX = exportSize.width / 2 - lockupW / 2;
-                  const logoX = startX;
-                  const textX = startX + logoSize + gap;
-                  const textBaselineY = exportLayout.brandTopY + 70;
-
-                  const capHeight = brandFont.getSize() * 0.7;
-                  const logoY = Math.round(
-                    textBaselineY - capHeight + (capHeight - logoSize) / 2,
-                  );
-
-                  const clip = Skia.Path.Make();
-                  clip.addCircle(logoX + r, logoY + r, r);
-
-                  return (
-                    <>
-                      {brandLogo && (
-                        <Group clip={clip}>
-                          <SkiaImage
-                            image={brandLogo}
-                            x={logoX}
-                            y={logoY}
-                            width={logoSize}
-                            height={logoSize}
-                            fit="cover"
-                          />
-                        </Group>
-                      )}
-                      <SkiaText
-                        x={textX}
-                        y={textBaselineY}
-                        text={untilText}
-                        font={brandFont}
-                        color="rgba(255,255,255,0.72)"
-                      />
-                    </>
-                  );
-                })()}
-              </>
-            )}
+            {/* Branding moved to subtle bottom watermark */}
 
             {/* Main ring */}
             <Path
@@ -842,6 +817,66 @@ export function ShareSnapshotScreen() {
                   </>
                 );
               })()}
+
+            {/* Subtle referral watermark */}
+            {brandByFont && brandFont && (
+              <>
+                <SkiaText
+                  x={centerXForText(
+                    brandByFont,
+                    exportSize.width,
+                    'built with',
+                  )}
+                  y={exportLayout.watermarkY}
+                  text="built with"
+                  font={brandByFont}
+                  color="rgba(255,255,255,0.38)"
+                />
+                {(() => {
+                  const logoSize = 36;
+                  const gap = 10;
+                  const r = logoSize / 2;
+                  const untilText = 'UNTIL';
+                  const textW = brandFont.getTextWidth(untilText) ?? 0;
+                  const lockupW = (brandLogo ? logoSize + gap : 0) + textW;
+                  const startX = exportSize.width / 2 - lockupW / 2;
+                  const textBaselineY = exportLayout.watermarkY + 48;
+                  const logoX = startX;
+                  const textX = brandLogo
+                    ? startX + logoSize + gap
+                    : startX;
+                  const capHeight = brandFont.getSize() * 0.7;
+                  const logoY = Math.round(
+                    textBaselineY - capHeight + (capHeight - logoSize) / 2,
+                  );
+                  const clip = Skia.Path.Make();
+                  clip.addCircle(logoX + r, logoY + r, r);
+                  return (
+                    <>
+                      {brandLogo && (
+                        <Group clip={clip}>
+                          <SkiaImage
+                            image={brandLogo}
+                            x={logoX}
+                            y={logoY}
+                            width={logoSize}
+                            height={logoSize}
+                            fit="cover"
+                          />
+                        </Group>
+                      )}
+                      <SkiaText
+                        x={textX}
+                        y={textBaselineY}
+                        text={untilText}
+                        font={brandFont}
+                        color="rgba(255,255,255,0.48)"
+                      />
+                    </>
+                  );
+                })()}
+              </>
+            )}
           </Canvas>
 
           <TouchableOpacity
@@ -979,7 +1014,7 @@ const styles = StyleSheet.create({
     marginTop: Spacing[3],
     textAlign: 'center',
     color: 'rgba(255,255,255,0.4)',
-    letterSpacing: 4,
+    letterSpacing: 1.2,
   },
   shareButton: {
     marginTop: Spacing[4],

@@ -31,7 +31,7 @@ import {
   Radius,
   Shadows,
 } from '../../theme';
-import { useAnalytics, useUpdateUserProfile } from '../../hooks';
+import { useAnalytics, useUpdateUserProfile, useOnboardingFunnel } from '../../hooks';
 import type { AuthStackParamList } from '../../navigation/AuthNavigator';
 
 const LIFESPAN_MIN = 40;
@@ -67,6 +67,7 @@ export function IdentitySetupScreen() {
   const percent = theme.percent;
   const updateUserProfile = useUpdateUserProfile();
   const { logEvent } = useAnalytics();
+  const { setStep } = useOnboardingFunnel();
 
   const [birthDate, setBirthDate] = useState(new Date(1995, 0, 1));
   const [showPicker, setShowPicker] = useState(false);
@@ -90,12 +91,13 @@ export function IdentitySetupScreen() {
       try {
         await Promise.resolve(updateUserProfile(dateStr, years));
         logEvent('identity_setup_complete');
+        setStep('life_weeks');
         navigation.navigate('LifeWeeksPreview');
       } catch {
         setIsSubmitting(false);
       }
     },
-    [isSubmitting, updateUserProfile, navigation],
+    [isSubmitting, updateUserProfile, navigation, logEvent, setStep],
   );
 
   const handleViewMyLife = () => {

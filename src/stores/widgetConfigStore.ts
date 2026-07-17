@@ -2,6 +2,9 @@ import { create } from 'zustand';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { DEFAULT_WIDGET_CONFIG, type WidgetConfig } from '../domain/widget/WidgetConfig';
 import { STORAGE_KEYS } from '../persistence/schema';
+import { getWidgetAccentColor } from '../config/widgetAccents';
+import { setString } from '../persistence/mmkv';
+import { syncWidgetCache } from '../infrastructure/WidgetSync';
 
 interface WidgetConfigState {
   config: WidgetConfig;
@@ -10,6 +13,7 @@ interface WidgetConfigState {
   setTheme: (theme: WidgetConfig['theme']) => void;
   setLayout: (layout: WidgetConfig['layout']) => void;
   setFont: (font: WidgetConfig['font']) => void;
+  setAccent: (accent: WidgetConfig['accent']) => void;
   setShowMessage: (show: boolean) => void;
   setMessage: (message: string) => void;
   reset: () => void;
@@ -23,6 +27,9 @@ async function persistConfig(config: WidgetConfig) {
   } catch {
     // ignore persistence errors
   }
+  const accent = config.accent ?? DEFAULT_WIDGET_CONFIG.accent;
+  setString(STORAGE_KEYS.WIDGET_ACCENT_COLOR, getWidgetAccentColor(accent));
+  syncWidgetCache();
 }
 
 export const useWidgetConfigStore = create<WidgetConfigState>((set, get) => ({
@@ -36,14 +43,24 @@ export const useWidgetConfigStore = create<WidgetConfigState>((set, get) => ({
         const merged: WidgetConfig = {
           ...DEFAULT_WIDGET_CONFIG,
           ...parsed,
+          accent: parsed.accent ?? DEFAULT_WIDGET_CONFIG.accent,
         };
         set({ config: merged });
+        setString(
+          STORAGE_KEYS.WIDGET_ACCENT_COLOR,
+          getWidgetAccentColor(merged.accent)
+        );
+        syncWidgetCache();
         return;
       }
     } catch {
       // ignore and fall back to default
     }
     set({ config: DEFAULT_WIDGET_CONFIG });
+    setString(
+      STORAGE_KEYS.WIDGET_ACCENT_COLOR,
+      getWidgetAccentColor(DEFAULT_WIDGET_CONFIG.accent)
+    );
   },
 
   setType: type => {
@@ -66,6 +83,12 @@ export const useWidgetConfigStore = create<WidgetConfigState>((set, get) => ({
 
   setFont: font => {
     const next = { ...get().config, font };
+    set({ config: next });
+    void persistConfig(next);
+  },
+
+  setAccent: accent => {
+    const next = { ...get().config, accent };
     set({ config: next });
     void persistConfig(next);
   },

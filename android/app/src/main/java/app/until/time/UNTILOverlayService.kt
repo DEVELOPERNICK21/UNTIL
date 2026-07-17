@@ -28,6 +28,8 @@ private const val NOTIFICATION_CHANNEL_ID = "until_overlay"
 private const val NOTIFICATION_ID = 9001
 private const val MMKV_ID = "until-storage"
 private const val WIDGET_CACHE_KEY = "widget.cache"
+private const val PREMIUM_EFFECTIVE_KEY = "premium.effectiveAccess"
+private const val PREMIUM_IS_ACTIVE_KEY = "premium.isActive"
 private const val DAILY_TASKS_WIDGET_KEY = "daily.tasks.widget"
 private const val HOUR_CALCULATION_WIDGET_KEY = "hour.calculation.widget"
 private const val OVERLAY_WIDGET_TYPE_KEY = "overlay.widgetType"
@@ -198,7 +200,15 @@ class UNTILOverlayService : Service() {
         return try {
             MMKV.initialize(this)
             val mmkv = MMKV.mmkvWithID(MMKV_ID) ?: return OverlayState.default()
-        val widgetType = mmkv.decodeString(OVERLAY_WIDGET_TYPE_KEY, "day") ?: "day"
+        var widgetType = mmkv.decodeString(OVERLAY_WIDGET_TYPE_KEY, "day") ?: "day"
+        val hasPremium = if (mmkv.containsKey(PREMIUM_EFFECTIVE_KEY)) {
+            mmkv.decodeBool(PREMIUM_EFFECTIVE_KEY, false)
+        } else {
+            mmkv.decodeBool(PREMIUM_IS_ACTIVE_KEY, false)
+        }
+        if (!hasPremium && (widgetType == "month" || widgetType == "life")) {
+            widgetType = "day"
+        }
 
         val cacheJson = mmkv.decodeString(WIDGET_CACHE_KEY)
         val cache = cacheJson?.let { parseCache(it) }

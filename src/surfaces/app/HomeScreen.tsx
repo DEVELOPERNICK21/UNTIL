@@ -30,6 +30,7 @@ import {
   useAccessControl,
   useReduceMotion,
   usePresenceStreak,
+  useDailyReflection,
 } from '../../hooks';
 import {
   Spacing,
@@ -45,6 +46,8 @@ import type { RootStackParamList } from '../../navigation/RootNavigator';
 import { logAnalyticsEvent } from '../../services/analytics';
 import { setEmberRouteOverride } from '../../services/emberSurface';
 import { TaskReportContent } from './TaskReportContent';
+import { InterventionHomeCard } from '../../components/intervention/InterventionHomeCard';
+import { TimeCoachCard } from '../../components/reflections/TimeCoachCard';
 
 function getDaysInMonth(): number {
   const d = new Date();
@@ -338,6 +341,14 @@ export function HomeScreen() {
   const { canAccessLife } = useAccessControl();
   const reduceMotion = useReduceMotion();
   const { streak } = usePresenceStreak();
+  const {
+    reflection,
+    visible: reflectionVisible,
+    tone: reflectionTone,
+    canUsePremiumReflections,
+    dismiss: dismissReflection,
+    setTone: setReflectionTone,
+  } = useDailyReflection();
   const scrollY = useRef(new Animated.Value(0)).current;
   const { width: pageWidth } = useWindowDimensions();
   const [pageIndex, setPageIndex] = useState(0);
@@ -510,6 +521,19 @@ export function HomeScreen() {
                   Swipe left for task report →
                 </Text>
               </Animated.View>
+
+              <InterventionHomeCard />
+
+              {reflectionVisible ? (
+                <TimeCoachCard
+                  reflection={reflection}
+                  tone={reflectionTone}
+                  canUsePremiumReflections={canUsePremiumReflections}
+                  onDismiss={dismissReflection}
+                  onToneChange={setReflectionTone}
+                  onBirthDatePress={() => navigation.navigate('Settings')}
+                />
+              ) : null}
 
               <TodayTimeBlock
                 index={0}

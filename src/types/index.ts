@@ -107,6 +107,8 @@ export interface WidgetCache {
   remainingDaysLife?: number;
   /** Life percent 0–100. Present only when birth date is set. */
   lifePercent?: number;
+  /** Hex accent for percent/current markers (e.g. #E87C20). Optional; native falls back to Ember. */
+  accentColor?: string;
   updatedAt: number;
 }
 
@@ -223,4 +225,49 @@ export interface MonthlyTaskStats {
   pending: number;
   byDay: DayTaskSummary[];
   byCategory: Partial<Record<TaskCategory, DailyTaskCategoryStats>>;
+}
+
+/** Psychology onboarding quiz answers */
+export type OnboardingGoal =
+  | 'people'
+  | 'focus'
+  | 'health'
+  | 'calm'
+  | 'other';
+
+export type OnboardingDrain =
+  | 'social'
+  | 'work'
+  | 'busywork'
+  | 'priorities'
+  | 'unsure';
+
+export type OnboardingValues = OnboardingGoal | 'rest';
+
+export type OnboardingCadence = 'checkins' | 'widgets' | 'both' | 'unsure';
+
+export type OnboardingReadiness = 'ready' | 'gentle' | 'exploring';
+
+export type OnboardingFunnelStep =
+  | 'brand'
+  | 'day_demo'
+  | 'widgets_demo'
+  | 'q_goal'
+  | 'q_drain'
+  | 'interstitial'
+  | 'identity'
+  | 'life_weeks'
+  | 'q_values'
+  | 'q_cadence'
+  | 'q_readiness'
+  | 'loader'
+  | 'results'
+  | 'paywall';
+
+export interface OnboardingQuizAnswers {
+  goal?: OnboardingGoal;
+  timeDrain?: OnboardingDrain;
+  valuesPriority?: OnboardingValues;
+  cadence?: OnboardingCadence;
+  readiness?: OnboardingReadiness;
 }

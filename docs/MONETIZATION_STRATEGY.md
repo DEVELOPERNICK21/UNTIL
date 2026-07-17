@@ -19,6 +19,8 @@ When changing prices, paywall text, or what is free vs Premium, update **this fi
 
 **Not sold:** Monthly on paywall (optional later per audit; user chose yearly + lifetime only).
 
+**Social proof:** `PAYWALL_SOCIAL_PROOF.verifiedActiveWatchers` in `monetization.ts` — set only from a verified Play/analytics count; line hidden while `null`.
+
 ---
 
 ## Free forever (trust guarantee — do not paywall)
@@ -90,7 +92,8 @@ When changing prices, paywall text, or what is free vs Premium, update **this fi
 
 - Play subscription trial without card (Console base-plan config)  
 - Trial-end **remote** push via FCM (local notifications implemented with Notifee)  
-- Student email verification before student SKU purchase  
+- Student email verification before student SKU purchase
+  (soft `.edu` / `.ac.*` check; gates `yearly_subscription_student`)  
 - Cancellation “what you’ll lose” screen  
 - Monthly → annual upsell at month 2  
 

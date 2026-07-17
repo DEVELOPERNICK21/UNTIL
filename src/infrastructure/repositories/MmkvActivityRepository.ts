@@ -5,7 +5,7 @@
 
 import type { IActivityRepository } from '../../domain/repository/IActivityRepository';
 import type { TimeBlock, ActivityCategory } from '../../types';
-import { getString, setString, getNumber } from '../../persistence/mmkv';
+import { getString, setString, getNumber, setNumber } from '../../persistence/mmkv';
 import { STORAGE_KEYS, DEFAULTS } from '../../persistence/schema';
 import { formatDateToIso } from '../../core/time/clock';
 import { aggregateCategoryTotals } from '../../core/activity/aggregate';
@@ -46,6 +46,12 @@ export class MmkvActivityRepository implements IActivityRepository {
 
   getDailyLimitNothing(): number {
     return getNumber(STORAGE_KEYS.ACTIVITY_DAILY_LIMIT_NOTHING) ?? DEFAULTS.ACTIVITY_DAILY_LIMIT_NOTHING;
+  }
+
+  setDailyLimitNothing(hours: number): void {
+    const clamped = Math.max(0.5, Math.min(12, hours));
+    setNumber(STORAGE_KEYS.ACTIVITY_DAILY_LIMIT_NOTHING, clamped);
+    this.notifySubscribers();
   }
 
   getCurrentCategory(dateIso: string): ActivityCategory | null {

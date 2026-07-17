@@ -21,5 +21,6 @@ export interface IActivityRepository {
   getCategoryTotals(dateIso: string, year: number): CategoryTotalsResult;
   getCurrentCategory(dateIso: string): ActivityCategory | null;
   getDailyLimitNothing(): number;
+  setDailyLimitNothing(hours: number): void;
   subscribe(callback: Subscriber): () => void;
 }

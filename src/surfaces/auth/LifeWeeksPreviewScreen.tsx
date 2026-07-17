@@ -15,7 +15,7 @@ import {
   getFontFamilyForWeight,
   Radius,
 } from '../../theme';
-import { useAnalytics, useObserveTimeState } from '../../hooks';
+import { useAnalytics, useObserveTimeState, useOnboardingFunnel } from '../../hooks';
 import type { AuthStackParamList } from '../../navigation/AuthNavigator';
 
 type AuthNav = NativeStackNavigationProp<
@@ -31,6 +31,7 @@ export function LifeWeeksPreviewScreen() {
   const theme = useTheme();
   const { userProfile, timeState } = useObserveTimeState();
   const { logEvent } = useAnalytics();
+  const { setStep } = useOnboardingFunnel();
 
   const { totalWeeks, livedWeeks } = useMemo(() => {
     const deathAge = userProfile.deathAge;
@@ -57,7 +58,12 @@ export function LifeWeeksPreviewScreen() {
   }, [logEvent]);
 
   const handleEnterPresent = () => {
-    navigation.navigate('OnboardingPaywall');
+    logEvent('onboarding_life_aha', {
+      lived_weeks: livedWeeks,
+      total_weeks: totalWeeks,
+    });
+    setStep('q_values');
+    navigation.navigate('Onboarding');
   };
 
   const handleBack = () => {

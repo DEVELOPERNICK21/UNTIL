@@ -13,6 +13,8 @@ export const STORAGE_KEYS = {
 
   // Premium / Subscription (one device, web purchase)
   PREMIUM_IS_ACTIVE: 'premium.isActive',
+  /** Paid OR active in-app preview — synced to native for widget/overlay gating. */
+  PREMIUM_EFFECTIVE_ACCESS: 'premium.effectiveAccess',
   SUBSCRIPTION_LICENSE_KEY: 'subscription.licenseKey',
   SUBSCRIPTION_DEVICE_ID: 'subscription.deviceId',
   SUBSCRIPTION_LAST_VERIFIED: 'subscription.lastVerified',
@@ -24,6 +26,9 @@ export const STORAGE_KEYS = {
   ENGAGEMENT_LIFE_UNLOCK_UNTIL: 'engagement.lifeUnlockUntil',
   /** Last time user dismissed an interstitial paywall (48h cooldown). */
   PAYWALL_DISMISSED_AT: 'engagement.paywallDismissedAt',
+  /** Soft student verification — school email that unlocked student SKU CTA. */
+  STUDENT_VERIFIED_EMAIL: 'student.verifiedEmail',
+  STUDENT_VERIFIED_AT: 'student.verifiedAt',
 
   // Play purchase metadata (SSOT)
   PURCHASE_TYPE: 'purchase.type',
@@ -43,6 +48,8 @@ export const STORAGE_KEYS = {
   // Widget
   WIDGET_CACHE: 'widget.cache',
   WIDGET_CONFIG: 'widget.config',
+  /** Hex accent color for native widgets (e.g. #E87C20). Synced from in-app customization. */
+  WIDGET_ACCENT_COLOR: 'widget.accentColor',
 
   // Custom counters (for counter widget)
   CUSTOM_COUNTERS: 'custom.counters',
@@ -71,6 +78,8 @@ export const STORAGE_KEYS = {
   // Onboarding (auth flow)
   ONBOARDING_COMPLETED: 'onboarding.completed',
   ONBOARDING_COMPLETED_AT: 'onboarding.completedAt',
+  ONBOARDING_FUNNEL_STEP: 'onboarding.funnelStep',
+  ONBOARDING_QUIZ_ANSWERS: 'onboarding.quizAnswers',
   WIDGET_COACH_PENDING: 'engagement.widgetCoachPending',
   DEFERRED_PAYWALL_SHOWN: 'engagement.deferredPaywallShown',
   DAY2_NOTIFICATION_SCHEDULED: 'engagement.day2NotificationScheduled',

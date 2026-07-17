@@ -19,8 +19,6 @@ import {
   Spacing,
   useTheme,
   Shadows,
-  pickEmberTip,
-  emberTipPoolForRoute,
   emberSupportsRoute,
   type EmberInsight,
 } from '../../theme';
@@ -28,6 +26,7 @@ import {
   useObserveTimeState,
   useReduceMotion,
   usePresenceStreak,
+  useOnboardingQuizAnswers,
 } from '../../hooks';
 import { rootNavigationRef } from '../../navigation/rootNavigationRef';
 import {
@@ -46,6 +45,7 @@ import {
   planEmberExit,
   type EmberFlightPlan,
 } from './emberFlight';
+import { mergedEmberTipPool, pickMergedEmberTip } from './emberPersonalization';
 
 type EmberCompanionProps = {
   suppressed?: boolean;
@@ -69,6 +69,7 @@ export function EmberCompanion({ suppressed = false }: EmberCompanionProps) {
   const reduceMotion = useReduceMotion();
   const { timeState } = useObserveTimeState();
   const { streak } = usePresenceStreak();
+  const quizAnswers = useOnboardingQuizAnswers();
   const dayProgress = timeState.day ?? 0.35;
 
   const [insight, setInsight] = useState<EmberInsight | null>(null);
@@ -102,6 +103,9 @@ export function EmberCompanion({ suppressed = false }: EmberCompanionProps) {
 
   const ctxRef = useRef({ dayProgress, streakCount: streak.count });
   ctxRef.current = { dayProgress, streakCount: streak.count };
+
+  const quizAnswersRef = useRef(quizAnswers);
+  quizAnswersRef.current = quizAnswers;
   const reduceMotionRef = useRef(reduceMotion);
   reduceMotionRef.current = reduceMotion;
   const screenWRef = useRef(screenW);
@@ -188,11 +192,11 @@ export function EmberCompanion({ suppressed = false }: EmberCompanionProps) {
   );
 
   const resolveTip = useCallback((route: string, advance: boolean) => {
-    const pool = emberTipPoolForRoute(route, ctxRef.current);
+    const pool = mergedEmberTipPool(route, ctxRef.current, quizAnswersRef.current);
     if (!pool || pool.length === 0) return null;
     const index = advance ? nextEmberTipIndex(route, pool.length) : 0;
     if (!advance) setEmberTipIndex(route, 0);
-    return pickEmberTip(route, ctxRef.current, index);
+    return pickMergedEmberTip(route, ctxRef.current, index, quizAnswersRef.current);
   }, []);
 
   const playEnter = useCallback(
@@ -448,10 +452,10 @@ export function EmberCompanion({ suppressed = false }: EmberCompanionProps) {
           const tip = resolveTip(route, false);
           markEmberIntroShown(route);
           if (tip) showInsightBubble(tip, calm ? 0 : 220, true);
-          else setInsight(pickEmberTip(route, ctxRef.current, 0));
+          else setInsight(pickMergedEmberTip(route, ctxRef.current, 0, quizAnswersRef.current));
         } else {
           setInsight(
-            pickEmberTip(route, ctxRef.current, 0) ?? {
+            pickMergedEmberTip(route, ctxRef.current, 0, quizAnswersRef.current) ?? {
               eyebrow: 'Ember',
               body: 'Tap me when you want a tip.',
             },
@@ -469,7 +473,7 @@ export function EmberCompanion({ suppressed = false }: EmberCompanionProps) {
         }
         prevRoute.current = name;
         setDocked(true);
-        setInsight(pickEmberTip(name, ctxRef.current, 0));
+        setInsight(pickMergedEmberTip(name, ctxRef.current, 0, quizAnswersRef.current));
         flightLock.current = true;
         bubbleOpacity.setValue(0);
         setBubbleOpen(false);

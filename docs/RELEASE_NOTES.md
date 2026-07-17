@@ -4,6 +4,39 @@ Use the **Short** version for Play Store / App Store "What's new" (character lim
 
 ---
 
+## Version 1.1 (Maximum potential — onboarding, intervention, growth)
+
+### Short (for store listing, ~500 characters)
+
+```
+• Psychology onboarding — quiz → your time map
+• Lost-time alerts when wasted hours cross your limit
+• Weekly reflection + personalized Ember tips
+• Premium widget accent colors
+• Student yearly (school email verify)
+• Share images: “built with UNTIL”
+• Month/Life widgets lock correctly after preview
+
+Day & Year widgets stay free forever.
+```
+
+### Full
+
+See [`PLAY_STORE_ASO.md`](PLAY_STORE_ASO.md) for the complete listing rewrite and What’s new block.
+
+**Highlights**
+
+- **Onboarding quiz funnel** with goal-gradient progress and life-weeks reveal
+- **Intervention MVP** — track nothing/lost time, daily limit, red home alert
+- **Weekly Time Coach** + Ember tips from quiz answers
+- **Premium accents** synced to native widgets
+- **Student plan** soft email verification
+- **Referral watermark** on shared snapshots
+- **Native premium gating** for Month/Life widgets and overlay
+- Funnel analytics: `onboarding_step_view` with `step_index` (PostHog)
+
+---
+
 ## Version 1.0 (Initial release)
 
 ### Short (for store listing, ~500 characters)

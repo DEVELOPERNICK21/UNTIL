@@ -4,19 +4,51 @@
  */
 
 export const MONETIZATION_PRICING = {
-  monthlyInr: 99,
-  yearlyInr: 499,
-  lifetimeInr: 1499,
-  yearlyStudentInr: 249,
+  monthlyInr: 100,
+  yearlyInr: 500,
+  lifetimeInr: 1500,
+  yearlyStudentInr: 500,
   yearlyRegionalTier2Inr: 399,
   yearlyPerDayDisplay: '₹1.37',
-  yearlySavingsVsMonthlyDisplay: '₹692',
+  yearlySavingsVsMonthlyDisplay: '₹700',
 } as const;
 
 /** Optional Play products — enable when created in Console. */
 export const MONETIZATION_FEATURE_FLAGS = {
   studentPlanEnabled: true,
+  /** Show social-proof line when a verified watcher count is set. */
+  socialProofEnabled: true,
 } as const;
+
+/**
+ * Social proof — only show a numeric claim when `verifiedActiveWatchers` is set
+ * from a real source (Play Console / analytics). Do not invent counts.
+ */
+export const PAYWALL_SOCIAL_PROOF = {
+  /** null until a verified figure is available — line stays hidden. */
+  verifiedActiveWatchers: null as number | null,
+  /** Used when `verifiedActiveWatchers` is a positive number. */
+  numericTemplate: 'Join {count}+ people watching their life',
+} as const;
+
+export function formatPaywallSocialProof(
+  count: number | null = PAYWALL_SOCIAL_PROOF.verifiedActiveWatchers
+): string | null {
+  if (
+    !MONETIZATION_FEATURE_FLAGS.socialProofEnabled ||
+    count == null ||
+    !Number.isFinite(count) ||
+    count <= 0
+  ) {
+    return null;
+  }
+  const rounded = Math.floor(count);
+  const display =
+    rounded >= 1000
+      ? rounded.toLocaleString('en-IN')
+      : String(rounded);
+  return PAYWALL_SOCIAL_PROOF.numericTemplate.replace('{count}', display);
+}
 
 export const MONETIZATION_TRIAL_DAYS = 5;
 
@@ -57,7 +89,7 @@ export const MONETIZATION_PAYWALL_COPY = {
   lifetimeCta: 'Own it forever',
   lifetimeSub: 'One-time payment in Google Play · all Premium features · no renewal',
   studentCta: 'Student yearly',
-  studentSub: 'Verify with student email in a future update · same Premium features',
+  studentSub: 'Verify with a school email · same Premium features',
   regionalNote:
     'Prices in your currency are set by Google Play (regional pricing may apply).',
   previewActiveTitle: 'Free app preview active',
@@ -67,9 +99,9 @@ export const MONETIZATION_PAYWALL_COPY = {
   lifeUnlockEndedTitle: 'Keep your life progress visible',
   lifeUnlockEndedMessage:
     'Your 24-hour Life preview ended. Premium keeps your life %, month widget, and overlay on every day.',
-  onboardingPaywallTitle: 'You have seen your life in weeks.',
+  onboardingPaywallTitle: 'Keep your time map.',
   onboardingPaywallSub:
-    'Unlock month & life widgets, overlay, and your full Life screen. Review the terms below before subscribing.',
+    'Month, life, and overlay stay with you — so the plan you just built doesn’t disappear.',
   previewEndingNoChargeNote:
     'No payment is taken during the free app preview. You are only charged if you choose to subscribe in Google Play.',
   previewEndingCancelNote:

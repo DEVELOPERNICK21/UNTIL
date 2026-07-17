@@ -19,6 +19,10 @@ export type AnalyticsPaywallSource =
 export type AnalyticsEventName =
   | 'app_open'
   | 'onboarding_step'
+  | 'onboarding_step_view'
+  | 'onboarding_answer'
+  | 'onboarding_life_aha'
+  | 'onboarding_results_view'
   | 'identity_setup_complete'
   | 'life_preview_seen'
   | 'onboarding_paywall_seen'
@@ -62,7 +66,18 @@ export type AnalyticsEventName =
   | 'feature_coach_cta_tapped'
   | 'share_prompt_shown'
   | 'share_prompt_dismissed'
-  | 'share_prompt_tapped';
+  | 'share_prompt_tapped'
+  | 'post_share_upgrade_prompt_shown'
+  | 'post_share_upgrade_prompt_tapped'
+  | 'post_share_upgrade_prompt_dismissed'
+  | 'intervention_teaser_tap'
+  | 'intervention_start_tracking'
+  | 'intervention_stop_tracking'
+  | 'intervention_quick_log'
+  | 'intervention_limit_changed'
+  | 'student_verify_shown'
+  | 'student_verify_succeeded'
+  | 'student_verify_failed';
 
 type EventParams = Record<string, string | number | boolean | undefined>;
 
