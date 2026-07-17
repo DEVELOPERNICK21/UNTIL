@@ -38,6 +38,9 @@ struct WidgetCache: Codable {
     let lifePercent: Int?
     /// Hex accent for percent/current markers (e.g. #E87C20). Optional.
     let accentColor: String?
+    let presenceStreakCount: Int
+    /// Last 7 days noticed flags, oldest to newest.
+    let presenceStreakDots: [Bool]
     let updatedAt: Int64
 
     init(from decoder: Decoder) throws {
@@ -64,6 +67,11 @@ struct WidgetCache: Codable {
         remainingDaysLife = try c.decodeIfPresent(Int.self, forKey: .remainingDaysLife)
         lifePercent = try c.decodeIfPresent(Int.self, forKey: .lifePercent)
         accentColor = try c.decodeIfPresent(String.self, forKey: .accentColor)
+        presenceStreakCount = max(0, try c.decodeIfPresent(Int.self, forKey: .presenceStreakCount) ?? 0)
+        let decodedDots = try c.decodeIfPresent([Bool].self, forKey: .presenceStreakDots) ?? []
+        presenceStreakDots = Array(
+            (decodedDots + Array(repeating: false, count: 7)).prefix(7)
+        )
         updatedAt = try c.decode(Int64.self, forKey: .updatedAt)
     }
 
@@ -90,6 +98,8 @@ struct WidgetCache: Codable {
         remainingDaysLife: Int?,
         lifePercent: Int?,
         accentColor: String? = nil,
+        presenceStreakCount: Int = 0,
+        presenceStreakDots: [Bool] = Array(repeating: false, count: 7),
         updatedAt: Int64
     ) {
         self.dayProgress = dayProgress
@@ -114,6 +124,10 @@ struct WidgetCache: Codable {
         self.remainingDaysLife = remainingDaysLife
         self.lifePercent = lifePercent
         self.accentColor = accentColor
+        self.presenceStreakCount = presenceStreakCount
+        self.presenceStreakDots = Array(
+            (presenceStreakDots + Array(repeating: false, count: 7)).prefix(7)
+        )
         self.updatedAt = updatedAt
     }
 
@@ -191,6 +205,8 @@ struct WidgetCache: Codable {
             remainingDaysLife: remainingDaysLife,
             lifePercent: lifePercent,
             accentColor: accentColor,
+            presenceStreakCount: presenceStreakCount,
+            presenceStreakDots: presenceStreakDots,
             updatedAt: updatedAt
         )
     }

@@ -11,6 +11,8 @@ import { getMonthProgress } from '../../core/time/month';
 import { getYearProgress } from '../../core/time/year';
 import { getLifeProgress } from '../../core/time/life';
 import { now } from '../../core/time/clock';
+import { presenceStreakDots } from '../../core/widget/dayWidgetAppeal';
+import { localDateKey } from '../../domain/presence/presenceStreak';
 import { STORAGE_KEYS } from '../../persistence/schema';
 import {
   getString,
@@ -63,6 +65,12 @@ function computeWidgetCache(): WidgetCache {
   const lifeProgress = life?.progress;
   const remainingDaysLife = life ? Math.round(life.yearsRemaining * 365.25) : undefined;
   const lifePercent = life ? Math.round(life.progress * 100) : undefined;
+  // Read the shared presence keys directly so the time repository remains independently
+  // constructible; MmkvPresenceRepository uses these same STORAGE_KEYS as its SSOT.
+  const presenceStreakCount = getNumber(STORAGE_KEYS.PRESENCE_STREAK_COUNT) ?? 0;
+  const presenceLastDateKey =
+    getString(STORAGE_KEYS.PRESENCE_STREAK_LAST_DATE) || null;
+  const todayKey = localDateKey(date);
 
   return {
     dayProgress: day.progress,
@@ -86,6 +94,13 @@ function computeWidgetCache(): WidgetCache {
     ...(lifeProgress !== undefined && { lifeProgress }),
     ...(remainingDaysLife !== undefined && { remainingDaysLife }),
     ...(lifePercent !== undefined && { lifePercent }),
+    presenceStreakCount,
+    presenceStreakDots: presenceStreakDots({
+      count: presenceStreakCount,
+      lastDateKey: presenceLastDateKey,
+      todayKey,
+      noticedToday: presenceLastDateKey === todayKey,
+    }),
     updatedAt: Date.now(),
   };
 }

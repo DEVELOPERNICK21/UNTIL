@@ -771,6 +771,10 @@ class UNTILWidgetWorker(
                         obj.optInt("lifePercent", 0)
                     } else null,
                     accentColor = obj.optString("accentColor", "").takeIf { it.isNotBlank() },
+                    presenceStreakCount = obj.optInt("presenceStreakCount", 0).coerceAtLeast(0),
+                    presenceStreakDots = obj.optJSONArray("presenceStreakDots")?.let { dots ->
+                        (0 until 7).map { index -> dots.optBoolean(index, false) }
+                    } ?: List(7) { false },
                     updatedAt = obj.optLong("updatedAt", 0L)
                 )
             } catch (e: Exception) {
@@ -1461,5 +1465,7 @@ private data class WidgetCache(
     val remainingDaysLife: Int? = null,
     val lifePercent: Int? = null,
     val accentColor: String? = null,
+    val presenceStreakCount: Int = 0,
+    val presenceStreakDots: List<Boolean> = List(7) { false },
     val updatedAt: Long = 0L
 )

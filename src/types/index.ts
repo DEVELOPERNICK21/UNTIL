@@ -109,6 +109,10 @@ export interface WidgetCache {
   lifePercent?: number;
   /** Hex accent for percent/current markers (e.g. #E87C20). Optional; native falls back to Ember. */
   accentColor?: string;
+  /** Presence streak count for Day widget appeal. */
+  presenceStreakCount?: number;
+  /** Last 7 days noticed flags, oldest → newest (length 7). */
+  presenceStreakDots?: boolean[];
   updatedAt: number;
 }
 
