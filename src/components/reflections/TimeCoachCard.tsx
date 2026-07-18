@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
-import { Card, Text } from '../../ui';
+import { GlassCard, Text } from '../../ui';
 import { Radius, Spacing, useTheme } from '../../theme';
 import type {
   DailyReflection,
@@ -54,7 +54,7 @@ export function TimeCoachCard({
   };
 
   return (
-    <Card style={styles.card} lighter>
+    <GlassCard style={styles.card}>
       <View style={styles.headerRow}>
         <Text variant="caption" color="secondary" style={styles.overline}>
           {reflection.category === 'weekly' ? 'WEEKLY REFLECTION' : 'TIME COACH'}
@@ -83,9 +83,11 @@ export function TimeCoachCard({
                   key={option}
                   style={[
                     styles.tonePill,
-                    active && styles.tonePillActive,
                     {
-                      borderColor: active ? theme.percent : theme.divider,
+                      borderColor: active ? theme.percent : theme.glassBorder,
+                      backgroundColor: active
+                        ? 'rgba(232, 124, 32, 0.14)'
+                        : 'rgba(255, 255, 255, 0.04)',
                     },
                   ]}
                   onPress={() => handleToneChange(option)}
@@ -121,7 +123,7 @@ export function TimeCoachCard({
           </TouchableOpacity>
         ) : null}
       </View>
-    </Card>
+    </GlassCard>
   );
 }
 
@@ -161,9 +163,6 @@ const styles = StyleSheet.create({
     borderRadius: Radius.full,
     paddingHorizontal: Spacing[2],
     paddingVertical: 6,
-  },
-  tonePillActive: {
-    backgroundColor: 'rgba(232, 124, 32, 0.14)',
   },
   lockHint: {
     flex: 1,

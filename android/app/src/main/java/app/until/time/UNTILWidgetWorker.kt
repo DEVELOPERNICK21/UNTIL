@@ -771,10 +771,6 @@ class UNTILWidgetWorker(
                         obj.optInt("lifePercent", 0)
                     } else null,
                     accentColor = obj.optString("accentColor", "").takeIf { it.isNotBlank() },
-                    presenceStreakCount = obj.optInt("presenceStreakCount", 0).coerceAtLeast(0),
-                    presenceStreakDots = obj.optJSONArray("presenceStreakDots")?.let { dots ->
-                        (0 until 7).map { index -> dots.optBoolean(index, false) }
-                    } ?: List(7) { false },
                     updatedAt = obj.optLong("updatedAt", 0L)
                 )
             } catch (e: Exception) {
@@ -821,6 +817,21 @@ class UNTILWidgetWorker(
             }
         }
 
+        /** Tint a ProgressBar to the resolved accent so the bar matches the percent text (API 31+). */
+        private fun applyAccentProgressTint(views: RemoteViews, viewId: Int, color: Int) {
+            if (android.os.Build.VERSION.SDK_INT >= 31) {
+                try {
+                    views.setColorStateList(
+                        viewId,
+                        "setProgressTintList",
+                        android.content.res.ColorStateList.valueOf(color),
+                    )
+                } catch (_: Exception) {
+                    // Keep XML default tint on failure.
+                }
+            }
+        }
+
         private fun buildRemoteViews(context: Context, layoutId: Int, cache: WidgetCache): RemoteViews {
             val views = RemoteViews(context.packageName, layoutId)
             val hasPremium = loadEffectivePremium(context)
@@ -833,7 +844,7 @@ class UNTILWidgetWorker(
                         val dProgress = cache.dayProgress.coerceIn(0.0, 1.0)
                         views.setTextViewText(R.id.widget_day_done, context.getString(R.string.widget_day_done_format, dDone))
                         views.setTextViewText(R.id.widget_day_left, context.getString(R.string.widget_day_left_format, dLeft))
-                        views.setTextColor(R.id.widget_day_done, accent)
+                        views.setTextColor(R.id.widget_day_done, Color.parseColor("#8E8E93"))
                         views.setTextColor(R.id.widget_day_left, accent)
                         // Time passed/left: use SSOT from cache (minutes) when present, else compute from progress
                         val (passedText, leftText) = dayTimeTexts(context, cache, dProgress)
@@ -865,9 +876,12 @@ class UNTILWidgetWorker(
                         views.setTextViewText(R.id.widget_month_passed, context.getString(R.string.widget_month_passed_format, mPassed))
                         views.setTextViewText(R.id.widget_month_left, context.getString(R.string.widget_month_left_format, mLeft))
                         views.setTextViewText(R.id.widget_month_percent, context.getString(R.string.widget_month_percent_format, mPct))
+                        views.setTextColor(R.id.widget_month_passed, Color.parseColor("#8E8E93"))
+                        views.setTextColor(R.id.widget_month_left, Color.parseColor("#F2F2F2"))
                         views.setTextColor(R.id.widget_month_percent, accent)
-                        // Month progress bar (keep day widget as circular only)
+                        // Month progress bar
                         views.setProgressBar(R.id.widget_month_progress, 100, (mProgress * 100).toInt().coerceIn(0, 100), false)
+                        applyAccentProgressTint(views, R.id.widget_month_progress, accent)
                         try {
                             val dotsBitmap = createMonthDotsBitmap(context, cache.monthIndex, accent)
                             if (dotsBitmap != null && !dotsBitmap.isRecycled) {
@@ -883,18 +897,20 @@ class UNTILWidgetWorker(
                         val yearLeft = cache.yearDaysLeft.coerceIn(0, 365)
                         val yearProgressClamped = cache.yearProgress.coerceIn(0.0, 1.0)
                         val yearConsumedPct = (yearProgressClamped * 100.0).toInt().coerceIn(0, 100)
-                        val yearLeftPct = (100 - yearConsumedPct).coerceIn(0, 100)
                         views.setTextViewText(
                             R.id.widget_year_passed,
-                            context.getString(R.string.widget_year_passed_format, yearPassed, yearConsumedPct)
+                            context.getString(R.string.widget_year_passed_format, yearPassed)
                         )
                         views.setTextViewText(
                             R.id.widget_year_left,
-                            context.getString(R.string.widget_year_left_format, yearLeft, yearLeftPct)
+                            context.getString(R.string.widget_year_left_format, yearLeft)
                         )
                         views.setTextViewText(R.id.widget_year_percent, context.getString(R.string.widget_year_percent_format, yearConsumedPct))
+                        views.setTextColor(R.id.widget_year_passed, Color.parseColor("#8E8E93"))
+                        views.setTextColor(R.id.widget_year_left, Color.parseColor("#F2F2F2"))
                         views.setTextColor(R.id.widget_year_percent, accent)
                         views.setProgressBar(R.id.widget_year_progress, 100, yearConsumedPct, false)
+                        applyAccentProgressTint(views, R.id.widget_year_progress, accent)
                         try {
                             val dotsBitmap = createYearDotsBitmap(context, yearProgressClamped, yearPassed, accent)
                             if (dotsBitmap != null && !dotsBitmap.isRecycled) {
@@ -1211,8 +1227,8 @@ class UNTILWidgetWorker(
                 val totalDots = 12
                 val cols = 6
                 val rows = 2
-                val bitmapWidth = 420
-                val bitmapHeight = 140
+                val bitmapWidth = 480
+                val bitmapHeight = 160
                 val bitmap = Bitmap.createBitmap(bitmapWidth, bitmapHeight, Bitmap.Config.ARGB_8888)
                 val canvas = Canvas(bitmap)
 
@@ -1223,7 +1239,7 @@ class UNTILWidgetWorker(
                     color = accentColor
                 }
                 val remainingPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-                    color = Color.parseColor("#666666")
+                    color = Color.parseColor("#4A4A4E")
                 }
 
                 val idx = monthIndex.coerceIn(1, 12)
@@ -1232,9 +1248,8 @@ class UNTILWidgetWorker(
 
                 val cellW = bitmapWidth / cols.toFloat()
                 val cellH = bitmapHeight / rows.toFloat()
-                // Slightly larger month dots for better readability.
-                val radius = 8f
-                val currentRadius = radius * 1.45f
+                val radius = 13f
+                val currentRadius = radius * 1.4f
 
                 for (i in 0 until totalDots) {
                     val col = i % cols
@@ -1272,13 +1287,13 @@ class UNTILWidgetWorker(
                 val cols = 25
                 val totalDots = 365
                 val rows = Math.ceil(totalDots / cols.toDouble()).toInt()
-                val dotSize = 10
-                val gap = 6
+                val dotSize = 11
+                val gap = 5
                 val step = (dotSize + gap).toFloat()
                 val width = (cols * step).toInt().coerceAtMost(900).coerceAtLeast(1)
                 val height = (rows * step).toInt().coerceAtMost(900).coerceAtLeast(1)
                 val radius = (dotSize / 2f).coerceAtLeast(1f)
-                val currentRadius = radius * 1.3f // Make current dot slightly larger for interactivity
+                val currentRadius = radius * 1.35f
 
                 val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
                 val canvas = Canvas(bitmap)
@@ -1290,7 +1305,7 @@ class UNTILWidgetWorker(
                     color = accentColor
                 }
                 val remainingPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-                    color = Color.parseColor("#666666")
+                    color = Color.parseColor("#4A4A4E")
                 }
 
                 val passedDots = yearDaysPassed.coerceIn(0, totalDots)
@@ -1465,7 +1480,5 @@ private data class WidgetCache(
     val remainingDaysLife: Int? = null,
     val lifePercent: Int? = null,
     val accentColor: String? = null,
-    val presenceStreakCount: Int = 0,
-    val presenceStreakDots: List<Boolean> = List(7) { false },
     val updatedAt: Long = 0L
 )

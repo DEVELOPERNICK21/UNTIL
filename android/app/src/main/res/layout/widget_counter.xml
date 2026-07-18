@@ -5,28 +5,29 @@
     android:layout_height="match_parent"
     android:background="@drawable/widget_background"
     android:orientation="vertical"
-    android:padding="16dp"
+    android:padding="12dp"
     android:gravity="center">
 
     <TextView
         android:id="@+id/widget_counter_title"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:textColor="#AAAAAA"
-        android:textSize="12sp"
+        android:textColor="#9A9A9A"
+        android:textSize="11sp"
         android:textStyle="bold"
         android:gravity="center"
         android:maxLines="1"
         android:ellipsize="end"
+        android:letterSpacing="0.04"
         android:text="Counter" />
 
     <TextView
         android:id="@+id/widget_counter_count"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:textColor="#BB86FC"
-        android:textSize="28sp"
+        android:layout_marginTop="6dp"
+        android:textColor="#E87C20"
+        android:textSize="32sp"
         android:textStyle="bold"
         android:gravity="center"
         android:text="0" />

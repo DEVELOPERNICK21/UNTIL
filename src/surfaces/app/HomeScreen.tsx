@@ -149,27 +149,14 @@ function scrollRevealStyle(
   if (!scrollY) {
     return undefined;
   }
-  const start = Math.max(0, index * 72 - 24);
-  const mid = start + 90;
-  const end = mid + 140;
+  // Motion only — no opacity fade (kept cards uneven / washed out down the list).
+  const mid = Math.max(0, index * 72) + 90;
   return {
-    opacity: scrollY.interpolate({
-      inputRange: [0, start, mid, end],
-      outputRange: [1, 1, 0.92, 0.55],
-      extrapolate: 'clamp' as const,
-    }),
     transform: [
       {
         translateY: scrollY.interpolate({
-          inputRange: [0, mid, end + 80],
-          outputRange: [0, -6 * index * 0.35, -14 - index * 2],
-          extrapolate: 'clamp' as const,
-        }),
-      },
-      {
-        scale: scrollY.interpolate({
-          inputRange: [0, mid, end + 60],
-          outputRange: [1, 0.995, 0.97],
+          inputRange: [0, mid, mid + 160],
+          outputRange: [0, -4 * Math.min(index, 2) * 0.35, -8],
           extrapolate: 'clamp' as const,
         }),
       },
@@ -826,7 +813,6 @@ const styles = StyleSheet.create({
   },
   comingSoonBlock: {
     marginBottom: Spacing[4],
-    opacity: 0.85,
   },
   blockHeader: {
     flexDirection: 'row',

@@ -16,19 +16,19 @@
     <string name="widget_day_time_left_format">%1$dh %2$dm left</string>
     <string name="widget_day_time_passed_sec_format">%1$dh %2$dm %3$ds passed</string>
     <string name="widget_day_time_left_sec_format">%1$dh %2$dm %3$ds left</string>
-    <string name="widget_month_passed_format">%1$d Days Passed</string>
-    <string name="widget_month_left_format">%1$d Days Left</string>
-    <string name="widget_month_percent_format">%d%% Month Left</string>
-    <string name="widget_year_passed_format">%1$dd passed (%2$d%%)</string>
-    <string name="widget_year_left_format">%1$dd left (%2$d%%)</string>
-    <string name="widget_year_percent_format">%d%% consumed</string>
+    <string name="widget_month_passed_format">%1$dd passed</string>
+    <string name="widget_month_left_format">%1$dd left</string>
+    <string name="widget_month_percent_format">%d%%</string>
+    <string name="widget_year_passed_format">%1$dd passed</string>
+    <string name="widget_year_left_format">%1$dd left</string>
+    <string name="widget_year_percent_format">%d%%</string>
 
     <string name="widget_life_description">Life progress when birth date is set in Until.</string>
     <string name="widget_life_passed_years_format">%1$s years lived (%2$d%%)</string>
     <string name="widget_life_left_years_format">%1$s years left (%2$d%%)</string>
     <string name="widget_life_passed_years_compact_format">%1$sy lived</string>
     <string name="widget_life_left_years_compact_format">%1$sy left</string>
-    <string name="widget_life_percent_format">%d%% of life</string>
+    <string name="widget_life_percent_format">%d%%</string>
     <string name="widget_life_locked">Premium required</string>
     <string name="widget_month_locked">Month · Premium</string>
     <string name="widget_premium_unlock_line">Open Until to upgrade</string>

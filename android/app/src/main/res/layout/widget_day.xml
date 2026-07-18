@@ -5,7 +5,7 @@
     android:layout_height="match_parent"
     android:background="@drawable/widget_background"
     android:orientation="vertical"
-    android:padding="16dp"
+    android:padding="12dp"
     android:gravity="center">
 
     <ImageView
@@ -13,9 +13,8 @@
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:layout_marginBottom="12dp"
+        android:layout_marginBottom="8dp"
         android:scaleType="fitCenter"
-        android:adjustViewBounds="true"
         android:layout_gravity="center_horizontal"
         android:contentDescription="@null" />
 
@@ -23,18 +22,15 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:gravity="center"
-        android:layout_gravity="center_horizontal"
-        android:paddingLeft="8dp"
-        android:paddingRight="8dp">
+        android:gravity="center">
 
         <TextView
             android:id="@+id/widget_day_done"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:textColor="#FF3B30"
-            android:textSize="13sp"
+            android:textColor="#8E8E93"
+            android:textSize="12sp"
             android:textStyle="bold"
             android:gravity="center"
             android:maxLines="1"
@@ -46,8 +42,8 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:textColor="#34C759"
-            android:textSize="13sp"
+            android:textColor="#E87C20"
+            android:textSize="12sp"
             android:textStyle="bold"
             android:gravity="center"
             android:maxLines="1"
@@ -61,18 +57,15 @@
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:gravity="center"
-        android:layout_gravity="center_horizontal"
-        android:layout_marginTop="8dp"
-        android:paddingLeft="8dp"
-        android:paddingRight="8dp">
+        android:layout_marginTop="4dp">
 
         <TextView
             android:id="@+id/widget_day_hours_passed"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:textColor="#AAAAAA"
-            android:textSize="12sp"
+            android:textColor="#9A9A9A"
+            android:textSize="11sp"
             android:gravity="center"
             android:maxLines="1"
             android:ellipsize="end"
@@ -83,8 +76,8 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:textColor="#EEEEEE"
-            android:textSize="12sp"
+            android:textColor="#EDEDED"
+            android:textSize="11sp"
             android:textStyle="bold"
             android:gravity="center"
             android:maxLines="1"

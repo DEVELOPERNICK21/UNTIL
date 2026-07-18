@@ -17,7 +17,7 @@ import {
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { Text, ScreenGradient, Card } from '../../ui';
+import { Text, ScreenGradient, GlassCard } from '../../ui';
 import {
   useObserveTimeState,
   useUpdateUserProfile,
@@ -205,59 +205,67 @@ export function SettingsScreen() {
               >
                 ACCOUNT
               </Text>
-              <TouchableOpacity
-                style={[styles.row, { borderBottomColor: theme.divider }]}
-                onPress={() => setShowEditProfile(!showEditProfile)}
-                activeOpacity={0.7}
-              >
-                <View style={styles.rowContent}>
-                  <Text variant="body" style={{ color: theme.textPrimary }}>
-                    Birth & lifespan
-                  </Text>
+              <GlassCard style={styles.sectionCard}>
+                <TouchableOpacity
+                  style={[styles.row, { borderBottomColor: theme.glassBorder }]}
+                  onPress={() => setShowEditProfile(!showEditProfile)}
+                  activeOpacity={0.7}
+                >
+                  <View style={styles.rowContent}>
+                    <Text variant="body" style={{ color: theme.textPrimary }}>
+                      Birth & lifespan
+                    </Text>
+                    <Text
+                      variant="caption"
+                      style={[
+                        styles.rowSubtitle,
+                        { color: theme.textSecondary },
+                      ]}
+                    >
+                      {userProfile.birthDate
+                        ? `${userProfile.birthDate} · ${userProfile.deathAge} years`
+                        : 'Tap to set'}
+                    </Text>
+                  </View>
                   <Text
-                    variant="caption"
-                    style={[styles.rowSubtitle, { color: theme.textSecondary }]}
+                    style={[styles.chevron, { color: theme.textSecondary }]}
                   >
-                    {userProfile.birthDate
-                      ? `${userProfile.birthDate} · ${userProfile.deathAge} years`
-                      : 'Tap to set'}
+                    ›
                   </Text>
-                </View>
-                <Text style={[styles.chevron, { color: theme.textSecondary }]}>
-                  ›
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[
-                  styles.row,
-                  styles.rowLast,
-                  { borderBottomColor: theme.divider },
-                ]}
-                onPress={() => navigation.navigate('Premium')}
-                activeOpacity={0.7}
-              >
-                <View style={styles.rowContent}>
-                  <Text variant="body" style={{ color: theme.textPrimary }}>
-                    Premium
-                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.row, styles.rowLast]}
+                  onPress={() => navigation.navigate('Premium')}
+                  activeOpacity={0.7}
+                >
+                  <View style={styles.rowContent}>
+                    <Text variant="body" style={{ color: theme.textPrimary }}>
+                      Premium
+                    </Text>
+                    <Text
+                      variant="caption"
+                      style={[
+                        styles.rowSubtitle,
+                        { color: theme.textSecondary },
+                      ]}
+                    >
+                      {isPremium
+                        ? 'Active — manage in Google Play'
+                        : 'Yearly subscription or lifetime'}
+                    </Text>
+                  </View>
                   <Text
-                    variant="caption"
-                    style={[styles.rowSubtitle, { color: theme.textSecondary }]}
+                    style={[styles.chevron, { color: theme.textSecondary }]}
                   >
-                    {isPremium
-                      ? 'Active — manage in Google Play'
-                      : 'Yearly subscription or lifetime'}
+                    ›
                   </Text>
-                </View>
-                <Text style={[styles.chevron, { color: theme.textSecondary }]}>
-                  ›
-                </Text>
-              </TouchableOpacity>
+                </TouchableOpacity>
+              </GlassCard>
             </View>
 
             {/* Edit profile card — inline when expanded */}
             {showEditProfile && (
-              <Card style={styles.editCard}>
+              <GlassCard style={styles.editCard}>
                 <Text
                   variant="caption"
                   color="secondary"
@@ -266,7 +274,7 @@ export function SettingsScreen() {
                   Birth date
                 </Text>
                 <TouchableOpacity
-                  style={[styles.input, { borderColor: theme.divider }]}
+                  style={[styles.input, { borderColor: theme.glassBorder }]}
                   onPress={() => setShowBirthPicker(true)}
                 >
                   <Text
@@ -310,7 +318,7 @@ export function SettingsScreen() {
                   style={[
                     styles.input,
                     {
-                      borderColor: theme.divider,
+                      borderColor: theme.glassBorder,
                       color: theme.textPrimary,
                     },
                   ]}
@@ -329,7 +337,7 @@ export function SettingsScreen() {
                     Save
                   </Text>
                 </TouchableOpacity>
-              </Card>
+              </GlassCard>
             )}
 
             {/* CONFIGURATION */}
@@ -340,132 +348,146 @@ export function SettingsScreen() {
               >
                 CONFIGURATION
               </Text>
-              <TouchableOpacity
-                style={[
-                  styles.row,
-                  { borderBottomColor: theme.divider },
-                ]}
-                onPress={() => navigation.navigate('Widget')}
-                activeOpacity={0.7}
-              >
-                <View style={styles.rowContent}>
-                  <Text variant="body" style={{ color: theme.textPrimary }}>
-                    Widget Design
-                  </Text>
+              <GlassCard style={styles.sectionCard}>
+                <TouchableOpacity
+                  style={[styles.row, { borderBottomColor: theme.glassBorder }]}
+                  onPress={() => navigation.navigate('Widget')}
+                  activeOpacity={0.7}
+                >
+                  <View style={styles.rowContent}>
+                    <Text variant="body" style={{ color: theme.textPrimary }}>
+                      Widget Design
+                    </Text>
+                    <Text
+                      variant="caption"
+                      style={[
+                        styles.rowSubtitle,
+                        { color: theme.textSecondary },
+                      ]}
+                    >
+                      Lockscreen & Home aesthetics
+                    </Text>
+                  </View>
                   <Text
-                    variant="caption"
-                    style={[styles.rowSubtitle, { color: theme.textSecondary }]}
+                    style={[styles.chevron, { color: theme.textSecondary }]}
                   >
-                    Lockscreen & Home aesthetics
+                    ›
                   </Text>
-                </View>
-                <Text style={[styles.chevron, { color: theme.textSecondary }]}>
-                  ›
-                </Text>
-              </TouchableOpacity>
-              <View
-                style={[
-                  styles.row,
-                  { borderBottomColor: theme.divider },
-                ]}
-              >
-                <View style={styles.rowContent}>
-                  <Text variant="body" style={{ color: theme.textPrimary }}>
-                    Lost-time alert limit
-                  </Text>
-                  <Text
-                    variant="caption"
-                    style={[styles.rowSubtitle, { color: theme.textSecondary }]}
-                  >
-                    {hasPremiumBundle
-                      ? 'Red alert when wasted hours hit this daily cap.'
-                      : 'Premium — nudge when you lose too much of today.'}
-                  </Text>
-                  {hasPremiumBundle ? (
-                    <View style={styles.limitChips}>
-                      {[1, 2, 3].map((h) => (
-                        <TouchableOpacity
-                          key={h}
-                          style={[
-                            styles.limitChip,
-                            {
-                              borderColor:
-                                limitHours === h ? theme.percent : theme.divider,
-                              backgroundColor:
-                                limitHours === h
-                                  ? 'rgba(232, 124, 32, 0.14)'
-                                  : 'transparent',
-                            },
-                          ]}
-                          onPress={() => {
-                            setLimitHours(h);
-                            void logAnalyticsEvent('intervention_limit_changed', {
-                              hours: h,
-                            });
-                          }}
-                          activeOpacity={0.8}
-                        >
-                          <Text
-                            variant="caption"
-                            style={{
-                              color:
-                                limitHours === h
-                                  ? theme.percent
-                                  : theme.textSecondary,
+                </TouchableOpacity>
+                <View
+                  style={[styles.row, { borderBottomColor: theme.glassBorder }]}
+                >
+                  <View style={styles.rowContent}>
+                    <Text variant="body" style={{ color: theme.textPrimary }}>
+                      Lost-time alert limit
+                    </Text>
+                    <Text
+                      variant="caption"
+                      style={[
+                        styles.rowSubtitle,
+                        { color: theme.textSecondary },
+                      ]}
+                    >
+                      {hasPremiumBundle
+                        ? 'Red alert when wasted hours hit this daily cap.'
+                        : 'Premium — nudge when you lose too much of today.'}
+                    </Text>
+                    {hasPremiumBundle ? (
+                      <View style={styles.limitChips}>
+                        {[1, 2, 3].map(h => (
+                          <TouchableOpacity
+                            key={h}
+                            style={[
+                              styles.limitChip,
+                              {
+                                borderColor:
+                                  limitHours === h
+                                    ? theme.percent
+                                    : theme.glassBorder,
+                                backgroundColor:
+                                  limitHours === h
+                                    ? 'rgba(232, 124, 32, 0.14)'
+                                    : 'rgba(255, 255, 255, 0.04)',
+                              },
+                            ]}
+                            onPress={() => {
+                              setLimitHours(h);
+                              void logAnalyticsEvent(
+                                'intervention_limit_changed',
+                                {
+                                  hours: h,
+                                },
+                              );
                             }}
+                            activeOpacity={0.8}
                           >
-                            {h}h
-                          </Text>
-                        </TouchableOpacity>
-                      ))}
-                    </View>
+                            <Text
+                              variant="caption"
+                              style={{
+                                color:
+                                  limitHours === h
+                                    ? theme.percent
+                                    : theme.textSecondary,
+                              }}
+                            >
+                              {h}h
+                            </Text>
+                          </TouchableOpacity>
+                        ))}
+                      </View>
+                    ) : null}
+                  </View>
+                  {!hasPremiumBundle ? (
+                    <TouchableOpacity
+                      onPress={() => navigation.navigate('Premium')}
+                      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                    >
+                      <Text
+                        style={[
+                          styles.chevron,
+                          { color: theme.textSecondary },
+                        ]}
+                      >
+                        ›
+                      </Text>
+                    </TouchableOpacity>
                   ) : null}
                 </View>
-                {!hasPremiumBundle ? (
-                  <TouchableOpacity
-                    onPress={() => navigation.navigate('Premium')}
-                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                  >
-                    <Text style={[styles.chevron, { color: theme.textSecondary }]}>
-                      ›
+                <View style={[styles.row, styles.rowLast]}>
+                  <View style={styles.rowContent}>
+                    <Text variant="body" style={{ color: theme.textPrimary }}>
+                      Daily Time Reminders
                     </Text>
-                  </TouchableOpacity>
-                ) : null}
-              </View>
-              <View
-                style={[
-                  styles.row,
-                  styles.rowLast,
-                  { borderBottomColor: theme.divider },
-                ]}
-              >
-                <View style={styles.rowContent}>
-                  <Text variant="body" style={{ color: theme.textPrimary }}>
-                    Daily Time Reminders
-                  </Text>
-                  <Text
-                    variant="caption"
-                    style={[styles.rowSubtitle, { color: theme.textSecondary }]}
-                  >
-                    One useful reminder per day. Uses your real progress. No spam.
-                  </Text>
+                    <Text
+                      variant="caption"
+                      style={[
+                        styles.rowSubtitle,
+                        { color: theme.textSecondary },
+                      ]}
+                    >
+                      One useful reminder per day. Uses your real progress. No
+                      spam.
+                    </Text>
+                  </View>
+                  <Switch
+                    value={retentionRemindersEnabled}
+                    onValueChange={handleRetentionReminderToggle}
+                    trackColor={{
+                      false: theme.divider,
+                      true: 'rgba(232, 124, 32, 0.45)',
+                    }}
+                    thumbColor={
+                      retentionRemindersEnabled
+                        ? theme.percent
+                        : theme.textSecondary
+                    }
+                  />
                 </View>
-                <Switch
-                  value={retentionRemindersEnabled}
-                  onValueChange={handleRetentionReminderToggle}
-                  trackColor={{
-                    false: theme.divider,
-                    true: 'rgba(232, 124, 32, 0.45)',
-                  }}
-                  thumbColor={
-                    retentionRemindersEnabled ? theme.percent : theme.textSecondary
-                  }
-                />
-              </View>
+              </GlassCard>
             </View>
 
             {/* Intentionality Focus card */}
-            <Card style={styles.intentCard} lighter>
+            <GlassCard style={styles.intentCard}>
               <Text
                 variant="title"
                 style={[styles.intentTitle, { color: theme.textPrimary }]}
@@ -486,7 +508,10 @@ export function SettingsScreen() {
                   activeOpacity={0.7}
                 >
                   <View
-                    style={[styles.radioOuter, { borderColor: theme.divider }]}
+                    style={[
+                      styles.radioOuter,
+                      { borderColor: theme.glassBorder },
+                    ]}
                   >
                     {intentionality === 'quiet' && (
                       <View
@@ -510,7 +535,10 @@ export function SettingsScreen() {
                   activeOpacity={0.7}
                 >
                   <View
-                    style={[styles.radioOuter, { borderColor: theme.divider }]}
+                    style={[
+                      styles.radioOuter,
+                      { borderColor: theme.glassBorder },
+                    ]}
                   >
                     {intentionality === 'radical' && (
                       <View
@@ -529,7 +557,7 @@ export function SettingsScreen() {
                   </Text>
                 </TouchableOpacity>
               </View>
-            </Card>
+            </GlassCard>
 
             <View
               style={[styles.versionRow, { borderTopColor: theme.divider }]}
@@ -605,6 +633,10 @@ const styles = StyleSheet.create({
     marginBottom: Spacing[2],
     marginLeft: Spacing[1],
   },
+  sectionCard: {
+    paddingVertical: Spacing[1],
+    paddingHorizontal: Spacing[3],
+  },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -649,6 +681,7 @@ const styles = StyleSheet.create({
     marginBottom: Spacing[3],
     minHeight: 48,
     justifyContent: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.04)',
   },
   inputText: {
     fontSize: Typography.label,

@@ -28,9 +28,9 @@ export const Colors = {
   accent: '#EDEDED',
   success: '#22AA22',
   percent: '#E87C20',
-  glassBg: 'rgba(255, 255, 255, 0.07)',
-  glassBorder: 'rgba(255, 255, 255, 0.14)',
-  glassHighlight: 'rgba(255, 255, 255, 0.08)',
+  glassBg: 'rgba(40, 40, 46, 0.72)',
+  glassBorder: 'rgba(255, 255, 255, 0.18)',
+  glassHighlight: 'rgba(255, 255, 255, 0.1)',
 } as const;
 
 /** Splash screen palette — light theme, single SSOT for splash UI */
@@ -142,10 +142,11 @@ export const Shadows = {
   },
   glass: {
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.35,
-    shadowRadius: 20,
-    elevation: 8,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.25,
+    shadowRadius: 16,
+    // Keep glass elevation low — high elevation + radius caused inner square on Android
+    elevation: 2,
   },
   fab: {
     shadowColor: '#000',

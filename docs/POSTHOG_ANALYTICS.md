@@ -6,29 +6,30 @@ Full implementation spec: [`POSTHOG_ANALYTICS_SPEC.md`](./POSTHOG_ANALYTICS_SPEC
 
 ## Setup
 
-1. Create a PostHog project at [us.posthog.com](https://us.posthog.com) and copy the **Project API Key** (`phc_...`).
-2. Copy the example config and add your key:
+1. Open [Project settings](https://us.posthog.com/project/472860/settings) and copy the **Project API Key** (`phc_...`).
+2. Either:
+
+   **A. `.env` (preferred for Metro)**
+
+   ```bash
+   cp .env.example .env
+   # set UNTIL_POSTHOG_API_KEY=phc_...
+   # keep UNTIL_POSTHOG_DEV=1 for local builds
+   ```
+
+   Babel loads `.env` via `dotenv` and inlines `UNTIL_POSTHOG_*` into the JS bundle.
+
+   **B. Local override file**
 
    ```bash
    cp src/config/analytics.ts.example src/config/analytics.local.ts
    ```
 
-3. Edit `src/config/analytics.local.ts`:
+   Set `POSTHOG_API_KEY` and keep `POSTHOG_DEV_ENABLED = true`.
 
-   ```ts
-   export const POSTHOG_API_KEY = 'phc_your_key_here';
-   export const POSTHOG_HOST = 'https://us.i.posthog.com';
-   export const POSTHOG_DEV_ENABLED = true; // optional: test in __DEV__
-   ```
+3. Restart Metro with a clean cache (`yarn start --reset-cache`), then rebuild.
 
-4. Install native deps (iOS):
-
-   ```bash
-   yarn install
-   cd ios && pod install && cd ..
-   ```
-
-5. Rebuild the app. In PostHog → **Activity**, confirm events appear.
+4. Confirm: Metro/device logs `[PostHog] enabled → …`, and events appear in PostHog → **Activity**.
 
 ## Lifecycle
 
@@ -68,8 +69,9 @@ See [`FIREBASE_ANALYTICS.md`](./FIREBASE_ANALYTICS.md) for widget / onboarding e
 
 ## Dev
 
-- Without `analytics.local.ts` key, PostHog is disabled; events log to console in `__DEV__`.
-- Firebase events still send when `google-services.json` is present.
+- Without a Project API Key, PostHog is disabled; look for `[PostHog] disabled` in Metro logs. Firebase still works when `google-services.json` is present.
+- In `__DEV__`, you also need `UNTIL_POSTHOG_DEV=1` or `POSTHOG_DEV_ENABLED = true` (both are set in the examples).
+- After changing `.env` or `analytics.local.ts`, restart Metro with `--reset-cache`.
 
 ## Privacy
 

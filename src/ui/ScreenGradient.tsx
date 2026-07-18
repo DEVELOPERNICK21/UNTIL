@@ -36,13 +36,43 @@ export function ScreenGradient({ children, style }: ScreenGradientProps) {
             id="warmGlow"
             cx="78%"
             cy="8%"
-            rx="55%"
-            ry="38%"
+            rx="60%"
+            ry="42%"
           >
             <Stop
               offset="0"
               stopColor={glow}
-              stopOpacity={isLight ? 0.14 : 0.22}
+              stopOpacity={isLight ? 0.2 : 0.38}
+            />
+            <Stop offset="1" stopColor={glow} stopOpacity={0} />
+          </RadialGradient>
+          {/* Mid-field glow — glass cards need visible atmosphere behind them */}
+          <RadialGradient
+            id="midGlow"
+            cx="50%"
+            cy="42%"
+            rx="85%"
+            ry="48%"
+          >
+            <Stop
+              offset="0"
+              stopColor={glow}
+              stopOpacity={isLight ? 0.14 : 0.28}
+            />
+            <Stop offset="0.55" stopColor={glow} stopOpacity={isLight ? 0.05 : 0.1} />
+            <Stop offset="1" stopColor={glow} stopOpacity={0} />
+          </RadialGradient>
+          <RadialGradient
+            id="sideGlow"
+            cx="8%"
+            cy="58%"
+            rx="45%"
+            ry="32%"
+          >
+            <Stop
+              offset="0"
+              stopColor={glow}
+              stopOpacity={isLight ? 0.08 : 0.14}
             />
             <Stop offset="1" stopColor={glow} stopOpacity={0} />
           </RadialGradient>
@@ -69,6 +99,8 @@ export function ScreenGradient({ children, style }: ScreenGradientProps) {
           height={height}
           fill="url(#warmGlow)"
         />
+        <Rect x={0} y={0} width={width} height={height} fill="url(#midGlow)" />
+        <Rect x={0} y={0} width={width} height={height} fill="url(#sideGlow)" />
         <Rect
           x={0}
           y={0}

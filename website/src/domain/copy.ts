@@ -3,10 +3,11 @@
  * No duplicated strings; components import from here.
  */
 
+import { PRICING_DISPLAY, WEBSITE_PRICING, formatInr } from './pricing';
+
 export const LANDING_COPY = {
-  /** Top-of-page price/offer line (e.g. "Intro price — Premium ₹99") */
-  introPriceLine:
-    'Start free. Premium: 5-day app preview, then ₹499/year or ₹1,499 lifetime on Android.',
+  /** Top-of-page price line */
+  introPriceLine: PRICING_DISPLAY.introLine,
 
   hero: {
     title: 'See your time.',
@@ -111,7 +112,7 @@ export const LANDING_COPY = {
       {
         question: 'Is Until free or paid?',
         answer:
-          'Until has a free core experience (day/year progress and sharing). Premium unlocks month/life widgets, full Life progress, Dynamic Island on iOS, and floating overlay on Android. Start with a 5-day free app preview, then ₹499/year or a one-time ₹1,499 lifetime on Android.',
+          `Until has a free core experience (day/year progress and sharing). Premium unlocks month/life widgets, full Life progress, lost-time alerts, widget accents, Dynamic Island on iOS, and floating overlay on Android. Start with a ${WEBSITE_PRICING.trialDays}-day free app preview, then ${formatInr(WEBSITE_PRICING.yearlyInr)}/year, ${formatInr(WEBSITE_PRICING.lifetimeInr)} lifetime, ${formatInr(WEBSITE_PRICING.monthlyInr)}/month, or ${formatInr(WEBSITE_PRICING.yearlyStudentInr)}/year student on Android.`,
       },
       {
         question: 'What can I put on widgets?',
@@ -195,13 +196,13 @@ export const LANDING_COPY = {
   /** Pricing CTA block — checkmarks for premium value props */
   pricingCta: {
     title: 'Start free, upgrade when ready',
-    subtitle:
-      'Use core features for free. Premium includes a 5-day free app preview and unlocks advanced surfaces and features.',
+    subtitle: PRICING_DISPLAY.trialLine,
     checkmarks: [
-      'Free core: day + year progress and share snapshot',
-      'Premium: month + life widgets and advanced surfaces',
-      'Dynamic Island (iOS) and overlay (Android)',
-      'Android plans: monthly, yearly, and lifetime',
+      'Free forever: day + year widgets and share snapshot',
+      `Best value: ${PRICING_DISPLAY.yearly} (${PRICING_DISPLAY.yearlyPerDay})`,
+      `${PRICING_DISPLAY.lifetime} · ${PRICING_DISPLAY.monthly}`,
+      `${PRICING_DISPLAY.studentYearly} with school email verify`,
+      'Premium: month/life widgets, overlay, intervention alerts',
     ],
     ctaLabelAndroid: 'Get on Google Play',
     iosComingSoon: 'Coming soon',

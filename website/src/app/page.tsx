@@ -360,7 +360,7 @@ export default function HomePage() {
       {/* Pricing CTA */}
       <section style={{ borderTop: '1px solid var(--divider)' }}>
         <div className="landing-pricing-box">
-          <span className="landing-offer-badge">Limited time offer</span>
+          <span className="landing-offer-badge">{pricing.introBadge}</span>
           <h2
             style={{
               fontSize: '1.35rem',
@@ -397,6 +397,30 @@ export default function HomePage() {
               ) : null}
             </p>
           )}
+          {pricing.secondaryLine ? (
+            <p
+              style={{
+                fontSize: '0.95rem',
+                color: 'var(--text-secondary)',
+                marginBottom: '0.5rem',
+              }}
+            >
+              {pricing.secondaryLine}
+            </p>
+          ) : null}
+          {pricing.perDayLine || pricing.savingsLine ? (
+            <p
+              style={{
+                fontSize: '0.9rem',
+                color: 'var(--text-secondary)',
+                marginBottom: '0.5rem',
+              }}
+            >
+              {[pricing.perDayLine, pricing.savingsLine]
+                .filter(Boolean)
+                .join(' · ')}
+            </p>
+          ) : null}
           <p
             style={{
               fontSize: '0.9rem',

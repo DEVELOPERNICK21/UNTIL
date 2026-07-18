@@ -13,6 +13,12 @@ let sharedClient: PostHog | null = null;
 
 export function initPostHogClient(): PostHog | null {
   if (!POSTHOG_ENABLED || !POSTHOG_API_KEY) {
+    if (__DEV__) {
+      // eslint-disable-next-line no-console
+      console.warn(
+        '[PostHog] disabled — set UNTIL_POSTHOG_API_KEY in .env (and UNTIL_POSTHOG_DEV=1) or fill src/config/analytics.local.ts. See .env.example.'
+      );
+    }
     return null;
   }
   if (!sharedClient) {
@@ -21,6 +27,10 @@ export function initPostHogClient(): PostHog | null {
       captureAppLifecycleEvents: true,
       enableSessionReplay: false,
     });
+    if (__DEV__) {
+      // eslint-disable-next-line no-console
+      console.log(`[PostHog] enabled → ${POSTHOG_HOST}`);
+    }
   }
   return sharedClient;
 }

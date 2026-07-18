@@ -105,15 +105,7 @@ export function InterventionHomeCard() {
   }
 
   return (
-    <GlassCard
-      style={[
-        styles.card,
-        limitCrossed && {
-          borderColor: 'rgba(220, 60, 60, 0.55)',
-          borderWidth: 1,
-        },
-      ]}
-    >
+    <GlassCard style={styles.card}>
       <View style={styles.headerRow}>
         <Text variant="caption" color="secondary" style={styles.eyebrow}>
           TODAY&apos;S LOST TIME
@@ -133,7 +125,10 @@ export function InterventionHomeCard() {
         <View
           style={[
             styles.alert,
-            { backgroundColor: 'rgba(220, 60, 60, 0.12)' },
+            {
+              backgroundColor: 'rgba(220, 60, 60, 0.14)',
+              borderColor: 'rgba(220, 60, 60, 0.35)',
+            },
           ]}
         >
           <Text
@@ -171,10 +166,10 @@ export function InterventionHomeCard() {
           style={[
             styles.actionBtn,
             {
-              borderColor: trackingNothing ? theme.percent : theme.divider,
+              borderColor: trackingNothing ? theme.percent : theme.glassBorder,
               backgroundColor: trackingNothing
                 ? 'rgba(232, 124, 32, 0.14)'
-                : 'transparent',
+                : 'rgba(255, 255, 255, 0.04)',
             },
           ]}
           onPress={handleToggleTrack}
@@ -191,7 +186,13 @@ export function InterventionHomeCard() {
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
-          style={[styles.actionBtn, { borderColor: theme.divider }]}
+          style={[
+            styles.actionBtn,
+            {
+              borderColor: theme.glassBorder,
+              backgroundColor: 'rgba(255, 255, 255, 0.04)',
+            },
+          ]}
           onPress={() => handleQuickAdd(30)}
           activeOpacity={0.8}
         >
@@ -200,7 +201,13 @@ export function InterventionHomeCard() {
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
-          style={[styles.actionBtn, { borderColor: theme.divider }]}
+          style={[
+            styles.actionBtn,
+            {
+              borderColor: theme.glassBorder,
+              backgroundColor: 'rgba(255, 255, 255, 0.04)',
+            },
+          ]}
           onPress={() => handleQuickAdd(60)}
           activeOpacity={0.8}
         >
@@ -247,6 +254,7 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing[3],
     paddingHorizontal: Spacing[3],
     borderRadius: Radius.md,
+    borderWidth: StyleSheet.hairlineWidth * 2,
     gap: Spacing[1],
   },
   overLimitHint: {

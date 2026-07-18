@@ -11,7 +11,6 @@ import {
   Radius,
   Weight,
   getFontFamilyForWeight,
-  Shadows,
 } from '../../theme';
 
 type FeatureTile = {
@@ -98,7 +97,6 @@ export function PaywallFeatureTiles({ onSelect }: PaywallFeatureTilesProps) {
                     : theme.glassBg,
                   transform: [{ scale: on ? 1.03 : 1 }],
                 },
-                Shadows.card,
               ]}
             >
               <PeriodGlyph
@@ -165,6 +163,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing[2],
     borderRadius: Radius.lg,
     borderWidth: 1,
+    overflow: 'hidden',
   },
   blurb: {
     marginTop: Spacing[2],

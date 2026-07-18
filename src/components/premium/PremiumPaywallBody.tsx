@@ -52,6 +52,7 @@ import {
   setPurchaseSuccessListener,
 } from '../../services/purchaseAnalyticsContext';
 import { PaywallVisualHero } from './PaywallVisualHero';
+import { PaywallLossFrame } from './PaywallLossFrame';
 import { PaywallFeatureTiles } from './PaywallFeatureTiles';
 import { PaywallCompareStrip } from './PaywallCompareStrip';
 import {
@@ -338,6 +339,14 @@ export function PremiumPaywallBody({
         subheadline={subheadline}
         lifeProgress={lifeProgress}
       />
+
+      {!isPremium && (
+        <PaywallLossFrame
+          lifeProgress={lifeProgress}
+          trialActive={access.trialActive}
+          trialEndsAtMs={access.trialEndsAt}
+        />
+      )}
 
       {isPremium && (
         <View

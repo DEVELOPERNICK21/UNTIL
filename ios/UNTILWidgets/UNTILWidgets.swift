@@ -217,21 +217,27 @@ private enum Design {
     private static let defaultAccent = Color(red: 0xE8/255, green: 0x7C/255, blue: 0x20/255) // #E87C20 Ember
     private static var resolvedAccent: Color = defaultAccent
 
-    static let background = Color.black
-    static let passed = Color(red: 0xFF/255, green: 0x3B/255, blue: 0x30/255)      // #FF3B30 red
-    static let left = Color(red: 0x34/255, green: 0xC7/255, blue: 0x59/255)        // #34C759 green
+    static let background = Color(red: 0x0E/255, green: 0x0E/255, blue: 0x10/255)
+    /// Passed / consumed — muted, not alarm red
+    static let passed = Color(red: 0x8E/255, green: 0x8E/255, blue: 0x93/255)
+    /// Remaining — bright readable white
+    static let left = Color(red: 0xED/255, green: 0xED/255, blue: 0xED/255)
     static var percent: Color { resolvedAccent }
     static var progressOrange: Color { resolvedAccent }
     static let passedDot = Color(red: 0xBB/255, green: 0x86/255, blue: 0xFC/255)   // #BB86FC purple
     static var currentDot: Color { resolvedAccent }
-    static let remainingDot = Color(red: 0x66/255, green: 0x66/255, blue: 0x66/255) // #666666 gray
-    static let grayLabel = Color(red: 0xAA/255, green: 0xAA/255, blue: 0xAA/255)   // #AAAAAA
-    static let lightText = Color(red: 0xEE/255, green: 0xEE/255, blue: 0xEE/255)     // #EEEEEE
-    static let progressBg = Color(red: 0x44/255, green: 0x44/255, blue: 0x44/255)  // #444444
+    static let remainingDot = Color(red: 0x4A/255, green: 0x4A/255, blue: 0x4E/255)
+    static let grayLabel = Color(red: 0x8A/255, green: 0x8A/255, blue: 0x8E/255)
+    static let lightText = Color(red: 0xF2/255, green: 0xF2/255, blue: 0xF2/255)
+    static let progressBg = Color(red: 0x3A/255, green: 0x34/255, blue: 0x2F/255)
+    static let border = Color.white.opacity(0.20)
     static let labelSize: CGFloat = 12
-    static let valueSize: CGFloat = 18
-    static let bigPercentSize: CGFloat = 20
+    static let valueSize: CGFloat = 16
+    static let bigPercentSize: CGFloat = 30
     static let smallLabelSize: CGFloat = 11
+    static let contentPadding: CGFloat = 14
+    static let stackSpacing: CGFloat = 8
+    static let barHeight: CGFloat = 4
 
     static func applyAccent(from cache: WidgetCache?) {
         if let hex = cache?.accentColor, let color = Color(untilHex: hex) {
@@ -858,9 +864,9 @@ private struct MonthDotsView: View {
     private let totalDots = 12
     private let cols = 6
     private let rows = 2
-    private let dotRadius: CGFloat = 6.5
-    private let currentDotRadius: CGFloat = 10.4
-    private let gap: CGFloat = 8
+    private let dotRadius: CGFloat = 8.5
+    private let currentDotRadius: CGFloat = 12
+    private let gap: CGFloat = 10
 
     var body: some View {
         let idx = (monthIndex ?? 1).clamped(to: 1...12)
@@ -1463,30 +1469,32 @@ struct DayWidgetView: View {
 
                 case .systemSmall:
                     // Hero: ring + Ember; support: leftover %
-                    VStack(spacing: 10) {
+                    VStack(spacing: Design.stackSpacing) {
                         DayDotsView(progress: cache.dayProgress)
                             .frame(maxWidth: .infinity)
                             .layoutPriority(1)
 
                         Text("\(cache.dayPercentLeft)% left")
-                            .font(.system(size: 15, weight: .bold))
+                            .font(.system(size: 14, weight: .bold))
                             .foregroundColor(Design.percent)
                     }
-                    .padding(20)
+                    .padding(Design.contentPadding)
 
                 default: // .systemMedium
                     // Hero: ring + Ember; one support row
-                    VStack(spacing: 12) {
+                    VStack(spacing: Design.stackSpacing) {
                         DayDotsView(progress: cache.dayProgress)
                             .frame(maxWidth: .infinity)
                             .layoutPriority(1)
 
                         Text("\(cache.dayPercentLeft)% left · \(dayTimeLeftText(cache, now: entry.date))")
-                            .font(.system(size: 13, weight: .semibold))
+                            .font(.system(size: 12, weight: .semibold))
                             .foregroundColor(Design.lightText)
                             .multilineTextAlignment(.center)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.85)
                     }
-                    .padding(20)
+                    .padding(Design.contentPadding)
                 }
             } else {
                 EmberEmptyStateView(
@@ -1538,39 +1546,57 @@ struct MonthWidgetView: View {
     }
 
     private func monthContent(cache: WidgetCache) -> some View {
-        VStack(spacing: 12) {
+        VStack(alignment: .leading, spacing: 0) {
+            Text("MONTH")
+                .font(.system(size: 10, weight: .bold))
+                .tracking(1.2)
+                .foregroundColor(Design.grayLabel)
+
             MonthDotsView(progress: cache.monthProgress, monthIndex: cache.monthIndex)
                 .frame(maxWidth: .infinity)
+                .padding(.top, 10)
+                .padding(.bottom, 12)
                 .layoutPriority(1)
 
-            HStack(spacing: 8) {
-                Text("\(cache.monthDaysPassed) Days Passed")
-                    .font(.system(size: 13, weight: .bold))
-                    .foregroundColor(Design.passed)
-                Text("\(cache.monthDaysLeft) Days Left")
-                    .font(.system(size: 13, weight: .bold))
-                    .foregroundColor(Design.left)
+            VStack(spacing: 2) {
+                Text("\(cache.monthPercent)%")
+                    .font(.system(size: 30, weight: .bold))
+                    .foregroundColor(Design.percent)
+                    .minimumScaleFactor(0.8)
+                Text("of month")
+                    .font(.system(size: 11, weight: .medium))
+                    .foregroundColor(Design.grayLabel)
             }
+            .frame(maxWidth: .infinity)
+
+            HStack(spacing: 6) {
+                Text("\(cache.monthDaysPassed)d passed")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundColor(Design.passed)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
+                Spacer(minLength: 4)
+                Text("\(cache.monthDaysLeft)d left")
+                    .font(.system(size: 12, weight: .bold))
+                    .foregroundColor(Design.left)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
+            }
+            .padding(.top, 10)
 
             GeometryReader { geo in
                 ZStack(alignment: .leading) {
-                    RoundedRectangle(cornerRadius: 4)
+                    Capsule()
                         .fill(Design.progressBg)
-                    RoundedRectangle(cornerRadius: 4)
-                        .fill(Design.passedDot)
-                        .frame(width: geo.size.width * cache.monthProgress)
+                    Capsule()
+                        .fill(Design.percent)
+                        .frame(width: max(0, geo.size.width * cache.monthProgress))
                 }
             }
-            .frame(height: 8)
-
-            Text("\(cache.monthPercent)%")
-                .font(.system(size: Design.bigPercentSize, weight: .bold))
-                .foregroundColor(Design.percent)
-            Text("of month")
-                .font(.system(size: Design.smallLabelSize))
-                .foregroundColor(Design.grayLabel)
+            .frame(height: 4)
+            .padding(.top, 6)
         }
-        .padding(16)
+        .padding(14)
     }
 
     private var placeholderView: some View {
@@ -1609,45 +1635,67 @@ struct YearWidgetView: View {
 
     private func yearContent(cache: WidgetCache) -> some View {
         let consumedPct = Int(cache.yearProgress * 100)
-        let leftPct = 100 - consumedPct
 
-        return VStack(spacing: 14) {
+        return VStack(alignment: .leading, spacing: 0) {
+            Text("YEAR")
+                .font(.system(size: 10, weight: .bold))
+                .tracking(1.2)
+                .foregroundColor(Design.grayLabel)
+
             GeometryReader { geo in
-                YearDotsView(progress: cache.yearProgress, yearDaysPassed: cache.yearDaysPassed, availableWidth: geo.size.width, availableHeight: geo.size.height)
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                YearDotsView(
+                    progress: cache.yearProgress,
+                    yearDaysPassed: cache.yearDaysPassed,
+                    availableWidth: geo.size.width,
+                    availableHeight: geo.size.height
+                )
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
             .frame(maxWidth: .infinity)
-            .frame(height: 140)
+            .frame(minHeight: 96)
+            .padding(.top, 10)
+            .padding(.bottom, 12)
             .layoutPriority(1)
+
+            VStack(spacing: 2) {
+                Text("\(consumedPct)%")
+                    .font(.system(size: 30, weight: .bold))
+                    .foregroundColor(Design.percent)
+                    .minimumScaleFactor(0.8)
+                Text("of year")
+                    .font(.system(size: 11, weight: .medium))
+                    .foregroundColor(Design.grayLabel)
+            }
+            .frame(maxWidth: .infinity)
+
+            HStack(spacing: 6) {
+                Text("\(cache.yearDaysPassed)d passed")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundColor(Design.passed)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
+                Spacer(minLength: 4)
+                Text("\(cache.yearDaysLeft)d left")
+                    .font(.system(size: 12, weight: .bold))
+                    .foregroundColor(Design.left)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
+            }
+            .padding(.top, 10)
 
             GeometryReader { geo in
                 ZStack(alignment: .leading) {
-                    RoundedRectangle(cornerRadius: 4)
+                    Capsule()
                         .fill(Design.progressBg)
-                    RoundedRectangle(cornerRadius: 4)
-                        .fill(Design.progressOrange)
-                        .frame(width: geo.size.width * cache.yearProgress)
+                    Capsule()
+                        .fill(Design.percent)
+                        .frame(width: max(0, geo.size.width * cache.yearProgress))
                 }
             }
-            .frame(height: 10)
-
-            HStack(spacing: 8) {
-                Text("\(cache.yearDaysPassed)d passed (\(consumedPct)%)")
-                    .font(.system(size: 15, weight: .bold))
-                    .foregroundColor(Design.passed)
-                Text("\(cache.yearDaysLeft)d left (\(leftPct)%)")
-                    .font(.system(size: 15, weight: .bold))
-                    .foregroundColor(Design.left)
-            }
-
-            Text("\(consumedPct)%")
-                .font(.system(size: 24, weight: .bold))
-                .foregroundColor(Design.percent)
-            Text("of year")
-                .font(.system(size: 13))
-                .foregroundColor(Design.grayLabel)
+            .frame(height: 4)
+            .padding(.top, 6)
         }
-        .padding(20)
+        .padding(14)
     }
 
     private var placeholderView: some View {
@@ -1691,7 +1739,7 @@ struct LifeWidgetView: View {
     private func lifeContent(cache: WidgetCache) -> some View {
         if let metrics = lifeYearMetrics(from: cache) {
             return AnyView(
-                VStack(spacing: 14) {
+                VStack(spacing: Design.stackSpacing) {
                     GeometryReader { geo in
                         LifeYearsDotsView(
                             progress: metrics.livedYears / Double(metrics.totalYears),
@@ -1702,37 +1750,44 @@ struct LifeWidgetView: View {
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                     }
                     .frame(maxWidth: .infinity)
-                    .frame(height: 110)
+                    .frame(minHeight: 72, maxHeight: 100)
                     .layoutPriority(1)
+
+                    HStack(spacing: 6) {
+                        Text("\(formatYears(metrics.livedYears))y lived")
+                            .font(.system(size: Design.labelSize, weight: .semibold))
+                            .foregroundColor(Design.passed)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.8)
+                        Spacer(minLength: 4)
+                        Text("\(formatYears(metrics.leftYears))y left")
+                            .font(.system(size: Design.labelSize, weight: .semibold))
+                            .foregroundColor(Design.left)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.8)
+                    }
 
                     GeometryReader { geo in
                         ZStack(alignment: .leading) {
-                            RoundedRectangle(cornerRadius: 6)
+                            Capsule()
                                 .fill(Design.progressBg)
-                            RoundedRectangle(cornerRadius: 6)
-                                .fill(Design.progressOrange)
+                            Capsule()
+                                .fill(Design.percent)
                                 .frame(width: max(0, geo.size.width * CGFloat(metrics.livedYears / Double(metrics.totalYears))))
                         }
                     }
-                    .frame(height: 10)
+                    .frame(height: Design.barHeight)
 
-                    Text("\(metrics.lifePct)%")
-                        .font(.system(size: 28, weight: .bold))
-                        .foregroundColor(Design.percent)
-                    Text("of life lived")
-                        .font(.system(size: 13))
-                        .foregroundColor(Design.grayLabel)
-
-                    HStack(spacing: 8) {
-                        Text("\(formatYears(metrics.livedYears))y lived")
-                            .font(.system(size: 15, weight: .bold))
-                            .foregroundColor(Design.passed)
-                        Text("\(formatYears(metrics.leftYears))y left")
-                            .font(.system(size: 15, weight: .bold))
-                            .foregroundColor(Design.left)
+                    VStack(spacing: 2) {
+                        Text("\(metrics.lifePct)%")
+                            .font(.system(size: Design.bigPercentSize, weight: .bold))
+                            .foregroundColor(Design.percent)
+                        Text("of life lived")
+                            .font(.system(size: Design.smallLabelSize, weight: .medium))
+                            .foregroundColor(Design.grayLabel)
                     }
                 }
-                .padding(20)
+                .padding(Design.contentPadding)
             )
         }
 
@@ -1759,31 +1814,28 @@ private struct WidgetGlassBackground: View {
             Design.background
             LinearGradient(
                 colors: [
-                    Color.white.opacity(0.10),
+                    Color.white.opacity(0.07),
                     Color.white.opacity(0.02),
-                    Color.black.opacity(0.35),
+                    Color.black.opacity(0.22),
                 ],
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
             )
-            LinearGradient(
-                colors: [
-                    Color(red: 0xE8 / 255, green: 0x7C / 255, blue: 0x20 / 255).opacity(0.12),
-                    Color.clear,
-                ],
-                startPoint: .topTrailing,
-                endPoint: .center
-            )
+            // ContainerRelativeShape follows the system widget corner radius,
+            // so the rim never renders as a mismatched inner rectangle.
+            ContainerRelativeShape()
+                .strokeBorder(Design.border, lineWidth: 1)
         }
     }
 }
 
 private extension View {
     func widgetBackground() -> some View {
-        background(WidgetGlassBackground().ignoresSafeArea())
-            .containerBackground(for: .widget) {
-                WidgetGlassBackground()
-            }
+        // containerBackground only — an extra .background() draws an unclipped
+        // square layer under the content that reads as an inner "square shadow".
+        containerBackground(for: .widget) {
+            WidgetGlassBackground()
+        }
     }
 }
 

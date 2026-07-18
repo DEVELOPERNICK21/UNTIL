@@ -11,7 +11,6 @@ import {
   Radius,
   Weight,
   getFontFamilyForWeight,
-  Shadows,
 } from '../../theme';
 
 export type PaywallPlanOption = {
@@ -81,7 +80,6 @@ export function PaywallPlanCards({
                   ? 'rgba(232, 124, 32, 0.12)'
                   : theme.glassBg,
               },
-              !selected && Shadows.card,
             ]}
           >
             {plan.badge ? (
@@ -158,6 +156,7 @@ const styles = StyleSheet.create({
     borderRadius: Radius.lg,
     padding: Spacing[3],
     position: 'relative',
+    overflow: 'hidden',
   },
   badge: {
     position: 'absolute',

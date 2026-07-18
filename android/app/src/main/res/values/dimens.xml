@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Widget card corner radius. Overridden on v31+ to match the launcher clip
+         radius so corners never show a mismatched dark sliver. -->
+    <dimen name="widget_corner_radius">16dp</dimen>
+</resources>

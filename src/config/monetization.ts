@@ -109,6 +109,52 @@ export const MONETIZATION_PAYWALL_COPY = {
   freeForeverLine: 'Day & year widgets and Share stay free forever.',
 } as const;
 
+/**
+ * Loss-frame (threat) copy — what the user keeps losing without Premium.
+ * Honest claims only; no fake scarcity.
+ */
+export const PAYWALL_LOSS_FRAME = {
+  eyebrow: 'THE COST OF WAITING',
+  headlineFallback: 'Your life is passing whether you watch it or not.',
+  /** `{pct}` = integer percent lived (0–100). */
+  headlineWithLife:
+    "You've lived {pct}% of your life — and it's still rising off-screen.",
+  losses: [
+    'Each month passes unseen — no month widget',
+    'Your life % climbs invisibly — no Life screen',
+    'Lost hours vanish with no red alert',
+  ] as const,
+  /** `{days}` = days left in preview (e.g. "3 days" / "1 day"). */
+  previewFooter:
+    'Your preview ends in {days}. After that, month & life lock.',
+} as const;
+
+export function formatPaywallLossHeadline(
+  lifeProgress: number | undefined
+): string {
+  if (
+    typeof lifeProgress === 'number' &&
+    Number.isFinite(lifeProgress) &&
+    lifeProgress > 0 &&
+    lifeProgress < 1
+  ) {
+    const pct = Math.max(1, Math.min(99, Math.round(lifeProgress * 100)));
+    return PAYWALL_LOSS_FRAME.headlineWithLife.replace('{pct}', String(pct));
+  }
+  return PAYWALL_LOSS_FRAME.headlineFallback;
+}
+
+export function formatPaywallLossPreviewFooter(
+  trialEndsAtMs: number | null,
+  trialActive: boolean
+): string | null {
+  if (!trialActive) return null;
+  const days = trialPreviewDaysLeft(trialEndsAtMs);
+  if (days <= 0) return null;
+  const dayLabel = days === 1 ? '1 day' : `${days} days`;
+  return PAYWALL_LOSS_FRAME.previewFooter.replace('{days}', dayLabel);
+}
+
 export const PREMIUM_BENEFITS = [
   'Month & Life home screen widgets',
   'Full Life progress screen',

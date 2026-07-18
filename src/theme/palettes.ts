@@ -47,9 +47,9 @@ export const darkPalette: ThemePalette = {
   accent: '#EDEDED',
   success: '#22AA22',
   percent: '#E87C20',
-  glassBg: 'rgba(255, 255, 255, 0.07)',
-  glassBorder: 'rgba(255, 255, 255, 0.14)',
-  glassHighlight: 'rgba(255, 255, 255, 0.08)',
+  glassBg: 'rgba(40, 40, 46, 0.72)',
+  glassBorder: 'rgba(255, 255, 255, 0.18)',
+  glassHighlight: 'rgba(255, 255, 255, 0.1)',
   statusBarStyle: 'light-content',
 };
 
@@ -71,9 +71,9 @@ export const lightPalette: ThemePalette = {
   accent: '#1A1A1A',
   success: '#16A34A',
   percent: '#E87C20',
-  glassBg: 'rgba(255, 255, 255, 0.78)',
-  glassBorder: 'rgba(26, 26, 26, 0.10)',
-  glassHighlight: 'rgba(255, 255, 255, 0.55)',
+  glassBg: 'rgba(255, 255, 255, 0.92)',
+  glassBorder: 'rgba(26, 26, 26, 0.08)',
+  glassHighlight: 'rgba(255, 255, 255, 0.7)',
   statusBarStyle: 'dark-content',
 };
 

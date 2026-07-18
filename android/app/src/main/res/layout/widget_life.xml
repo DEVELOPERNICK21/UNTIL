@@ -5,20 +5,18 @@
     android:layout_height="match_parent"
     android:background="@drawable/widget_background"
     android:orientation="vertical"
-    android:padding="12dp"
-    android:gravity="center_horizontal|top">
+    android:padding="14dp"
+    android:gravity="center">
 
+    <!-- fitCenter without adjustViewBounds keeps the dots centered in the
+         flexible area instead of pinning them to the top with dead space. -->
     <ImageView
         android:id="@+id/widget_life_dots"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:minHeight="120dp"
-        android:maxHeight="190dp"
-        android:layout_marginTop="4dp"
         android:layout_marginBottom="8dp"
         android:scaleType="fitCenter"
-        android:adjustViewBounds="true"
         android:layout_gravity="center_horizontal"
         android:contentDescription="@null" />
 
@@ -26,18 +24,17 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:gravity="center"
-        android:layout_gravity="center_horizontal">
+        android:gravity="center">
 
         <TextView
             android:id="@+id/widget_life_passed"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:textColor="#FF3B30"
+            android:textColor="#8E8E93"
             android:textSize="12sp"
             android:textStyle="bold"
-            android:gravity="center"
+            android:gravity="start"
             android:maxLines="1"
             android:ellipsize="end"
             android:text="0y lived" />
@@ -47,10 +44,10 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:textColor="#34C759"
+            android:textColor="#EDEDED"
             android:textSize="12sp"
             android:textStyle="bold"
-            android:gravity="center"
+            android:gravity="end"
             android:maxLines="1"
             android:ellipsize="end"
             android:text="0y left" />
@@ -60,14 +57,14 @@
         android:id="@+id/widget_life_percent"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="2dp"
+        android:layout_marginTop="6dp"
         android:layout_gravity="center_horizontal"
-        android:textColor="#E9A23A"
-        android:textSize="24sp"
+        android:textColor="#E87C20"
+        android:textSize="18sp"
         android:textStyle="bold"
         android:maxLines="1"
         android:ellipsize="end"
-        android:text="0% of life" />
+        android:text="0%" />
 
     <TextView
         android:id="@+id/widget_life_label"
@@ -75,8 +72,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="2dp"
         android:layout_gravity="center_horizontal"
-        android:textColor="#AAAAAA"
-        android:textSize="11sp"
-        android:text="your life" />
+        android:textColor="#9A9A9A"
+        android:textSize="10sp"
+        android:text="of life lived" />
 </LinearLayout>
-
