@@ -68,6 +68,13 @@ Design: [`docs/superpowers/specs/2026-07-14-apple-watch-day-design.md`](./superp
 5. Tap the complication → Day detail should open on the watch.
 6. Force-quit / reinstall Watch app → empty copy until the next phone sync.
 
+### Accessibility (required for App Review)
+
+On the Watch: **Settings → Accessibility → Text Size** — slide to the largest size, then open the Day detail screen.
+
+- Text must grow with the system setting (no fixed pt-only fonts).
+- Nothing may be clipped by the screen edge — content scrolls if needed.
+
 ---
 
 ## Sync payload

@@ -14,7 +14,7 @@ android {
         minSdk 30
         targetSdk rootProject.ext.targetSdkVersion
         // Must differ from phone versionCode in the same Play release (phone is 16).
-        versionCode 18
+        versionCode 19
         versionName "1.1"
     }
       signingConfigs {

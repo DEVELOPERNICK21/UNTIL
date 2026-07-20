@@ -25,7 +25,8 @@ import {
 } from './hooks';
 import { TrialEndingModal } from './components/premium/TrialEndingModal';
 import { AppEngagementLayer } from './components/engagement/AppEngagementLayer';
-import { logAppOpen } from './services/analytics';
+import { logAppOpen, initCrashlyticsCollection } from './services/analytics';
+import { CrashErrorBoundary } from './components/CrashErrorBoundary';
 import { initPostHogClient } from './services/posthogClient';
 import { POSTHOG_HOST, POSTHOG_ENABLED } from './config/analytics';
 import {
@@ -119,6 +120,7 @@ function App() {
   }, [showSplash]);
 
   useEffect(() => {
+    initCrashlyticsCollection();
     verifySubscriptionUseCase.execute().then(() => {
       syncPremiumStatus();
     });
@@ -219,7 +221,9 @@ function App() {
   if (showSplash) {
     return (
       <SafeAreaProvider>
-        <SplashScreen durationMs={SPLASH_DURATION_MS} />
+        <CrashErrorBoundary>
+          <SplashScreen durationMs={SPLASH_DURATION_MS} />
+        </CrashErrorBoundary>
       </SafeAreaProvider>
     );
   }
@@ -232,20 +236,22 @@ function App() {
 
   return (
     <SafeAreaProvider>
-      {posthogClient && POSTHOG_ENABLED ? (
-        <PostHogProvider
-          client={posthogClient}
-          autocapture={{
-            captureScreens: false,
-            captureTouches: false,
-          }}
-          options={{ host: POSTHOG_HOST }}
-        >
-          {appTree}
-        </PostHogProvider>
-      ) : (
-        appTree
-      )}
+      <CrashErrorBoundary>
+        {posthogClient && POSTHOG_ENABLED ? (
+          <PostHogProvider
+            client={posthogClient}
+            autocapture={{
+              captureScreens: false,
+              captureTouches: false,
+            }}
+            options={{ host: POSTHOG_HOST }}
+          >
+            {appTree}
+          </PostHogProvider>
+        ) : (
+          appTree
+        )}
+      </CrashErrorBoundary>
     </SafeAreaProvider>
   );
 }

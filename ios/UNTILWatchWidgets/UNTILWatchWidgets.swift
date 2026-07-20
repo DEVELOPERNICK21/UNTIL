@@ -62,22 +62,30 @@ struct DayWatchCircularView: View {
             .rotationEffect(.degrees(-90))
           VStack(spacing: 0) {
             Text("DAY")
-              .font(.system(size: 8, weight: .medium))
+              .font(.caption2.weight(.medium))
               .foregroundColor(label)
+              .minimumScaleFactor(0.6)
+              .lineLimit(1)
             Text("\(cache.dayPercentDone)%")
-              .font(.system(size: 15, weight: .bold))
+              .font(.headline.weight(.bold))
               .foregroundColor(percent)
+              .minimumScaleFactor(0.5)
+              .lineLimit(1)
           }
         }
         .padding(4)
       } else {
         VStack(spacing: 2) {
           Text("DAY")
-            .font(.system(size: 9, weight: .medium))
+            .font(.caption2.weight(.medium))
             .foregroundColor(label)
+            .minimumScaleFactor(0.6)
+            .lineLimit(1)
           Text("—")
-            .font(.system(size: 16, weight: .bold))
+            .font(.headline.weight(.bold))
             .foregroundColor(percent)
+            .minimumScaleFactor(0.5)
+            .lineLimit(1)
         }
       }
     }

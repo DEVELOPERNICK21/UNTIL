@@ -7,6 +7,7 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.graphics.Color
 import android.graphics.drawable.GradientDrawable
+import android.graphics.drawable.InsetDrawable
 import android.os.Build
 import android.os.Bundle
 import android.os.Handler
@@ -36,21 +37,30 @@ class TimeHubActivity : Activity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        val density = resources.displayMetrics.density
-        fun dp(value: Int) = (value * density).toInt()
+        val metrics = resources.displayMetrics
+        val config = resources.configuration
+        val edgeInset = WearLayoutMetrics.horizontalInsetPx(metrics)
+        fun dp(value: Float) = (value * metrics.density).toInt()
 
         pages = List(TimePage.entries.size) { TimePeriodPageView(this) }
+
+        // Vertical stack (not overlay): pager + dots. Overlay caused text-on-dots
+        // which fails Wear font / layout quality (WO-V1).
         val root = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             setBackgroundColor(Color.parseColor("#0E0E10"))
+            // Small chin pad only — large bottomInset left a blank band under the dial.
+            setPadding(0, 0, 0, dp(4f))
             layoutParams = ViewGroup.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.MATCH_PARENT,
             )
         }
+
         val pager = ViewPager2(this).apply {
             adapter = TimeHubPagerAdapter { page -> pages[page.ordinal] }
             setCurrentItem(TimePage.DAY.ordinal, false)
+            offscreenPageLimit = 1
         }
         root.addView(
             pager,
@@ -61,18 +71,23 @@ class TimeHubActivity : Activity() {
             ),
         )
 
+        val touch = dp(WearLayoutMetrics.pageDotTouchDp(config))
+        val visual = dp(WearLayoutMetrics.pageDotVisualDp(config))
+        val inset = ((touch - visual) / 2).coerceAtLeast(0)
+
         val dotsRow = LinearLayout(this).apply {
             gravity = Gravity.CENTER
             orientation = LinearLayout.HORIZONTAL
+            importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO
+            setPadding(edgeInset, dp(2f), edgeInset, dp(2f))
         }
         dots = List(TimePage.entries.size) { index ->
             View(this).apply {
-                layoutParams = LinearLayout.LayoutParams(dp(6), dp(6)).apply {
-                    marginStart = dp(3)
-                    marginEnd = dp(3)
-                    bottomMargin = dp(10)
+                layoutParams = LinearLayout.LayoutParams(touch, touch).apply {
+                    marginStart = dp(1f)
+                    marginEnd = dp(1f)
                 }
-                setDotActive(index == TimePage.DAY.ordinal)
+                setDotActive(active = index == TimePage.DAY.ordinal, insetPx = inset)
             }.also(dotsRow::addView)
         }
         root.addView(
@@ -82,9 +97,12 @@ class TimeHubActivity : Activity() {
                 LinearLayout.LayoutParams.WRAP_CONTENT,
             ),
         )
+
         pager.registerOnPageChangeCallback(object : ViewPager2.OnPageChangeCallback() {
             override fun onPageSelected(position: Int) {
-                dots.forEachIndexed { index, dot -> dot.setDotActive(index == position) }
+                dots.forEachIndexed { index, dot ->
+                    dot.setDotActive(active = index == position, insetPx = inset)
+                }
             }
         })
 
@@ -141,11 +159,12 @@ class TimeHubActivity : Activity() {
             }
     }
 
-    private fun View.setDotActive(active: Boolean) {
-        background = GradientDrawable().apply {
+    private fun View.setDotActive(active: Boolean, insetPx: Int) {
+        val fill = GradientDrawable().apply {
             shape = GradientDrawable.OVAL
             setColor(Color.parseColor(if (active) "#E87C20" else "#6A6A6A"))
         }
+        background = InsetDrawable(fill, insetPx)
     }
 
     companion object {

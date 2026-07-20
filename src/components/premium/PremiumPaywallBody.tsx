@@ -44,6 +44,7 @@ import {
 } from '../../config/monetization';
 import {
   logAnalyticsEvent,
+  recordCrashError,
   type AnalyticsPaywallSource,
 } from '../../services/analytics';
 import {
@@ -292,6 +293,7 @@ export function PremiumPaywallBody({
           error_message: err?.message ?? 'Unknown error',
           payment_provider: 'google_play',
         });
+        recordCrashError(e, 'PremiumPaywallBody.requestPurchase');
         Alert.alert(
           'Purchase failed',
           err?.message ??
@@ -318,6 +320,7 @@ export function PremiumPaywallBody({
       }
     } catch (e: unknown) {
       const err = e as { message?: string };
+      recordCrashError(e, 'PremiumPaywallBody.restorePurchases');
       Alert.alert('Restore failed', err?.message ?? 'Try again later.');
     } finally {
       setRestoring(false);

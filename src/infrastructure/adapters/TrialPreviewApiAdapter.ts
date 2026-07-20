@@ -6,6 +6,7 @@ import type {
   ITrialPreviewService,
   TrialPreviewSyncResult,
 } from '../../domain/ports/ITrialPreviewService';
+import { recordCrashError } from '../../services/analytics';
 
 const TRIAL_PREVIEW_URL =
   process.env.UNTIL_TRIAL_PREVIEW_URL ??
@@ -67,6 +68,7 @@ export class TrialPreviewApiAdapter implements ITrialPreviewService {
         trialActive: data.trialActive === true,
       };
     } catch (e) {
+      recordCrashError(e, 'TrialPreviewApiAdapter.sync');
       return {
         ok: false,
         error: e instanceof Error ? e.message : 'Network error',

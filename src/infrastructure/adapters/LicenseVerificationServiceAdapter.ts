@@ -5,6 +5,7 @@
 
 import type { ILicenseVerificationService } from '../../domain/ports/ILicenseVerificationService';
 import type { ActivationResult, VerificationResult } from '../../types/subscription';
+import { recordCrashError } from '../../services/analytics';
 
 // Configure your backend URL. Use env var in production.
 const API_BASE_URL = process.env.UNTIL_LICENSE_API ?? 'https://your-api.example.com/until';
@@ -36,6 +37,7 @@ export class LicenseVerificationServiceAdapter implements ILicenseVerificationSe
       const code = (data.code as ActivationResult extends { success: false } ? ActivationResult['code'] : 'unknown') ?? 'unknown';
       return { success: false, code, message };
     } catch (e) {
+      recordCrashError(e, 'LicenseVerificationServiceAdapter.activate');
       return {
         success: false,
         code: 'network_error',
@@ -69,6 +71,7 @@ export class LicenseVerificationServiceAdapter implements ILicenseVerificationSe
       const code = (data.code as VerificationResult extends { valid: false } ? VerificationResult['code'] : 'unknown') ?? 'unknown';
       return { valid: false, code, message };
     } catch (e) {
+      recordCrashError(e, 'LicenseVerificationServiceAdapter.verify');
       return {
         valid: false,
         code: 'network_error',

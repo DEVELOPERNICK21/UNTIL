@@ -7,7 +7,7 @@ import { getDeviceId } from '../infrastructure/DeviceId';
 import { getAccessStateUseCase, observeSubscriptionUseCase } from '../di';
 import { identifyPostHogUser } from '../services/posthogClient';
 import { syncAnalyticsUserProperties } from '../services/analyticsUserProperties';
-import { logAnalyticsEvent } from '../services/analytics';
+import { logAnalyticsEvent, setCrashUserId } from '../services/analytics';
 import { useOnboardingState } from './useOnboardingState';
 
 let appVersionPromise: Promise<string | undefined> | null = null;
@@ -38,6 +38,7 @@ export function useAnalyticsBootstrap(): void {
     void (async () => {
       const deviceId = await getDeviceId();
       identifyPostHogUser(deviceId);
+      setCrashUserId(deviceId);
       const access = getAccessStateUseCase.execute();
       const appVersion = await loadAppVersion();
       syncAnalyticsUserProperties({

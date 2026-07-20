@@ -2,6 +2,7 @@ import { Platform, Linking } from 'react-native';
 import DeviceInfo from 'react-native-device-info';
 import { getNumber, getString, setNumber, setString } from '../persistence/mmkv';
 import { STORAGE_KEYS } from '../persistence/schema';
+import { recordCrashError } from './analytics';
 
 export type UpdateType = 'FORCE_UPDATE' | 'OPTIONAL_UPDATE' | 'NO_UPDATE';
 
@@ -139,7 +140,8 @@ export async function fetchUpdateConfig(): Promise<UpdateConfig | null> {
 
     const json = (await response.json()) as UpdateConfig;
     return json;
-  } catch {
+  } catch (e) {
+    recordCrashError(e, 'updateService.fetchUpdateConfig');
     return null;
   }
 }

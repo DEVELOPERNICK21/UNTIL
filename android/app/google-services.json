@@ -1,13 +1,13 @@
 {
   "project_info": {
-    "project_number": "YOUR_PROJECT_NUMBER",
-    "project_id": "YOUR_FIREBASE_PROJECT_ID",
-    "storage_bucket": "YOUR_FIREBASE_PROJECT_ID.appspot.com"
+    "project_number": "150745476537",
+    "project_id": "until-b7624",
+    "storage_bucket": "until-b7624.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:YOUR_PROJECT_NUMBER:android:YOUR_APP_HASH",
+        "mobilesdk_app_id": "1:150745476537:android:f314fbd3ede63d5d399a68",
         "android_client_info": {
           "package_name": "app.until.time"
         }
@@ -15,7 +15,7 @@
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "YOUR_API_KEY"
+          "current_key": "AIzaSyCXPmnT5ZPjcFhoGCk3m_IALuG38QBWVdo"
         }
       ],
       "services": {

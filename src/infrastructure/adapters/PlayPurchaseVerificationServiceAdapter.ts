@@ -7,6 +7,7 @@ import type {
   PurchaseVerificationRequest,
   PurchaseVerificationResult,
 } from '../../domain/ports/IPlayPurchaseVerificationService';
+import { recordCrashError } from '../../services/analytics';
 
 const VERIFY_URL =
   process.env.UNTIL_VERIFY_PURCHASE_URL ??
@@ -58,6 +59,7 @@ export class PlayPurchaseVerificationServiceAdapter
         error: data.error,
       };
     } catch (e) {
+      recordCrashError(e, 'PlayPurchaseVerificationServiceAdapter.verify');
       return {
         valid: false,
         error: e instanceof Error ? e.message : 'Network error',

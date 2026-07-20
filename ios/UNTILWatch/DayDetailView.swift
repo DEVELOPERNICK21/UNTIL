@@ -7,6 +7,11 @@ import SwiftUI
 
 struct DayDetailView: View {
   @EnvironmentObject private var session: WatchSessionReceiver
+  @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+
+  /// Scales with System Settings text size (Dynamic Type).
+  @ScaledMetric(relativeTo: .largeTitle) private var percentFontSize: CGFloat = 40
+  @ScaledMetric(relativeTo: .body) private var barHeight: CGFloat = 8
 
   private var passed: Color { Color(hex: DayWatchDesign.passed) }
   private var left: Color { Color(hex: DayWatchDesign.left) }
@@ -14,49 +19,71 @@ struct DayDetailView: View {
   private var label: Color { Color(hex: DayWatchDesign.label) }
   private var text: Color { Color(hex: DayWatchDesign.text) }
 
+  private var isAccessibilitySize: Bool {
+    dynamicTypeSize.isAccessibilitySize
+  }
+
   var body: some View {
     Group {
       if let cache = session.cache {
-        VStack(spacing: 10) {
-          Text("TODAY")
-            .font(.system(size: 11, weight: .medium))
-            .foregroundColor(label)
-            .tracking(1)
+        ScrollView {
+          VStack(spacing: isAccessibilitySize ? 14 : 10) {
+            Text("TODAY")
+              .font(.caption.weight(.medium))
+              .foregroundColor(label)
+              .tracking(1)
+              .multilineTextAlignment(.center)
+              .frame(maxWidth: .infinity)
 
-          Text("\(cache.dayPercentDone)%")
-            .font(.system(size: 40, weight: .bold))
-            .foregroundColor(percent)
+            Text("\(cache.dayPercentDone)%")
+              .font(.system(size: percentFontSize, weight: .bold))
+              .foregroundColor(percent)
+              .minimumScaleFactor(0.5)
+              .lineLimit(1)
+              .multilineTextAlignment(.center)
+              .frame(maxWidth: .infinity)
 
-          GeometryReader { geo in
-            ZStack(alignment: .leading) {
-              Capsule().fill(passed)
-              Capsule()
-                .fill(left)
-                .frame(width: max(0, geo.size.width * cache.progressClamped))
+            GeometryReader { geo in
+              ZStack(alignment: .leading) {
+                Capsule().fill(passed)
+                Capsule()
+                  .fill(left)
+                  .frame(width: max(0, geo.size.width * cache.progressClamped))
+              }
             }
+            .frame(height: barHeight)
+            .padding(.horizontal, 4)
+            .accessibilityHidden(true)
+
+            Text(cache.timeLeftText())
+              .font(.body.weight(.semibold))
+              .foregroundColor(text)
+              .multilineTextAlignment(.center)
+              .fixedSize(horizontal: false, vertical: true)
+              .frame(maxWidth: .infinity)
+
+            Text("Synced from iPhone")
+              .font(.caption2)
+              .foregroundColor(label)
+              .multilineTextAlignment(.center)
+              .fixedSize(horizontal: false, vertical: true)
+              .frame(maxWidth: .infinity)
+              .padding(.top, 4)
           }
-          .frame(height: 8)
-          .padding(.horizontal, 8)
-
-          Text(cache.timeLeftText())
-            .font(.system(size: 14, weight: .semibold))
-            .foregroundColor(text)
-
-          Spacer(minLength: 0)
-
-          Text("Synced from iPhone")
-            .font(.system(size: 10))
-            .foregroundColor(label)
+          .padding(.horizontal, 12)
+          .padding(.vertical, 8)
+          .frame(maxWidth: .infinity)
         }
-        .padding(12)
       } else {
-        VStack(spacing: 8) {
+        ScrollView {
           Text("Open UNTIL on iPhone to sync")
-            .font(.system(size: 13, weight: .medium))
+            .font(.body.weight(.medium))
             .foregroundColor(label)
             .multilineTextAlignment(.center)
+            .fixedSize(horizontal: false, vertical: true)
+            .frame(maxWidth: .infinity)
+            .padding(16)
         }
-        .padding(16)
       }
     }
     .frame(maxWidth: .infinity, maxHeight: .infinity)

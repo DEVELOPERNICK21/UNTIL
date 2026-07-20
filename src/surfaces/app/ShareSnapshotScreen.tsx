@@ -23,7 +23,7 @@ import {
 } from '@shopify/react-native-skia';
 import Share from 'react-native-share';
 import RNFS from 'react-native-fs';
-import { logAnalyticsEvent } from '../../services/analytics';
+import { logAnalyticsEvent, recordCrashError } from '../../services/analytics';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text, ScreenGradient, Card } from '../../ui';
 import { useAccessControl, useObserveTimeState } from '../../hooks';
@@ -260,6 +260,7 @@ export function ShareSnapshotScreen() {
       }
     } catch (error) {
       console.warn('Share snapshot failed', error);
+      recordCrashError(error, 'ShareSnapshotScreen.share');
       Alert.alert(
         'Share failed',
         'Something went wrong while preparing the image.',

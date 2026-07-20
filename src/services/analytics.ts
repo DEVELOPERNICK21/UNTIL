@@ -134,6 +134,9 @@ function getAnalyticsModule(): {
 function getCrashlyticsModule(): {
   recordError: (error: Error) => void;
   log: (message: string) => void;
+  setUserId: (userId: string) => Promise<void>;
+  setAttributes: (attributes: Record<string, string>) => Promise<void>;
+  setCrashlyticsCollectionEnabled: (enabled: boolean) => Promise<void>;
 } | null {
   try {
     const { getApp } = require('@react-native-firebase/app') as {
@@ -143,15 +146,34 @@ function getCrashlyticsModule(): {
       getCrashlytics,
       log,
       recordError,
+      setUserId,
+      setAttributes,
+      setCrashlyticsCollectionEnabled,
     } = require('@react-native-firebase/crashlytics') as {
       getCrashlytics: (app: unknown) => unknown;
       log: (crashlytics: unknown, message: string) => void;
       recordError: (crashlytics: unknown, error: Error) => void;
+      setUserId: (crashlytics: unknown, userId: string) => Promise<null>;
+      setAttributes: (
+        crashlytics: unknown,
+        attributes: Record<string, string>
+      ) => Promise<null>;
+      setCrashlyticsCollectionEnabled: (
+        crashlytics: unknown,
+        enabled: boolean
+      ) => Promise<null>;
     };
     const instance = getCrashlytics(getApp());
     return {
       log: message => log(instance, message),
       recordError: error => recordError(instance, error),
+      setUserId: userId => setUserId(instance, userId).then(() => undefined),
+      setAttributes: attributes =>
+        setAttributes(instance, attributes).then(() => undefined),
+      setCrashlyticsCollectionEnabled: enabled =>
+        setCrashlyticsCollectionEnabled(instance, enabled).then(
+          () => undefined
+        ),
     };
   } catch {
     return null;
@@ -208,4 +230,54 @@ export function recordCrashError(error: unknown, context?: string): void {
   } catch {
     //
   }
+}
+
+/** Breadcrumb line attached to subsequent Crashlytics reports. */
+export function logCrashBreadcrumb(message: string): void {
+  if (!message.trim()) return;
+  if (__DEV__) {
+    console.log('[crashlytics:breadcrumb]', message);
+  }
+  const crashlytics = getCrashlyticsModule();
+  if (!crashlytics) return;
+  try {
+    crashlytics.log(message);
+  } catch {
+    //
+  }
+}
+
+/** Anonymous device / install id for Crashlytics console grouping. */
+export function setCrashUserId(userId: string): void {
+  const id = userId.trim();
+  if (!id) return;
+  const crashlytics = getCrashlyticsModule();
+  if (!crashlytics) return;
+  void crashlytics.setUserId(id).catch(() => {});
+}
+
+/** String attributes visible on Crashlytics issues (values coerced to string). */
+export function setCrashAttributes(
+  attributes: Record<string, string | number | boolean | undefined>
+): void {
+  const crashlytics = getCrashlyticsModule();
+  if (!crashlytics) return;
+  const payload: Record<string, string> = {};
+  for (const [key, value] of Object.entries(attributes)) {
+    if (value === undefined) continue;
+    payload[key] = String(value);
+  }
+  if (Object.keys(payload).length === 0) return;
+  void crashlytics.setAttributes(payload).catch(() => {});
+}
+
+/**
+ * Enable Crashlytics collection in release; keep quiet in local __DEV__
+ * unless explicitly forced.
+ */
+export function initCrashlyticsCollection(forceEnabled = false): void {
+  const crashlytics = getCrashlyticsModule();
+  if (!crashlytics) return;
+  const enabled = forceEnabled || !__DEV__;
+  void crashlytics.setCrashlyticsCollectionEnabled(enabled).catch(() => {});
 }

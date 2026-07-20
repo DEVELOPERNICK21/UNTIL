@@ -6,6 +6,7 @@ import { Platform } from 'react-native';
 import type { AccessState } from '../types';
 import { TRIAL_DURATION_MS } from '../config/accessConstants';
 import { setPostHogPersonProperties } from './posthogClient';
+import { setCrashAttributes } from './analytics';
 
 export function buildAnalyticsUserProperties(input: {
   access: AccessState;
@@ -37,7 +38,17 @@ export function syncAnalyticsUserProperties(input: {
   onboardingComplete: boolean;
   appVersion?: string;
 }): void {
-  setPostHogPersonProperties(buildAnalyticsUserProperties(input));
+  const props = buildAnalyticsUserProperties(input);
+  setPostHogPersonProperties(props);
+  setCrashAttributes({
+    is_premium: props.is_premium,
+    trial_active: props.trial_active,
+    onboarding_complete: props.onboarding_complete,
+    platform: props.platform,
+    ...(typeof props.app_version === 'string'
+      ? { app_version: props.app_version }
+      : {}),
+  });
 }
 
 export function getTrialDurationDays(): number {

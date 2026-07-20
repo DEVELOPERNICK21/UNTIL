@@ -17,6 +17,9 @@ import com.google.common.util.concurrent.ListenableFuture
 
 /**
  * Day % tile — circular glance (arc + %), tap opens [TimeHubActivity].
+ *
+ * Uses sp for all text (WO-V1). At large system font scales, drops secondary
+ * lines and shrinks the ring so content is not clipped (WO-V1 / WO-V16).
  */
 class DayTileService : TileService() {
     override fun onTileRequest(
@@ -25,8 +28,9 @@ class DayTileService : TileService() {
         val cache = DayClock.snapshot()
         DayWearStore.save(this, cache)
         val percentLabel = "${cache.dayPercentDone}%"
-        val sub = DayClock.whisper(cache.dayProgress)
         val progressDeg = (cache.progressClamped * 360f).coerceIn(0f, 360f)
+        val largeFont = WearLayoutMetrics.isLargeFont(resources.configuration)
+        val extraLarge = WearLayoutMetrics.isExtraLargeFont(resources.configuration)
 
         val clickable = ModifiersBuilders.Clickable.Builder()
             .setId("open_day")
@@ -42,7 +46,7 @@ class DayTileService : TileService() {
             )
             .build()
 
-        fun text(value: String, sizeSp: Float, color: Int): LayoutElementBuilders.Text {
+        fun text(value: String, sizeSp: Float, color: Int, maxLines: Int = 2): LayoutElementBuilders.Text {
             return LayoutElementBuilders.Text.Builder()
                 .setText(value)
                 .setFontStyle(
@@ -51,7 +55,8 @@ class DayTileService : TileService() {
                         .setColor(argb(color))
                         .build(),
                 )
-                .setMaxLines(2)
+                .setMaxLines(maxLines)
+                .setOverflow(LayoutElementBuilders.TEXT_OVERFLOW_ELLIPSIZE_END)
                 .build()
         }
 
@@ -63,9 +68,22 @@ class DayTileService : TileService() {
                 .build()
         }
 
+        val ringSize = when {
+            extraLarge -> 64f
+            largeFont -> 76f
+            else -> 88f
+        }
+        // sp sizes scale with system font settings (WO-V1). Base is reduced only at
+        // extra-large scales so the fixed tile slot still fits without clipping.
+        val percentSp = when {
+            extraLarge -> 18f
+            largeFont -> 20f
+            else -> 22f
+        }.coerceAtLeast(WearLayoutMetrics.ESSENTIAL_SP)
+
         val ring = LayoutElementBuilders.Box.Builder()
-            .setWidth(dp(88f))
-            .setHeight(dp(88f))
+            .setWidth(dp(ringSize))
+            .setHeight(dp(ringSize))
             .setHorizontalAlignment(LayoutElementBuilders.HORIZONTAL_ALIGN_CENTER)
             .setVerticalAlignment(LayoutElementBuilders.VERTICAL_ALIGN_CENTER)
             .addContent(
@@ -82,21 +100,29 @@ class DayTileService : TileService() {
                     .addContent(arcLine(progressDeg, 0xFFE87C20.toInt(), 8f))
                     .build(),
             )
-            .addContent(text(percentLabel, 22f, 0xFFEDEDED.toInt()))
+            .addContent(text(percentLabel, percentSp, 0xFFEDEDED.toInt(), maxLines = 1))
             .build()
 
         val column = LayoutElementBuilders.Column.Builder()
             .setWidth(expand())
             .setHorizontalAlignment(LayoutElementBuilders.HORIZONTAL_ALIGN_CENTER)
-            .addContent(text("DAY", 11f, 0xFF9A9A9A.toInt()))
-            .addContent(LayoutElementBuilders.Spacer.Builder().setHeight(dp(6f)).build())
+            .addContent(text("DAY", WearLayoutMetrics.ESSENTIAL_SP, 0xFF9A9A9A.toInt(), maxLines = 1))
+            .addContent(LayoutElementBuilders.Spacer.Builder().setHeight(dp(if (largeFont) 4f else 6f)).build())
             .addContent(ring)
-            .addContent(LayoutElementBuilders.Spacer.Builder().setHeight(dp(8f)).build())
-            .addContent(text(sub, 12f, 0xFFE9A23A.toInt()))
-            .addContent(LayoutElementBuilders.Spacer.Builder().setHeight(dp(4f)).build())
-            .addContent(text(cache.timeLeftText(), 11f, 0xFF9A9A9A.toInt()))
-            .build()
 
+        if (!extraLarge) {
+            column
+                .addContent(LayoutElementBuilders.Spacer.Builder().setHeight(dp(6f)).build())
+                .addContent(
+                    text(
+                        cache.timeLeftText(),
+                        WearLayoutMetrics.ESSENTIAL_SP,
+                        0xFF9A9A9A.toInt(),
+                    ),
+                )
+        }
+
+        val edgePad = if (largeFont) 14f else 10f
         val root = LayoutElementBuilders.Box.Builder()
             .setWidth(expand())
             .setHeight(expand())
@@ -110,15 +136,15 @@ class DayTileService : TileService() {
                     )
                     .setPadding(
                         ModifiersBuilders.Padding.Builder()
-                            .setStart(dp(10f))
-                            .setEnd(dp(10f))
-                            .setTop(dp(10f))
-                            .setBottom(dp(10f))
+                            .setStart(dp(edgePad))
+                            .setEnd(dp(edgePad))
+                            .setTop(dp(edgePad))
+                            .setBottom(dp(edgePad))
                             .build(),
                     )
                     .build(),
             )
-            .addContent(column)
+            .addContent(column.build())
             .build()
 
         return Futures.immediateFuture(
@@ -131,6 +157,6 @@ class DayTileService : TileService() {
     }
 
     companion object {
-        private const val RESOURCES_VERSION = "3"
+        private const val RESOURCES_VERSION = "4"
     }
 }

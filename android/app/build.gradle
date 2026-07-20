@@ -4,6 +4,7 @@ apply plugin: "com.facebook.react"
 
 if (file("google-services.json").exists()) {
     apply plugin: "com.google.gms.google-services"
+    apply plugin: "com.google.firebase.crashlytics"
 }
 
 // Fail early with clear instructions if release build is run without keystore (skip when CI provides CM_* vars)
@@ -137,6 +138,12 @@ android {
             minifyEnabled enableProguardInReleaseBuilds
             shrinkResources enableProguardInReleaseBuilds
             proguardFiles getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro"
+            if (file("google-services.json").exists()) {
+                firebaseCrashlytics {
+                    nativeSymbolUploadEnabled true
+                    unstrippedNativeLibsDir 'build/intermediates/merged_native_libs/release/out/lib'
+                }
+            }
         }
     }
 }

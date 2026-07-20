@@ -1,21 +1,28 @@
 # Firebase Analytics & Crashlytics
 
+UNTIL uses Firebase project **until-b7624** (number `150745476537`).
+
+Android package: `app.until.time` — config file: `android/app/google-services.json` (fetched via Firebase CLI).
+
 UNTIL logs product events via [`src/services/analytics.ts`](../src/services/analytics.ts). Events are sent to Firebase when native modules are installed and `google-services.json` is present. The same events are **dual-written to PostHog** when configured — see [`POSTHOG_ANALYTICS.md`](./POSTHOG_ANALYTICS.md).
 
 ## Setup (Android)
 
-1. Create a Firebase project and add Android app `app.until.time`.
-2. Download `google-services.json` into `android/app/google-services.json` (see `google-services.json.example`).
-3. Install packages (already in `package.json` after growth work):
+1. Project is already created: `until-b7624`. Android app is registered as `app.until.time`.
+2. Refresh config if needed:
+
+   ```bash
+   npx -y firebase-tools@latest apps:sdkconfig ANDROID 1:150745476537:android:f314fbd3ede63d5d399a68 --project until-b7624 > android/app/google-services.json
+   ```
+
+3. Install packages (already in `package.json`):
 
    ```bash
    yarn install
    cd ios && pod install && cd ..
    ```
 
-4. Rebuild release/debug APK.
-
-Gradle applies the Google Services plugin only when `android/app/google-services.json` exists.
+4. Rebuild a **release** (or internal) APK/AAB so Crashlytics collection is enabled.
 
 ## Events
 
@@ -41,7 +48,39 @@ PostHog also receives **Application Installed** via SDK lifecycle autocapture (s
 
 ## Crashlytics
 
-Use `recordCrashError(error, context)` from `analytics.ts` in catch blocks for non-fatal reporting.
+Firebase Crashlytics reports **native crashes** automatically and **non-fatal JS errors** via helpers in [`src/services/analytics.ts`](../src/services/analytics.ts).
+
+### What is wired
+
+| Piece | Where |
+|-------|--------|
+| Android Gradle plugin | `android/build.gradle` + `android/app/build.gradle` (when `google-services.json` exists) |
+| iOS upload script | Xcode `[RNFB] Crashlytics Configuration` (from CocoaPods) |
+| React ErrorBoundary | `CrashErrorBoundary` wraps the app in `src/app.tsx` |
+| Non-fatals | `recordCrashError(error, context)` in purchase, share, update-config, trial/verify adapters |
+| User context | `setCrashUserId(deviceId)` + `setCrashAttributes(...)` via analytics bootstrap |
+| Collection | Enabled in release (`initCrashlyticsCollection`); disabled in `__DEV__` |
+
+### Reporting non-fatals
+
+```ts
+import { recordCrashError, logCrashBreadcrumb } from '../services/analytics';
+
+try {
+  await riskyWork();
+} catch (e) {
+  logCrashBreadcrumb('optional breadcrumb');
+  recordCrashError(e, 'MyFeature.riskyWork');
+}
+```
+
+### Verify in Firebase console
+
+1. Ensure `android/app/google-services.json` and iOS `GoogleService-Info.plist` are present for a release/internal build.
+2. Trigger a non-fatal (e.g. force a purchase network failure) or a test crash in a **non-debug** build.
+3. Open Firebase → Crashlytics; reports can take a few minutes.
+
+To force Crashlytics in debug builds temporarily, set `crashlytics_debug_enabled` to `true` in root `firebase.json` and rebuild.
 
 ## Dev
 

@@ -153,6 +153,22 @@ adb -s emulator-5556 shell am start -n app.until.time/app.until.time.watch.TimeH
 
 ---
 
+## Accessibility (Play Wear quality — WO-V1)
+
+Play rejects Wear apps that ignore system font size or clip text at large sizes
+([Wear app quality](https://developer.android.com/docs/quality-guidelines/wear-app-quality) `WO-V1`).
+
+On the watch: **Settings → Accessibility → Display size / Font size** (wording varies by OEM) → set the **largest** size, then:
+
+1. Open **UNTIL** Time Hub (Day / Month / Year / Life).
+2. Confirm text grows with the setting (all hub text uses `sp`).
+3. Confirm nothing is cut off by the round edge — content **scrolls** (scrollbar visible) when it no longer fits.
+4. Open the **UNTIL Day** tile and confirm it still fits (secondary lines drop at very large scales).
+
+Also covered: essential text ≥12sp / footer ≥10sp (`WO-V14`), round-edge insets (`WO-V16`).
+
+---
+
 ## Empty state
 
 Day / Month / Year % is computed **on the watch clock** — the hub, tile, and complication work without phone pairing.
