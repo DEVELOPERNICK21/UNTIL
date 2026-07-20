@@ -34,6 +34,7 @@ local.properties
 # Keystores: do not commit. Back up release keystore + passwords securely (see docs/ANDROID_RELEASE_BUILD.md).
 *.keystore
 android/app/keystore.properties
+android/wear/keystore.properties
 .kotlin/
 
 # node.js

@@ -296,7 +296,7 @@ class UNTILWidgetWorker(
                 val mmkv = MMKV.mmkvWithID(MMKV_ID) ?: return null to 80
                 val birth = mmkv.decodeString("user.birthDate")
                 val death = if (mmkv.containsKey("user.deathAge")) {
-                    mmkv.decodeInt("user.deathAge", 80)
+                    mmkv.decodeDouble("user.deathAge", 80.0).toInt().takeIf { it > 0 } ?: 80
                 } else 80
                 birth to death
             } catch (_: Exception) {
