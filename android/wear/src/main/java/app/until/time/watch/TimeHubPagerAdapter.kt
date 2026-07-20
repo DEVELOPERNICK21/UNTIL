@@ -11,7 +11,12 @@ class TimeHubPagerAdapter(
     class PageViewHolder(page: TimePeriodPageView) : RecyclerView.ViewHolder(page)
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): PageViewHolder {
-        return PageViewHolder(inflatePage(TimePage.entries[viewType]))
+        val page = inflatePage(TimePage.entries[viewType])
+        page.layoutParams = ViewGroup.LayoutParams(
+            ViewGroup.LayoutParams.MATCH_PARENT,
+            ViewGroup.LayoutParams.MATCH_PARENT,
+        )
+        return PageViewHolder(page)
     }
 
     override fun onBindViewHolder(holder: PageViewHolder, position: Int) = Unit
