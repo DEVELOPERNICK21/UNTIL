@@ -22,13 +22,15 @@ object WearDaySync {
         startOfDay: Long? = null,
         endOfDay: Long? = null,
         dayRemainingMinutes: Int? = null,
+        birthDate: String? = null,
+        deathAge: Int? = null,
     ) {
         try {
             val hoursLeft = when {
                 dayRemainingMinutes != null -> dayRemainingMinutes / 60.0
                 else -> dayPercentLeft / 100.0 * 24.0
             }
-            val json = JSONObject()
+            val jsonObj = JSONObject()
                 .put("dayProgress", dayProgress)
                 .put("dayPercentDone", dayPercentDone)
                 .put("dayPercentLeft", dayPercentLeft)
@@ -37,7 +39,11 @@ object WearDaySync {
                 .put("dayRemainingMinutes", dayRemainingMinutes)
                 .put("dayHoursLeft", hoursLeft)
                 .put("updatedAt", System.currentTimeMillis())
-                .toString()
+            if (!birthDate.isNullOrBlank()) {
+                jsonObj.put("birthDate", birthDate)
+                deathAge?.let { jsonObj.put("deathAge", it) }
+            }
+            val json = jsonObj.toString()
             val payload = json.toByteArray(Charsets.UTF_8)
             val appContext = context.applicationContext
 
@@ -74,6 +80,10 @@ object WearDaySync {
                 dayRemainingMinutes?.let { dataMap.putInt("dayRemainingMinutes", it) }
                 dataMap.putDouble("dayHoursLeft", hoursLeft)
                 dataMap.putLong("updatedAt", System.currentTimeMillis())
+                if (!birthDate.isNullOrBlank()) {
+                    dataMap.putString("birthDate", birthDate)
+                    deathAge?.let { dataMap.putInt("deathAge", it) }
+                }
             }.asPutDataRequest().setUrgent()
             Wearable.getDataClient(appContext).putDataItem(request)
         } catch (e: Exception) {

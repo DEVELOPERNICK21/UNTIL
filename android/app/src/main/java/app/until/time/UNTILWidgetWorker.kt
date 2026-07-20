@@ -276,6 +276,7 @@ class UNTILWidgetWorker(
                 }
             }
 
+            val (birth, deathAge) = loadUserProfile(context)
             WearDaySync.push(
                 context = context,
                 dayProgress = cache.dayProgress,
@@ -284,7 +285,23 @@ class UNTILWidgetWorker(
                 startOfDay = cache.startOfDay,
                 endOfDay = cache.endOfDay,
                 dayRemainingMinutes = cache.dayRemainingMinutes,
+                birthDate = birth,
+                deathAge = deathAge,
             )
+        }
+
+        private fun loadUserProfile(context: Context): Pair<String?, Int> {
+            return try {
+                MMKV.initialize(context)
+                val mmkv = MMKV.mmkvWithID(MMKV_ID) ?: return null to 80
+                val birth = mmkv.decodeString("user.birthDate")
+                val death = if (mmkv.containsKey("user.deathAge")) {
+                    mmkv.decodeInt("user.deathAge", 80)
+                } else 80
+                birth to death
+            } catch (_: Exception) {
+                null to 80
+            }
         }
 
         private fun loadWidgetCache(context: Context): WidgetCache? {

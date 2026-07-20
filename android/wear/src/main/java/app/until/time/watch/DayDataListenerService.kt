@@ -49,6 +49,13 @@ class DayDataListenerService : WearableListenerService() {
                     dayHoursLeft = map.getDouble("dayHoursLeft", 0.0),
                     updatedAt = map.getLong("updatedAt", System.currentTimeMillis()),
                 )
+                if (map.containsKey("birthDate")) {
+                    val birth = map.getString("birthDate", "").trim()
+                    if (birth.isNotEmpty()) {
+                        val death = map.getInt("deathAge", 80).let { if (it <= 0) 80 else it }
+                        ProfileStore.save(this, birth, death)
+                    }
+                }
                 notifyUi()
             }
         }
@@ -70,6 +77,11 @@ class DayDataListenerService : WearableListenerService() {
                 dayHoursLeft = o.optDouble("dayHoursLeft", 0.0),
                 updatedAt = o.optLong("updatedAt", System.currentTimeMillis()),
             )
+            val birth = o.optString("birthDate", "").trim()
+            if (birth.isNotEmpty()) {
+                val death = o.optInt("deathAge", 80).let { if (it <= 0) 80 else it }
+                ProfileStore.save(this, birth, death)
+            }
             notifyUi()
         } catch (_: Exception) {
             // ignore bad payloads
