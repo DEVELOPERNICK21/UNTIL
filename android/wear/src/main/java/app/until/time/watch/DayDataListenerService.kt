@@ -93,6 +93,6 @@ class DayDataListenerService : WearableListenerService() {
         ComplicationDataSourceUpdateRequester
             .create(this, ComponentName(this, DayComplicationService::class.java))
             .requestUpdateAll()
-        sendBroadcast(Intent(DayActivity.ACTION_REFRESH).setPackage(packageName))
+        sendBroadcast(Intent(TimeHubActivity.ACTION_REFRESH).setPackage(packageName))
     }
 }

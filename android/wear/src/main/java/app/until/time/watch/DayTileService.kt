@@ -16,7 +16,7 @@ import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.ListenableFuture
 
 /**
- * Day % tile — circular glance (arc + %), tap opens [DayActivity].
+ * Day % tile — circular glance (arc + %), tap opens [TimeHubActivity].
  */
 class DayTileService : TileService() {
     override fun onTileRequest(
@@ -34,7 +34,7 @@ class DayTileService : TileService() {
                 ActionBuilders.LaunchAction.Builder()
                     .setAndroidActivity(
                         ActionBuilders.AndroidActivity.Builder()
-                            .setClassName(DayActivity::class.java.name)
+                            .setClassName(TimeHubActivity::class.java.name)
                             .setPackageName(packageName)
                             .build(),
                     )

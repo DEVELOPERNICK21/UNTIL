@@ -16,7 +16,7 @@
             android:value="false" />
 
         <activity
-            android:name=".DayActivity"
+            android:name=".TimeHubActivity"
             android:exported="true"
             android:taskAffinity=""
             android:theme="@android:style/Theme.DeviceDefault.NoActionBar">
