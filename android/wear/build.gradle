@@ -8,21 +8,49 @@ android {
     compileSdk rootProject.ext.compileSdkVersion
 
     defaultConfig {
-        // Distinct from phone app.until.time — installing the phone APK on Wear causes a white screen.
-        applicationId "app.until.time.watch"
+        // Same Play package as phone — Play delivers this AAB to watches via Wear form factor.
+        // Do not install the phone APK on a watch (RN MainActivity → white screen).
+        applicationId "app.until.time"
         minSdk 30
         targetSdk rootProject.ext.targetSdkVersion
-        versionCode 13
+        // Must differ from phone versionCode in the same Play release (phone is 16).
+        versionCode 18
         versionName "1.1"
+    }
+      signingConfigs {
+        debug {
+            storeFile file('../app/debug.keystore')
+            storePassword 'android'
+            keyAlias 'androiddebugkey'
+            keyPassword 'android'
+        }
+        release {
+            if (System.getenv("CI") != null && System.getenv("CM_KEYSTORE_PATH") != null) {
+                // Codemagic (or other CI) provides these when android_signing is configured
+                storeFile file(System.getenv("CM_KEYSTORE_PATH"))
+                storePassword System.getenv("CM_KEYSTORE_PASSWORD")
+                keyAlias System.getenv("CM_KEY_ALIAS")
+                keyPassword System.getenv("CM_KEY_PASSWORD")
+            } else if (file("keystore.properties").exists()) {
+                def keystoreProps = new Properties()
+                keystoreProps.load(new FileInputStream(file("keystore.properties")))
+                storeFile file(keystoreProps["storeFile"])
+                storePassword keystoreProps["storePassword"]
+                keyAlias keystoreProps["keyAlias"]
+                keyPassword keystoreProps["keyPassword"]
+            }
+        }
     }
 
     buildTypes {
+        debug {
+            signingConfig signingConfigs.debug
+            minifyEnabled false
+        }
         release {
+            signingConfig signingConfigs.release
             minifyEnabled false
             proguardFiles getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro"
-        }
-        debug {
-            minifyEnabled false
         }
     }
 
@@ -52,4 +80,6 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.9.0")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.9.0")
     implementation("androidx.wear.watchface:watchface-complications-data-source-ktx:1.2.1")
+    implementation("androidx.viewpager2:viewpager2:1.1.0")
+    testImplementation("junit:junit:4.13.2")
 }
