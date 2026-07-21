@@ -13,8 +13,11 @@ workflows:
           source: true
 
     environment:
+      groups:
+        - google_play # Must contain secret GOOGLE_PLAY_SERVICE_ACCOUNT_CREDENTIALS
       android_signing:
-        - until_keystore # Set in Codemagic UI: Code signing identities → Android keystores
+        # Must match Codemagic UI → Code signing identities → Android keystores reference name
+        - UNTILAPP
       vars:
         PACKAGE_NAME: 'app.until.time'
 
