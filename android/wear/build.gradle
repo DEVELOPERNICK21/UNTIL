@@ -13,8 +13,8 @@ android {
         applicationId "app.until.time"
         minSdk 30
         targetSdk rootProject.ext.targetSdkVersion
-        // Must differ from phone versionCode in the same Play release (phone is 16).
-        versionCode 19
+        // Must differ from phone versionCode in the same Play release (phone default is 20).
+        versionCode 21
         versionName "1.1"
     }
       signingConfigs {

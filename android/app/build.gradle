@@ -102,7 +102,9 @@ android {
         applicationId "app.until.time"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 16
+        // Overridable in CI: ./gradlew bundleRelease -PversionCode=N
+        // Keep above Wear versionCode when both ship in the same Play listing.
+        versionCode (findProperty("versionCode") ?: "20") as Integer
         versionName "1.2"
     }
     signingConfigs {
