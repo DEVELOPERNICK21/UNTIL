@@ -5,7 +5,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Text } from '../../ui';
 import { PeriodDetailScreen } from './PeriodDetailScreen';
 import { useObserveTimeState, useGoalsFeatureEnabled } from '../../hooks';
-import { Spacing } from '../../theme';
+import { Spacing, Typography, FontFamily, getProgressColor } from '../../theme';
 import type { RootStackParamList } from '../../navigation/RootNavigator';
 
 function formatTime(date: Date) {
@@ -30,29 +30,57 @@ function formatTime(date: Date) {
   };
 }
 
-export function DayDetailScreen() {
-  const navigation =
-    useNavigation<NativeStackNavigationProp<RootStackParamList, 'DayDetail'>>();
+const LiveDayLabel = React.memo(function LiveDayLabelInternal({
+  type,
+  color,
+}: {
+  type: 'passed' | 'left';
+  color?: string;
+}) {
   const [live, setLive] = useState(() => new Date());
-  const goalsFeatureEnabled = useGoalsFeatureEnabled();
-  useObserveTimeState();
 
   useEffect(() => {
+    // 1-second interval timer is isolated to this tiny sub-component
     const t = setInterval(() => setLive(new Date()), 1000);
     return () => clearInterval(t);
   }, []);
 
-  const { passed, left, progress } = formatTime(live);
+  const { passed, left } = formatTime(live);
+  const text = type === 'passed' ? passed : left;
+
+  return (
+    <Text
+      variant="title"
+      style={[
+        styles.bigValue,
+        color ? { color } : undefined,
+      ]}
+    >
+      {text}
+    </Text>
+  );
+});
+
+export function DayDetailScreen() {
+  const navigation =
+    useNavigation<NativeStackNavigationProp<RootStackParamList, 'DayDetail'>>();
+  const goalsFeatureEnabled = useGoalsFeatureEnabled();
+  useObserveTimeState();
+
+  // Initialize a static date for render-once on other components (e.g., circular progress, progress line)
+  const [initialDate] = useState(() => new Date());
+  const { progress } = formatTime(initialDate);
   const pctDone = Math.round(progress * 100);
   const pctLeft = 100 - pctDone;
+  const progressColor = getProgressColor(progress);
 
   return (
     <PeriodDetailScreen
       kind="day"
       title="Today"
       progress={progress}
-      passedLabel={passed}
-      leftLabel={left}
+      passedLabel={<LiveDayLabel type="passed" />}
+      leftLabel={<LiveDayLabel type="left" color={progressColor} />}
       passedCaption="PASSED"
       leftCaption="LEFT"
       summary={`${pctDone}% of the day passed · ${pctLeft}% left`}
@@ -87,5 +115,10 @@ const styles = StyleSheet.create({
   cta: {
     marginTop: Spacing[2],
     paddingVertical: Spacing[3],
+  },
+  bigValue: {
+    fontSize: Typography.display,
+    fontFamily: FontFamily.bold,
+    textAlign: 'center',
   },
 });

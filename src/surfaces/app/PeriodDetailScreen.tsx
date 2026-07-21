@@ -62,8 +62,8 @@ export type PeriodDetailProps = {
   kind: PeriodGlyphKind;
   title: string;
   progress: number;
-  passedLabel: string;
-  leftLabel: string;
+  passedLabel: string | React.ReactNode;
+  leftLabel: string | React.ReactNode;
   passedCaption: string;
   leftCaption: string;
   summary: string;
@@ -299,17 +299,25 @@ export function PeriodDetailScreen({
                 </Text>
                 {flipped ? (
                   <Animated.View style={{ opacity: leftPulse }}>
-                    <Text
-                      variant="title"
-                      style={[styles.bigValue, { color: progressColor }]}
-                    >
-                      {leftLabel}
-                    </Text>
+                    {typeof leftLabel === 'string' ? (
+                      <Text
+                        variant="title"
+                        style={[styles.bigValue, { color: progressColor }]}
+                      >
+                        {leftLabel}
+                      </Text>
+                    ) : (
+                      leftLabel
+                    )}
                   </Animated.View>
                 ) : (
-                  <Text variant="title" color="primary" style={styles.bigValue}>
-                    {passedLabel}
-                  </Text>
+                  typeof passedLabel === 'string' ? (
+                    <Text variant="title" color="primary" style={styles.bigValue}>
+                      {passedLabel}
+                    </Text>
+                  ) : (
+                    passedLabel
+                  )
                 )}
               </GlassCard>
               <GlassCard style={styles.statCard}>
@@ -321,17 +329,25 @@ export function PeriodDetailScreen({
                   {flipped ? passedCaption : leftCaption}
                 </Text>
                 {flipped ? (
-                  <Text variant="title" color="primary" style={styles.bigValue}>
-                    {passedLabel}
-                  </Text>
+                  typeof passedLabel === 'string' ? (
+                    <Text variant="title" color="primary" style={styles.bigValue}>
+                      {passedLabel}
+                    </Text>
+                  ) : (
+                    passedLabel
+                  )
                 ) : (
                   <Animated.View style={{ opacity: leftPulse }}>
-                    <Text
-                      variant="title"
-                      style={[styles.bigValue, { color: progressColor }]}
-                    >
-                      {leftLabel}
-                    </Text>
+                    {typeof leftLabel === 'string' ? (
+                      <Text
+                        variant="title"
+                        style={[styles.bigValue, { color: progressColor }]}
+                      >
+                        {leftLabel}
+                      </Text>
+                    ) : (
+                      leftLabel
+                    )}
                   </Animated.View>
                 )}
               </GlassCard>
