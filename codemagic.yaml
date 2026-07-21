@@ -28,23 +28,21 @@ workflows:
       - name: Install npm dependencies
         script: |
           npm install
-      - name: Bump versionCode from Google Play
+      - name: Build Android release AAB
         script: |
           set -e
           LATEST="$(google-play get-latest-build-number \
             --package-name "$PACKAGE_NAME" \
-            --credentials "@env:GOOGLE_PLAY_SERVICE_ACCOUNT_CREDENTIALS" || true)"
+            --credentials "@env:GOOGLE_PLAY_SERVICE_ACCOUNT_CREDENTIALS" 2>/dev/null || true)"
           if [ -z "$LATEST" ] || ! [[ "$LATEST" =~ ^[0-9]+$ ]]; then
+            # Fallback above last known Play codes (phone 16, wear 19)
             UPDATED_BUILD_NUMBER=20
           else
             UPDATED_BUILD_NUMBER=$((LATEST + 1))
           fi
           echo "Using versionCode=$UPDATED_BUILD_NUMBER (Play latest was '${LATEST:-none}')"
-          echo "NEW_VERSION_CODE=$UPDATED_BUILD_NUMBER" >> "$CM_ENV"
-      - name: Build Android release AAB
-        script: |
           cd android
-          ./gradlew bundleRelease -PversionCode="$NEW_VERSION_CODE"
+          ./gradlew bundleRelease -PuntilVersionCode="$UPDATED_BUILD_NUMBER"
 
     artifacts:
       - android/app/build/outputs/**/*.aab
