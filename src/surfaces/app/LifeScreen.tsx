@@ -64,7 +64,7 @@ export function LifeScreen() {
               <Text variant="body" color="secondary" style={styles.cardText}>
                 {!hasBirthDate
                   ? 'Set your birth date in Settings to see how much of your life has passed and how much is left.'
-                  : 'Life details are part of Premium (or your free app preview). Visiting this screen can unlock Life for 24 hours after enough app opens — pull to leave and return if you just unlocked.'}
+                  : 'Life details are part of Premium (or your free app preview). Visiting this screen can unlock Life for 24 hours after enough app opens. Pull to leave and return if you just unlocked.'}
               </Text>
               <TouchableOpacity
                 style={styles.settingsCta}
@@ -95,8 +95,8 @@ export function LifeScreen() {
         progress={progress}
         passedLabel={passedDays.toLocaleString()}
         leftLabel={remainingDays.toLocaleString()}
-        passedCaption="DAYS LIVED"
-        leftCaption="DAYS LEFT"
+        passedCaption="Days lived"
+        leftCaption="Days left"
         summary={`Based on ${deathAge} years. ${percentUsed}% used · ${100 - percentUsed}% remaining.`}
       />
     </>
@@ -112,7 +112,7 @@ const styles = StyleSheet.create({
   overhead: {
     textAlign: 'center',
     marginBottom: Spacing[1],
-    letterSpacing: 1.2,
+    letterSpacing: 0.4,
   },
   streakHint: {
     textAlign: 'center',

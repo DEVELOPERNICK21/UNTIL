@@ -72,8 +72,11 @@ export const Typography = {
   meta: 13,
 } as const;
 
-/** App-wide: disable system font scaling so sizes stay consistent across devices. */
-export const FontScaling = { allowFontScaling: false } as const;
+/** App-wide: allow system font scaling, capped so layouts stay readable. */
+export const FontScaling = {
+  allowFontScaling: true,
+  maxFontSizeMultiplier: 1.35,
+} as const;
 
 export const Weight = {
   bold: '700' as const,

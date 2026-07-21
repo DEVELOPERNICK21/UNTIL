@@ -50,7 +50,7 @@ export function OverlayScreen() {
             Floating overlay
           </Text>
           <Text variant="body" color="secondary" style={styles.subtitle}>
-            Dynamic Island–like pill that floats over other apps. Drag to move,
+            A floating pill over other apps. Drag to move,
             long-press to open Until.
           </Text>
 

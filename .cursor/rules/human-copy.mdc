@@ -1,0 +1,35 @@
+---
+description: Ban AI-slop voice in user-facing copy (app UI, website, store listing)
+alwaysApply: true
+---
+
+# Human copy (no AI slop)
+
+When writing or editing **user-facing** text (screens, paywall, Ember tips, website, Play Store paste, notifications), write like a clear person. Not a wellness coach or marketing LLM.
+
+## Ban list
+
+- Em dashes (`—`). Use a period, comma, colon, or middot (`·`).
+- Soft filler: *gently, kindly, softly, quietly, whisper, soft presence, soft light, soft pride, breathe once, hold it soft, offered gently, presence made light*
+- Coach clichés: *journey, deliberate(ly), glanceable, redefined, seamless, empower, unlock your, not a race, not a scorecard, not a demand, future self, ordinary moment, finite nature*
+- Stacked hype lists and fake testimonials
+- “And also”, “It’s important to note”, “In order to”, “Whether you’re…”
+
+## Do this instead
+
+- Short sentences. One idea per line when possible.
+- Concrete product words: day %, widget, preview, subscribe, home screen.
+- Prefer plain over poetic. Warm is fine; mystical is not.
+- Empty UI placeholders may still use `—`.
+
+```text
+❌ The day is folding — you did enough. Soft pride, no pressure.
+✅ Day’s almost done. Rest is fine.
+
+❌ UNTIL makes time visible — so you spend it on purpose.
+✅ UNTIL shows how much time you have left.
+```
+
+## Scope
+
+Applies to visible strings only. Do **not** rewrite code comments or internal `docs/` architecture notes unless asked.

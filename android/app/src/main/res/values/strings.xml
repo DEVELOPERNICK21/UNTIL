@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Until: Days left</string>
+    <string name="app_name">UNTIL</string>
     <string name="widget_day_description">See your day progress.</string>
     <string name="widget_month_description">See your month progress.</string>
     <string name="widget_year_description">See your year and day progress.</string>

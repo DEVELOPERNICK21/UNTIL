@@ -4,6 +4,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Animated, Easing } from 'react-native';
+import { useReduceMotion } from '../../hooks';
 
 export function useLiveDayClock(enabled: boolean) {
   const [now, setNow] = useState(() => Date.now());
@@ -36,13 +37,19 @@ export function useLiveDayClock(enabled: boolean) {
 }
 
 export function useEnter(active: boolean, delay = 0) {
+  const reduceMotion = useReduceMotion();
   const opacity = useRef(new Animated.Value(0)).current;
   const y = useRef(new Animated.Value(22)).current;
 
   useEffect(() => {
     if (!active) {
       opacity.setValue(0);
-      y.setValue(22);
+      y.setValue(reduceMotion ? 0 : 22);
+      return;
+    }
+    if (reduceMotion) {
+      opacity.setValue(1);
+      y.setValue(0);
       return;
     }
     Animated.parallel([
@@ -61,15 +68,17 @@ export function useEnter(active: boolean, delay = 0) {
         useNativeDriver: true,
       }),
     ]).start();
-  }, [active, delay, opacity, y]);
+  }, [active, delay, opacity, y, reduceMotion]);
 
   return { opacity, transform: [{ translateY: y }] };
 }
 
 export function useCtaPressScale() {
+  const reduceMotion = useReduceMotion();
   const scale = useRef(new Animated.Value(1)).current;
 
   const bounce = () => {
+    if (reduceMotion) return;
     Animated.sequence([
       Animated.timing(scale, {
         toValue: 0.96,

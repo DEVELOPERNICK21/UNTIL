@@ -10,7 +10,35 @@ if (typeof window !== 'undefined') {
 }
 
 const INJECTED_STYLES = `
-  .gsap-reveal { visibility: hidden; }
+  /* Content stays readable by default; GSAP only animates when motion is allowed */
+  .gsap-reveal { visibility: visible; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .gsap-reveal, .text-track, .text-days, .main-card, .cta-wrapper,
+    .card-left-text, .card-right-text, .mockup-scroll-wrapper,
+    .floating-badge, .phone-widget {
+      opacity: 1 !important;
+      visibility: visible !important;
+      filter: none !important;
+      transform: none !important;
+    }
+    .hero-text-wrapper { display: none !important; }
+    .cta-wrapper { position: relative !important; z-index: 30 !important; }
+    .main-card {
+      position: relative !important;
+      width: min(92vw, 960px) !important;
+      height: auto !important;
+      min-height: 70vh !important;
+      margin: 2rem auto !important;
+      border-radius: 24px !important;
+    }
+    .cinematic-hero-root {
+      height: auto !important;
+      min-height: 100vh !important;
+      overflow: visible !important;
+    }
+    .floating-badge { display: none !important; }
+  }
 
   .film-grain {
       position: absolute; inset: 0; width: 100%; height: 100%;
@@ -117,7 +145,7 @@ const INJECTED_STYLES = `
   }
 
   .btn-modern-light, .btn-modern-dark {
-      transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+      transition: transform 0.25s cubic-bezier(0.25, 1, 0.5, 1), box-shadow 0.25s ease, background 0.25s ease;
       text-decoration: none;
   }
   .btn-modern-light {
@@ -183,12 +211,12 @@ export function CinematicHero({
   brandName = 'UNTIL',
   tagline1 = 'See your time,',
   tagline2 = 'not just the clock.',
-  cardHeading = 'Time awareness, redefined.',
+  cardHeading = 'Know where your time goes.',
   cardDescription = (
     <>
       <span className="text-white font-semibold">Until</span> shows day, month,
-      year, and life progress with widgets, deadlines, counters, and daily tasks
-      — always visible on your home screen.
+      year, and life progress with widgets, deadlines, counters, and daily tasks.
+      Always visible on your home screen.
     </>
   ),
   metricValue = 247,
@@ -207,6 +235,10 @@ export function CinematicHero({
   const requestRef = useRef<number>(0);
 
   useEffect(() => {
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const coarsePointer = window.matchMedia('(pointer: coarse)').matches;
+    if (reduceMotion || coarsePointer) return;
+
     const handleMouseMove = (e: MouseEvent) => {
       if (window.scrollY > window.innerHeight * 2) return;
 
@@ -242,6 +274,8 @@ export function CinematicHero({
   }, []);
 
   useEffect(() => {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
     const isMobile = window.innerWidth < 768;
 
     const ctx = gsap.context(() => {
@@ -458,7 +492,7 @@ export function CinematicHero({
     <div
       ref={containerRef}
       className={cn(
-        'relative w-screen h-screen overflow-hidden flex items-center justify-center bg-background text-foreground font-sans antialiased',
+        'cinematic-hero-root relative w-full max-w-[100vw] h-screen overflow-hidden flex items-center justify-center bg-background text-foreground font-sans antialiased',
         className,
       )}
       style={{ perspective: '1500px' }}
@@ -471,25 +505,25 @@ export function CinematicHero({
         aria-hidden="true"
       />
 
-      <div className="hero-text-wrapper absolute z-10 flex flex-col items-center justify-center text-center w-screen px-4 will-change-transform transform-style-3d">
-        <h1 className="text-track gsap-reveal text-3d-matte text-5xl md:text-7xl lg:text-[6rem] font-bold tracking-tight mb-2">
+      <div className="hero-text-wrapper absolute z-10 flex flex-col items-center justify-center text-center w-full px-4 will-change-transform transform-style-3d">
+        <p className="text-track gsap-reveal text-3d-matte text-5xl md:text-7xl lg:text-[6rem] font-bold tracking-tight mb-2">
           {tagline1}
-        </h1>
-        <h1 className="text-days gsap-reveal text-silver-matte text-5xl md:text-7xl lg:text-[6rem] font-extrabold tracking-tighter">
+        </p>
+        <p className="text-days gsap-reveal text-silver-matte text-5xl md:text-7xl lg:text-[6rem] font-extrabold tracking-tighter">
           {tagline2}
-        </h1>
+        </p>
       </div>
 
-      <div className="cta-wrapper absolute z-10 flex flex-col items-center justify-center text-center w-screen px-4 gsap-reveal pointer-events-auto will-change-transform">
-        <h2 className="text-4xl md:text-6xl lg:text-7xl font-bold mb-6 tracking-tight text-silver-matte">
+      <div className="cta-wrapper absolute z-10 flex flex-col items-center justify-center text-center w-full px-4 gsap-reveal pointer-events-auto will-change-transform">
+        <p className="text-4xl md:text-6xl lg:text-7xl font-bold mb-6 tracking-tight text-silver-matte">
           {ctaHeading}
-        </h2>
+        </p>
         <p className="text-muted-foreground text-lg md:text-xl mb-12 max-w-xl mx-auto font-light leading-relaxed">
           {ctaDescription}
         </p>
         <div className="flex flex-col sm:flex-row gap-6">
           <span
-            aria-label={`App Store — ${iosComingSoon}`}
+            aria-label={`App Store · ${iosComingSoon}`}
             className="btn-modern-light btn-modern-disabled flex items-center justify-center gap-3 px-8 py-4 rounded-[1.25rem]"
           >
             <svg
@@ -514,7 +548,7 @@ export function CinematicHero({
             target="_blank"
             rel="noopener noreferrer"
             aria-label="Get it on Google Play"
-            className="btn-modern-dark flex items-center justify-center gap-3 px-8 py-4 rounded-[1.25rem] group focus:outline-none focus:ring-2 focus:ring-[var(--offer)] focus:ring-offset-2 focus:ring-offset-background"
+            className="btn-modern-dark flex items-center justify-center gap-3 px-8 py-4 rounded-[1.25rem] group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--offer)] focus-visible:ring-offset-2 focus-visible:ring-offset-background"
           >
             <svg
               className="w-7 h-7 transition-transform group-hover:scale-105"
@@ -548,9 +582,9 @@ export function CinematicHero({
 
           <div className="relative w-full h-full max-w-7xl mx-auto px-4 lg:px-12 flex flex-col justify-evenly lg:grid lg:grid-cols-3 items-center lg:gap-8 z-10 py-6 lg:py-0">
             <div className="card-right-text gsap-reveal order-1 lg:order-3 flex justify-center lg:justify-end z-20 w-full">
-              <h2 className="text-6xl md:text-[6rem] lg:text-[8rem] font-black uppercase tracking-tighter text-card-silver-matte lg:mt-0">
+              <p className="text-6xl md:text-[6rem] lg:text-[8rem] font-black uppercase tracking-tighter text-card-silver-matte lg:mt-0">
                 {brandName}
-              </h2>
+              </p>
             </div>
 
             <div
@@ -586,7 +620,7 @@ export function CinematicHero({
                     />
 
                     <div className="absolute top-[5px] left-1/2 -translate-x-1/2 w-[100px] h-[28px] bg-black rounded-full z-50 flex items-center justify-end px-3 shadow-[inset_0_-1px_2px_rgba(255,255,255,0.1)]">
-                      <div className="w-1.5 h-1.5 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.8)] animate-pulse" />
+                      <div className="w-1.5 h-1.5 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.8)] motion-safe:animate-pulse" />
                     </div>
 
                     <div className="relative w-full h-full pt-12 px-5 pb-8 flex flex-col">
@@ -689,11 +723,22 @@ export function CinematicHero({
                   </div>
                 </div>
 
-                <div className="floating-badge absolute flex top-6 lg:top-12 left-[-15px] lg:left-[-80px] floating-ui-badge rounded-xl lg:rounded-2xl p-3 lg:p-4 items-center gap-3 lg:gap-4 z-30">
+                <div className="floating-badge absolute hidden md:flex top-6 lg:top-12 left-[-15px] lg:left-[-80px] floating-ui-badge rounded-xl lg:rounded-2xl p-3 lg:p-4 items-center gap-3 lg:gap-4 z-30">
                   <div className="w-8 h-8 lg:w-10 lg:h-10 rounded-full bg-gradient-to-b from-[var(--offer)]/20 to-[var(--offer)]/5 flex items-center justify-center border border-[var(--offer)]/30 shadow-inner">
-                    <span className="text-base lg:text-xl drop-shadow-lg" aria-hidden="true">
-                      📊
-                    </span>
+                    <svg
+                      className="w-4 h-4 lg:w-5 lg:h-5 text-[var(--offer)]"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      aria-hidden="true"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M3 3v18h18M7 15l4-4 3 3 5-6"
+                      />
+                    </svg>
                   </div>
                   <div>
                     <p className="text-white text-xs lg:text-sm font-bold tracking-tight">
@@ -705,11 +750,23 @@ export function CinematicHero({
                   </div>
                 </div>
 
-                <div className="floating-badge absolute flex bottom-12 lg:bottom-20 right-[-15px] lg:right-[-80px] floating-ui-badge rounded-xl lg:rounded-2xl p-3 lg:p-4 items-center gap-3 lg:gap-4 z-30">
+                <div className="floating-badge absolute hidden md:flex bottom-12 lg:bottom-20 right-[-15px] lg:right-[-80px] floating-ui-badge rounded-xl lg:rounded-2xl p-3 lg:p-4 items-center gap-3 lg:gap-4 z-30">
                   <div className="w-8 h-8 lg:w-10 lg:h-10 rounded-full bg-gradient-to-b from-[var(--amber)]/20 to-[var(--amber)]/5 flex items-center justify-center border border-[var(--amber)]/30 shadow-inner">
-                    <span className="text-base lg:text-lg drop-shadow-lg" aria-hidden="true">
-                      ⏳
-                    </span>
+                    <svg
+                      className="w-4 h-4 lg:w-5 lg:h-5 text-[var(--amber)]"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      aria-hidden="true"
+                    >
+                      <circle cx="12" cy="12" r="9" />
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M12 7v5l3 2"
+                      />
+                    </svg>
                   </div>
                   <div>
                     <p className="text-white text-xs lg:text-sm font-bold tracking-tight">
@@ -724,9 +781,9 @@ export function CinematicHero({
             </div>
 
             <div className="card-left-text gsap-reveal order-3 lg:order-1 flex flex-col justify-center text-center lg:text-left z-20 w-full lg:max-w-none px-4 lg:px-0">
-              <h3 className="text-white text-2xl md:text-3xl lg:text-4xl font-bold mb-0 lg:mb-5 tracking-tight">
+              <p className="text-white text-2xl md:text-3xl lg:text-4xl font-bold mb-0 lg:mb-5 tracking-tight">
                 {cardHeading}
-              </h3>
+              </p>
               <p className="hidden md:block text-[var(--text-secondary)] text-sm md:text-base lg:text-lg font-normal leading-relaxed mx-auto lg:mx-0 max-w-sm lg:max-w-none">
                 {cardDescription}
               </p>

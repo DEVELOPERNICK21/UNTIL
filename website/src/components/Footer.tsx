@@ -8,38 +8,35 @@ export function Footer() {
       style={{
         marginTop: 'auto',
         borderTop: '1px solid var(--divider)',
-        padding: '2rem 1.5rem',
+        padding:
+          '2.5rem 1.5rem calc(2rem + env(safe-area-inset-bottom, 0px))',
         background: 'var(--bg-alt)',
       }}
     >
       <div style={{ maxWidth: 1200, margin: '0 auto' }}>
-        {/* Community CTA — ChatPal-style */}
         <div
           style={{
             textAlign: 'center',
-            padding: '1.5rem',
-            marginBottom: '2rem',
+            paddingBottom: '1.75rem',
+            marginBottom: '1.75rem',
             borderBottom: '1px solid var(--divider)',
           }}
         >
-          <h3 style={{ fontSize: '1rem', fontWeight: 600, marginBottom: '0.35rem' }}>
-            {footer.community.title}
-          </h3>
-          <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', marginBottom: '0.75rem' }}>
-            {footer.community.subtitle}
-          </p>
-          <span
+          <p
             style={{
-              display: 'inline-block',
-              padding: '0.5rem 1rem',
-              background: 'var(--divider)',
-              color: 'var(--text-secondary)',
-              borderRadius: 'var(--radius)',
-              fontSize: '0.85rem',
+              fontSize: '1rem',
+              fontWeight: 600,
+              marginBottom: '0.35rem',
             }}
           >
-            {footer.community.cta}
-          </span>
+            {footer.community.title}
+          </p>
+          <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
+            {footer.community.subtitle}{' '}
+            <span style={{ color: 'var(--text-secondary)' }}>
+              ({footer.community.cta.toLowerCase()})
+            </span>
+          </p>
         </div>
 
         <div
@@ -52,25 +49,60 @@ export function Footer() {
           }}
         >
           <div>
-            <span style={{ fontWeight: 600 }}>{footer.appName}</span>
-            <span style={{ color: 'var(--text-secondary)', marginLeft: '0.5rem' }}>
-              — {footer.tagline}
+            <span style={{ fontWeight: 600 }}>
+              UNTIL&nbsp;:&nbsp;Countdown&nbsp;&amp;&nbsp;Time&nbsp;Left
+            </span>
+            <span
+              style={{ color: 'var(--text-secondary)', marginLeft: '0.5rem' }}
+            >
+              · {footer.tagline}
             </span>
           </div>
-          <div style={{ display: 'flex', gap: '1.5rem', flexWrap: 'wrap' }}>
-            <Link href={ROUTES.terms} style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
+          <nav
+            aria-label="Footer"
+            style={{ display: 'flex', gap: '0.25rem', flexWrap: 'wrap' }}
+          >
+            <Link
+              href={ROUTES.terms}
+              style={{
+                color: 'var(--text-secondary)',
+                fontSize: '0.9rem',
+                padding: '0.65rem 0.75rem',
+                minHeight: 44,
+                display: 'inline-flex',
+                alignItems: 'center',
+              }}
+            >
               {footer.links.terms}
             </Link>
-            <Link href={ROUTES.privacy} style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
+            <Link
+              href={ROUTES.privacy}
+              style={{
+                color: 'var(--text-secondary)',
+                fontSize: '0.9rem',
+                padding: '0.65rem 0.75rem',
+                minHeight: 44,
+                display: 'inline-flex',
+                alignItems: 'center',
+              }}
+            >
               {footer.links.privacy}
             </Link>
             <a
               href={`mailto:${SITE_CONFIG.contactEmail}`}
-              style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', textDecoration: 'none' }}
+              style={{
+                color: 'var(--text-secondary)',
+                fontSize: '0.9rem',
+                textDecoration: 'none',
+                padding: '0.65rem 0.75rem',
+                minHeight: 44,
+                display: 'inline-flex',
+                alignItems: 'center',
+              }}
             >
               {footer.links.contact}
             </a>
-          </div>
+          </nav>
         </div>
       </div>
     </footer>

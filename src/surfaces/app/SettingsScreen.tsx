@@ -56,28 +56,28 @@ function toBirthDateString(d: Date): string {
 }
 
 const MONTHS = [
-  'JAN',
-  'FEB',
-  'MAR',
-  'APR',
-  'MAY',
-  'JUN',
-  'JUL',
-  'AUG',
-  'SEP',
-  'OCT',
-  'NOV',
-  'DEC',
+  'Jan',
+  'Feb',
+  'Mar',
+  'Apr',
+  'May',
+  'Jun',
+  'Jul',
+  'Aug',
+  'Sep',
+  'Oct',
+  'Nov',
+  'Dec',
 ];
 
 function formatBornExpected(
   birthDate: string | null,
   deathAge: number,
 ): string {
-  if (!birthDate || birthDate.length < 10) return `EXPECTED: ${deathAge} YEARS`;
+  if (!birthDate || birthDate.length < 10) return `Expected: ${deathAge} years`;
   const [y, m] = birthDate.split('-').map(Number);
   const month = MONTHS[(m ?? 1) - 1] ?? '';
-  return `BORN: ${month} ${y}  +  EXPECTED: ${deathAge} YEARS`;
+  return `Born: ${month} ${y}  ·  Expected: ${deathAge} years`;
 }
 
 type IntentionalityMode = 'quiet' | 'radical';
@@ -193,7 +193,7 @@ export function SettingsScreen() {
                 variant="caption"
                 style={[styles.profileMeta, { color: theme.textSecondary }]}
               >
-                REALITY: {lifePercent}% JOURNEY COMPLETED
+                {lifePercent}% of life complete
               </Text>
             </View>
 
@@ -203,7 +203,7 @@ export function SettingsScreen() {
                 variant="caption"
                 style={[styles.sectionLabel, { color: theme.textSecondary }]}
               >
-                ACCOUNT
+                Account
               </Text>
               <GlassCard style={styles.sectionCard}>
                 <TouchableOpacity
@@ -250,7 +250,7 @@ export function SettingsScreen() {
                       ]}
                     >
                       {isPremium
-                        ? 'Active — manage in Google Play'
+                        ? 'Active · manage in Google Play'
                         : 'Yearly subscription or lifetime'}
                     </Text>
                   </View>
@@ -346,7 +346,7 @@ export function SettingsScreen() {
                 variant="caption"
                 style={[styles.sectionLabel, { color: theme.textSecondary }]}
               >
-                CONFIGURATION
+                Configuration
               </Text>
               <GlassCard style={styles.sectionCard}>
                 <TouchableOpacity
@@ -390,7 +390,7 @@ export function SettingsScreen() {
                     >
                       {hasPremiumBundle
                         ? 'Red alert when wasted hours hit this daily cap.'
-                        : 'Premium — nudge when you lose too much of today.'}
+                        : 'Premium. Nudge when you lose too much of today.'}
                     </Text>
                     {hasPremiumBundle ? (
                       <View style={styles.limitChips}>
@@ -629,7 +629,7 @@ const styles = StyleSheet.create({
     marginBottom: Spacing[4],
   },
   sectionLabel: {
-    letterSpacing: 1,
+    letterSpacing: 0.4,
     marginBottom: Spacing[2],
     marginLeft: Spacing[1],
   },

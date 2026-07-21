@@ -1,6 +1,6 @@
-# Until: Days left — Landing Website
+# UNTIL : Countdown & Time Left · Landing Website
 
-This is the **standalone** marketing/landing site for the Until: Days left app. It lives in the same repo as the React Native app but is **not** part of the app bundle — the app’s APK/AAB size is unchanged.
+This is the **standalone** marketing/landing site for UNTIL : Countdown & Time Left. It lives in the same repo as the React Native app but is **not** part of the app bundle — the app’s APK/AAB size is unchanged.
 
 ## Stack
 

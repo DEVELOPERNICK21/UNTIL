@@ -2,6 +2,7 @@ import { HeroScreenshotShowcase } from '@/components/HeroScreenshotShowcase';
 import { AppScreenshots } from '@/components/AppScreenshots';
 import { CinematicHeroSection } from '@/components/CinematicHeroSection';
 import { EmberCompanion } from '@/components/EmberCompanion';
+import { PricingSection } from '@/components/PricingSection';
 import { LANDING_COPY, SITE_CONFIG } from '@/domain';
 
 export default function HomePage() {
@@ -47,6 +48,8 @@ export default function HomePage() {
             fontSize: 'clamp(1.75rem, 4vw, 2.5rem)',
             fontWeight: 600,
             marginBottom: '0.5rem',
+            letterSpacing: '-0.02em',
+            textWrap: 'balance',
           }}
         >
           {hero.title}
@@ -82,30 +85,22 @@ export default function HomePage() {
         >
           <span
             style={{
-              display: 'inline-block',
+              display: 'inline-flex',
+              alignItems: 'center',
               padding: '0.75rem 1.5rem',
-              background: 'var(--divider)',
+              minHeight: 44,
               color: 'var(--text-secondary)',
-              borderRadius: 'var(--radius)',
-              fontWeight: 600,
-              cursor: 'default',
+              fontSize: '0.95rem',
+              fontWeight: 500,
             }}
           >
-            App Store - {pricingCta.iosComingSoon}
+            App Store · {pricingCta.iosComingSoon}
           </span>
           <a
             href={SITE_CONFIG.playStoreUrl}
             target="_blank"
             rel="noopener noreferrer"
-            style={{
-              display: 'inline-block',
-              padding: '0.75rem 1.5rem',
-              background: 'var(--text)',
-              color: 'var(--bg)',
-              borderRadius: 'var(--radius)',
-              fontWeight: 600,
-              textDecoration: 'none',
-            }}
+            className="landing-primary-cta"
           >
             {hero.cta}
           </a>
@@ -113,20 +108,21 @@ export default function HomePage() {
         <HeroScreenshotShowcase />
       </section>
 
-      {/* Value props — "That's why Until exists" (ChatPal-style) */}
+      {/* Value props */}
       <section style={{ borderTop: '1px solid var(--divider)' }}>
-        <p
+        <h2
           style={{
             textAlign: 'center',
-            fontSize: '0.9rem',
-            color: 'var(--text-secondary)',
+            fontSize: 'clamp(1.25rem, 2.5vw, 1.5rem)',
+            color: 'var(--text)',
             marginBottom: '1.5rem',
-            textTransform: 'uppercase',
-            letterSpacing: '0.1em',
+            fontWeight: 600,
+            letterSpacing: '-0.02em',
+            textWrap: 'balance',
           }}
         >
           {valueProps.tagline}
-        </p>
+        </h2>
         <div
           style={{
             display: 'grid',
@@ -138,7 +134,7 @@ export default function HomePage() {
         >
           {valueProps.items.map(item => (
             <div key={item.label} style={{ textAlign: 'center' }}>
-              <h3
+              <p
                 style={{
                   fontSize: '1.1rem',
                   fontWeight: 600,
@@ -146,7 +142,7 @@ export default function HomePage() {
                 }}
               >
                 {item.label}
-              </h3>
+              </p>
               <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
                 {item.desc}
               </p>
@@ -294,11 +290,9 @@ export default function HomePage() {
             margin: '0 auto',
           }}
         >
-          {testimonials.items.map((t, i) => (
-            <div key={i} className="landing-testimonial-card">
-              <div className="landing-testimonial-stars" aria-hidden>
-                {'★'.repeat(t.stars)}
-              </div>
+          {testimonials.items.map(t => (
+            <div key={`${t.author}-${t.role}`} className="landing-testimonial-card">
+              <p className="landing-testimonial-rating">{t.stars}/5 on Play</p>
               <p style={{ fontSize: '0.95rem', lineHeight: 1.5 }}>
                 &ldquo;{t.quote}&rdquo;
               </p>
@@ -326,7 +320,8 @@ export default function HomePage() {
         <div style={{ maxWidth: 640, margin: '0 auto' }}>
           {faq.items.map((item, i) => (
             <details
-              key={i}
+              key={item.question}
+              className="landing-faq"
               style={{
                 borderBottom: '1px solid var(--divider)',
                 padding: '1rem 0',
@@ -357,120 +352,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Pricing CTA */}
-      <section style={{ borderTop: '1px solid var(--divider)' }}>
-        <div className="landing-pricing-box">
-          <span className="landing-offer-badge">{pricing.introBadge}</span>
-          <h2
-            style={{
-              fontSize: '1.35rem',
-              fontWeight: 600,
-              marginBottom: '0.5rem',
-            }}
-          >
-            {pricingCta.title}
-          </h2>
-          <p
-            style={{
-              color: 'var(--text-secondary)',
-              fontSize: '0.95rem',
-              marginBottom: '1.25rem',
-            }}
-          >
-            {pricingCta.subtitle}
-          </p>
-          <ul className="landing-pricing-checkmarks">
-            {pricingCta.checkmarks.map(line => (
-              <li key={line}>{line}</li>
-            ))}
-          </ul>
-          {pricing.price && (
-            <p style={{ marginBottom: '0.5rem' }}>
-              <span className="landing-price-badge">{pricing.price}</span>
-              {pricing.wasPrice ? (
-                <span className="landing-price-was">{pricing.wasPrice}</span>
-              ) : null}
-              {pricing.savePercent > 0 ? (
-                <span className="landing-price-save">
-                  Save {pricing.savePercent}%
-                </span>
-              ) : null}
-            </p>
-          )}
-          {pricing.secondaryLine ? (
-            <p
-              style={{
-                fontSize: '0.95rem',
-                color: 'var(--text-secondary)',
-                marginBottom: '0.5rem',
-              }}
-            >
-              {pricing.secondaryLine}
-            </p>
-          ) : null}
-          {pricing.perDayLine || pricing.savingsLine ? (
-            <p
-              style={{
-                fontSize: '0.9rem',
-                color: 'var(--text-secondary)',
-                marginBottom: '0.5rem',
-              }}
-            >
-              {[pricing.perDayLine, pricing.savingsLine]
-                .filter(Boolean)
-                .join(' · ')}
-            </p>
-          ) : null}
-          <p
-            style={{
-              fontSize: '0.9rem',
-              marginBottom: '1rem',
-            }}
-          >
-            <span className="landing-limited-time-text">
-              {pricing.currencyNote}
-            </span>
-          </p>
-          <div
-            style={{
-              display: 'flex',
-              gap: '1rem',
-              justifyContent: 'center',
-              flexWrap: 'wrap',
-            }}
-          >
-            <span
-              style={{
-                display: 'inline-block',
-                padding: '0.75rem 1.5rem',
-                background: 'var(--divider)',
-                color: 'var(--text-secondary)',
-                borderRadius: 'var(--radius)',
-                fontWeight: 600,
-                cursor: 'default',
-              }}
-            >
-              {pricingCta.iosComingSoon}
-            </span>
-            <a
-              href={SITE_CONFIG.playStoreUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{
-                display: 'inline-block',
-                padding: '0.75rem 1.5rem',
-                background: 'var(--text)',
-                color: 'var(--bg)',
-                borderRadius: 'var(--radius)',
-                fontWeight: 600,
-                textDecoration: 'none',
-              }}
-            >
-              {pricingCta.ctaLabelAndroid}
-            </a>
-          </div>
-        </div>
-      </section>
+      <PricingSection />
 
       {/* Final CTA */}
       <section

@@ -1,50 +1,46 @@
 'use client';
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-
-const IOS_IMAGES = [
-  '/images/iOSImage1.PNG',
-  '/images/iOSImage2.PNG',
-  '/images/iOSImage3.PNG',
-  '/images/iOSImage4.PNG',
-];
-
-const ANDROID_IMAGES = [
-  '/images/screenshotAndroid1.JPG',
-  '/images/screenshotAndroid2.JPG',
-  '/images/screenshotAndroid3.JPG',
-  '/images/screenshotAndroid4.JPG',
-];
+import Image from 'next/image';
+import { ANDROID_SCREENSHOTS, IOS_SCREENSHOTS } from '@/lib/screenshots';
 
 const AUTO_ADVANCE_MS = 4000;
 const DRAG_THRESHOLD = 50;
 
 export function HeroScreenshotShowcase() {
-  const [platform, setPlatform] = useState<'ios' | 'android'>('ios');
+  const [platform, setPlatform] = useState<'ios' | 'android'>('android');
   const [index, setIndex] = useState(0);
   const [dragOffset, setDragOffset] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
   const [entered, setEntered] = useState(false);
+  const [reduceMotion, setReduceMotion] = useState(false);
+  const [paused, setPaused] = useState(false);
   const startX = useRef(0);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const images = platform === 'ios' ? IOS_IMAGES : ANDROID_IMAGES;
+  const images = platform === 'ios' ? IOS_SCREENSHOTS : ANDROID_SCREENSHOTS;
   const count = images.length;
 
-  // Entrance animation
+  useEffect(() => {
+    const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const sync = () => setReduceMotion(mq.matches);
+    sync();
+    mq.addEventListener('change', sync);
+    return () => mq.removeEventListener('change', sync);
+  }, []);
+
   useEffect(() => {
     const t = setTimeout(() => setEntered(true), 100);
     return () => clearTimeout(t);
   }, []);
 
-  // Auto-advance carousel
   useEffect(() => {
-    if (isDragging) return;
+    if (isDragging || reduceMotion || paused) return;
     const id = setInterval(() => {
       setIndex(i => (i + 1) % count);
     }, AUTO_ADVANCE_MS);
     return () => clearInterval(id);
-  }, [count, isDragging]);
+  }, [count, isDragging, reduceMotion, paused]);
 
   const goTo = useCallback(
     (next: number) => {
@@ -61,8 +57,7 @@ export function HeroScreenshotShowcase() {
   const handleDragMove = useCallback(
     (clientX: number) => {
       if (!isDragging) return;
-      const delta = clientX - startX.current;
-      setDragOffset(delta);
+      setDragOffset(clientX - startX.current);
     },
     [isDragging],
   );
@@ -98,14 +93,28 @@ export function HeroScreenshotShowcase() {
 
   return (
     <div
+      role="region"
+      aria-roledescription="carousel"
+      aria-label="App screenshots"
+      onFocusCapture={() => setPaused(true)}
+      onBlurCapture={e => {
+        if (!e.currentTarget.contains(e.relatedTarget as Node | null)) {
+          setPaused(false);
+        }
+      }}
+      onMouseEnter={() => setPaused(true)}
+      onMouseLeave={() => setPaused(false)}
       style={{
         opacity: entered ? 1 : 0,
         transform: entered ? 'translateY(0)' : 'translateY(20px)',
-        transition: 'opacity 0.6s ease-out, transform 0.6s ease-out',
+        transition: reduceMotion
+          ? 'none'
+          : 'opacity 0.6s ease-out, transform 0.6s ease-out',
       }}
     >
-      {/* Platform toggle */}
       <div
+        role="group"
+        aria-label="Platform"
         style={{
           display: 'flex',
           gap: '0.5rem',
@@ -115,52 +124,28 @@ export function HeroScreenshotShowcase() {
       >
         <button
           type="button"
+          aria-pressed={platform === 'ios'}
           onClick={() => {
             setPlatform('ios');
             setIndex(0);
           }}
-          style={{
-            padding: '0.5rem 1rem',
-            borderRadius: 'var(--radius-sm)',
-            border: `1px solid ${
-              platform === 'ios' ? 'var(--text)' : 'var(--divider)'
-            }`,
-            background: platform === 'ios' ? 'var(--divider)' : 'transparent',
-            color: 'var(--text)',
-            fontWeight: 600,
-            fontSize: '0.9rem',
-            cursor: 'pointer',
-            transition: 'border-color 0.2s, background 0.2s',
-          }}
+          className="landing-platform-btn"
         >
           iPhone
         </button>
         <button
           type="button"
+          aria-pressed={platform === 'android'}
           onClick={() => {
             setPlatform('android');
             setIndex(0);
           }}
-          style={{
-            padding: '0.5rem 1rem',
-            borderRadius: 'var(--radius-sm)',
-            border: `1px solid ${
-              platform === 'android' ? 'var(--text)' : 'var(--divider)'
-            }`,
-            background:
-              platform === 'android' ? 'var(--divider)' : 'transparent',
-            color: 'var(--text)',
-            fontWeight: 600,
-            fontSize: '0.9rem',
-            cursor: 'pointer',
-            transition: 'border-color 0.2s, background 0.2s',
-          }}
+          className="landing-platform-btn"
         >
           Android
         </button>
       </div>
 
-      {/* Phone frame + carousel */}
       <div
         style={{
           width: 'min(280px, 85vw)',
@@ -169,7 +154,6 @@ export function HeroScreenshotShowcase() {
           borderRadius: 36,
           padding: 10,
           boxShadow: '0 24px 48px rgba(0,0,0,0.5), 0 0 0 2px var(--divider)',
-          transition: 'transform 0.3s ease',
           cursor: isDragging ? 'grabbing' : 'grab',
         }}
       >
@@ -195,12 +179,10 @@ export function HeroScreenshotShowcase() {
             position: 'relative',
             touchAction: 'pan-y',
             userSelect: 'none',
-            WebkitUserSelect: 'none',
           }}
         >
           {images.map((src, i) => {
             const offsetPercent = (i - index) * 100;
-            const isActive = i === index;
             const opacity =
               Math.abs(offsetPercent) > 100
                 ? 0
@@ -210,32 +192,37 @@ export function HeroScreenshotShowcase() {
             return (
               <div
                 key={`${platform}-${src}`}
+                aria-hidden={i !== index}
                 style={{
                   position: 'absolute',
                   inset: 0,
-                  transition: isDragging
-                    ? 'none'
-                    : 'transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94), opacity 0.4s ease',
+                  transition:
+                    isDragging || reduceMotion
+                      ? 'none'
+                      : 'transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94), opacity 0.4s ease',
                   transform: `translateX(calc(${offsetPercent}% + ${dragOffset}px)) scale(${scale})`,
                   opacity,
                   pointerEvents: 'none',
                 }}
               >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
+                <Image
                   src={src}
                   alt={
                     platform === 'ios'
-                      ? `Until on iPhone ${i + 1}`
-                      : `Until on Android ${i + 1}`
+                      ? `UNTIL on iPhone, screenshot ${i + 1}`
+                      : `UNTIL on Android, screenshot ${i + 1}`
                   }
+                  fill
+                  sizes="280px"
+                  priority={i === 0 && platform === 'android'}
+                  draggable={false}
                   style={{
-                    width: '100%',
-                    height: '100%',
-                    display: 'block',
                     objectFit: 'cover',
                     borderRadius: 20,
+                    pointerEvents: 'none',
+                    userSelect: 'none',
                   }}
+                  className="landing-carousel-img"
                 />
               </div>
             );
@@ -243,11 +230,10 @@ export function HeroScreenshotShowcase() {
         </div>
       </div>
 
-      {/* Dots */}
       <div
         style={{
           display: 'flex',
-          gap: 8,
+          gap: 4,
           justifyContent: 'center',
           marginTop: '1.25rem',
           flexWrap: 'wrap',
@@ -259,17 +245,9 @@ export function HeroScreenshotShowcase() {
             type="button"
             onClick={() => goTo(i)}
             aria-label={`Go to screenshot ${i + 1}`}
-            style={{
-              width: 8,
-              height: 8,
-              borderRadius: '50%',
-              border: 'none',
-              padding: 0,
-              cursor: 'pointer',
-              background: i === index ? 'var(--text)' : 'var(--divider)',
-              transform: i === index ? 'scale(1.2)' : 'scale(1)',
-              transition: 'background 0.2s, transform 0.2s',
-            }}
+            aria-current={i === index ? 'true' : undefined}
+            className="landing-carousel-dot"
+            data-active={i === index ? 'true' : undefined}
           />
         ))}
       </div>
@@ -282,7 +260,9 @@ export function HeroScreenshotShowcase() {
           textAlign: 'center',
         }}
       >
-        Swipe or drag to browse · Auto-rotates
+        {reduceMotion
+          ? 'Use the dots or drag to browse'
+          : 'Swipe or drag to browse · Pauses on hover'}
       </p>
     </div>
   );

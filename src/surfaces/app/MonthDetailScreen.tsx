@@ -26,8 +26,8 @@ export function MonthDetailScreen() {
       progress={progress}
       passedLabel={`${passedDays}`}
       leftLabel={`${remainingDaysMonth}`}
-      passedCaption="DAYS PASSED"
-      leftCaption="DAYS LEFT"
+      passedCaption="Days passed"
+      leftCaption="Days left"
       summary={`${passedDays} of ${daysInMonth} days · ${100 - pct}% of month remaining`}
       footer={
         <Text variant="caption" color="secondary" style={styles.hint}>

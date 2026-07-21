@@ -1,5 +1,5 @@
 /**
- * Emotional microcopy for UNTIL — honest, warm, not guilt-heavy.
+ * Emotional microcopy for UNTIL — plain, warm, not guilt-heavy.
  * Presentation-only; surfaces consume via theme/ui.
  */
 
@@ -24,35 +24,35 @@ export function timeOfDayLabel(date: Date = new Date()): string {
 }
 
 const DAY_FEEL: Record<ProgressBand, string> = {
-  dawn: 'The day is still soft — plenty ahead.',
-  open: 'You’re in the open stretch of today.',
-  mid: 'Halfway light. Keep what matters close.',
-  late: 'Evening gathers. Make the last hours count gently.',
-  dusk: 'Almost night. Rest is part of the day, too.',
+  dawn: 'Early day. Plenty ahead.',
+  open: 'Open stretch of today.',
+  mid: 'Halfway. Keep priorities close.',
+  late: 'Evening. Make the last hours count.',
+  dusk: 'Almost night. Rest is part of the day.',
 };
 
 const MONTH_FEEL: Record<ProgressBand, string> = {
-  dawn: 'A fresh page of the month.',
-  open: 'The month still has room to breathe.',
-  mid: 'Middle of the month — a quiet checkpoint.',
+  dawn: 'Fresh page of the month.',
+  open: 'The month still has room.',
+  mid: 'Middle of the month. Quick checkpoint.',
   late: 'Days thin out. Choose carefully.',
   dusk: 'Month nearly spent. Honor what you lived.',
 };
 
 const YEAR_FEEL: Record<ProgressBand, string> = {
-  dawn: 'A new orbit just beginning.',
+  dawn: 'New year just starting.',
   open: 'The year is still young.',
-  mid: 'Midyear light — look both ways.',
-  late: 'Leaves turning. Hold the good days.',
-  dusk: 'Year almost written. Be kind to yourself.',
+  mid: 'Midyear. Look both ways.',
+  late: 'Late year. Hold the good days.',
+  dusk: 'Year almost done. Be kind to yourself.',
 };
 
 const LIFE_FEEL: Record<ProgressBand, string> = {
-  dawn: 'So much life still opens.',
-  open: 'You’re walking a long road — not alone.',
-  mid: 'The middle is where meaning deepens.',
-  late: 'Treasures in what remains.',
-  dusk: 'Every day left is a gift. Hold it soft.',
+  dawn: 'So much life still ahead.',
+  open: 'Long road. You’re not alone.',
+  mid: 'The middle is where meaning settles.',
+  late: 'Value in what remains.',
+  dusk: 'Every day left counts. Hold it carefully.',
 };
 
 export function feelForPeriod(
@@ -76,9 +76,9 @@ export function homeHeroSupport(date: Date = new Date()): string {
   const h = date.getHours();
   if (h < 5) return 'Quiet hours. Time is still yours.';
   if (h < 12) return 'Start where you are. The day opens.';
-  if (h < 17) return 'Notice what’s left — not only what’s gone.';
-  if (h < 21) return 'Evening light. Soften your pace.';
-  return 'The day is folding. You did enough for today.';
+  if (h < 17) return 'Notice what’s left, not only what’s gone.';
+  if (h < 21) return 'Evening. Ease your pace.';
+  return 'Day’s almost done. You did enough for today.';
 }
 
 /** Short line for Wear glance (keep tiny). */
@@ -92,7 +92,7 @@ export function wearDayWhisper(progress: number): string {
     case 'mid':
       return 'Hold steady';
     case 'late':
-      return 'Gentle close';
+      return 'Closing soon';
     case 'dusk':
       return 'Almost rest';
   }

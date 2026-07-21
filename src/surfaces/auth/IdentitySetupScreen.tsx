@@ -1,5 +1,5 @@
 /**
- * Your Journey — birth date and expected lifespan (Stitch: Your Journey screen).
+ * Birth date and expected lifespan setup.
  */
 
 import React, { useState, useMemo, useCallback } from 'react';
@@ -21,7 +21,8 @@ import {
   SafeAreaView,
   useSafeAreaInsets,
 } from 'react-native-safe-area-context';
-import { Text, Card, Slider } from '../../ui';
+import Svg, { Path, Rect, Circle } from 'react-native-svg';
+import { Text, Card, Slider, PeriodGlyph } from '../../ui';
 import {
   useTheme,
   Spacing,
@@ -37,6 +38,38 @@ import type { AuthStackParamList } from '../../navigation/AuthNavigator';
 const LIFESPAN_MIN = 40;
 const LIFESPAN_MAX = 120;
 const DEFAULT_LIFESPAN = 80;
+
+function CalendarMark({ color }: { color: string }) {
+  return (
+    <Svg width={22} height={22} viewBox="0 0 24 24" accessibilityElementsHidden>
+      <Rect
+        x={3}
+        y={5}
+        width={18}
+        height={16}
+        rx={2}
+        stroke={color}
+        strokeWidth={1.6}
+        fill="none"
+      />
+      <Path d="M8 3v4M16 3v4M3 10h18" stroke={color} strokeWidth={1.6} />
+    </Svg>
+  );
+}
+
+function InfoMark({ color }: { color: string }) {
+  return (
+    <Svg width={18} height={18} viewBox="0 0 24 24" accessibilityElementsHidden>
+      <Circle cx={12} cy={12} r={9} stroke={color} strokeWidth={1.6} fill="none" />
+      <Path
+        d="M12 10v6M12 7.5h.01"
+        stroke={color}
+        strokeWidth={1.8}
+        strokeLinecap="round"
+      />
+    </Svg>
+  );
+}
 
 function toBirthDateString(d: Date): string {
   const y = d.getFullYear();
@@ -114,9 +147,7 @@ export function IdentitySetupScreen() {
       <SafeAreaView style={styles.safe} edges={['top']}>
         <View style={styles.brandHeader}>
           <View style={styles.brandLeft}>
-            <Text variant="body" style={{ color: percent }}>
-              ⏳
-            </Text>
+            <PeriodGlyph kind="life" size={22} progress={0.35} animated={false} />
             <Text
               variant="sectionTitle"
               style={[styles.brandTitle, { color: theme.textPrimary }]}
@@ -138,14 +169,14 @@ export function IdentitySetupScreen() {
               variant="display"
               style={[styles.headline, { color: theme.textPrimary }]}
             >
-              When did your journey begin?
+              When were you born?
             </Text>
             <Text
               variant="body"
               style={[styles.introBody, { color: theme.textSecondary }]}
             >
-              We use your birth date and expected lifespan to calculate your life
-              progress. Data stays local to your device.
+              We use your birth date and expected lifespan to calculate life
+              progress. Data stays on your device.
             </Text>
           </View>
 
@@ -155,13 +186,13 @@ export function IdentitySetupScreen() {
                 variant="micro"
                 style={[styles.fieldLabel, { color: theme.textSecondary }]}
               >
-                BIRTH DATE
+                Birth date
               </Text>
               <Text
                 variant="micro"
                 style={[styles.fieldLabelMuted, { color: theme.textSecondary }]}
               >
-                ESTABLISHED
+                Required for Life
               </Text>
             </View>
             <TouchableOpacity
@@ -174,6 +205,8 @@ export function IdentitySetupScreen() {
               ]}
               onPress={() => setShowPicker(true)}
               activeOpacity={0.85}
+              accessibilityRole="button"
+              accessibilityLabel={`Birth date ${formatDisplayDate(birthDate)}. Tap to change.`}
             >
               <Text
                 variant="title"
@@ -181,9 +214,7 @@ export function IdentitySetupScreen() {
               >
                 {formatDisplayDate(birthDate)}
               </Text>
-              <Text variant="body" style={{ color: theme.textSecondary }}>
-                📅
-              </Text>
+              <CalendarMark color={theme.textSecondary} />
             </TouchableOpacity>
             {showPicker ? (
               <View style={styles.datePickerWrap}>
@@ -212,12 +243,15 @@ export function IdentitySetupScreen() {
                 variant="micro"
                 style={[styles.fieldLabel, { color: theme.textSecondary }]}
               >
-                EXPECTED LIFESPAN
+                Expected lifespan
               </Text>
               <View style={styles.lifespanValueRow}>
                 <Text
                   variant="title"
-                  style={{ color: percent, fontFamily: getFontFamilyForWeight(Weight.semibold) }}
+                  style={{
+                    color: percent,
+                    fontFamily: getFontFamilyForWeight(Weight.semibold),
+                  }}
                 >
                   {lifespan}
                 </Text>
@@ -226,7 +260,7 @@ export function IdentitySetupScreen() {
                   style={[styles.yearsLabel, { color: theme.textSecondary }]}
                 >
                   {' '}
-                  YEARS
+                  years
                 </Text>
               </View>
             </View>
@@ -250,12 +284,17 @@ export function IdentitySetupScreen() {
           </View>
 
           <Card style={styles.infoCard} lighter>
-            <Text variant="body" style={{ color: theme.textSecondary }}>
-              ℹ️ Lifespan estimates are based on global averages (approx.
-              73–85 years), but you can customize this to reflect your personal
-              goals or heritage. This metric serves as a gentle reminder of the
-              finite nature of time.
-            </Text>
+            <View style={styles.infoRow}>
+              <InfoMark color={theme.textSecondary} />
+              <Text
+                variant="body"
+                style={{ color: theme.textSecondary, flex: 1 }}
+              >
+                Lifespan estimates are based on global averages (about 73–85
+                years). Change this to match your goals or family history. It
+                helps UNTIL show life progress.
+              </Text>
+            </View>
           </Card>
         </ScrollView>
 
@@ -265,9 +304,14 @@ export function IdentitySetupScreen() {
             { paddingBottom: Math.max(insets.bottom, Spacing.lg) },
           ]}
         >
-          <TouchableOpacity onPress={handleSkip} style={styles.footerSkip}>
+          <TouchableOpacity
+            onPress={handleSkip}
+            style={styles.footerSkip}
+            accessibilityRole="button"
+            accessibilityLabel="Skip for now"
+          >
             <Text variant="body" style={{ color: theme.textSecondary }}>
-              ✕ Skip
+              Skip
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
@@ -279,13 +323,15 @@ export function IdentitySetupScreen() {
             onPress={handleViewMyLife}
             activeOpacity={0.85}
             disabled={isSubmitting}
+            accessibilityRole="button"
+            accessibilityLabel="View my life"
           >
             {isSubmitting ? (
               <ActivityIndicator color="#FFFFFF" />
             ) : (
               <>
                 <Text variant="sectionTitle" style={styles.ctaLabel}>
-                  View My Life
+                  View my life
                 </Text>
                 <Text variant="sectionTitle" style={styles.ctaLabel}>
                   {' '}
@@ -344,11 +390,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   fieldLabel: {
-    letterSpacing: 2,
+    letterSpacing: 0.4,
   },
   fieldLabelMuted: {
-    letterSpacing: 2,
-    opacity: 0.5,
+    letterSpacing: 0.3,
+    opacity: 0.65,
   },
   dateValue: {
     flex: 1,
@@ -371,7 +417,7 @@ const styles = StyleSheet.create({
     alignItems: 'baseline',
   },
   yearsLabel: {
-    letterSpacing: 1,
+    letterSpacing: 0.3,
   },
   sliderWrap: {
     paddingTop: Spacing.sm,
@@ -379,10 +425,15 @@ const styles = StyleSheet.create({
   sliderLabels: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop: Spacing.sm,
+    marginTop: Spacing.xs,
   },
   infoCard: {
-    marginTop: Spacing.sm,
+    marginBottom: Spacing.md,
+  },
+  infoRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: Spacing.sm,
   },
   footer: {
     position: 'absolute',
@@ -393,25 +444,29 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: Spacing.lg,
-    paddingTop: Spacing.sm,
+    paddingTop: Spacing.md,
+    gap: Spacing.md,
   },
   footerSkip: {
-    paddingVertical: Spacing.sm,
+    minHeight: 44,
+    justifyContent: 'center',
+    paddingHorizontal: Spacing.sm,
   },
   ctaPill: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: Radius.full,
     paddingVertical: Spacing.md,
     paddingHorizontal: Spacing.xl,
-    borderRadius: Radius.full,
-    minHeight: 48,
+    minHeight: 52,
     ...Shadows.card,
   },
   ctaDisabled: {
-    opacity: 0.8,
+    opacity: 0.7,
   },
   ctaLabel: {
-    fontFamily: getFontFamilyForWeight(Weight.semibold),
     color: '#FFFFFF',
+    fontFamily: getFontFamilyForWeight(Weight.semibold),
   },
 });

@@ -37,7 +37,7 @@ export function SharePromptModal({ visible, onDismiss }: SharePromptModalProps) 
             Your countdown reached today
           </Text>
           <Text variant="body" color="secondary" style={styles.body}>
-            Share the moment — capture how much of your day, month, or year is left.
+            Share the moment. Capture how much of your day, month, or year is left.
           </Text>
           <TouchableOpacity
             style={[styles.primary, { backgroundColor: theme.percent }]}

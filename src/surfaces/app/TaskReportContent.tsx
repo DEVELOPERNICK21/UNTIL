@@ -450,15 +450,13 @@ const styles = StyleSheet.create({
   },
   cardTitle: {
     marginBottom: Spacing[3],
-    textTransform: 'uppercase',
-    letterSpacing: 1.2,
+    letterSpacing: 0.4,
     fontSize: Typography.small,
   },
   categoryTitle: {
     marginTop: Spacing[4],
     marginBottom: Spacing[2],
-    textTransform: 'uppercase',
-    letterSpacing: 1.2,
+    letterSpacing: 0.4,
     fontSize: Typography.small,
   },
   chartSection: {

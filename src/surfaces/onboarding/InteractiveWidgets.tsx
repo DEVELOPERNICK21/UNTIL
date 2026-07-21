@@ -27,6 +27,7 @@ import {
   useEnter,
   useLiveDayClock,
 } from './onboardingMotion';
+import { useReduceMotion } from '../../hooks';
 
 function WidgetMock({
   title,
@@ -48,11 +49,15 @@ function WidgetMock({
   active: boolean;
 }) {
   const theme = useTheme();
+  const reduceMotion = useReduceMotion();
   const enter = useEnter(active, enterDelay);
   const bob = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    if (!active) return;
+    if (!active || reduceMotion) {
+      bob.setValue(0);
+      return;
+    }
     const loop = Animated.loop(
       Animated.sequence([
         Animated.timing(bob, {
@@ -71,7 +76,7 @@ function WidgetMock({
     );
     loop.start();
     return () => loop.stop();
-  }, [active, bob, enterDelay]);
+  }, [active, bob, enterDelay, reduceMotion]);
 
   return (
     <Animated.View
@@ -173,7 +178,7 @@ export function InteractiveWidgets({ active }: InteractiveWidgetsProps) {
     <View style={styles.body}>
       <Animated.View style={title}>
         <Text variant="micro" style={[styles.eyebrow, { color: theme.percent }]}>
-          ON YOUR HOME SCREEN
+          On your home screen
         </Text>
         <Text
           variant="display"
@@ -194,7 +199,7 @@ export function InteractiveWidgets({ active }: InteractiveWidgetsProps) {
           variant="body"
           style={[styles.slideSubtitle, { color: theme.textSecondary }]}
         >
-          Tap a preview widget — then add the real ones from your home screen.
+          Tap a preview widget, then add the real ones from your home screen.
         </Text>
       </Animated.View>
 

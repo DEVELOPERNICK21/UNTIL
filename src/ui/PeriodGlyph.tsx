@@ -10,6 +10,7 @@ import Svg, {
   Stop,
   G,
 } from 'react-native-svg';
+import { useReduceMotion } from '../hooks';
 
 export type PeriodGlyphKind = 'day' | 'month' | 'year' | 'life';
 
@@ -69,6 +70,8 @@ export function PeriodGlyph({
   pressed = false,
   onPress,
 }: PeriodGlyphProps) {
+  const reduceMotion = useReduceMotion();
+  const shouldAnimate = animated && !reduceMotion;
   const palette = KIND_COLORS[kind];
   const ringColor = accent ?? palette.mid;
   const gid = useMemo(
@@ -93,15 +96,24 @@ export function PeriodGlyph({
   const shimmer = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
+    if (reduceMotion) {
+      ringAnim.setValue(clamped);
+      return;
+    }
     Animated.timing(ringAnim, {
       toValue: clamped,
       duration: 700,
       easing: Easing.out(Easing.cubic),
       useNativeDriver: false,
     }).start();
-  }, [clamped, ringAnim]);
+  }, [clamped, ringAnim, reduceMotion]);
 
   useEffect(() => {
+    if (reduceMotion) {
+      pressScale.setValue(pressed ? 1.08 : 1);
+      spark.setValue(0);
+      return;
+    }
     Animated.spring(pressScale, {
       toValue: pressed ? 1.08 : 1,
       friction: 6,
@@ -117,10 +129,15 @@ export function PeriodGlyph({
         useNativeDriver: true,
       }).start();
     }
-  }, [pressed, pressScale, spark]);
+  }, [pressed, pressScale, spark, reduceMotion]);
 
   useEffect(() => {
-    if (!animated) {
+    if (!shouldAnimate) {
+      glow.setValue(0);
+      spin.setValue(0);
+      shimmer.setValue(0);
+      beat.setValue(1);
+      pageFlip.setValue(0);
       return;
     }
 
@@ -249,7 +266,7 @@ export function PeriodGlyph({
       pageLoop?.stop();
       beatLoop.stop();
     };
-  }, [animated, kind, glow, spin, shimmer, beat, pageFlip]);
+  }, [shouldAnimate, kind, glow, spin, shimmer, beat, pageFlip]);
 
   const dashOffset = ringAnim.interpolate({
     inputRange: [0, 1],
@@ -372,7 +389,7 @@ export function PeriodGlyph({
           </Svg>
 
           {/* Moving highlight strip — clipped by orbStage */}
-          {animated ? (
+          {shouldAnimate ? (
             <Animated.View
               pointerEvents="none"
               style={[
@@ -396,7 +413,7 @@ export function PeriodGlyph({
               styles.innerPulse,
               {
                 backgroundColor: palette.glow,
-                opacity: animated ? innerGlowOpacity : 0.3,
+                opacity: shouldAnimate ? innerGlowOpacity : 0.3,
               },
             ]}
           />
@@ -406,7 +423,7 @@ export function PeriodGlyph({
             <Animated.View
               style={[
                 StyleSheet.absoluteFillObject,
-                { transform: [{ rotate: animated ? rotate : '0deg' }] },
+                { transform: [{ rotate: shouldAnimate ? rotate : '0deg' }] },
               ]}
             >
               <Svg width={size} height={size} viewBox="0 0 36 36">
@@ -436,7 +453,7 @@ export function PeriodGlyph({
             <Animated.View
               style={[
                 StyleSheet.absoluteFillObject,
-                { transform: [{ rotate: animated ? rotate : '0deg' }] },
+                { transform: [{ rotate: shouldAnimate ? rotate : '0deg' }] },
               ]}
             >
               <Svg width={size} height={size} viewBox="0 0 36 36">

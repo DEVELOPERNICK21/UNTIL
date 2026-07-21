@@ -556,8 +556,7 @@ const styles = StyleSheet.create({
   reportCard: { marginBottom: Spacing[4] },
   blockTitle: {
     marginBottom: Spacing[2],
-    textTransform: 'uppercase',
-    letterSpacing: 1,
+    letterSpacing: 0.4,
   },
   reportRow: { marginBottom: Spacing[2] },
   progress: { marginTop: Spacing[1] },
@@ -572,13 +571,11 @@ const styles = StyleSheet.create({
   },
   addSectionLabel: {
     marginBottom: Spacing[2],
-    textTransform: 'uppercase',
-    letterSpacing: 1,
+    letterSpacing: 0.4,
   },
   categorySectionLabel: {
     marginBottom: Spacing[1],
-    textTransform: 'uppercase',
-    letterSpacing: 1,
+    letterSpacing: 0.4,
   },
   input: {
     borderWidth: 1,
@@ -676,8 +673,7 @@ const styles = StyleSheet.create({
   modalTitle: { marginBottom: Spacing[3] },
   modalInputLabel: {
     marginBottom: Spacing[1],
-    textTransform: 'uppercase',
-    letterSpacing: 1,
+    letterSpacing: 0.4,
   },
   modalInput: {
     borderWidth: 1,

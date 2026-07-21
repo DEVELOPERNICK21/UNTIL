@@ -57,13 +57,13 @@ export const QUIZ_PROMPTS = {
   q_goal: 'What do you want more of?',
   q_drain: 'Where does most of your time leak?',
   interstitial:
-    'Most people underestimate lost hours. Small daily leaks add up to ~15–25 hrs/week.',
+    'Most people underestimate lost hours. Small daily leaks add up to about 15–25 hrs/week.',
   q_values: 'If you reclaimed 10 hrs/week, what comes first?',
   q_cadence: 'How do you want UNTIL to show up?',
-  q_readiness: 'Ready to watch your time deliberately?',
+  q_readiness: 'Ready to watch your time on purpose?',
   brandTitle: 'Your time is limited.',
   brandSub:
-    'UNTIL makes that visible — so you spend it on purpose. Day, month, year, and life — on screen and as home widgets.',
+    'UNTIL makes that visible so you spend it on purpose. Day, month, year, and life on screen and as home widgets.',
   loaderTitle: 'Building your time map…',
   resultsTitle: 'Your time map is ready',
   resultsSub: 'Based on your 5 answers',

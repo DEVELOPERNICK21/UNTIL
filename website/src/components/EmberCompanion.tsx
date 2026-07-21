@@ -61,6 +61,7 @@ export function EmberCompanion() {
   const [whisper, setWhisper] = useState<string | null>(null);
   const [bounce, setBounce] = useState(false);
   const [reduceMotion, setReduceMotion] = useState(false);
+  const [coarsePointer, setCoarsePointer] = useState(false);
   const mood = useMemo(() => moodFromHour(new Date().getHours()), []);
   const colors = MOOD_COLOR[mood];
 
@@ -73,6 +74,8 @@ export function EmberCompanion() {
   const bounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const whisperIndex = useRef(0);
 
+  const parkOnly = reduceMotion || coarsePointer;
+
   const clearWhisperTimer = useCallback(() => {
     if (whisperTimer.current) clearTimeout(whisperTimer.current);
     whisperTimer.current = null;
@@ -84,11 +87,19 @@ export function EmberCompanion() {
   }, []);
 
   useEffect(() => {
-    const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
-    const sync = () => setReduceMotion(mq.matches);
+    const mqMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const mqPointer = window.matchMedia('(pointer: coarse)');
+    const sync = () => {
+      setReduceMotion(mqMotion.matches);
+      setCoarsePointer(mqPointer.matches);
+    };
     sync();
-    mq.addEventListener('change', sync);
-    return () => mq.removeEventListener('change', sync);
+    mqMotion.addEventListener('change', sync);
+    mqPointer.addEventListener('change', sync);
+    return () => {
+      mqMotion.removeEventListener('change', sync);
+      mqPointer.removeEventListener('change', sync);
+    };
   }, []);
 
   useEffect(() => {
@@ -117,7 +128,7 @@ export function EmberCompanion() {
   }, []);
 
   const tick = useCallback(() => {
-    if (!visibleOk.current || reduceMotion) {
+    if (!visibleOk.current || parkOnly) {
       raf.current = null;
       return;
     }
@@ -130,13 +141,13 @@ export function EmberCompanion() {
       node.style.transform = `translate3d(${p.x}px, ${p.y}px, 0)`;
     }
     raf.current = requestAnimationFrame(tick);
-  }, [reduceMotion]);
+  }, [parkOnly]);
 
   useEffect(() => {
-    if (!active || reduceMotion) {
+    if (!active || parkOnly) {
       if (raf.current != null) cancelAnimationFrame(raf.current);
       raf.current = null;
-      if (reduceMotion && rootRef.current) {
+      if (parkOnly && rootRef.current) {
         rootRef.current.style.transform = '';
       }
       return;
@@ -145,10 +156,10 @@ export function EmberCompanion() {
     return () => {
       if (raf.current != null) cancelAnimationFrame(raf.current);
     };
-  }, [active, reduceMotion, tick]);
+  }, [active, parkOnly, tick]);
 
   useEffect(() => {
-    if (!active || reduceMotion) return;
+    if (!active || parkOnly) return;
 
     const onMove = (e: PointerEvent) => {
       target.current = {
@@ -158,7 +169,7 @@ export function EmberCompanion() {
     };
     const onVis = () => {
       visibleOk.current = document.visibilityState === 'visible';
-      if (visibleOk.current && raf.current == null && active && !reduceMotion) {
+      if (visibleOk.current && raf.current == null && active && !parkOnly) {
         raf.current = requestAnimationFrame(tick);
       }
     };
@@ -169,7 +180,7 @@ export function EmberCompanion() {
       window.removeEventListener('pointermove', onMove);
       document.removeEventListener('visibilitychange', onVis);
     };
-  }, [active, reduceMotion, tick]);
+  }, [active, parkOnly, tick]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -205,18 +216,18 @@ export function EmberCompanion() {
     whisperTimer.current = setTimeout(() => setWhisper(null), WHISPER_MS);
   };
 
-  const parkedClass = reduceMotion ? ' ember-companion--parked' : '';
+  const parkedClass = parkOnly ? ' ember-companion--parked' : '';
   const hiddenClass = !active ? ' ember-companion--hidden' : '';
 
   return (
     <div
       className={`ember-companion${parkedClass}${hiddenClass}${
-        bounce ? ' ember-companion--bounce' : ''
+        bounce && !parkOnly ? ' ember-companion--bounce' : ''
       }`}
       ref={rootRef}
       aria-hidden={!active}
       style={
-        reduceMotion
+        parkOnly
           ? undefined
           : {
               transform: `translate3d(${pos.current.x}px, ${pos.current.y}px, 0)`,

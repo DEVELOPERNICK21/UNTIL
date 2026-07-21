@@ -199,7 +199,7 @@ export function WidgetScreen() {
             {Platform.OS === 'android' && (
               <SettingTile
                 title="Floating overlay"
-                description="Dynamic Island–like pill over other apps. Drag to move."
+                description="Floating pill over other apps. Drag to move."
                 status={overlayActive ? 'active' : 'inactive'}
                 statusLabel={overlayActive ? 'Active' : 'Inactive'}
                 onPress={() => navigation.navigate('Overlay')}

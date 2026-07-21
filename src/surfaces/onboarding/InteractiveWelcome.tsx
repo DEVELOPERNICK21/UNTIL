@@ -22,6 +22,7 @@ import {
   Shadows,
 } from '../../theme';
 import { useEnter } from './onboardingMotion';
+import { useReduceMotion } from '../../hooks';
 
 const FEATURES = [
   {
@@ -34,7 +35,7 @@ const FEATURES = [
     id: 'widgets',
     label: 'Widgets',
     glyph: 'month' as const,
-    blurb: 'Home screen glances — no app open needed.',
+    blurb: 'Home screen glances. No app open needed.',
   },
   {
     id: 'life',
@@ -56,6 +57,7 @@ export function InteractiveWelcome({
   subtitle,
 }: InteractiveWelcomeProps) {
   const theme = useTheme();
+  const reduceMotion = useReduceMotion();
   const [selected, setSelected] = useState<string | null>(null);
   const glow = useRef(new Animated.Value(0)).current;
   const brandScale = useRef(new Animated.Value(0.92)).current;
@@ -65,7 +67,18 @@ export function InteractiveWelcome({
   const chips = useEnter(active, 340);
 
   useEffect(() => {
-    if (!active) return;
+    if (!active) {
+      brandScale.setValue(0.92);
+      brandOpacity.setValue(0);
+      glow.setValue(0);
+      return;
+    }
+    if (reduceMotion) {
+      brandScale.setValue(1);
+      brandOpacity.setValue(1);
+      glow.setValue(0.5);
+      return;
+    }
     Animated.parallel([
       Animated.spring(brandScale, {
         toValue: 1,
@@ -98,7 +111,7 @@ export function InteractiveWelcome({
     );
     loop.start();
     return () => loop.stop();
-  }, [active, brandScale, brandOpacity, glow]);
+  }, [active, brandScale, brandOpacity, glow, reduceMotion]);
 
   return (
     <View style={styles.hero}>
@@ -131,7 +144,7 @@ export function InteractiveWelcome({
           <Ember progress={0.32} size={64} />
         </View>
         <Text variant="micro" style={[styles.eyebrow, { color: theme.percent }]}>
-          WELCOME
+          Welcome
         </Text>
         <Text
           variant="display"

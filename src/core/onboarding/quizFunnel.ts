@@ -84,7 +84,7 @@ export function buildResultCards(
   const priority = answers.valuesPriority ?? answers.goal ?? 'other';
   const planLabel = VALUES_LABELS[priority] ?? VALUES_LABELS.other;
 
-  let cadenceText = 'Gentle start — widgets when you’re ready';
+  let cadenceText = 'Gentle start. Widgets when you’re ready';
   const cadence: OnboardingCadence | undefined = answers.cadence;
   if (cadence === 'checkins' || cadence === 'both') {
     cadenceText = 'Daily awareness check-ins enabled';

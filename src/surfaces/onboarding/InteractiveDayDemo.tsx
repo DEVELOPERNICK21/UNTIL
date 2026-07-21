@@ -28,6 +28,7 @@ import {
   useEnter,
   useLiveDayClock,
 } from './onboardingMotion';
+import { useReduceMotion } from '../../hooks';
 
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 
@@ -41,6 +42,7 @@ function LiveDayRing({
   interactive: boolean;
 }) {
   const theme = useTheme();
+  const reduceMotion = useReduceMotion();
   const stroke = 14;
   const radius = (size - stroke) / 2;
   const circumference = 2 * Math.PI * radius;
@@ -55,15 +57,24 @@ function LiveDayRing({
   useEffect(() => {
     if (scrubbing) return;
     setDisplay(live);
+    if (reduceMotion) {
+      ring.setValue(live);
+      return;
+    }
     Animated.timing(ring, {
       toValue: live,
       duration: 450,
       easing: Easing.out(Easing.cubic),
       useNativeDriver: false,
     }).start();
-  }, [live, scrubbing, ring]);
+  }, [live, scrubbing, ring, reduceMotion]);
 
   useEffect(() => {
+    if (reduceMotion) {
+      pulse.setValue(1);
+      rotateHint.setValue(0);
+      return;
+    }
     const loop = Animated.loop(
       Animated.sequence([
         Animated.timing(pulse, {
@@ -94,7 +105,7 @@ function LiveDayRing({
       loop.stop();
       spin.stop();
     };
-  }, [pulse, rotateHint]);
+  }, [pulse, rotateHint, reduceMotion]);
 
   const pan = useMemo(
     () =>
@@ -200,7 +211,7 @@ function LiveDayRing({
         variant="micro"
         style={{ color: theme.textSecondary, letterSpacing: 2 }}
       >
-        {scrubbing ? 'PREVIEW' : 'TODAY'}
+        {scrubbing ? 'Preview' : 'Today'}
       </Text>
       <Text
         variant="timer"
@@ -227,6 +238,7 @@ interface InteractiveDayDemoProps {
 
 export function InteractiveDayDemo({ active }: InteractiveDayDemoProps) {
   const theme = useTheme();
+  const reduceMotion = useReduceMotion();
   const clock = useLiveDayClock(active);
   const [highlightWidgets, setHighlightWidgets] = useState(false);
   const title = useEnter(active, 40);
@@ -237,7 +249,10 @@ export function InteractiveDayDemo({ active }: InteractiveDayDemoProps) {
   const hintPulse = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
-    if (!highlightWidgets) return;
+    if (!highlightWidgets || reduceMotion) {
+      hintPulse.setValue(1);
+      return;
+    }
     const loop = Animated.loop(
       Animated.sequence([
         Animated.timing(hintPulse, {
@@ -254,13 +269,13 @@ export function InteractiveDayDemo({ active }: InteractiveDayDemoProps) {
     );
     loop.start();
     return () => loop.stop();
-  }, [highlightWidgets, hintPulse]);
+  }, [highlightWidgets, hintPulse, reduceMotion]);
 
   return (
     <View style={styles.body}>
       <Animated.View style={title}>
         <Text variant="micro" style={[styles.eyebrow, { color: theme.percent }]}>
-          LIVE DEMO
+          Live demo
         </Text>
         <Text
           variant="display"
@@ -281,7 +296,7 @@ export function InteractiveDayDemo({ active }: InteractiveDayDemoProps) {
           variant="body"
           style={[styles.slideSubtitle, { color: theme.textSecondary }]}
         >
-          Drag the ring left or right to preview — it snaps back to real time.
+          Drag the ring left or right to preview. It snaps back to real time.
         </Text>
       </Animated.View>
 
@@ -334,7 +349,7 @@ export function InteractiveDayDemo({ active }: InteractiveDayDemoProps) {
             }}
           >
             {highlightWidgets
-              ? 'Yes — this same Day view can live on your home screen as a widget.'
+              ? 'Yes. This same Day view can live on your home screen as a widget.'
               : 'Tap: Where does this go? → Home screen widgets'}
           </Text>
         </Pressable>

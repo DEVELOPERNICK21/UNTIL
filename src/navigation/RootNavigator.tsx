@@ -294,7 +294,7 @@ export function RootNavigator() {
           name="Home"
           component={HomeScreen}
           options={({ navigation }) => ({
-            title: 'Until: Days left',
+            title: 'UNTIL',
             headerRight: () => (
               <View style={styles.headerActions}>
                 <TouchableOpacity

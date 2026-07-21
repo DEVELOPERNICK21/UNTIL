@@ -742,8 +742,7 @@ const styles = StyleSheet.create({
     maxWidth: 200,
   },
   eyebrow: {
-    letterSpacing: 0.8,
-    textTransform: 'uppercase',
+    letterSpacing: 0.4,
     marginBottom: 4,
   },
   body: {

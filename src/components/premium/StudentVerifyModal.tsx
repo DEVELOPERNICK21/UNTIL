@@ -67,7 +67,7 @@ export function StudentVerifyModal({
           </Text>
           <Text variant="body" color="secondary" style={styles.body}>
             Enter a school email to unlock the student yearly price. Same Premium
-            features — soft check only (no document upload).
+            features. Soft check only (no document upload).
           </Text>
           <TextInput
             value={email}

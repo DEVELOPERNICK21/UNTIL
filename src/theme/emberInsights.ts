@@ -1,5 +1,5 @@
 /**
- * Ember tip pools — varied whispers so returning visits stay fresh.
+ * Ember tip pools — short product tips, plain language.
  */
 
 import { progressBand, timeOfDayLabel } from './emotionalCopy';
@@ -18,19 +18,19 @@ function streakLines(streakCount: number | undefined): string[] {
   if (streakCount == null || streakCount < 2) return [];
   if (streakCount < 5) {
     return [
-      `Day ${streakCount} together — I’m glad you opened this.`,
-      `${streakCount} quiet days. Soft pride, no pressure.`,
+      `Day ${streakCount}. Nice to see you open the app.`,
+      `${streakCount} days in a row. Keep going at your pace.`,
     ];
   }
   if (streakCount < 14) {
     return [
-      `${streakCount} days of presence. That gently adds up.`,
-      `We’ve noticed ${streakCount} days — thank you for showing up.`,
+      `${streakCount} days opened. That adds up.`,
+      `${streakCount} days noticed. Thanks for checking in.`,
     ];
   }
   return [
-    `${streakCount} days noticed together. I’m still here.`,
-    `A long streak of soft presence — wear it lightly.`,
+    `${streakCount} days together. Still here.`,
+    `Long streak: ${streakCount} days. Wear it lightly.`,
   ];
 }
 
@@ -39,115 +39,115 @@ function dayBandLines(dayProgress: number): string[] {
   switch (band) {
     case 'dawn':
     case 'open':
-      return ['Plenty of day still open.', 'Morning light still stretches ahead.'];
+      return ['Most of today is still ahead.', 'Morning stretch. Plenty of day left.'];
     case 'mid':
-      return ['Midday checkpoint — keep what matters close.', 'Halfway light. Breathe once.'];
+      return ['Midday check. Keep priorities close.', 'About halfway through today.'];
     default:
-      return ['Evening softens. Go gently.', 'The day is folding — you did enough.'];
+      return ['Evening. Go easy on what’s left.', 'Day’s almost done. Rest is fine.'];
   }
 }
 
 const POOLS: Record<string, (ctx: InsightContext) => EmberInsight[]> = {
   DayDetail: ctx => [
-    { eyebrow: 'Today', body: dayBandLines(ctx.dayProgress)[0] + ' Watch what’s left.' },
-    { eyebrow: 'Live pulse', body: 'Seconds moving — a soft reminder you’re here now.' },
-    { eyebrow: 'Glance', body: 'Not a race. Just a clear look at remaining light.' },
-    ...streakLines(ctx.streakCount).map(body => ({ eyebrow: 'With you', body })),
+    { eyebrow: 'Today', body: `${dayBandLines(ctx.dayProgress)[0]} Watch what’s left.` },
+    { eyebrow: 'Live clock', body: 'Seconds tick here so you can see remaining time.' },
+    { eyebrow: 'Glance', body: 'Clear view of what’s left of today.' },
+    ...streakLines(ctx.streakCount).map(body => ({ eyebrow: 'Streak', body })),
   ],
   MonthDetail: ctx => [
-    { eyebrow: 'This month', body: 'Blank days ahead are still yours to shape.' },
-    { eyebrow: 'Calendar', body: 'Days stack quietly — notice the empty ones kindly.' },
-    { eyebrow: 'Checkpoint', body: 'A soft middle-of-month breath, nothing more.' },
-    ...streakLines(ctx.streakCount).map(body => ({ eyebrow: 'Presence', body })),
+    { eyebrow: 'This month', body: 'Empty days ahead are still open.' },
+    { eyebrow: 'Calendar', body: 'Days add up. Notice the open ones.' },
+    { eyebrow: 'Checkpoint', body: 'Middle of the month. Quick status check.' },
+    ...streakLines(ctx.streakCount).map(body => ({ eyebrow: 'Streak', body })),
   ],
   YearDetail: () => [
-    { eyebrow: 'This year', body: 'One honest day still moves the whole orbit.' },
-    { eyebrow: 'Orbit', body: 'Seasons turn slowly — you’re allowed to go slow too.' },
-    { eyebrow: 'Long view', body: '365 chances. Today is one of them.' },
+    { eyebrow: 'This year', body: 'One solid day still moves the year forward.' },
+    { eyebrow: 'Year view', body: 'Seasons move slowly. You’re allowed to too.' },
+    { eyebrow: 'Long view', body: '365 days. Today is one of them.' },
   ],
   Life: () => [
-    { eyebrow: 'Your life', body: 'Big picture, soft light — unlock when you’re ready.' },
+    { eyebrow: 'Your life', body: 'Big picture. Unlock Life when you’re ready.' },
     { eyebrow: 'No rush', body: 'Life view waits. Ember stays either way.' },
-    { eyebrow: 'Perspective', body: 'One long road. Walk the stretch in front of you.' },
+    { eyebrow: 'Perspective', body: 'Long road. Walk the stretch in front of you.' },
   ],
   DailyTasks: ctx => [
-    { eyebrow: 'Today’s list', body: 'Do what you can. The rest can wait kindly.' },
-    { eyebrow: 'Small steps', body: 'One checkmark is presence — not a report card.' },
-    { eyebrow: 'Soft plan', body: 'Lists help you remember. They don’t own you.' },
+    { eyebrow: 'Today’s list', body: 'Do what you can. Leave the rest.' },
+    { eyebrow: 'Small steps', body: 'One checkmark is enough to start.' },
+    { eyebrow: 'List', body: 'Tasks help you remember. They don’t own you.' },
     ...streakLines(ctx.streakCount).map(body => ({ eyebrow: 'Here', body })),
   ],
   DailyTasksAdd: () => [
-    { eyebrow: 'Add a task', body: 'Name one small thing. That’s enough to begin.' },
-    { eyebrow: 'Gently', body: 'A short title beats a perfect plan you’ll abandon.' },
-    { eyebrow: 'Categories', body: 'Pick a lane if it helps — or leave it Other.' },
+    { eyebrow: 'Add a task', body: 'Name one small thing. That’s enough.' },
+    { eyebrow: 'Title', body: 'A short title beats a perfect plan you’ll skip.' },
+    { eyebrow: 'Categories', body: 'Pick a category if it helps, or leave Other.' },
   ],
   TaskReport: () => [
-    { eyebrow: 'Patterns', body: 'Not a scorecard — a mirror of where time went.' },
-    { eyebrow: 'Look back', body: 'Curious, not critical. What did your days hold?' },
-    { eyebrow: 'Insight', body: 'Trends whisper. Listen once, then return to today.' },
-    { eyebrow: 'Swipe home', body: 'Swipe right anytime to return to time reality.' },
+    { eyebrow: 'Patterns', body: 'Shows where time went. Not a grade.' },
+    { eyebrow: 'Look back', body: 'Curious look back. What did your days hold?' },
+    { eyebrow: 'Trends', body: 'Glance once, then return to today.' },
+    { eyebrow: 'Swipe home', body: 'Swipe right anytime to return home.' },
   ],
   MonthlyGoals: () => [
-    { eyebrow: 'Goals', body: 'Aim gently. Slow progress still counts as care.' },
-    { eyebrow: 'Intent', body: 'Directions help — deadlines don’t have to hurt.' },
+    { eyebrow: 'Goals', body: 'Aim steady. Slow progress still counts.' },
+    { eyebrow: 'Intent', body: 'Directions help. Deadlines don’t have to sting.' },
     { eyebrow: 'Steady', body: 'A quiet aim beats a loud abandoned one.' },
   ],
   GoalDetail: () => [
-    { eyebrow: 'This goal', body: 'Zoom in kindly. Progress that holds is soft.' },
+    { eyebrow: 'This goal', body: 'Zoom in. Progress that sticks is enough.' },
     { eyebrow: 'Focus', body: 'One thread at a time is enough.' },
   ],
   TasksComingSoon: () => [
-    { eyebrow: timeOfDayLabel(), body: 'Tasks land later. Noticing time is enough for now.' },
-    { eyebrow: 'Soon', body: 'Something’s coming — until then, stay with what’s left of today.' },
+    { eyebrow: timeOfDayLabel(), body: 'Tasks come later. Noticing time is enough for now.' },
+    { eyebrow: 'Soon', body: 'More tools coming. For now, stay with what’s left of today.' },
   ],
   Widget: () => [
-    { eyebrow: 'Widgets', body: 'Put a soft day% where your eyes already go.' },
-    { eyebrow: 'Home screen', body: 'A glance without opening — presence made light.' },
-    { eyebrow: 'Reminder', body: 'Let the widget whisper; you don’t have to listen every time.' },
+    { eyebrow: 'Widgets', body: 'Put day % where your eyes already go.' },
+    { eyebrow: 'Home screen', body: 'A glance without opening the app.' },
+    { eyebrow: 'Reminder', body: 'The widget can nudge. You don’t have to check every time.' },
   ],
   WidgetCustomization: () => [
     { eyebrow: 'Design', body: 'Tune the look until it feels like yours.' },
-    { eyebrow: 'Make it fit', body: 'Widgets should calm you, not shout.' },
+    { eyebrow: 'Make it fit', body: 'Widgets should stay quiet, not shout.' },
   ],
   Settings: ctx => [
-    { eyebrow: 'Make it yours', body: 'Birth date & reminders shape how UNTIL speaks to you.' },
-    { eyebrow: 'Quiet tools', body: 'Theme, lifespan, soft alerts — set and forget.' },
-    { eyebrow: 'Tune', body: 'Small settings, big feel. Adjust when something nags.' },
+    { eyebrow: 'Make it yours', body: 'Birth date and reminders shape how UNTIL talks to you.' },
+    { eyebrow: 'Tools', body: 'Theme, lifespan, alerts. Set and forget.' },
+    { eyebrow: 'Tune', body: 'Small settings, big feel. Change what nags.' },
     ...streakLines(ctx.streakCount).map(body => ({ eyebrow: 'Still here', body })),
   ],
   ShareSnapshot: () => [
-    { eyebrow: 'Share', body: 'Only if it feels kind — a moment of time, offered gently.' },
-    { eyebrow: 'Snapshot', body: 'A picture of remaining — share when it warms someone.' },
+    { eyebrow: 'Share', body: 'Share only if you want. A moment of time.' },
+    { eyebrow: 'Snapshot', body: 'A picture of remaining time. Send when it helps.' },
   ],
   Countdowns: () => [
-    { eyebrow: 'Dates that matter', body: 'Mark them. Then live toward them, one day at a time.' },
-    { eyebrow: 'Coming up', body: 'Countdowns hold hope without rushing the wait.' },
+    { eyebrow: 'Dates that matter', body: 'Mark them. Live toward them, one day at a time.' },
+    { eyebrow: 'Coming up', body: 'Countdowns hold the date without rushing you.' },
   ],
   CustomCounters: () => [
-    { eyebrow: 'Counters', body: 'Count presence — not points.' },
+    { eyebrow: 'Counters', body: 'Count what you care about. Not points.' },
     { eyebrow: 'Your count', body: 'What you track becomes what you notice.' },
   ],
   Premium: () => [
-    { eyebrow: 'No rush', body: 'Life unlocks when you’re ready. I’m staying either way.' },
-    { eyebrow: 'Gently', body: 'Premium is a door, not a demand.' },
+    { eyebrow: 'No rush', body: 'Premium unlocks when you’re ready. Ember stays.' },
+    { eyebrow: 'Premium', body: 'A door, not a demand.' },
     { eyebrow: 'Either way', body: 'Ember doesn’t leave if you wait.' },
   ],
   HourCalculation: () => [
-    { eyebrow: 'Hours', body: 'Numbers help you see. Feeling them is the gift.' },
-    { eyebrow: 'Math of time', body: 'Count if it clarifies — stop if it weighs.' },
+    { eyebrow: 'Hours', body: 'Numbers help you see where hours went.' },
+    { eyebrow: 'Timer', body: 'Count if it clarifies. Stop if it weighs.' },
   ],
   Overlay: () => [
-    { eyebrow: 'Always near', body: 'A glance at the edge — breathe, then return.' },
-    { eyebrow: 'Overlay', body: 'Time beside your day, never on top of it.' },
+    { eyebrow: 'Always near', body: 'A glance at the edge. Then return.' },
+    { eyebrow: 'Overlay', body: 'Time beside your day, not on top of it.' },
   ],
   DynamicIsland: () => [
-    { eyebrow: 'Island', body: 'A tiny pulse of remaining time — soft, not sticky.' },
+    { eyebrow: 'Island', body: 'A small pulse of remaining time.' },
     { eyebrow: 'Glance', body: 'Look once. Live the rest.' },
   ],
 };
 
 const DEFAULT_POOL: (ctx: InsightContext) => EmberInsight[] = ctx => [
-  { eyebrow: 'Ember', body: 'I’m with you — a quiet glance at what’s left.' },
+  { eyebrow: 'Ember', body: 'A quiet glance at what’s left.' },
   { eyebrow: 'Still here', body: dayBandLines(ctx.dayProgress)[0] },
   ...streakLines(ctx.streakCount).map(body => ({ eyebrow: 'Together', body })),
 ];
@@ -179,7 +179,7 @@ export function pickEmberTip(
   return pool[i] ?? pool[0];
 }
 
-/** @deprecated use pickEmberTip — kept for any old imports */
+/** @deprecated use pickEmberTip */
 export function emberInsightForRoute(
   routeName: string | undefined,
   ctx: InsightContext,

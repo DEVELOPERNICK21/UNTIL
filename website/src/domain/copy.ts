@@ -11,9 +11,9 @@ export const LANDING_COPY = {
 
   hero: {
     title: 'See your time.',
-    headline: 'Day, month, year, and life - always visible.',
+    headline: 'Day, month, year, and life. Always visible.',
     subtitle:
-      'Track progress with Ember, home widgets, Wear OS Day %, deadlines, tasks, and shareable snapshots — glanceable without opening the app.',
+      'Ember, home widgets, Wear OS Day %, deadlines, tasks, and shareable snapshots. Check them without opening the app.',
     cta: 'Get the app',
   },
 
@@ -22,9 +22,9 @@ export const LANDING_COPY = {
     tagline1: 'See your time,',
     tagline2: 'not just the clock.',
     brandName: 'UNTIL',
-    cardHeading: 'Time awareness, redefined.',
+    cardHeading: 'Know where your time goes.',
     cardDescription:
-      'Until shows day, month, year, and life progress with Ember on widgets, Wear OS Day %, deadlines, counters, and daily tasks — always visible when you need a glance.',
+      'Until shows day, month, year, and life progress. Ember on widgets, Wear OS Day %, deadlines, counters, and daily tasks stay visible when you need a glance.',
     metricValue: 247,
     metricLabel: 'Days Left',
     ctaHeading: 'Start seeing time clearly.',
@@ -44,13 +44,13 @@ export const LANDING_COPY = {
       category: 'Widgets',
       title: 'Home + lock screen widgets',
       description:
-        'Today, month, year, life, deadlines, tasks, counters, and hour timer — with Ember on Day and Daily Tasks widgets.',
+        'Today, month, year, life, deadlines, tasks, counters, and hour timer. Ember shows on Day and Daily Tasks widgets.',
     },
     {
       category: 'Companion',
       title: 'Meet Ember',
       description:
-        'A calm companion in the app and on widgets. Ember’s mood follows your day progress — soft presence, not another notification.',
+        'A small companion in the app and on widgets. Ember’s mood follows your day progress. Not another notification.',
     },
     {
       category: 'Wrist',
@@ -74,9 +74,9 @@ export const LANDING_COPY = {
 
   /** Blurb above the screenshot gallery on the home page */
   screenshotsBlurb:
-    'Day, month, year, and life progress — widgets with Ember, countdowns, counters, and Wear OS Day % on Android.',
+    'Day, month, year, and life progress. Widgets with Ember, countdowns, counters, and Wear OS Day % on Android.',
 
-  /** Value prop bullets — "That's why Until exists" (ChatPal-style) */
+  /** Value prop bullets */
   valueProps: {
     tagline: "That's why Until exists",
     items: [
@@ -95,14 +95,14 @@ export const LANDING_COPY = {
     ],
   },
 
-  /** FAQ — reduces friction, answers common questions */
+  /** FAQ */
   faq: {
     title: 'FAQ',
     items: [
       {
         question: 'What is Until?',
         answer:
-          'Until is a time-awareness app that shows how much of your day, month, year, and life has passed and how much is left. You can keep this visible through home and lock screen widgets.',
+          'Until shows how much of your day, month, year, and life has passed and how much is left. You can keep that visible on home and lock screen widgets.',
       },
       {
         question: 'How does it work?',
@@ -127,7 +127,7 @@ export const LANDING_COPY = {
       {
         question: 'Who is Until for?',
         answer:
-          'People who want time clarity, not another noisy productivity app. It is useful for students, creators, professionals, and anyone who benefits from seeing progress and remaining time in one glance.',
+          'Anyone who wants a clearer sense of remaining time without another noisy productivity app. Students, creators, professionals, and anyone who likes seeing progress at a glance.',
       },
       {
         question: 'How do I get started?',
@@ -137,7 +137,7 @@ export const LANDING_COPY = {
     ],
   },
 
-  /** "Why people choose Until" — benefit bullets */
+  /** "Why people choose Until" */
   whyChoose: {
     title: 'Why people choose Until',
     subtitle: 'Time awareness without opening the app.',
@@ -145,7 +145,7 @@ export const LANDING_COPY = {
       {
         title: 'One glance, full context',
         description:
-          'See today, this month, this year, and life progress in a single system.',
+          'See today, this month, this year, and life progress in one place.',
       },
       {
         title: 'Built for surfaces',
@@ -155,7 +155,7 @@ export const LANDING_COPY = {
       {
         title: 'Action + reflection',
         description:
-          'Use deadlines, counters, and daily tasks to translate awareness into action.',
+          'Deadlines, counters, and daily tasks turn awareness into something you can act on.',
       },
       {
         title: 'Simple, serious design',
@@ -178,7 +178,7 @@ export const LANDING_COPY = {
       },
       {
         quote:
-          'Home screen widget shows my year progress. No opening the app — just a glance.',
+          'Home screen widget shows my year progress. No opening the app. Just a glance.',
         author: 'Sam K.',
         role: 'Android user',
         stars: 5,
@@ -193,7 +193,7 @@ export const LANDING_COPY = {
     ],
   },
 
-  /** Pricing CTA block — checkmarks for premium value props */
+  /** Pricing CTA block */
   pricingCta: {
     title: 'Start free, upgrade when ready',
     subtitle: PRICING_DISPLAY.trialLine,
@@ -214,7 +214,7 @@ export const LANDING_COPY = {
   },
 
   footer: {
-    appName: 'Until: Days left',
+    appName: 'UNTIL : Countdown & Time Left',
     tagline: 'See your time.',
     links: {
       terms: 'Terms of Service',
@@ -232,10 +232,10 @@ export const LANDING_COPY = {
   emberCompanion: {
     ariaLabel: 'Ember, UNTIL companion',
     whispers: [
-      'I\u2019m Ember — I travel with you while you look around.',
-      'Your day is still soft. UNTIL keeps it glanceable on your home screen.',
+      'I\u2019m Ember. I stick around while you look around.',
+      'Your day is still open. UNTIL keeps it visible on your home screen.',
       'When you\u2019re ready, Android has widgets, Ember, and Wear OS Day %.',
-      'No rush. Scroll a little more — I\u2019ll stay nearby.',
+      'No rush. Scroll a little more. I\u2019ll stay nearby.',
     ],
   },
 } as const;

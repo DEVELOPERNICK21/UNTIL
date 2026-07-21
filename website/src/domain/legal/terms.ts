@@ -7,7 +7,7 @@ import { SITE_CONFIG } from '../config';
 
 const { appName, baseUrl, contactEmail } = SITE_CONFIG;
 
-export const TERMS_TITLE = `Terms of Service — ${appName}`;
+export const TERMS_TITLE = `Terms of Service · ${appName}`;
 
 export const TERMS_LAST_UPDATED = '2025-02-22';
 

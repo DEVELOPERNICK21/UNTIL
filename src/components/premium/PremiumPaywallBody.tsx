@@ -428,6 +428,10 @@ export function PremiumPaywallBody({
             style={[styles.continueBtn, { backgroundColor: theme.percent }]}
             onPress={() => void onBuy(selectedPlan.productId)}
             activeOpacity={0.85}
+            accessibilityRole="button"
+            accessibilityLabel={`Continue with ${selectedPlan.title} for ${selectedPlan.price}${
+              selectedPlan.periodLabel ? ` ${selectedPlan.periodLabel.trim()}` : ''
+            }`}
           >
             <Text
               variant="body"
@@ -496,6 +500,8 @@ export function PremiumPaywallBody({
           onPress={() => void onRestore()}
           disabled={restoring}
           activeOpacity={0.7}
+          accessibilityRole="button"
+          accessibilityLabel="Restore purchases"
         >
           {restoring ? (
             <ActivityIndicator color={theme.textPrimary} />

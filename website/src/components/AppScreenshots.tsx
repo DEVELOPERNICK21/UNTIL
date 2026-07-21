@@ -1,28 +1,18 @@
 'use client';
 
 import React, { useState } from 'react';
-
-const IOS_IMAGES = [
-  '/images/iOSImage1.PNG',
-  '/images/iOSImage2.PNG',
-  '/images/iOSImage3.PNG',
-  '/images/iOSImage4.PNG',
-];
-
-const ANDROID_IMAGES = [
-  '/images/screenshotAndroid1.JPG',
-  '/images/screenshotAndroid2.JPG',
-  '/images/screenshotAndroid3.JPG',
-  '/images/screenshotAndroid4.JPG',
-];
+import Image from 'next/image';
+import { ANDROID_SCREENSHOTS, IOS_SCREENSHOTS } from '@/lib/screenshots';
 
 export function AppScreenshots() {
-  const [platform, setPlatform] = useState<'ios' | 'android'>('ios');
-  const images = platform === 'ios' ? IOS_IMAGES : ANDROID_IMAGES;
+  const [platform, setPlatform] = useState<'ios' | 'android'>('android');
+  const images = platform === 'ios' ? IOS_SCREENSHOTS : ANDROID_SCREENSHOTS;
 
   return (
     <div style={{ width: '100%' }}>
       <div
+        role="group"
+        aria-label="Platform"
         style={{
           display: 'flex',
           gap: '0.5rem',
@@ -32,38 +22,17 @@ export function AppScreenshots() {
       >
         <button
           type="button"
+          aria-pressed={platform === 'ios'}
           onClick={() => setPlatform('ios')}
-          style={{
-            padding: '0.5rem 1rem',
-            borderRadius: 'var(--radius-sm)',
-            border: `1px solid ${
-              platform === 'ios' ? 'var(--text)' : 'var(--divider)'
-            }`,
-            background: platform === 'ios' ? 'var(--divider)' : 'transparent',
-            color: 'var(--text)',
-            fontWeight: 600,
-            fontSize: '0.9rem',
-            cursor: 'pointer',
-          }}
+          className="landing-platform-btn"
         >
           iPhone
         </button>
         <button
           type="button"
+          aria-pressed={platform === 'android'}
           onClick={() => setPlatform('android')}
-          style={{
-            padding: '0.5rem 1rem',
-            borderRadius: 'var(--radius-sm)',
-            border: `1px solid ${
-              platform === 'android' ? 'var(--text)' : 'var(--divider)'
-            }`,
-            background:
-              platform === 'android' ? 'var(--divider)' : 'transparent',
-            color: 'var(--text)',
-            fontWeight: 600,
-            fontSize: '0.9rem',
-            cursor: 'pointer',
-          }}
+          className="landing-platform-btn"
         >
           Android
         </button>
@@ -86,23 +55,22 @@ export function AppScreenshots() {
               boxShadow: '0 8px 24px rgba(0,0,0,0.4)',
               maxWidth: 180,
               margin: '0 auto',
+              position: 'relative',
+              aspectRatio: '9 / 19.5',
+              width: '100%',
             }}
           >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
+            <Image
               src={src}
               alt={
                 platform === 'ios'
-                  ? `Until app on iPhone screenshot ${i + 1}`
-                  : `Until app on Android screenshot ${i + 1}`
+                  ? `UNTIL on iPhone screenshot ${i + 1}`
+                  : `UNTIL on Android screenshot ${i + 1}`
               }
-              style={{
-                width: '100%',
-                height: 'auto',
-                display: 'block',
-                aspectRatio: '9 / 19.5',
-                objectFit: 'cover',
-              }}
+              fill
+              sizes="180px"
+              loading="lazy"
+              style={{ objectFit: 'cover' }}
             />
           </div>
         ))}

@@ -19,22 +19,24 @@ type FeatureTile = {
   blurb: string;
   glyph: PeriodGlyphKind;
   progress: number;
+  featured?: boolean;
 };
 
 const FEATURES: FeatureTile[] = [
+  {
+    id: 'life',
+    label: 'Life view',
+    blurb: 'Full life % and weeks. Always visible.',
+    glyph: 'life',
+    progress: 0.58,
+    featured: true,
+  },
   {
     id: 'month',
     label: 'Month widget',
     blurb: 'See the month pass on your home screen.',
     glyph: 'month',
     progress: 0.42,
-  },
-  {
-    id: 'life',
-    label: 'Life view',
-    blurb: 'Full life % and weeks — always visible.',
-    glyph: 'life',
-    progress: 0.58,
   },
   {
     id: 'overlay',
@@ -45,8 +47,8 @@ const FEATURES: FeatureTile[] = [
   },
   {
     id: 'alerts',
-    label: 'Awareness',
-    blurb: 'Gentle nudges when time slips away.',
+    label: 'Lost-time alerts',
+    blurb: 'A nudge when wasted hours cross your limit.',
     glyph: 'year',
     progress: 0.33,
   },
@@ -60,7 +62,7 @@ export function PaywallFeatureTiles({ onSelect }: PaywallFeatureTilesProps) {
   const theme = useTheme();
   const [selected, setSelected] = React.useState<string | null>('life');
 
-  const active = FEATURES.find(f => f.id === selected) ?? FEATURES[1];
+  const active = FEATURES.find(f => f.id === selected) ?? FEATURES[0];
 
   return (
     <View style={styles.wrap}>
@@ -74,7 +76,7 @@ export function PaywallFeatureTiles({ onSelect }: PaywallFeatureTilesProps) {
           },
         ]}
       >
-        WHAT YOU KEEP WITH PREMIUM
+        What you keep with Premium
       </Text>
 
       <View style={styles.grid}>
@@ -83,6 +85,9 @@ export function PaywallFeatureTiles({ onSelect }: PaywallFeatureTilesProps) {
           return (
             <Pressable
               key={f.id}
+              accessibilityRole="button"
+              accessibilityState={{ selected: on }}
+              accessibilityLabel={`${f.label}. ${f.blurb}`}
               onPress={() => {
                 Vibration.vibrate(8);
                 setSelected(f.id);
@@ -90,18 +95,20 @@ export function PaywallFeatureTiles({ onSelect }: PaywallFeatureTilesProps) {
               }}
               style={[
                 styles.tile,
+                f.featured ? styles.tileFeatured : styles.tileHalf,
                 {
                   borderColor: on ? theme.percent : theme.glassBorder,
                   backgroundColor: on
                     ? 'rgba(232, 124, 32, 0.14)'
                     : theme.glassBg,
-                  transform: [{ scale: on ? 1.03 : 1 }],
+                  transform: [{ scale: on ? 1.02 : 1 }],
+                  minHeight: f.featured ? 108 : 96,
                 },
               ]}
             >
               <PeriodGlyph
                 kind={f.glyph}
-                size={32}
+                size={f.featured ? 40 : 32}
                 progress={f.progress}
                 pressed={on}
                 animated
@@ -131,6 +138,7 @@ export function PaywallFeatureTiles({ onSelect }: PaywallFeatureTilesProps) {
               backgroundColor: theme.glassBg,
             },
           ]}
+          accessibilityLiveRegion="polite"
         >
           <Text variant="body" style={{ color: theme.textSecondary }}>
             {active.blurb}
@@ -146,7 +154,7 @@ const styles = StyleSheet.create({
     marginBottom: Spacing[4],
   },
   heading: {
-    letterSpacing: 1.2,
+    letterSpacing: 0.4,
     marginBottom: Spacing[2],
     textAlign: 'center',
   },
@@ -157,13 +165,24 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   tile: {
-    width: '47%',
     alignItems: 'center',
+    justifyContent: 'center',
     paddingVertical: Spacing[3],
     paddingHorizontal: Spacing[2],
     borderRadius: Radius.lg,
     borderWidth: 1,
     overflow: 'hidden',
+    minHeight: 96,
+  },
+  tileFeatured: {
+    width: '100%',
+    borderRadius: Radius.lg,
+    flexDirection: 'row',
+    gap: Spacing[3],
+    paddingHorizontal: Spacing[4],
+  },
+  tileHalf: {
+    width: '31%',
   },
   blurb: {
     marginTop: Spacing[2],

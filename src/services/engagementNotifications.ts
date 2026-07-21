@@ -32,7 +32,7 @@ export async function scheduleDay2ReengagementNotification(): Promise<void> {
     await notifee.createTriggerNotification(
       {
         title: 'UNTIL',
-        body: 'See how much of your month is left — add the Day widget to your home screen.',
+        body: 'See how much of your month is left. Add the Day widget to your home screen.',
         android: { channelId: 'engagement' },
       },
       {

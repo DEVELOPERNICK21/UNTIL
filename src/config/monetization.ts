@@ -76,7 +76,7 @@ export const PLAY_SUBSCRIPTION_CANCEL_PATH =
 export const MONETIZATION_PAYWALL_COPY = {
   headline: 'Your life is passing. Start watching it.',
   subheadline:
-    'See every day, month, and year of your life — live on your home screen and overlay.',
+    'See every day, month, and year of your life. Live on your home screen and overlay.',
   /** Shown on yearly plan — subscription bills immediately via Google Play (no Play free trial). */
   yearlyCta: 'Subscribe yearly',
   yearlyCtaSub:
@@ -94,14 +94,14 @@ export const MONETIZATION_PAYWALL_COPY = {
     'Prices in your currency are set by Google Play (regional pricing may apply).',
   previewActiveTitle: 'Free app preview active',
   previewActiveBody:
-    'Premium features unlocked for {days} — no payment or subscription yet. When the preview ends, Premium locks unless you subscribe. You will not be charged automatically.',
+    'Premium features unlocked for {days}. No payment or subscription yet. When the preview ends, Premium locks unless you subscribe. You will not be charged automatically.',
   subscriptionDisclosureTitle: 'Subscription & preview terms',
   lifeUnlockEndedTitle: 'Keep your life progress visible',
   lifeUnlockEndedMessage:
     'Your 24-hour Life preview ended. Premium keeps your life %, month widget, and overlay on every day.',
   onboardingPaywallTitle: 'Keep your time map.',
   onboardingPaywallSub:
-    'Month, life, and overlay stay with you — so the plan you just built doesn’t disappear.',
+    'Month, life, and overlay stay with you so the plan you just built doesn’t disappear.',
   previewEndingNoChargeNote:
     'No payment is taken during the free app preview. You are only charged if you choose to subscribe in Google Play.',
   previewEndingCancelNote:
@@ -118,10 +118,10 @@ export const PAYWALL_LOSS_FRAME = {
   headlineFallback: 'Your life is passing whether you watch it or not.',
   /** `{pct}` = integer percent lived (0–100). */
   headlineWithLife:
-    "You've lived {pct}% of your life — and it's still rising off-screen.",
+    "You've lived {pct}% of your life, and it's still rising off-screen.",
   losses: [
-    'Each month passes unseen — no month widget',
-    'Your life % climbs invisibly — no Life screen',
+    'Each month passes unseen. No month widget.',
+    'Your life % climbs invisibly. No Life screen.',
     'Lost hours vanish with no red alert',
   ] as const,
   /** `{days}` = days left in preview (e.g. "3 days" / "1 day"). */
@@ -158,14 +158,14 @@ export function formatPaywallLossPreviewFooter(
 export const PREMIUM_BENEFITS = [
   'Month & Life home screen widgets',
   'Full Life progress screen',
-  'Floating overlay — month & life (Android)',
-  'Dynamic Island — month & life (iOS)',
+  'Floating overlay for month & life (Android)',
+  'Dynamic Island for month & life (iOS)',
   'Activity intervention alerts',
   `${MONETIZATION_TRIAL_DAYS}-day free app preview (no payment)`,
 ] as const;
 
 export const PAYWALL_TRUST_SIGNALS = [
-  `Free ${MONETIZATION_TRIAL_DAYS}-day app preview — no Google Play charge`,
+  `Free ${MONETIZATION_TRIAL_DAYS}-day app preview. No Google Play charge`,
   'No automatic charge when the preview ends',
   `Cancel subscriptions in ${PLAY_SUBSCRIPTION_CANCEL_PATH}`,
   'Day + Year widgets free forever',
@@ -211,7 +211,7 @@ export function buildSubscriptionDisclosure(params: {
 
   if (params.trialActive && daysLeft > 0) {
     lines.push(
-      `${MONETIZATION_TRIAL_DAYS}-day free app preview (in-app only — not a Google Play subscription trial). No payment is required during the preview.`
+      `${MONETIZATION_TRIAL_DAYS}-day free app preview (in-app only, not a Google Play subscription trial). No payment is required during the preview.`
     );
     if (endDate) {
       lines.push(
@@ -248,7 +248,7 @@ export function formatPreviewEndingMessage(
   }
   const daysLeft = total - trialDay;
   const leftLabel = daysLeft === 1 ? '1 day' : `${daysLeft} days`;
-  return `${leftLabel} left in your free app preview. No payment during the preview. Subscribe at ${yearlyPrice}/year when ready — cancel anytime in ${cancelPath}.`;
+  return `${leftLabel} left in your free app preview. No payment during the preview. Subscribe at ${yearlyPrice}/year when ready. Cancel anytime in ${cancelPath}.`;
 }
 
 export function formatInr(amount: number): string {

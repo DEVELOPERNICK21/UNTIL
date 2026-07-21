@@ -82,8 +82,8 @@ export async function schedulePresenceStreakSaver(
         title: 'Ember is still here',
         body:
           state.count >= 2
-            ? `${whisper} — your ${state.count}-day presence is still open.`
-            : `${whisper} — open UNTIL once to notice what’s left of today.`,
+            ? `${whisper}. Your ${state.count}-day presence is still open.`
+            : `${whisper}. Open UNTIL once to notice what’s left of today.`,
         android: { channelId: CHANNEL_ID, pressAction: { id: 'default' } },
         ios: { sound: 'default' },
       },

@@ -121,7 +121,7 @@ export function HourCalculationScreen() {
             </Text>
             {state.isRunning && (
               <Text variant="caption" color="secondary" style={styles.runningHint}>
-                Running — tap widget to stop
+                Running. Tap widget to stop
               </Text>
             )}
             <TouchableOpacity style={styles.resetButton} onPress={handleReset}>

@@ -70,7 +70,7 @@ export function InterventionHomeCard() {
       <GlassCard style={styles.card}>
         <View style={styles.headerRow}>
           <Text variant="caption" color="secondary" style={styles.eyebrow}>
-            PREMIUM
+            Premium
           </Text>
           <View style={[styles.pill, { borderColor: theme.divider }]}>
             <Text variant="micro" color="secondary">
@@ -82,7 +82,7 @@ export function InterventionHomeCard() {
           Lost-time alerts
         </Text>
         <Text variant="body" color="secondary" style={styles.body}>
-          Log wasted hours and get a red moment when you cross your daily limit —
+          Log wasted hours and get a red moment when you cross your daily limit:
           &quot;This day will never repeat.&quot;
         </Text>
         <TouchableOpacity
@@ -108,7 +108,7 @@ export function InterventionHomeCard() {
     <GlassCard style={styles.card}>
       <View style={styles.headerRow}>
         <Text variant="caption" color="secondary" style={styles.eyebrow}>
-          TODAY&apos;S LOST TIME
+          Today&apos;s lost time
         </Text>
         <Text variant="caption" style={{ color: theme.percent }}>
           {formatHours(nothingHours)} / {formatHours(limitHours)}
@@ -117,7 +117,7 @@ export function InterventionHomeCard() {
 
       <ProgressLine
         progress={progress}
-        fillColor={limitCrossed ? '#DC3C3C' : theme.percent}
+        fillColor={limitCrossed ? '#C45A4A' : theme.percent}
         style={styles.progressLine}
       />
 
@@ -126,15 +126,15 @@ export function InterventionHomeCard() {
           style={[
             styles.alert,
             {
-              backgroundColor: 'rgba(220, 60, 60, 0.14)',
-              borderColor: 'rgba(220, 60, 60, 0.35)',
+              backgroundColor: 'rgba(196, 90, 74, 0.14)',
+              borderColor: 'rgba(196, 90, 74, 0.35)',
             },
           ]}
         >
           <Text
             variant="body"
             style={{
-              color: '#E85C5C',
+              color: '#D4786A',
               fontFamily: getFontFamilyForWeight(Weight.semibold),
               textAlign: 'center',
             }}
@@ -154,7 +154,7 @@ export function InterventionHomeCard() {
       ) : (
         <Text variant="caption" color="secondary" style={styles.hint}>
           {trackingNothing
-            ? 'Tracking wasted time now — tap Stop when you refocus.'
+            ? 'Tracking wasted time now. Tap Stop when you refocus.'
             : remainingBeforeAlert > 0
               ? `${formatHours(remainingBeforeAlert)} left before the red alert.`
               : 'Log scroll / doom time so UNTIL can nudge you before the day is gone.'}
@@ -232,7 +232,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   eyebrow: {
-    letterSpacing: 1.2,
+    letterSpacing: 0.4,
   },
   pill: {
     paddingHorizontal: Spacing[2],

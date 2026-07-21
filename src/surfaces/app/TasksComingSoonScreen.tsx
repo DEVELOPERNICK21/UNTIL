@@ -348,7 +348,7 @@ export function TasksComingSoonScreen() {
                 ]}
               >
                 <Text variant="caption" color="muted" style={styles.peekIntro}>
-                  A quick preview — tap above to collapse.
+                  A quick preview. Tap above to collapse.
                 </Text>
                 <TeaserRow
                   label="Monthly goals with progress you can see at a glance"
@@ -372,7 +372,7 @@ export function TasksComingSoonScreen() {
             </Animated.View>
 
             <Text variant="caption" color="muted" style={styles.hint}>
-              Tip: pull down from Home anytime — the floating button stays one tap away.
+              Tip: pull down from Home anytime. The floating button stays one tap away.
             </Text>
           </Animated.View>
         </ScrollView>

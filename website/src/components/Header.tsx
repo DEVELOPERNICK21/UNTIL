@@ -1,5 +1,3 @@
-'use client';
-
 import Link from 'next/link';
 import { ROUTES, SITE_CONFIG } from '@/domain';
 
@@ -12,7 +10,8 @@ export function Header() {
         zIndex: 10,
         background: 'var(--bg)',
         borderBottom: '1px solid var(--divider)',
-        padding: '1rem 1.5rem',
+        padding:
+          'calc(1rem + env(safe-area-inset-top, 0px)) 1.5rem 1rem',
       }}
     >
       <div
@@ -22,16 +21,46 @@ export function Header() {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
+          gap: '1rem',
         }}
       >
-        <Link href={ROUTES.home} style={{ textDecoration: 'none', color: 'var(--text)', fontWeight: 600, fontSize: '1.25rem' }}>
-          {SITE_CONFIG.appName}
+        <Link
+          href={ROUTES.home}
+          style={{
+            textDecoration: 'none',
+            color: 'var(--text)',
+            fontWeight: 600,
+            fontSize: '1.1rem',
+            lineHeight: 1.2,
+          }}
+        >
+          UNTIL
         </Link>
-        <nav style={{ display: 'flex', gap: '1.5rem' }}>
-          <Link href={ROUTES.terms} style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
+        <nav aria-label="Legal" style={{ display: 'flex', gap: '0.5rem' }}>
+          <Link
+            href={ROUTES.terms}
+            style={{
+              fontSize: '0.9rem',
+              color: 'var(--text-secondary)',
+              padding: '0.65rem 0.75rem',
+              minHeight: 44,
+              display: 'inline-flex',
+              alignItems: 'center',
+            }}
+          >
             Terms
           </Link>
-          <Link href={ROUTES.privacy} style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
+          <Link
+            href={ROUTES.privacy}
+            style={{
+              fontSize: '0.9rem',
+              color: 'var(--text-secondary)',
+              padding: '0.65rem 0.75rem',
+              minHeight: 44,
+              display: 'inline-flex',
+              alignItems: 'center',
+            }}
+          >
             Privacy
           </Link>
         </nav>

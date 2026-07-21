@@ -1,6 +1,6 @@
-# Until: Days left
+# UNTIL : Countdown & Time Left
 
-Days left. Day, month, year, life. One app. No clutter.
+Countdown & time left. Day, month, year, life. One app. No clutter.
 
 ---
 

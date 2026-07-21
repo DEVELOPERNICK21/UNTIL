@@ -38,7 +38,7 @@ const PERSONALITY: Record<
 > = {
   day: {
     tagline: 'Every second counts',
-    cue: 'Live clock — tap ring to feel the pulse',
+    cue: 'Live clock. Tap the ring to feel the pulse',
     accentHint: 'Seconds',
   },
   month: {
@@ -53,7 +53,7 @@ const PERSONALITY: Record<
   },
   life: {
     tagline: 'Your one run of days',
-    cue: 'Heart-pace reminder — what you still have',
+    cue: 'Heart-pace reminder of what you still have',
     accentHint: 'Heartbeat',
   },
 };
@@ -382,8 +382,7 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   overhead: {
-    letterSpacing: 1.2,
-    textTransform: 'uppercase',
+    letterSpacing: 0.4,
   },
   chip: {
     alignSelf: 'center',

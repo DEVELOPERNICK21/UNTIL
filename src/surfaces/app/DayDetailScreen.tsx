@@ -53,8 +53,8 @@ export function DayDetailScreen() {
       progress={progress}
       passedLabel={passed}
       leftLabel={left}
-      passedCaption="PASSED"
-      leftCaption="LEFT"
+      passedCaption="Passed"
+      leftCaption="Left"
       summary={`${pctDone}% of the day passed · ${pctLeft}% left`}
       liveHint="Updates every second"
       footer={

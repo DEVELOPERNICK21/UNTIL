@@ -10,13 +10,13 @@ import {
   formatInr,
 } from './pricing';
 
-export const APP_NAME = 'Until: Days left' as const;
+export const APP_NAME = 'UNTIL : Countdown & Time Left' as const;
 
 export const SITE_CONFIG = {
   /** Base URL for canonical links and sitemap (replace with your domain) */
   baseUrl: process.env.NEXT_PUBLIC_SITE_URL ?? 'https://until-app.com',
   appName: APP_NAME,
-  tagline: 'Days left. Day, month, year, life.',
+  tagline: 'Countdown & time left. Day, month, year, life.',
   /** Contact email for privacy/legal inquiries (required for store listings) */
   contactEmail: 'support@until-app.com',
   /** Placeholder; replace with real store URLs when published */
@@ -25,7 +25,7 @@ export const SITE_CONFIG = {
   /** Pricing for landing page — mirrors live Play Store */
   pricing: {
     introLabel: 'Android Premium',
-    introBadge: 'Best value — yearly',
+    introBadge: 'Best value · yearly',
     oneTimeLabel: `Free day & year + ${WEBSITE_PRICING.trialDays}-day Premium preview`,
     price: PRICING_DISPLAY.yearly,
     wasPrice: `${formatInr(WEBSITE_PRICING.monthlyInr * 12)}/year at monthly`,

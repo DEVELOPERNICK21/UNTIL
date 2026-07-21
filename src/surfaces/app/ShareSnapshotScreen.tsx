@@ -220,7 +220,7 @@ export function ShareSnapshotScreen() {
       await Share.open({
         url: `file://${filePath}`,
         type: 'image/png',
-        message: `${quote}\n\nbuilt with UNTIL — until-app.com`,
+        message: `${quote}\n\nbuilt with UNTIL · until-app.com`,
         failOnCancel: false,
       });
       void logAnalyticsEvent('share_completed', {

@@ -7,9 +7,11 @@ Rules in `.cursor/rules/` provide persistent AI guidance. They are loaded automa
 | Rule | Scope | Purpose |
 |------|-------|---------|
 | `architecture.mdc` | always | Clean architecture, SSOT, layer boundaries |
+| `human-copy.mdc` | always | No AI-slop voice in user-facing copy |
 | `typescript-standards.mdc` | `**/*.ts`, `**/*.tsx` | TypeScript conventions, imports, error handling |
 | `react-patterns.mdc` | `**/*.tsx` | Components, hooks, no direct storage/core |
 | `state-management.mdc` | `**/hooks/**`, `**/surfaces/**` | Use cases, subscriptions, useState usage |
+| `monetization.mdc` | paywall / pricing files | Pricing, paywall, entitlement rules |
 
 ## Quick Reference
 

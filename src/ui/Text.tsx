@@ -33,8 +33,9 @@ interface TextProps extends RNTextProps {
   variant?: TextVariant;
   color?: 'primary' | 'secondary' | 'muted';
   opacity?: number;
-  /** Override design system lock; default false so font size is consistent across devices */
+  /** Override design system default (true + capped multiplier). */
   allowFontScaling?: boolean;
+  maxFontSizeMultiplier?: number;
 }
 
 const variantStyles = StyleSheet.create({
@@ -129,6 +130,7 @@ export function Text({
   color = 'primary',
   opacity,
   allowFontScaling = FontScaling.allowFontScaling,
+  maxFontSizeMultiplier = FontScaling.maxFontSizeMultiplier,
   style,
   ...props
 }: TextProps) {
@@ -149,6 +151,9 @@ export function Text({
   return (
     <RNText
       allowFontScaling={allowFontScaling}
+      maxFontSizeMultiplier={
+        allowFontScaling ? maxFontSizeMultiplier : undefined
+      }
       style={combinedStyle}
       {...props}
     />

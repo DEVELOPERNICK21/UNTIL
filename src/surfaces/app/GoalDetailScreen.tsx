@@ -330,7 +330,7 @@ const styles = StyleSheet.create({
   targetDesc: { marginBottom: Spacing[2] },
   removeGoalBtn: { alignSelf: 'flex-start' },
   removeText: { color: Colors.textSecondary, textDecorationLine: 'underline' },
-  sectionTitle: { marginBottom: Spacing[1], textTransform: 'uppercase', letterSpacing: 1 },
+  sectionTitle: { marginBottom: Spacing[1], letterSpacing: 0.4 },
   hint: { marginBottom: Spacing[3] },
   empty: { marginBottom: Spacing[4], fontStyle: 'italic' },
   taskCard: { marginBottom: Spacing[2] },

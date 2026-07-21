@@ -7,7 +7,7 @@ import { SITE_CONFIG } from '../config';
 
 const { appName, baseUrl, contactEmail } = SITE_CONFIG;
 
-export const PRIVACY_TITLE = `Privacy Policy — ${appName}`;
+export const PRIVACY_TITLE = `Privacy Policy · ${appName}`;
 
 export const PRIVACY_LAST_UPDATED = '2026-06-12';
 
@@ -22,7 +22,7 @@ export const PRIVACY_SECTIONS = [
     title: '2. Data We Collect',
     body: `**Data you provide (including health-related information):** Information you enter in the App (e.g., birth date, expected lifespan, countdown titles and dates, custom counter names and values, and any goals or countdowns related to your health, habits, or well‑being) is stored locally on your device. This information may be considered "Health Data" because it relates to your physical or mental well‑being, even though it is manually entered by you. We do not access Health Data from external services (such as Google Fit, Apple Health, or your medical provider), and we do not transmit your in‑app Health Data to our servers unless you use a feature that explicitly syncs data (e.g., cloud backup or trial preview sync), in which case we will describe that feature and its data use in the App.
 
-**Analytics:** We use PostHog (PostHog, Inc.) and Google Firebase Analytics to collect anonymous usage data (e.g., screens viewed, feature usage, purchase funnel steps). This does not include the health or personal content you enter in the App. We use a stable anonymous device identifier — not your name or email — to understand how the App is used and to improve it.`,
+**Analytics:** We use PostHog (PostHog, Inc.) and Google Firebase Analytics to collect anonymous usage data (e.g., screens viewed, feature usage, purchase funnel steps). This does not include the health or personal content you enter in the App. We use a stable anonymous device identifier (not your name or email) to understand how the App is used and to improve it.`,
   },
   {
     id: 'health-data-use',

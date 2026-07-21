@@ -61,6 +61,16 @@ workflows:
         track: internal
         submit_as_draft: false
 
+# track value	Where it goes
+# internal
+# Internal testing (what you have now)
+# alpha / closed
+# Closed testing
+# beta / open
+# Open testing
+# production
+# Production (live store)
+
   ios-workflow:
     name: UNTIL iOS
     max_build_duration: 120

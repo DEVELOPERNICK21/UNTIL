@@ -53,13 +53,13 @@ export function personalizeWeeklyReflectionMessage(
   if (options.hasBirthDate && options.lifeProgress != null) {
     const pct = Math.round(options.lifeProgress * 100);
     parts.push(
-      `Your life grid is ${pct}% complete — this week is one more row crossed.`
+      `Your life grid is ${pct}% complete. This week is one more row.`
     );
   }
 
   if (priority) {
     const label = PRIORITY_LABELS[priority];
-    parts.push(`Guard ${label} before the week fills with noise.`);
+    parts.push(`Protect ${label} before the week fills up.`);
   }
 
   return parts.join(' ');
@@ -73,7 +73,7 @@ function priorityTip(
   if (priority === 'calm') {
     return {
       eyebrow: 'Your map',
-      body: `You wanted less doomscroll — notice when ${label} slips away today.`,
+      body: `You wanted less doomscroll. Watch when ${label} slips away today.`,
     };
   }
   if (priority === 'focus') {
@@ -93,7 +93,7 @@ function priorityTip(
 function drainTip(drain: OnboardingDrain): { eyebrow: string; body: string } {
   return {
     eyebrow: 'Leak watch',
-    body: `You named ${DRAIN_LABELS[drain]} as the drain. Catch one leak before it spreads.`,
+    body: `You named ${DRAIN_LABELS[drain]} as the drain. Catch one leak early.`,
   };
 }
 
@@ -118,14 +118,14 @@ export function personalizedEmberTipsForRoute(
   if (routeName === 'Life' && priority) {
     tips.push({
       eyebrow: 'Life grid',
-      body: `Zoom out kindly — ${PRIORITY_LABELS[priority]} still fits in a finite life.`,
+      body: `Zoom out. ${PRIORITY_LABELS[priority]} still fits in a finite life.`,
     });
   }
 
   if (routeName === 'Settings' && answers.cadence === 'widgets') {
     tips.push({
       eyebrow: 'Widgets first',
-      body: 'You chose widgets over check-ins — a glance can still change a day.',
+      body: 'You chose widgets over check-ins. A glance can still change a day.',
     });
   }
 

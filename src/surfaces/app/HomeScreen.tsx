@@ -343,7 +343,7 @@ export function HomeScreen() {
 
   useEffect(() => {
     navigation.setOptions({
-      title: pageIndex === 0 ? 'Until: Days left' : 'Task report',
+      title: pageIndex === 0 ? 'UNTIL' : 'Task report',
     });
   }, [navigation, pageIndex]);
 
@@ -778,9 +778,8 @@ const styles = StyleSheet.create({
     letterSpacing: 0.4,
   },
   greeting: {
-    letterSpacing: 0.8,
+    letterSpacing: 0.3,
     marginBottom: Spacing[1],
-    textTransform: 'uppercase',
   },
   headline: {
     marginBottom: 0,
@@ -825,14 +824,12 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   blockTitle: {
-    textTransform: 'uppercase',
-    letterSpacing: 1,
+    letterSpacing: 0.3,
     flexShrink: 1,
   },
   blockTitleAlone: {
     marginBottom: Spacing[3],
-    textTransform: 'uppercase',
-    letterSpacing: 1,
+    letterSpacing: 0.3,
   },
   heroLeft: {
     fontFamily: FontFamily.medium,

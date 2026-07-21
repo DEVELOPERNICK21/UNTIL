@@ -68,6 +68,11 @@ export function PaywallPlanCards({
         return (
           <Pressable
             key={plan.productId}
+            accessibilityRole="radio"
+            accessibilityState={{ selected }}
+            accessibilityLabel={`${plan.title}, ${plan.price}${
+              plan.periodLabel ? ` ${plan.periodLabel}` : ''
+            }${plan.badge ? `, ${plan.badge}` : ''}`}
             onPress={() => {
               Vibration.vibrate(8);
               onSelect(plan.productId);
@@ -79,6 +84,7 @@ export function PaywallPlanCards({
                 backgroundColor: selected
                   ? 'rgba(232, 124, 32, 0.12)'
                   : theme.glassBg,
+                minHeight: 64,
               },
             ]}
           >

@@ -38,7 +38,7 @@ export function WidgetCoachModal({ visible, onDismiss }: WidgetCoachModalProps) 
           </Text>
           <Text variant="body" color="secondary" style={styles.body}>
             Pin UNTIL to your home screen to see how much of today and this month
-            is left — without opening the app.
+            is left, without opening the app.
           </Text>
           <TouchableOpacity
             style={[styles.primary, { backgroundColor: theme.percent }]}

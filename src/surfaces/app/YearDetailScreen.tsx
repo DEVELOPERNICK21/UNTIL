@@ -26,8 +26,8 @@ export function YearDetailScreen() {
       progress={progress}
       passedLabel={`${passedDays}`}
       leftLabel={`${remainingDaysYear}`}
-      passedCaption="DAYS PASSED"
-      leftCaption="DAYS LEFT"
+      passedCaption="Days passed"
+      leftCaption="Days left"
       summary={`${passedDays} of ${daysInYear} days · ${100 - pct}% of year remaining`}
       footer={
         <Text variant="caption" color="secondary" style={styles.hint}>

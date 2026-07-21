@@ -15,8 +15,8 @@ export function DotsGrid({
   rows = 10,
   cols = 10,
   fillCount = 0,
-  fillColor = '#2563EB',
-  emptyColor = '#E5E7EB',
+  fillColor = '#E87C20',
+  emptyColor = 'rgba(128,128,128,0.25)',
   size = 4,
   gap = 2,
 }: DotsGridProps) {
