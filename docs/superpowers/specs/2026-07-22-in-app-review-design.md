@@ -1,7 +1,7 @@
 # In-App Review (Play + App Store) — Design Spec
 
 **Date:** 2026-07-22  
-**Status:** Approved  
+**Status:** Implemented  
 **Platform:** Android (Play In-App Review) + iOS (StoreKit `requestReview`)  
 **Approach:** Thin native wrapper via `react-native-store-review` (no custom “enjoying UNTIL?” modal)
 
