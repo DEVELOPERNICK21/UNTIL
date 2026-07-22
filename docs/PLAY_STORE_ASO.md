@@ -47,39 +47,63 @@ Home screen time widgets. 5-day free Premium preview. Day & year stay free.
 ## Full description (paste-ready)
 
 ```
-UNTIL : Countdown & Time Left makes time visible so you spend it on purpose.
+Until: Countdown & Time Left shows how much time you have left.
 
-See how much of today, this month, this year, and your life has already passed. Put that on your home screen as widgets. Glance once. Live the rest.
+Track how much of today, this month, this year, and your life has passed. Add home screen widgets and Wear OS so progress stays on your phone and wrist.
 
-WHAT YOU GET (FREE FOREVER)
-• Day widget & detail: hours, minutes, seconds left today
-• Year widget & detail: how much of the year is gone
-• Share snapshots: a quiet image of remaining time
-• Custom counters & countdowns
+KEY FEATURES
 
-PREMIUM (optional)
-• Month & Life home screen widgets
-• Full life progress & life weeks view
-• Floating overlay (Android) / Dynamic Island (iOS) for month & life
-• Lost-time alerts when wasted hours cross your limit
-• Widget accent colors
-• 5-day free in-app Premium preview (no Google Play charge during preview)
+• Day Progress Widget: Hours, minutes, and % left today, updating in real time.
 
-WHY PEOPLE USE UNTIL
-• Time awareness without noisy productivity apps
-• Life weeks / memento mori: finite life, easy to see at a glance
-• Home screen widgets that whisper instead of shout
-• Built for India-first pricing with honest cancel in Google Play
+• Year & Month Tracker: See how much of the month and year is already gone.
 
-HOW IT WORKS
-1. Answer a short quiz about where your time goes
-2. See your life weeks map
-3. Add a Day or Year widget to your home screen
-4. Optionally try Premium for 5 days: Month, Life, overlay, and alerts
+• Life Weeks Grid: Your life laid out in weeks.
 
-Privacy-first: no account required for core time tracking. Your birth date and progress stay on your device.
+• Home Screen Widgets: Clean widgets for a quick look at progress.
 
-Download UNTIL : Countdown & Time Left. Watch your time. Don’t waste it.
+• Wear OS Time Hub: Open UNTIL on your watch and swipe Day, Month, Year, and Life. Day, Month, and Year run on the watch clock. Life uses your birth date synced from the phone.
+
+• Wear OS Day Tile: UNTIL Day tile shows today’s %. Tap it to open the Time Hub.
+
+• Wear OS Complication: Add UNTIL Day to your watch face for today’s % (short text or ranged value).
+
+• Custom Countdowns: Days left until goals, birthdays, or events.
+
+• Floating Overlay (Android): A small progress bar over your screen.
+
+FREE FEATURES
+
+Day & Year progress views
+
+Basic home screen widgets
+
+Wear OS Time Hub, Day tile, and Day complication
+
+Custom countdown creation
+
+Shareable time progress snapshots
+
+PREMIUM UNLOCKS
+
+Life in Weeks on phone
+
+Month progress & overlay widgets
+
+Full home screen widget customization
+
+Floating ambient time bar
+
+5-day free Premium trial included
+
+WHY VISUALIZE TIME?
+
+See progress on your phone and Wear OS watch without another noisy productivity app.
+
+Use life weeks as a plain daily reminder that time is limited.
+
+Keep day % on a tile or complication so you don’t have to open the app every time.
+
+Download Until: Countdown & Time Left and make remaining time visible.
 ```
 
 ---
