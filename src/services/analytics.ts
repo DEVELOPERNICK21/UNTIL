@@ -77,7 +77,9 @@ export type AnalyticsEventName =
   | 'intervention_limit_changed'
   | 'student_verify_shown'
   | 'student_verify_succeeded'
-  | 'student_verify_failed';
+  | 'student_verify_failed'
+  | 'review_requested'
+  | 'review_store_fallback';
 
 type EventParams = Record<string, string | number | boolean | undefined>;
 

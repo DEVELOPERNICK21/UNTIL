@@ -20,6 +20,7 @@ import { AppUpdateServiceAdapter } from './infrastructure/adapters/AppUpdateServ
 import { AppVersionProviderAdapter } from './infrastructure/adapters/AppVersionProviderAdapter';
 import { ActivityAnalysisAdapter } from './infrastructure/adapters/ActivityAnalysisAdapter';
 import { ClockAdapter } from './infrastructure/adapters/ClockAdapter';
+import { StoreReviewAdapter } from './infrastructure/adapters/StoreReviewAdapter';
 import { ObserveTimeStateUseCase } from './domain/useCases/ObserveTimeStateUseCase';
 import { UpdateUserProfileUseCase } from './domain/useCases/UpdateUserProfileUseCase';
 import { ObserveSubscriptionUseCase } from './domain/useCases/ObserveSubscriptionUseCase';
@@ -87,6 +88,8 @@ import { RunAppOpenSideEffectsUseCase } from './domain/useCases/RunAppOpenSideEf
 import { GetEngagementModalStateUseCase } from './domain/useCases/GetEngagementModalStateUseCase';
 import { SetWidgetCoachPendingUseCase } from './domain/useCases/SetWidgetCoachPendingUseCase';
 import { ClearWidgetCoachPendingUseCase } from './domain/useCases/ClearWidgetCoachPendingUseCase';
+import { MaybeRequestInAppReviewUseCase } from './domain/useCases/MaybeRequestInAppReviewUseCase';
+import { RequestInAppReviewFromSettingsUseCase } from './domain/useCases/RequestInAppReviewFromSettingsUseCase';
 import { MarkFeatureCoachShownUseCase } from './domain/useCases/MarkFeatureCoachShownUseCase';
 import { ClearSharePromptPendingUseCase } from './domain/useCases/ClearSharePromptPendingUseCase';
 import { CheckCountdownCompletionUseCase } from './domain/useCases/CheckCountdownCompletionUseCase';
@@ -137,6 +140,7 @@ const appUpdateService = new AppUpdateServiceAdapter();
 const appVersionProvider = new AppVersionProviderAdapter();
 const deviceIdProvider = new DeviceIdProviderAdapter();
 const licenseVerificationService = new LicenseVerificationServiceAdapter();
+const inAppReviewService = new StoreReviewAdapter();
 const playPurchaseVerificationService = new PlayPurchaseVerificationServiceAdapter();
 const trialPreviewService = new TrialPreviewApiAdapter();
 const clock = new ClockAdapter();
@@ -180,6 +184,13 @@ export const checkCountdownCompletionUseCase = new CheckCountdownCompletionUseCa
     void logAnalyticsEvent('countdown_completed', event);
   }
 );
+export const maybeRequestInAppReviewUseCase = new MaybeRequestInAppReviewUseCase(
+  inAppReviewService,
+  engagementRepository,
+  subscriptionRepository
+);
+export const requestInAppReviewFromSettingsUseCase =
+  new RequestInAppReviewFromSettingsUseCase(inAppReviewService);
 export const recordPresenceUseCase = new RecordPresenceUseCase(presenceRepository);
 export const getPresenceStreakUseCase = new GetPresenceStreakUseCase(
   presenceRepository,
