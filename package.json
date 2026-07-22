@@ -38,6 +38,7 @@
     "react-native-safe-area-context": "^5.5.2",
     "react-native-screens": "^4.23.0",
     "react-native-share": "12.2.6",
+    "react-native-store-review": "^0.5.0",
     "react-native-svg": "^15.15.3",
     "react-native-view-shot": "^4.0.3",
     "react-redux": "^9.2.0",
