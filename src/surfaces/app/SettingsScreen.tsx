@@ -27,6 +27,7 @@ import {
   useAccessControl,
   useDailyNothingLimit,
 } from '../../hooks';
+import { useInAppReview } from '../../hooks/useInAppReview';
 import {
   useTheme,
   Spacing,
@@ -95,6 +96,7 @@ export function SettingsScreen() {
   } = useRetentionNotifications();
   const { hasPremiumBundle } = useAccessControl();
   const { limitHours, setLimitHours } = useDailyNothingLimit();
+  const { rateApp } = useInAppReview();
   const theme = useTheme();
 
   const [birthInput, setBirthInput] = useState(userProfile.birthDate ?? '');
@@ -366,6 +368,31 @@ export function SettingsScreen() {
                       ]}
                     >
                       Lockscreen & Home aesthetics
+                    </Text>
+                  </View>
+                  <Text
+                    style={[styles.chevron, { color: theme.textSecondary }]}
+                  >
+                    ›
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.row, { borderBottomColor: theme.glassBorder }]}
+                  onPress={() => rateApp()}
+                  activeOpacity={0.7}
+                >
+                  <View style={styles.rowContent}>
+                    <Text variant="body" style={{ color: theme.textPrimary }}>
+                      Rate UNTIL
+                    </Text>
+                    <Text
+                      variant="caption"
+                      style={[
+                        styles.rowSubtitle,
+                        { color: theme.textSecondary },
+                      ]}
+                    >
+                      Leave a Play Store or App Store review
                     </Text>
                   </View>
                   <Text
