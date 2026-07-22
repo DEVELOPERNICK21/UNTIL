@@ -47,6 +47,13 @@ export function AppEngagementLayer() {
     }
   }, [readModalState]);
 
+  const tryAutoReview = useCallback(async () => {
+    const countdownRequested = await tryCountdownReview(false);
+    if (!countdownRequested) {
+      await tryOpensReview(false);
+    }
+  }, [tryCountdownReview, tryOpensReview]);
+
   const refreshEngagementModals = useCallback(() => {
     const state = readModalState();
     const nextFeatureCoachVisible =
@@ -76,16 +83,14 @@ export function AppEngagementLayer() {
     }
     if (!reviewBlocked && !autoReviewAttemptedRef.current) {
       autoReviewAttemptedRef.current = true;
-      tryCountdownReview(false);
-      tryOpensReview(false);
+      void tryAutoReview();
     }
   }, [
     deferredPaywallVisible,
     featureCoachVisible,
     readModalState,
     sharePromptVisible,
-    tryCountdownReview,
-    tryOpensReview,
+    tryAutoReview,
     widgetCoachVisible,
   ]);
 
@@ -125,14 +130,12 @@ export function AppEngagementLayer() {
     setDeferredPaywallVisible(false);
     if (!widgetCoachVisible && !featureCoachVisible && !sharePromptVisible) {
       autoReviewAttemptedRef.current = true;
-      tryCountdownReview(false);
-      tryOpensReview(false);
+      void tryAutoReview();
     }
   }, [
     featureCoachVisible,
     sharePromptVisible,
-    tryCountdownReview,
-    tryOpensReview,
+    tryAutoReview,
     widgetCoachVisible,
   ]);
 

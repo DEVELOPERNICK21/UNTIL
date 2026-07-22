@@ -15,8 +15,8 @@ export function useEngagementModals(): {
   dismissFeatureCoach: () => void;
   dismissSharePrompt: () => void;
   completeFeatureCoachCta: () => void;
-  tryCountdownReview: (blockingOverlayVisible: boolean) => void;
-  tryOpensReview: (blockingOverlayVisible: boolean) => void;
+  tryCountdownReview: (blockingOverlayVisible: boolean) => Promise<boolean>;
+  tryOpensReview: (blockingOverlayVisible: boolean) => Promise<boolean>;
 } {
   const readModalState = useCallback(
     () => getEngagementModalStateUseCase.execute(),
@@ -36,7 +36,7 @@ export function useEngagementModals(): {
   }, []);
 
   const tryCountdownReview = useCallback((blockingOverlayVisible: boolean) => {
-    void maybeRequestInAppReviewUseCase.execute({
+    return maybeRequestInAppReviewUseCase.execute({
       source: 'countdown',
       blockingOverlayVisible,
       todayDateKey: getLocalDateKey(new Date()),
@@ -44,7 +44,7 @@ export function useEngagementModals(): {
   }, []);
 
   const tryOpensReview = useCallback((blockingOverlayVisible: boolean) => {
-    void maybeRequestInAppReviewUseCase.execute({
+    return maybeRequestInAppReviewUseCase.execute({
       source: 'opens',
       blockingOverlayVisible,
       todayDateKey: getLocalDateKey(new Date()),
