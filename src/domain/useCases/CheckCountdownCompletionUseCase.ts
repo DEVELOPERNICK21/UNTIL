@@ -33,5 +33,6 @@ export class CheckCountdownCompletionUseCase {
       days_used: daysUsed,
     });
     this.engagementRepository.scheduleSharePrompt();
+    this.engagementRepository.scheduleReviewPrompt();
   }
 }

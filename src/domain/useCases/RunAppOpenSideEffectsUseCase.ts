@@ -1,3 +1,4 @@
+import { getLocalDateKey } from '../notifications/retentionNotificationCopy';
 import type { ISubscriptionRepository } from '../repository/ISubscriptionRepository';
 import type { IEngagementRepository } from '../repository/IEngagementRepository';
 import type { TrackAppOpenUseCase } from './TrackAppOpenUseCase';
@@ -18,6 +19,7 @@ export class RunAppOpenSideEffectsUseCase {
 
   execute(now: number = Date.now()): void {
     this.trackAppOpenUseCase.execute(now);
+    this.engagementRepository.ensureFirstOpenDate(getLocalDateKey(new Date(now)));
     this.engagementRepository.scheduleFeatureCoachIfEligible(
       this.subscriptionRepository.getAppOpenCount(),
     );
