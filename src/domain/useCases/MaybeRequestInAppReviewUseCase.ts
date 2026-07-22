@@ -2,7 +2,6 @@ import {
   isAutoReviewCooldownElapsed,
   isSustainedUseEligible,
 } from '../../core/engagement';
-import { logAnalyticsEvent } from '../../services/analytics';
 import type { IInAppReviewService } from '../ports/IInAppReviewService';
 import type { IEngagementRepository } from '../repository/IEngagementRepository';
 import type { ISubscriptionRepository } from '../repository/ISubscriptionRepository';
@@ -14,7 +13,11 @@ export class MaybeRequestInAppReviewUseCase {
   constructor(
     private readonly reviewService: IInAppReviewService,
     private readonly engagementRepository: IEngagementRepository,
-    private readonly subscriptionRepository: ISubscriptionRepository
+    private readonly subscriptionRepository: ISubscriptionRepository,
+    private readonly onEvent?: (
+      name: 'review_requested',
+      params: { source: AutoInAppReviewSource }
+    ) => void
   ) {}
 
   async execute(input: {
@@ -57,7 +60,7 @@ export class MaybeRequestInAppReviewUseCase {
     try {
       await this.reviewService.requestReview();
       this.engagementRepository.setLastAutoReviewRequestAt(nowMs);
-      void logAnalyticsEvent('review_requested', { source: input.source });
+      this.onEvent?.('review_requested', { source: input.source });
       return true;
     } catch {
       return false;

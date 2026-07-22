@@ -1,14 +1,19 @@
-import { logAnalyticsEvent } from '../../services/analytics';
 import type { IInAppReviewService } from '../ports/IInAppReviewService';
 
 export class RequestInAppReviewFromSettingsUseCase {
-  constructor(private readonly reviewService: IInAppReviewService) {}
+  constructor(
+    private readonly reviewService: IInAppReviewService,
+    private readonly onEvent?: (
+      name: 'review_requested' | 'review_store_fallback',
+      params: { source: 'settings' }
+    ) => void
+  ) {}
 
   async execute(): Promise<void> {
     try {
       if (this.reviewService.isAvailable()) {
         await this.reviewService.requestReview();
-        void logAnalyticsEvent('review_requested', { source: 'settings' });
+        this.onEvent?.('review_requested', { source: 'settings' });
         return;
       }
     } catch {
@@ -17,7 +22,7 @@ export class RequestInAppReviewFromSettingsUseCase {
 
     try {
       await this.reviewService.openStoreListing();
-      void logAnalyticsEvent('review_store_fallback', { source: 'settings' });
+      this.onEvent?.('review_store_fallback', { source: 'settings' });
     } catch {
       // The fallback is best effort.
     }

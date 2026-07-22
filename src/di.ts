@@ -187,10 +187,15 @@ export const checkCountdownCompletionUseCase = new CheckCountdownCompletionUseCa
 export const maybeRequestInAppReviewUseCase = new MaybeRequestInAppReviewUseCase(
   inAppReviewService,
   engagementRepository,
-  subscriptionRepository
+  subscriptionRepository,
+  (name, params) => {
+    void logAnalyticsEvent(name, params);
+  }
 );
 export const requestInAppReviewFromSettingsUseCase =
-  new RequestInAppReviewFromSettingsUseCase(inAppReviewService);
+  new RequestInAppReviewFromSettingsUseCase(inAppReviewService, (name, params) => {
+    void logAnalyticsEvent(name, params);
+  });
 export const recordPresenceUseCase = new RecordPresenceUseCase(presenceRepository);
 export const getPresenceStreakUseCase = new GetPresenceStreakUseCase(
   presenceRepository,
