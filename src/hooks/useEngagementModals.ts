@@ -4,7 +4,9 @@ import {
   clearWidgetCoachPendingUseCase,
   getEngagementModalStateUseCase,
   markFeatureCoachShownUseCase,
+  maybeRequestInAppReviewUseCase,
 } from '../di';
+import { getLocalDateKey } from '../domain/notifications/retentionNotificationCopy';
 import type { EngagementModalState } from '../domain/repository/IEngagementRepository';
 
 export function useEngagementModals(): {
@@ -13,6 +15,8 @@ export function useEngagementModals(): {
   dismissFeatureCoach: () => void;
   dismissSharePrompt: () => void;
   completeFeatureCoachCta: () => void;
+  tryCountdownReview: (blockingOverlayVisible: boolean) => void;
+  tryOpensReview: (blockingOverlayVisible: boolean) => void;
 } {
   const readModalState = useCallback(
     () => getEngagementModalStateUseCase.execute(),
@@ -31,9 +35,26 @@ export function useEngagementModals(): {
     markFeatureCoachShownUseCase.execute();
   }, []);
 
+  const tryCountdownReview = useCallback((blockingOverlayVisible: boolean) => {
+    void maybeRequestInAppReviewUseCase.execute({
+      source: 'countdown',
+      blockingOverlayVisible,
+      todayDateKey: getLocalDateKey(new Date()),
+    });
+  }, []);
+
+  const tryOpensReview = useCallback((blockingOverlayVisible: boolean) => {
+    void maybeRequestInAppReviewUseCase.execute({
+      source: 'opens',
+      blockingOverlayVisible,
+      todayDateKey: getLocalDateKey(new Date()),
+    });
+  }, []);
+
   const dismissSharePrompt = useCallback(() => {
     clearSharePromptPendingUseCase.execute();
-  }, []);
+    tryCountdownReview(false);
+  }, [tryCountdownReview]);
 
   return {
     readModalState,
@@ -41,5 +62,7 @@ export function useEngagementModals(): {
     dismissFeatureCoach,
     dismissSharePrompt,
     completeFeatureCoachCta,
+    tryCountdownReview,
+    tryOpensReview,
   };
 }

@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { AppState } from 'react-native';
 import { RootNavigator } from '../../navigation/RootNavigator';
 import { WidgetCoachModal } from './WidgetCoachModal';
@@ -20,8 +20,11 @@ export function AppEngagementLayer() {
     dismissFeatureCoach,
     dismissSharePrompt,
     completeFeatureCoachCta,
+    tryCountdownReview,
+    tryOpensReview,
   } = useEngagementModals();
   const { logEvent } = useAnalytics();
+  const autoReviewAttemptedRef = useRef(false);
 
   const initial = readModalState();
   const [widgetCoachVisible, setWidgetCoachVisible] = useState(
@@ -46,20 +49,44 @@ export function AppEngagementLayer() {
 
   const refreshEngagementModals = useCallback(() => {
     const state = readModalState();
-    if (!widgetCoachVisible && state.featureCoachPending) {
+    const nextFeatureCoachVisible =
+      featureCoachVisible || (!widgetCoachVisible && state.featureCoachPending);
+    const nextSharePromptVisible =
+      sharePromptVisible ||
+      (!widgetCoachVisible &&
+        !nextFeatureCoachVisible &&
+        state.sharePromptPending);
+    const nextDeferredPaywallVisible =
+      deferredPaywallVisible || shouldShowDeferredPaywall();
+    const blockingOverlayVisible =
+      widgetCoachVisible ||
+      nextFeatureCoachVisible ||
+      nextSharePromptVisible ||
+      nextDeferredPaywallVisible;
+
+    if (nextFeatureCoachVisible && !featureCoachVisible) {
       setFeatureCoachVisible(true);
     }
-    if (
-      !widgetCoachVisible &&
-      !featureCoachVisible &&
-      state.sharePromptPending
-    ) {
+    if (nextSharePromptVisible && !sharePromptVisible) {
       setSharePromptVisible(true);
     }
-    if (shouldShowDeferredPaywall()) {
+    if (nextDeferredPaywallVisible && !deferredPaywallVisible) {
       setDeferredPaywallVisible(true);
     }
-  }, [readModalState, widgetCoachVisible, featureCoachVisible]);
+    if (!blockingOverlayVisible && !autoReviewAttemptedRef.current) {
+      autoReviewAttemptedRef.current = true;
+      tryCountdownReview(false);
+      tryOpensReview(false);
+    }
+  }, [
+    deferredPaywallVisible,
+    featureCoachVisible,
+    readModalState,
+    sharePromptVisible,
+    tryCountdownReview,
+    tryOpensReview,
+    widgetCoachVisible,
+  ]);
 
   useEffect(() => {
     if (widgetCoachVisible) {
@@ -90,7 +117,10 @@ export function AppEngagementLayer() {
   }, [refreshEngagementModals]);
 
   const blockingOverlayVisible =
-    widgetCoachVisible || featureCoachVisible || sharePromptVisible;
+    widgetCoachVisible ||
+    featureCoachVisible ||
+    sharePromptVisible ||
+    deferredPaywallVisible;
 
   return (
     <>
