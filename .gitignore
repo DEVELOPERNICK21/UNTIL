@@ -89,3 +89,4 @@ src/config/analytics.local.ts
 
 # Superpowers brainstorm mockups
 .superpowers/
+.worktrees
