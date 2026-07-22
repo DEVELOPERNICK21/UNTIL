@@ -55,6 +55,39 @@ export class MmkvEngagementRepository implements IEngagementRepository {
     setString(STORAGE_KEYS.SHARE_PROMPT_PENDING, '');
   }
 
+  scheduleReviewPrompt(): void {
+    setString(STORAGE_KEYS.REVIEW_PROMPT_PENDING, '1');
+  }
+
+  clearReviewPending(): void {
+    setString(STORAGE_KEYS.REVIEW_PROMPT_PENDING, '');
+  }
+
+  isReviewPending(): boolean {
+    return getString(STORAGE_KEYS.REVIEW_PROMPT_PENDING) === '1';
+  }
+
+  getLastAutoReviewRequestAt(): number | null {
+    const raw = getString(STORAGE_KEYS.LAST_AUTO_REVIEW_REQUEST_AT);
+    if (!raw) return null;
+    const n = Number(raw);
+    return Number.isFinite(n) ? n : null;
+  }
+
+  setLastAutoReviewRequestAt(ms: number): void {
+    setString(STORAGE_KEYS.LAST_AUTO_REVIEW_REQUEST_AT, String(ms));
+  }
+
+  ensureFirstOpenDate(dateKey: string): void {
+    if (this.getFirstOpenDate()) return;
+    setString(STORAGE_KEYS.FIRST_OPEN_DATE, dateKey);
+  }
+
+  getFirstOpenDate(): string | null {
+    const raw = getString(STORAGE_KEYS.FIRST_OPEN_DATE);
+    return raw?.trim() ? raw : null;
+  }
+
   getCountdownCompletedFiredId(): string | null {
     const raw = getString(STORAGE_KEYS.COUNTDOWN_COMPLETED_FIRED);
     return raw?.trim() ? raw : null;

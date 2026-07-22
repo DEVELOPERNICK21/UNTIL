@@ -121,6 +121,11 @@ export const STORAGE_KEYS = {
   COUNTDOWN_COMPLETED_FIRED: 'engagement.countdownCompletedFired',
   SHARE_PROMPT_PENDING: 'engagement.sharePromptPending',
 
+  // In-app review (Play / App Store)
+  REVIEW_PROMPT_PENDING: 'engagement.reviewPromptPending',
+  LAST_AUTO_REVIEW_REQUEST_AT: 'engagement.lastAutoReviewRequestAt',
+  FIRST_OPEN_DATE: 'engagement.firstOpenDate',
+
   // Feature discovery coach (after 3rd app open)
   FEATURE_COACH_PENDING: 'engagement.featureCoachPending',
   FEATURE_COACH_SHOWN: 'engagement.featureCoachShown',
