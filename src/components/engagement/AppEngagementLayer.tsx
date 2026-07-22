@@ -58,11 +58,12 @@ export function AppEngagementLayer() {
         state.sharePromptPending);
     const nextDeferredPaywallVisible =
       deferredPaywallVisible || shouldShowDeferredPaywall();
-    const blockingOverlayVisible =
+    const engagementBlockingVisible =
       widgetCoachVisible ||
       nextFeatureCoachVisible ||
-      nextSharePromptVisible ||
-      nextDeferredPaywallVisible;
+      nextSharePromptVisible;
+    const reviewBlocked =
+      engagementBlockingVisible || nextDeferredPaywallVisible;
 
     if (nextFeatureCoachVisible && !featureCoachVisible) {
       setFeatureCoachVisible(true);
@@ -73,7 +74,7 @@ export function AppEngagementLayer() {
     if (nextDeferredPaywallVisible && !deferredPaywallVisible) {
       setDeferredPaywallVisible(true);
     }
-    if (!blockingOverlayVisible && !autoReviewAttemptedRef.current) {
+    if (!reviewBlocked && !autoReviewAttemptedRef.current) {
       autoReviewAttemptedRef.current = true;
       tryCountdownReview(false);
       tryOpensReview(false);
@@ -116,20 +117,29 @@ export function AppEngagementLayer() {
     return () => sub.remove();
   }, [refreshEngagementModals]);
 
-  const blockingOverlayVisible =
-    widgetCoachVisible ||
-    featureCoachVisible ||
-    sharePromptVisible ||
-    deferredPaywallVisible;
+  const engagementBlockingVisible =
+    widgetCoachVisible || featureCoachVisible || sharePromptVisible;
+  const reviewBlocked = engagementBlockingVisible || deferredPaywallVisible;
+
+  const handleDeferredPaywallClose = useCallback(() => {
+    setDeferredPaywallVisible(false);
+    if (!widgetCoachVisible && !featureCoachVisible && !sharePromptVisible) {
+      autoReviewAttemptedRef.current = true;
+      tryCountdownReview(false);
+      tryOpensReview(false);
+    }
+  }, [
+    featureCoachVisible,
+    sharePromptVisible,
+    tryCountdownReview,
+    tryOpensReview,
+    widgetCoachVisible,
+  ]);
 
   return (
     <>
       <RootNavigator />
-      <EmberCompanion
-        suppressed={
-          blockingOverlayVisible || deferredPaywallVisible
-        }
-      />
+      <EmberCompanion suppressed={reviewBlocked} />
       <WidgetCoachModal
         visible={widgetCoachVisible}
         onDismiss={() => {
@@ -159,8 +169,8 @@ export function AppEngagementLayer() {
         }}
       />
       <DeferredPaywallModal
-        visible={deferredPaywallVisible && !blockingOverlayVisible}
-        onClose={() => setDeferredPaywallVisible(false)}
+        visible={deferredPaywallVisible && !engagementBlockingVisible}
+        onClose={handleDeferredPaywallClose}
       />
     </>
   );
