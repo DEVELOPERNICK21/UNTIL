@@ -8,13 +8,21 @@ export type LifeWeeksGridProps = {
   fillColor?: string;
 };
 
-export function LifeWeeksGrid({
+function LifeWeeksGridComponent({
   livedWeeks,
   renderWeeks,
   fillColor,
 }: LifeWeeksGridProps) {
   const theme = useTheme();
   const livedFill = fillColor ?? theme.percent;
+  const livedDotStyle = useMemo(
+    () => [styles.dot, { backgroundColor: livedFill }],
+    [livedFill],
+  );
+  const remainingDotStyle = useMemo(
+    () => [styles.dot, { backgroundColor: theme.progressTrack }],
+    [theme.progressTrack],
+  );
   const flags = useMemo(
     () =>
       Array.from({ length: Math.max(0, renderWeeks) }, (_, i) => i < livedWeeks),
@@ -22,19 +30,20 @@ export function LifeWeeksGrid({
   );
 
   return (
-    <View style={styles.grid} accessibilityLabel={`${livedWeeks} of ${renderWeeks} weeks lived`}>
+    <View
+      accessible
+      accessibilityRole="image"
+      accessibilityLabel={`${livedWeeks} of ${renderWeeks} weeks lived`}
+      style={styles.grid}
+    >
       {flags.map((isLived, index) => (
-        <View
-          key={index}
-          style={[
-            styles.dot,
-            isLived ? { backgroundColor: livedFill } : styles.dotRemaining,
-          ]}
-        />
+        <View key={index} style={isLived ? livedDotStyle : remainingDotStyle} />
       ))}
     </View>
   );
 }
+
+export const LifeWeeksGrid = React.memo(LifeWeeksGridComponent);
 
 const styles = StyleSheet.create({
   grid: {
@@ -49,8 +58,5 @@ const styles = StyleSheet.create({
     borderRadius: 3,
     marginHorizontal: 2,
     marginVertical: 3,
-  },
-  dotRemaining: {
-    backgroundColor: '#4A4A4A',
   },
 });

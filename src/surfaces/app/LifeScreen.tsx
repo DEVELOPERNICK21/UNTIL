@@ -24,7 +24,7 @@ export function LifeScreen() {
   const { canAccessLife } = useAccessControl();
   const { streak } = usePresenceStreak();
   const theme = useTheme();
-  const { totalWeeks, livedWeeks, renderWeeks } = useLifeWeeks(
+  const { totalWeeks, livedWeeks, renderWeeks, renderLivedWeeks } = useLifeWeeks(
     userProfile.deathAge,
     timeState.remainingDaysLife,
   );
@@ -115,7 +115,7 @@ export function LifeScreen() {
               {livedWeeksLabel} weeks / {totalWeeksLabel} weeks
             </Text>
             <LifeWeeksGrid
-              livedWeeks={livedWeeks}
+              livedWeeks={renderLivedWeeks}
               renderWeeks={renderWeeks}
               fillColor={theme.percent}
             />

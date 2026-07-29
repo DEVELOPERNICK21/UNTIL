@@ -4,7 +4,12 @@ export const LIFE_WEEKS_DOT_CAP = 5200;
 export function computeLifeWeeks(
   deathAge: number,
   remainingDaysLife: number | undefined,
-): { totalWeeks: number; livedWeeks: number; renderWeeks: number } {
+): {
+  totalWeeks: number;
+  livedWeeks: number;
+  renderWeeks: number;
+  renderLivedWeeks: number;
+} {
   const totalWeeks = Math.round(deathAge * WEEKS_PER_YEAR);
   const remainingWeeks =
     typeof remainingDaysLife === 'number'
@@ -12,5 +17,8 @@ export function computeLifeWeeks(
       : 0;
   const livedWeeks = Math.max(0, Math.min(totalWeeks, totalWeeks - remainingWeeks));
   const renderWeeks = Math.min(totalWeeks, LIFE_WEEKS_DOT_CAP);
-  return { totalWeeks, livedWeeks, renderWeeks };
+  const renderLivedWeeks =
+    totalWeeks > 0 ? Math.round((livedWeeks / totalWeeks) * renderWeeks) : 0;
+
+  return { totalWeeks, livedWeeks, renderWeeks, renderLivedWeeks };
 }

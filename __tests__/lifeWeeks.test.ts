@@ -21,14 +21,18 @@ describe('computeLifeWeeks', () => {
   });
 
   it('clamps lived weeks to [0, total]', () => {
-    expect(computeLifeWeeks(80, -100).livedWeeks).toBeGreaterThanOrEqual(0);
+    const negativeRemainingDays = computeLifeWeeks(80, -100);
+    expect(negativeRemainingDays.livedWeeks).toBe(negativeRemainingDays.totalWeeks);
     const over = computeLifeWeeks(10, 999999);
     expect(over.livedWeeks).toBe(0);
   });
 
-  it('caps renderWeeks at LIFE_WEEKS_DOT_CAP', () => {
-    const result = computeLifeWeeks(200, 0);
+  it('scales lived weeks to the capped render grid', () => {
+    const result = computeLifeWeeks(200, 7 * 100);
     expect(result.totalWeeks).toBeGreaterThan(LIFE_WEEKS_DOT_CAP);
     expect(result.renderWeeks).toBe(LIFE_WEEKS_DOT_CAP);
+    expect(result.renderLivedWeeks).toBe(
+      Math.round((result.livedWeeks / result.totalWeeks) * result.renderWeeks),
+    );
   });
 });

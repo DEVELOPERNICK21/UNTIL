@@ -36,7 +36,7 @@ export function LifeWeeksPreviewScreen() {
   const { logEvent } = useAnalytics();
   const { setStep } = useOnboardingFunnel();
 
-  const { totalWeeks, livedWeeks, renderWeeks } = useLifeWeeks(
+  const { totalWeeks, livedWeeks, renderWeeks, renderLivedWeeks } = useLifeWeeks(
     userProfile.deathAge,
     timeState.remainingDaysLife,
   );
@@ -105,7 +105,7 @@ export function LifeWeeksPreviewScreen() {
                   <Text style={[{ color: '#FFFFFF' }]}> weeks </Text>
                 </Text>
                 <LifeWeeksGrid
-                  livedWeeks={livedWeeks}
+                  livedWeeks={renderLivedWeeks}
                   renderWeeks={renderWeeks}
                   fillColor={theme.percent}
                 />
