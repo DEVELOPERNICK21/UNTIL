@@ -2,7 +2,7 @@ import React from 'react';
 import { View, StyleSheet, TouchableOpacity } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { Text, ScreenGradient, GlassCard } from '../../ui';
+import { Text, ScreenGradient, GlassCard, LifeWeeksGrid } from '../../ui';
 import { PeriodDetailScreen } from './PeriodDetailScreen';
 import {
   useObserveTimeState,
@@ -10,9 +10,10 @@ import {
   useTrackLifeScreenVisit,
   useLifeUnlockPaywallPrompt,
   usePresenceStreak,
+  useLifeWeeks,
 } from '../../hooks';
 import { LifeUnlockEndedModal } from '../../components/premium/LifeUnlockEndedModal';
-import { Spacing } from '../../theme';
+import { Spacing, useTheme } from '../../theme';
 import type { RootStackParamList } from '../../navigation/RootNavigator';
 
 export function LifeScreen() {
@@ -22,6 +23,8 @@ export function LifeScreen() {
   const { userProfile, timeState } = useObserveTimeState();
   const { canAccessLife } = useAccessControl();
   const { streak } = usePresenceStreak();
+  const theme = useTheme();
+  const { totalWeeks, livedWeeks, renderWeeks } = useLifeWeeks();
   const {
     visible: lifeUnlockPaywallVisible,
     dismiss: dismissLifeUnlockPaywall,
@@ -34,6 +37,8 @@ export function LifeScreen() {
   const deathAge = userProfile.deathAge ?? 80;
   const totalLifeDays = Math.round(deathAge * 365.25);
   const passedDays = totalLifeDays - remainingDays;
+  const livedWeeksLabel = livedWeeks.toLocaleString();
+  const totalWeeksLabel = totalWeeks.toLocaleString();
 
   if (!hasBirthDate || !canAccessLife) {
     return (
@@ -98,6 +103,21 @@ export function LifeScreen() {
         passedCaption="Days lived"
         leftCaption="Days left"
         summary={`Based on ${deathAge} years. ${percentUsed}% used · ${100 - percentUsed}% remaining.`}
+        hero={
+          <View style={styles.hero}>
+            <Text variant="body" color="primary" style={styles.heroIntro}>
+              You have lived
+            </Text>
+            <Text style={[styles.heroWeeks, { color: theme.percent }]}>
+              {livedWeeksLabel} weeks / {totalWeeksLabel} weeks
+            </Text>
+            <LifeWeeksGrid
+              livedWeeks={livedWeeks}
+              renderWeeks={renderWeeks}
+              fillColor={theme.percent}
+            />
+          </View>
+        }
       />
     </>
   );
@@ -128,5 +148,16 @@ const styles = StyleSheet.create({
   settingsCta: {
     marginTop: Spacing[3],
     paddingVertical: Spacing[2],
+  },
+  hero: {
+    width: '100%',
+    alignItems: 'center',
+  },
+  heroIntro: {
+    textAlign: 'center',
+  },
+  heroWeeks: {
+    textAlign: 'center',
+    marginBottom: Spacing[5],
   },
 });

@@ -37,3 +37,4 @@ export { useAnalyticsBootstrap } from './useAnalyticsBootstrap';
 export { useEngagementModals } from './useEngagementModals';
 export { useReduceMotion } from './useReduceMotion';
 export { usePresenceStreak } from './usePresenceStreak';
+export { useLifeWeeks } from './useLifeWeeks';
