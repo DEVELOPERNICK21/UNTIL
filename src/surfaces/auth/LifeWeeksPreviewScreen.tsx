@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect } from 'react';
 import { View, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import {
   SafeAreaView,
@@ -6,7 +6,7 @@ import {
 } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { Text, ScreenGradient } from '../../ui';
+import { Text, ScreenGradient, LifeWeeksGrid } from '../../ui';
 import {
   useTheme,
   Spacing,
@@ -15,15 +15,18 @@ import {
   getFontFamilyForWeight,
   Radius,
 } from '../../theme';
-import { useAnalytics, useObserveTimeState, useOnboardingFunnel } from '../../hooks';
+import {
+  useAnalytics,
+  useLifeWeeks,
+  useObserveTimeState,
+  useOnboardingFunnel,
+} from '../../hooks';
 import type { AuthStackParamList } from '../../navigation/AuthNavigator';
 
 type AuthNav = NativeStackNavigationProp<
   AuthStackParamList,
   'LifeWeeksPreview'
 >;
-
-const WEEKS_PER_YEAR = 365.25 / 7;
 
 export function LifeWeeksPreviewScreen() {
   const navigation = useNavigation<AuthNav>();
@@ -33,22 +36,10 @@ export function LifeWeeksPreviewScreen() {
   const { logEvent } = useAnalytics();
   const { setStep } = useOnboardingFunnel();
 
-  const { totalWeeks, livedWeeks } = useMemo(() => {
-    const deathAge = userProfile.deathAge;
-    const total = Math.round(deathAge * WEEKS_PER_YEAR);
-    const remainingDaysLife = timeState.remainingDaysLife;
-    const remainingWeeks =
-      typeof remainingDaysLife === 'number'
-        ? Math.max(0, Math.round(remainingDaysLife / 7))
-        : 0;
-    const lived = Math.max(0, Math.min(total, total - remainingWeeks));
-    return { totalWeeks: total, livedWeeks: lived };
-  }, [userProfile.deathAge, timeState.remainingDaysLife]);
-
-  const weeksArray = useMemo(() => {
-    const safeTotal = Math.min(totalWeeks, 5200);
-    return Array.from({ length: safeTotal }, (_, i) => i < livedWeeks);
-  }, [totalWeeks, livedWeeks]);
+  const { totalWeeks, livedWeeks, renderWeeks } = useLifeWeeks(
+    userProfile.deathAge,
+    timeState.remainingDaysLife,
+  );
 
   const livedWeeksLabel = livedWeeks.toLocaleString();
   const totalWeeksLabel = totalWeeks.toLocaleString();
@@ -113,19 +104,11 @@ export function LifeWeeksPreviewScreen() {
                   {totalWeeksLabel}
                   <Text style={[{ color: '#FFFFFF' }]}> weeks </Text>
                 </Text>
-                <View style={styles.gridContainer}>
-                  {weeksArray.map((isLived, index) => (
-                    <View
-                      key={index}
-                      style={[
-                        styles.weekDot,
-                        isLived
-                          ? { backgroundColor: theme.percent }
-                          : styles.weekDotRemaining,
-                      ]}
-                    />
-                  ))}
-                </View>
+                <LifeWeeksGrid
+                  livedWeeks={livedWeeks}
+                  renderWeeks={renderWeeks}
+                  fillColor={theme.percent}
+                />
               </View>
             </View>
           </ScrollView>
@@ -200,22 +183,6 @@ const styles = StyleSheet.create({
     fontSize: Typography.display,
     fontFamily: getFontFamilyForWeight(Weight.bold),
     marginBottom: Spacing[5],
-  },
-  gridContainer: {
-    width: '100%',
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'center',
-  },
-  weekDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    marginHorizontal: 2,
-    marginVertical: 3,
-  },
-  weekDotRemaining: {
-    backgroundColor: '#4A4A4A',
   },
   footer: {
     position: 'absolute',
