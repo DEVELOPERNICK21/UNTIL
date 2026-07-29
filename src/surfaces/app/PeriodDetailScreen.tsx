@@ -69,6 +69,7 @@ export type PeriodDetailProps = {
   summary: string;
   footer?: React.ReactNode;
   liveHint?: string;
+  hero?: React.ReactNode;
 };
 
 /**
@@ -86,6 +87,7 @@ export function PeriodDetailScreen({
   summary,
   footer,
   liveHint,
+  hero,
 }: PeriodDetailProps) {
   const theme = useTheme();
   const reduceMotion = useReduceMotion();
@@ -262,25 +264,29 @@ export function PeriodDetailScreen({
             </Text>
           ) : null}
 
-          <Pressable onPress={bounceRing} accessibilityRole="button">
-            <Animated.View
-              style={[styles.ringWrap, { transform: [{ scale: ringScale }] }]}
-            >
-              <CircularProgress
-                progress={progress}
-                size={RING_SIZE}
-                strokeWidth={14}
-                label={`${pct}%`}
-              />
-              <Text
-                variant="micro"
-                color="secondary"
-                style={styles.tapRingCue}
+          {hero != null ? (
+            <View style={styles.heroWrap}>{hero}</View>
+          ) : (
+            <Pressable onPress={bounceRing} accessibilityRole="button">
+              <Animated.View
+                style={[styles.ringWrap, { transform: [{ scale: ringScale }] }]}
               >
-                {personality.cue}
-              </Text>
-            </Animated.View>
-          </Pressable>
+                <CircularProgress
+                  progress={progress}
+                  size={RING_SIZE}
+                  strokeWidth={14}
+                  label={`${pct}%`}
+                />
+                <Text
+                  variant="micro"
+                  color="secondary"
+                  style={styles.tapRingCue}
+                >
+                  {personality.cue}
+                </Text>
+              </Animated.View>
+            </Pressable>
+          )}
 
           <Pressable
             onPress={() => {
@@ -395,6 +401,11 @@ const styles = StyleSheet.create({
   liveHint: {
     textAlign: 'center',
     marginBottom: Spacing[3],
+  },
+  heroWrap: {
+    width: '100%',
+    marginBottom: Spacing[4],
+    alignItems: 'center',
   },
   ringWrap: {
     alignItems: 'center',
