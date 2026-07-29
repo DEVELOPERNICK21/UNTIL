@@ -24,7 +24,10 @@ export function LifeScreen() {
   const { canAccessLife } = useAccessControl();
   const { streak } = usePresenceStreak();
   const theme = useTheme();
-  const { totalWeeks, livedWeeks, renderWeeks } = useLifeWeeks();
+  const { totalWeeks, livedWeeks, renderWeeks } = useLifeWeeks(
+    userProfile.deathAge,
+    timeState.remainingDaysLife,
+  );
   const {
     visible: lifeUnlockPaywallVisible,
     dismiss: dismissLifeUnlockPaywall,

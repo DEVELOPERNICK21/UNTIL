@@ -1,16 +1,12 @@
 import { useMemo } from 'react';
 import { computeLifeWeeks } from '../core/time/lifeWeeks';
-import { useObserveTimeState } from './useObserveTimeState';
 
-export function useLifeWeeks() {
-  const { userProfile, timeState } = useObserveTimeState();
-
+export function useLifeWeeks(
+  deathAge: number | undefined,
+  remainingDaysLife: number | undefined,
+) {
   return useMemo(
-    () =>
-      computeLifeWeeks(
-        userProfile.deathAge ?? 80,
-        timeState.remainingDaysLife,
-      ),
-    [userProfile.deathAge, timeState.remainingDaysLife],
+    () => computeLifeWeeks(deathAge ?? 80, remainingDaysLife),
+    [deathAge, remainingDaysLife],
   );
 }
