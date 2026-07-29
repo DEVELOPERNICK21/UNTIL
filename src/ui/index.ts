@@ -19,3 +19,5 @@ export { BarChart } from './BarChart';
 export type { BarDataPoint } from './BarChart';
 export { Slider } from './Slider';
 export type { SliderProps } from './Slider';
+export { LifeWeeksGrid } from './LifeWeeksGrid';
+export type { LifeWeeksGridProps } from './LifeWeeksGrid';
