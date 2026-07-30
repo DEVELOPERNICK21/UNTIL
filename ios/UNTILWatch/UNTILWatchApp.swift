@@ -1,6 +1,6 @@
 //
 //  UNTILWatchApp.swift
-//  UNTILWatch — Day detail on Apple Watch.
+//  UNTILWatch
 //
 
 import SwiftUI
@@ -13,7 +13,7 @@ struct UNTILWatchApp: App {
 
   var body: some Scene {
     WindowGroup {
-      DayDetailView()
+      TimeHubView()
         .environmentObject(session)
     }
   }
