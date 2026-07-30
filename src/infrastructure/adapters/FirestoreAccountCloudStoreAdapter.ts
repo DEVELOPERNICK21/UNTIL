@@ -1,0 +1,154 @@
+/**
+ * FirestoreAccountCloudStoreAdapter — Firestore-backed IAccountCloudStore.
+ *
+ * Paths (owner-only, see firestore.rules at repo root):
+ * - users/{uid}                     -> CloudUserProfile fields
+ * - users/{uid}/devices/{deviceId}  -> AccountDevice
+ * - users/{uid}/entitlement/current -> CloudEntitlement (single doc)
+ *
+ * Requires a Firestore database to exist for the project (Firebase Console ->
+ * Firestore Database -> Create database) and rules deployed via
+ * `firebase deploy --only firestore:rules`.
+ */
+
+import type { IAccountCloudStore } from '../../domain/ports/IAccountCloudStore';
+import type { AccountDevice, CloudEntitlement, CloudUserProfile } from '../../types';
+import { recordCrashError } from '../../services/analytics';
+
+interface DocSnapshotLike<T> {
+  exists: boolean;
+  data(): T | undefined;
+}
+
+interface QuerySnapshotLike<T> {
+  docs: DocSnapshotLike<T>[];
+}
+
+interface DocRefLike {
+  __docRef: true;
+}
+
+interface FirestoreModule {
+  doc: (path: string, ...segments: string[]) => DocRefLike;
+  collection: (path: string, ...segments: string[]) => DocRefLike;
+  getDoc: <T>(ref: DocRefLike) => Promise<DocSnapshotLike<T>>;
+  getDocs: <T>(ref: DocRefLike) => Promise<QuerySnapshotLike<T>>;
+  setDoc: (ref: DocRefLike, data: Record<string, unknown>, options?: { merge?: boolean }) => Promise<void>;
+}
+
+/**
+ * Lazily resolves the Firestore module. Returns null if the native FIRApp
+ * was never configured, mirroring the guard in services/analytics.ts.
+ */
+function getFirestoreModule(): FirestoreModule | null {
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const { getApp, getApps } = require('@react-native-firebase/app') as {
+      getApp: () => unknown;
+      getApps: () => unknown[];
+    };
+    if (getApps().length === 0) return null;
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const { getFirestore, doc, collection, getDoc, getDocs, setDoc } = require('@react-native-firebase/firestore') as {
+      getFirestore: (app: unknown) => unknown;
+      doc: (db: unknown, path: string, ...segments: string[]) => DocRefLike;
+      collection: (db: unknown, path: string, ...segments: string[]) => DocRefLike;
+      getDoc: <T>(ref: DocRefLike) => Promise<DocSnapshotLike<T>>;
+      getDocs: <T>(ref: DocRefLike) => Promise<QuerySnapshotLike<T>>;
+      setDoc: (
+        ref: DocRefLike,
+        data: Record<string, unknown>,
+        options?: { merge?: boolean }
+      ) => Promise<void>;
+    };
+    const db = getFirestore(getApp());
+    return {
+      doc: (path, ...segments) => doc(db, path, ...segments),
+      collection: (path, ...segments) => collection(db, path, ...segments),
+      getDoc,
+      getDocs,
+      setDoc,
+    };
+  } catch (e) {
+    recordCrashError(e, 'FirestoreAccountCloudStoreAdapter.getFirestoreModule');
+    return null;
+  }
+}
+
+export class FirestoreAccountCloudStoreAdapter implements IAccountCloudStore {
+  async getProfile(uid: string): Promise<CloudUserProfile | null> {
+    const db = getFirestoreModule();
+    if (!db) return null;
+    try {
+      const snap = await db.getDoc<CloudUserProfile>(db.doc('users', uid));
+      return snap.exists ? (snap.data() ?? null) : null;
+    } catch (e) {
+      recordCrashError(e, 'FirestoreAccountCloudStoreAdapter.getProfile');
+      return null;
+    }
+  }
+
+  async upsertProfile(uid: string, patch: Partial<CloudUserProfile>): Promise<void> {
+    const db = getFirestoreModule();
+    if (!db) return;
+    try {
+      await db.setDoc(db.doc('users', uid), { ...patch, updatedAt: Date.now() }, { merge: true });
+    } catch (e) {
+      recordCrashError(e, 'FirestoreAccountCloudStoreAdapter.upsertProfile');
+    }
+  }
+
+  async listDevices(uid: string): Promise<AccountDevice[]> {
+    const db = getFirestoreModule();
+    if (!db) return [];
+    try {
+      const snap = await db.getDocs<AccountDevice>(db.collection('users', uid, 'devices'));
+      return snap.docs.map(d => d.data()).filter((d): d is AccountDevice => d !== undefined);
+    } catch (e) {
+      recordCrashError(e, 'FirestoreAccountCloudStoreAdapter.listDevices');
+      return [];
+    }
+  }
+
+  async upsertDevice(uid: string, device: AccountDevice): Promise<void> {
+    const db = getFirestoreModule();
+    if (!db) return;
+    try {
+      await db.setDoc(db.doc('users', uid, 'devices', device.id), { ...device }, { merge: true });
+    } catch (e) {
+      recordCrashError(e, 'FirestoreAccountCloudStoreAdapter.upsertDevice');
+    }
+  }
+
+  async setDeviceActive(uid: string, deviceId: string, active: boolean): Promise<void> {
+    const db = getFirestoreModule();
+    if (!db) return;
+    try {
+      await db.setDoc(db.doc('users', uid, 'devices', deviceId), { active }, { merge: true });
+    } catch (e) {
+      recordCrashError(e, 'FirestoreAccountCloudStoreAdapter.setDeviceActive');
+    }
+  }
+
+  async getEntitlement(uid: string): Promise<CloudEntitlement | null> {
+    const db = getFirestoreModule();
+    if (!db) return null;
+    try {
+      const snap = await db.getDoc<CloudEntitlement>(db.doc('users', uid, 'entitlement', 'current'));
+      return snap.exists ? (snap.data() ?? null) : null;
+    } catch (e) {
+      recordCrashError(e, 'FirestoreAccountCloudStoreAdapter.getEntitlement');
+      return null;
+    }
+  }
+
+  async setEntitlement(uid: string, entitlement: CloudEntitlement): Promise<void> {
+    const db = getFirestoreModule();
+    if (!db) return;
+    try {
+      await db.setDoc(db.doc('users', uid, 'entitlement', 'current'), { ...entitlement });
+    } catch (e) {
+      recordCrashError(e, 'FirestoreAccountCloudStoreAdapter.setEntitlement');
+    }
+  }
+}

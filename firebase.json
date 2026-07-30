@@ -3,5 +3,8 @@
     "crashlytics_auto_collection_enabled": true,
     "crashlytics_debug_enabled": false,
     "crashlytics_javascript_exception_handler_chaining_enabled": true
+  },
+  "firestore": {
+    "rules": "firestore.rules"
   }
 }
