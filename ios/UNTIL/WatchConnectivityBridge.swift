@@ -64,6 +64,17 @@ final class WatchConnectivityBridge: NSObject, WCSessionDelegate {
     if let remaining = number(from: obj["dayRemainingMinutes"]) {
       context["dayRemainingMinutes"] = remaining.intValue
     }
+    if let birth = obj["birthDate"] as? String {
+      let trimmed = birth.trimmingCharacters(in: .whitespacesAndNewlines)
+      if !trimmed.isEmpty {
+        context["birthDate"] = trimmed
+        if let death = number(from: obj["deathAge"]) {
+          context["deathAge"] = death.intValue > 0 ? death.intValue : 80
+        } else {
+          context["deathAge"] = 80
+        }
+      }
+    }
 
     guard context["dayProgress"] != nil || context["dayPercentDone"] != nil else { return }
     context["updatedAt"] = Date().timeIntervalSince1970 * 1000

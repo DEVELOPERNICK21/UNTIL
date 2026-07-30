@@ -36,6 +36,10 @@ struct WidgetCache: Codable {
     let remainingDaysLife: Int?
     /// Life percent 0–100.
     let lifePercent: Int?
+    /// ISO birth date for watch Life sync.
+    let birthDate: String?
+    /// Expected lifespan years for watch Life sync.
+    let deathAge: Int?
     /// Hex accent for percent/current markers (e.g. #E87C20). Optional.
     let accentColor: String?
     let presenceStreakCount: Int
@@ -66,6 +70,8 @@ struct WidgetCache: Codable {
         lifeProgress = try c.decodeIfPresent(Double.self, forKey: .lifeProgress)
         remainingDaysLife = try c.decodeIfPresent(Int.self, forKey: .remainingDaysLife)
         lifePercent = try c.decodeIfPresent(Int.self, forKey: .lifePercent)
+        birthDate = try c.decodeIfPresent(String.self, forKey: .birthDate)
+        deathAge = try c.decodeIfPresent(Int.self, forKey: .deathAge)
         accentColor = try c.decodeIfPresent(String.self, forKey: .accentColor)
         presenceStreakCount = max(0, try c.decodeIfPresent(Int.self, forKey: .presenceStreakCount) ?? 0)
         let decodedDots = try c.decodeIfPresent([Bool].self, forKey: .presenceStreakDots) ?? []
@@ -97,6 +103,8 @@ struct WidgetCache: Codable {
         lifeProgress: Double?,
         remainingDaysLife: Int?,
         lifePercent: Int?,
+        birthDate: String? = nil,
+        deathAge: Int? = nil,
         accentColor: String? = nil,
         presenceStreakCount: Int = 0,
         presenceStreakDots: [Bool] = Array(repeating: false, count: 7),
@@ -123,6 +131,8 @@ struct WidgetCache: Codable {
         self.lifeProgress = lifeProgress
         self.remainingDaysLife = remainingDaysLife
         self.lifePercent = lifePercent
+        self.birthDate = birthDate
+        self.deathAge = deathAge
         self.accentColor = accentColor
         self.presenceStreakCount = presenceStreakCount
         self.presenceStreakDots = Array(
@@ -204,6 +214,8 @@ struct WidgetCache: Codable {
             lifeProgress: lifeProgress,
             remainingDaysLife: remainingDaysLife,
             lifePercent: lifePercent,
+            birthDate: birthDate,
+            deathAge: deathAge,
             accentColor: accentColor,
             presenceStreakCount: presenceStreakCount,
             presenceStreakDots: presenceStreakDots,

@@ -107,6 +107,10 @@ export interface WidgetCache {
   remainingDaysLife?: number;
   /** Life percent 0–100. Present only when birth date is set. */
   lifePercent?: number;
+  /** ISO birth date for watch Life sync. Present only when set. */
+  birthDate?: string;
+  /** Expected lifespan years for watch Life sync. Present only when birthDate set. */
+  deathAge?: number;
   /** Hex accent for percent/current markers (e.g. #E87C20). Optional; native falls back to Ember. */
   accentColor?: string;
   /** Presence streak count for Day widget appeal. */
