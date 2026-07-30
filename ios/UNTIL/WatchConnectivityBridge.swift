@@ -133,4 +133,15 @@ final class WatchConnectivityBridge: NSObject, WCSessionDelegate {
       pushCachedIfAvailable()
     }
   }
+
+  func session(
+    _ session: WCSession,
+    didReceiveMessage message: [String: Any],
+    replyHandler: @escaping ([String: Any]) -> Void
+  ) {
+    if (message["type"] as? String) == "until.watch.refresh" {
+      pushCachedIfAvailable()
+    }
+    replyHandler(["ok": true])
+  }
 }

@@ -23,10 +23,12 @@ final class WatchSessionReceiver: NSObject, ObservableObject, WCSessionDelegate 
   static let shared = WatchSessionReceiver()
 
   @Published var cache: DayWatchCache?
+  @Published var profile: WatchProfile?
 
   private override init() {
     super.init()
     cache = WatchDayStore.load()
+    profile = WatchProfileStore.load()
     activate()
   }
 
@@ -38,11 +40,18 @@ final class WatchSessionReceiver: NSObject, ObservableObject, WCSessionDelegate 
   }
 
   private func apply(_ context: [String: Any]) {
+    WatchProfileStore.save(fromContext: context)
+    let loadedProfile = WatchProfileStore.load()
     if let saved = WatchDayStore.save(fromContext: context) {
       DispatchQueue.main.async {
         self.cache = saved
+        self.profile = loadedProfile
       }
       WidgetCenter.shared.reloadAllTimelines()
+    } else {
+      DispatchQueue.main.async {
+        self.profile = loadedProfile
+      }
     }
   }
 
@@ -53,6 +62,9 @@ final class WatchSessionReceiver: NSObject, ObservableObject, WCSessionDelegate 
   ) {
     if activationState == .activated, !session.receivedApplicationContext.isEmpty {
       apply(session.receivedApplicationContext)
+    }
+    if activationState == .activated, session.isReachable {
+      session.sendMessage(["type": "until.watch.refresh"], replyHandler: { _ in }, errorHandler: { _ in })
     }
   }
 
