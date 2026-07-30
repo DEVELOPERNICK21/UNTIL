@@ -5,10 +5,18 @@
 import { useEffect, useRef } from 'react';
 import { getDeviceId } from '../infrastructure/DeviceId';
 import { getAccessStateUseCase, observeSubscriptionUseCase } from '../di';
-import { identifyPostHogUser } from '../services/posthogClient';
+import {
+  identifyPostHogUser,
+  setPostHogPersonProperties,
+} from '../services/posthogClient';
 import { syncAnalyticsUserProperties } from '../services/analyticsUserProperties';
-import { logAnalyticsEvent, setCrashUserId } from '../services/analytics';
+import {
+  logAnalyticsEvent,
+  setCrashAttributes,
+  setCrashUserId,
+} from '../services/analytics';
 import { useOnboardingState } from './useOnboardingState';
+import { useAuthSession } from './useAuthSession';
 
 let appVersionPromise: Promise<string | undefined> | null = null;
 
@@ -29,16 +37,26 @@ function loadAppVersion(): Promise<string | undefined> {
 
 export function useAnalyticsBootstrap(): void {
   const { hasCompleted } = useOnboardingState();
-  const identifiedRef = useRef(false);
+  const { uid } = useAuthSession();
   const wasTrialActiveRef = useRef<boolean | null>(null);
+  const identifiedAsRef = useRef<string | null>(null);
 
   useEffect(() => {
-    if (identifiedRef.current) return;
-    identifiedRef.current = true;
     void (async () => {
       const deviceId = await getDeviceId();
-      identifyPostHogUser(deviceId);
-      setCrashUserId(deviceId);
+      const distinctId = uid ?? deviceId;
+      // Re-runs when uid changes (sign-in/out), not on every render.
+      if (identifiedAsRef.current === distinctId) return;
+      identifiedAsRef.current = distinctId;
+
+      identifyPostHogUser(distinctId);
+      setCrashUserId(distinctId);
+      if (uid) {
+        // Signed in: identity is the account uid, device id kept as a property.
+        setPostHogPersonProperties({ device_id: deviceId });
+        setCrashAttributes({ device_id: deviceId });
+      }
+
       const access = getAccessStateUseCase.execute();
       const appVersion = await loadAppVersion();
       syncAnalyticsUserProperties({
@@ -48,7 +66,7 @@ export function useAnalyticsBootstrap(): void {
       });
       wasTrialActiveRef.current = access.trialActive;
     })();
-  }, [hasCompleted]);
+  }, [hasCompleted, uid]);
 
   useEffect(() => {
     const refresh = () => {

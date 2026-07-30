@@ -22,6 +22,7 @@ import {
   useAppUpdateCheck,
   useTrialEndingReminder,
   useAnalyticsBootstrap,
+  useAuthBootstrap,
 } from './hooks';
 import { TrialEndingModal } from './components/premium/TrialEndingModal';
 import { AppEngagementLayer } from './components/engagement/AppEngagementLayer';
@@ -258,6 +259,7 @@ function App() {
 
 /** After splash: show onboarding (auth stack) or main app based on completion. */
 function PostSplashContent() {
+  useAuthBootstrap();
   useAnalyticsBootstrap();
   const theme = useTheme();
   const { hasCompleted, completeOnboarding } = useOnboardingState();
