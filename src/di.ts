@@ -82,6 +82,14 @@ import {
   RewindOnboardingFunnelUseCase,
 } from './domain/useCases/OnboardingFunnelNavigationUseCases';
 import { DeviceIdProviderAdapter } from './infrastructure/adapters/DeviceIdProviderAdapter';
+import { SignInWithGoogleUseCase } from './domain/useCases/SignInWithGoogleUseCase';
+import { SignOutUseCase } from './domain/useCases/SignOutUseCase';
+import { SyncAccountProfileUseCase } from './domain/useCases/SyncAccountProfileUseCase';
+import { RegisterDeviceUseCase } from './domain/useCases/RegisterDeviceUseCase';
+import { RemoveAccountDeviceUseCase } from './domain/useCases/RemoveAccountDeviceUseCase';
+import { BindEntitlementToAccountUseCase } from './domain/useCases/BindEntitlementToAccountUseCase';
+import { ObserveAuthSessionUseCase } from './domain/useCases/ObserveAuthSessionUseCase';
+import { useThemeStore } from './stores/themeStore';
 import { LicenseVerificationServiceAdapter } from './infrastructure/adapters/LicenseVerificationServiceAdapter';
 import { GetAccessStateUseCase } from './domain/useCases/GetAccessStateUseCase';
 import { GetDailyReflectionUseCase } from './domain/useCases/GetDailyReflectionUseCase';
@@ -109,7 +117,7 @@ import { PlayBillingRepository } from './infrastructure/repositories/PlayBilling
 import { NoOpPlayBillingRepository } from './infrastructure/repositories/NoOpPlayBillingRepository';
 import type { IPlayBillingRepository } from './domain/repository/IPlayBillingRepository';
 import { productIdToPurchaseType } from './domain/billing/mapProductId';
-import { logAnalyticsEvent } from './services/analytics';
+import { logAnalyticsEvent, recordCrashError } from './services/analytics';
 import { getTrialDurationDays } from './services/analyticsUserProperties';
 import {
   clearPendingPurchase,
@@ -437,3 +445,84 @@ export const getOnboardingFunnelProgressUseCase =
   new GetOnboardingFunnelProgressUseCase(onboardingRepository);
 export const getOnboardingFunnelEncouragementUseCase =
   new GetOnboardingFunnelEncouragementUseCase(onboardingRepository);
+
+/**
+ * Account use cases. Wired last because they reuse the purchase use cases above
+ * to re-check local entitlement proof before writing it to the account.
+ */
+
+const accountPlatform = (): 'ios' | 'android' =>
+  Platform.OS === 'ios' ? 'ios' : 'android';
+
+/** Best-effort human label for the device list (e.g. "Pixel 7"). */
+function currentDeviceLabel(): string | null {
+  try {
+    const DeviceInfo = require('react-native-device-info').default;
+    const model = DeviceInfo?.getModel?.();
+    return typeof model === 'string' && model ? model : null;
+  } catch {
+    return null;
+  }
+}
+
+export const observeAuthSessionUseCase = new ObserveAuthSessionUseCase(
+  authSessionRepository
+);
+
+export const syncAccountProfileUseCase = new SyncAccountProfileUseCase(
+  timeRepository,
+  accountCloudStore,
+  {
+    /** themeStore always resolves a mode ('system' default), so theme syncs up. */
+    get: () => useThemeStore.getState().themeMode,
+    set: value => {
+      if (value === 'light' || value === 'dark' || value === 'system') {
+        void useThemeStore.getState().setThemeMode(value);
+      }
+    },
+  }
+);
+
+export const registerDeviceUseCase = new RegisterDeviceUseCase(
+  accountCloudStore,
+  deviceIdProvider,
+  accountPlatform,
+  currentDeviceLabel
+);
+
+export const bindEntitlementToAccountUseCase = new BindEntitlementToAccountUseCase(
+  subscriptionRepository,
+  authSessionRepository,
+  accountCloudStore,
+  accountPlatform,
+  {
+    restorePurchases: restorePurchasesUseCase,
+    verifySubscription: verifySubscriptionUseCase,
+  },
+  syncPremiumAfterEntitlementChange,
+  recordCrashError
+);
+
+export const signInWithGoogleUseCase = new SignInWithGoogleUseCase(
+  authService,
+  authSessionRepository,
+  syncAccountProfileUseCase,
+  registerDeviceUseCase,
+  bindEntitlementToAccountUseCase,
+  recordCrashError
+);
+
+export const signOutUseCase = new SignOutUseCase(
+  authService,
+  authSessionRepository,
+  subscriptionRepository,
+  syncPremiumAfterEntitlementChange
+);
+
+export const removeAccountDeviceUseCase = new RemoveAccountDeviceUseCase(
+  accountCloudStore,
+  authSessionRepository,
+  deviceIdProvider,
+  registerDeviceUseCase,
+  bindEntitlementToAccountUseCase
+);

@@ -18,6 +18,9 @@ export type {
   AccountDevice,
   CloudEntitlement,
   CloudUserProfile,
+  RegisterDeviceResult,
+  SignInResult,
+  ProfileSyncResult,
 } from './auth';
 
 export interface UserProfile {

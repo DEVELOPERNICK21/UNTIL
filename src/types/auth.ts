@@ -33,3 +33,22 @@ export interface CloudUserProfile {
   theme: string | null;
   updatedAt: number;
 }
+
+/** Result of trying to claim one of the account's device slots for this phone. */
+export interface RegisterDeviceResult {
+  registered: boolean;
+  deviceId: string;
+  reason?: 'limit_reached';
+}
+
+export interface SignInResult {
+  user: AuthUser;
+  deviceRegistered: boolean;
+  deviceLimitReached: boolean;
+}
+
+/** What the profile merge did, for analytics and screen messaging. */
+export interface ProfileSyncResult {
+  appliedFromCloud: boolean;
+  pushedToCloud: boolean;
+}
