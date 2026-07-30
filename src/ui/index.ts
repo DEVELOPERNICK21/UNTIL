@@ -19,5 +19,7 @@ export { BarChart } from './BarChart';
 export type { BarDataPoint } from './BarChart';
 export { Slider } from './Slider';
 export type { SliderProps } from './Slider';
+export { PeriodDotsGrid } from './PeriodDotsGrid';
+export type { PeriodDotsGridProps } from './PeriodDotsGrid';
 export { LifeWeeksGrid } from './LifeWeeksGrid';
 export type { LifeWeeksGridProps } from './LifeWeeksGrid';
