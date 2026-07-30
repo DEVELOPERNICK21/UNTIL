@@ -473,7 +473,6 @@ export const syncAccountProfileUseCase = new SyncAccountProfileUseCase(
   timeRepository,
   accountCloudStore,
   {
-    /** themeStore always resolves a mode ('system' default), so theme syncs up. */
     get: () => useThemeStore.getState().themeMode,
     set: value => {
       if (value === 'light' || value === 'dark' || value === 'system') {

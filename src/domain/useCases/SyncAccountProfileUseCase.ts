@@ -7,9 +7,11 @@ import type { IAccountCloudStore } from '../ports/IAccountCloudStore';
 import type { ITimeRepository } from '../repository/ITimeRepository';
 import type { ProfileSyncResult } from '../../types';
 
+/** Local theme before the user picks one in Settings; also the store default. */
+export const DEFAULT_LOCAL_THEME = 'system';
+
 /**
  * Theme access as plain callbacks so this use case stays out of the store layer.
- * `get` returns null when no theme has been chosen locally.
  */
 export interface ThemePreferenceGateway {
   get(): string | null;
@@ -57,10 +59,17 @@ export class SyncAccountProfileUseCase {
     if (this.theme) {
       const localTheme = this.theme.get();
       const cloudTheme = cloudProfile?.theme ?? null;
-      if (!localTheme && cloudTheme) {
+      const localIsUnset =
+        localTheme == null || localTheme === DEFAULT_LOCAL_THEME;
+
+      if (localIsUnset && cloudTheme) {
         this.theme.set(cloudTheme);
         appliedFromCloud = true;
-      } else if (localTheme && localTheme !== cloudTheme) {
+      } else if (
+        localTheme &&
+        localTheme !== cloudTheme &&
+        localTheme !== DEFAULT_LOCAL_THEME
+      ) {
         await this.cloud.upsertProfile(uid, { theme: localTheme });
         pushedToCloud = true;
       }
