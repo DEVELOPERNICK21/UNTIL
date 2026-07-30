@@ -4,13 +4,13 @@ import { useFocusEffect } from '@react-navigation/native';
 import { ScreenGradient } from '../../ui';
 import { TaskReportContent } from './TaskReportContent';
 import { EmberLocalDock } from '../../components/engagement/EmberLocalDock';
-import { setEmberModalCovering } from '../../services/emberSurface';
+import { setEmberModalCoveringSource } from '../../services/emberSurface';
 
 export function TaskReportScreen() {
   useFocusEffect(
     useCallback(() => {
-      setEmberModalCovering(true);
-      return () => setEmberModalCovering(false);
+      setEmberModalCoveringSource('TaskReportScreen', true);
+      return () => setEmberModalCoveringSource('TaskReportScreen', false);
     }, []),
   );
 

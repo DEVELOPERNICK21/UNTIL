@@ -20,7 +20,7 @@ import { Text, ScreenGradient, Card, ProgressLine } from '../../ui';
 import { Spacing, Colors, Radius, Typography, FontFamily } from '../../theme';
 import type { DailyTask, TaskCategory } from '../../types';
 import { EmberLocalDock } from '../../components/engagement/EmberLocalDock';
-import { setEmberModalCovering } from '../../services/emberSurface';
+import { setEmberModalCoveringSource } from '../../services/emberSurface';
 
 const TASK_CATEGORIES: { value: TaskCategory; label: string }[] = [
   { value: 'health', label: 'Health' },
@@ -200,8 +200,8 @@ export function DailyTasksScreen() {
   useFocusEffect(
     useCallback(() => {
       // Local dock on this screen (add form); keep global Ember suppressed.
-      setEmberModalCovering(true);
-      return () => setEmberModalCovering(false);
+      setEmberModalCoveringSource('DailyTasksScreen', true);
+      return () => setEmberModalCoveringSource('DailyTasksScreen', false);
     }, []),
   );
 

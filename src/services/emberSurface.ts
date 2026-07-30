@@ -18,6 +18,7 @@ let state: EmberSurfaceState = {
 };
 
 const listeners = new Set<Listener>();
+const modalCoveringSources = new Set<string>();
 
 function emit(): void {
   listeners.forEach(l => l());
@@ -33,10 +34,26 @@ export function setEmberRouteOverride(routeOverride: string | null): void {
   emit();
 }
 
-export function setEmberModalCovering(modalCovering: boolean): void {
+function syncModalCovering(): void {
+  const modalCovering = modalCoveringSources.size > 0;
   if (state.modalCovering === modalCovering) return;
   state = { ...state, modalCovering };
   emit();
+}
+
+export function setEmberModalCovering(modalCovering: boolean): void {
+  if (modalCovering) modalCoveringSources.add('legacy');
+  else modalCoveringSources.delete('legacy');
+  syncModalCovering();
+}
+
+export function setEmberModalCoveringSource(
+  source: string,
+  modalCovering: boolean,
+): void {
+  if (modalCovering) modalCoveringSources.add(source);
+  else modalCoveringSources.delete(source);
+  syncModalCovering();
 }
 
 export function subscribeEmberSurface(listener: Listener): () => void {
