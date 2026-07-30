@@ -12,6 +12,7 @@ import {
   Pressable,
   Platform,
 } from 'react-native';
+import { useIsFocused } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ember, Text } from '../../ui';
 import {
@@ -43,6 +44,7 @@ export function EmberLocalDock({
   place,
   autoIntro = true,
 }: EmberLocalDockProps) {
+  const focused = useIsFocused();
   const theme = useTheme();
   const insets = useSafeAreaInsets();
   const reduceMotion = useReduceMotion();
@@ -202,7 +204,9 @@ export function EmberLocalDock({
     if (tip) showTip(tip, 0);
   }, [ctx, place, showTip]);
 
-  if (!insight) return null;
+  // Stack screens stay mounted; hide when another route is focused so we
+  // don't stack two Embers (e.g. DailyTasks → TaskReport).
+  if (!focused || !insight) return null;
 
   return (
     <Animated.View
