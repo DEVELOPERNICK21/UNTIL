@@ -71,4 +71,60 @@ describe('accessControl', () => {
     expect(canAccessLife(access)).toBe(true);
     expect(hasPremiumBundle(access)).toBe(false);
   });
+
+  it('signed in premium blocked when device not allowed', () => {
+    const now = 10_000_000;
+    const access = computeAccessState({
+      now,
+      isPremium: true,
+      purchaseType: 'yearly',
+      purchaseDate: now,
+      trialStartDate: null,
+      appOpenCount: 0,
+      lifeScreenViewed: false,
+      lifeUnlockUntil: null,
+      signedIn: true,
+      devicePremiumAllowed: false,
+    });
+    expect(access.isPremium).toBe(false);
+    expect(hasPremiumBundle(access)).toBe(false);
+    expect(canAccessLife(access)).toBe(false);
+  });
+
+  it('signed in premium allowed when device registered', () => {
+    const now = 10_000_000;
+    const access = computeAccessState({
+      now,
+      isPremium: true,
+      purchaseType: 'yearly',
+      purchaseDate: now,
+      trialStartDate: null,
+      appOpenCount: 0,
+      lifeScreenViewed: false,
+      lifeUnlockUntil: null,
+      signedIn: true,
+      devicePremiumAllowed: true,
+    });
+    expect(access.isPremium).toBe(true);
+    expect(hasPremiumBundle(access)).toBe(true);
+    expect(canAccessLife(access)).toBe(true);
+  });
+
+  it('unsigned premium uses device-bound path', () => {
+    const now = 10_000_000;
+    const access = computeAccessState({
+      now,
+      isPremium: true,
+      purchaseType: 'yearly',
+      purchaseDate: now,
+      trialStartDate: null,
+      appOpenCount: 0,
+      lifeScreenViewed: false,
+      lifeUnlockUntil: null,
+      signedIn: false,
+      devicePremiumAllowed: false,
+    });
+    expect(access.isPremium).toBe(true);
+    expect(hasPremiumBundle(access)).toBe(true);
+  });
 });

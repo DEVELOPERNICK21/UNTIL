@@ -17,9 +17,16 @@ export interface AccessControlInput {
   appOpenCount: number;
   lifeScreenViewed: boolean;
   lifeUnlockUntil: number | null;
+  signedIn?: boolean;
+  devicePremiumAllowed?: boolean;
 }
 
 export function computeAccessState(input: AccessControlInput): AccessState {
+  const signedIn = input.signedIn ?? false;
+  const devicePremiumAllowed = input.devicePremiumAllowed ?? true;
+  const effectiveIsPremium =
+    input.isPremium && (!signedIn || devicePremiumAllowed);
+
   const trialEndsAt =
     input.trialStartDate != null
       ? input.trialStartDate + TRIAL_DURATION_MS
@@ -31,7 +38,7 @@ export function computeAccessState(input: AccessControlInput): AccessState {
     input.lifeUnlockUntil != null && input.now < input.lifeUnlockUntil;
 
   return {
-    isPremium: input.isPremium,
+    isPremium: effectiveIsPremium,
     purchaseType: input.purchaseType,
     purchaseDate: input.purchaseDate,
     trialStartDate: input.trialStartDate,
