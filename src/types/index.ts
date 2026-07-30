@@ -12,6 +12,14 @@ export type {
   SubscriptionState,
 } from './subscription';
 
+export type {
+  AuthProviderId,
+  AuthUser,
+  AccountDevice,
+  CloudEntitlement,
+  CloudUserProfile,
+} from './auth';
+
 export interface UserProfile {
   birthDate: string; // ISO date string YYYY-MM-DD
   deathAge?: number; // Expected lifespan in years, e.g. 80

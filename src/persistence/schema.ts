@@ -140,6 +140,11 @@ export const STORAGE_KEYS = {
   // Ember companion tip memory (first-auto + rotation)
   EMBER_TIP_INTRO_SEEN: 'engagement.emberTipIntroSeen',
   EMBER_TIP_CURSOR: 'engagement.emberTipCursor',
+
+  // Account / auth session (local mirror of Firebase session)
+  AUTH_UID: 'auth.uid',
+  AUTH_EMAIL: 'auth.email',
+  AUTH_DEVICE_PREMIUM_ALLOWED: 'auth.devicePremiumAllowed',
 } as const;
 
 export const DEFAULTS = {
@@ -149,6 +154,7 @@ export const DEFAULTS = {
   ENGAGEMENT_APP_OPEN_COUNT: 0,
   ACTIVITY_DAILY_LIMIT_NOTHING: 2, // hours
   MIGRATION_VERSION: 0,
+  AUTH_DEVICE_PREMIUM_ALLOWED: true,
 };
 
 export type StoredTheme = 'light' | 'dark' | 'system';

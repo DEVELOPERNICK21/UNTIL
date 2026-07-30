@@ -16,6 +16,7 @@ import { MmkvEngagementRepository } from './infrastructure/repositories/MmkvEnga
 import { MmkvPresenceRepository } from './infrastructure/repositories/MmkvPresenceRepository';
 import { MmkvReflectionRepository } from './infrastructure/repositories/MmkvReflectionRepository';
 import { MmkvStudentVerificationRepository } from './infrastructure/repositories/MmkvStudentVerificationRepository';
+import { MmkvAuthSessionRepository } from './infrastructure/repositories/MmkvAuthSessionRepository';
 import { AppUpdateServiceAdapter } from './infrastructure/adapters/AppUpdateServiceAdapter';
 import { AppVersionProviderAdapter } from './infrastructure/adapters/AppVersionProviderAdapter';
 import { ActivityAnalysisAdapter } from './infrastructure/adapters/ActivityAnalysisAdapter';
@@ -136,6 +137,7 @@ const engagementRepository = new MmkvEngagementRepository();
 const presenceRepository = new MmkvPresenceRepository();
 const reflectionRepository = new MmkvReflectionRepository();
 const studentVerificationRepository = new MmkvStudentVerificationRepository();
+const authSessionRepository = new MmkvAuthSessionRepository();
 const appUpdateService = new AppUpdateServiceAdapter();
 const appVersionProvider = new AppVersionProviderAdapter();
 const deviceIdProvider = new DeviceIdProviderAdapter();
@@ -163,7 +165,10 @@ export const observeTimeStateUseCase = new ObserveTimeStateUseCase(timeRepositor
 export const updateUserProfileUseCase = new UpdateUserProfileUseCase(timeRepository);
 export const observeSubscriptionUseCase = new ObserveSubscriptionUseCase(subscriptionRepository);
 export const updateSubscriptionUseCase = new UpdateSubscriptionUseCase(subscriptionRepository);
-export const getAccessStateUseCase = new GetAccessStateUseCase(subscriptionRepository);
+export const getAccessStateUseCase = new GetAccessStateUseCase(
+  subscriptionRepository,
+  authSessionRepository
+);
 export const getDailyReflectionUseCase = new GetDailyReflectionUseCase(
   timeRepository,
   subscriptionRepository,

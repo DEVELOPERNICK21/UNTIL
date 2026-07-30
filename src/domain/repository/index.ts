@@ -9,3 +9,7 @@ export type {
   IEngagementRepository,
 } from './IEngagementRepository';
 export type { IPresenceRepository } from './IPresenceRepository';
+export type {
+  AuthSessionState,
+  IAuthSessionRepository,
+} from './IAuthSessionRepository';
