@@ -14,12 +14,14 @@ import type { OnboardingExitParams } from '../services/onboardingCompletion';
 import { IdentitySetupScreen } from '../surfaces/auth/IdentitySetupScreen';
 import { LifeWeeksPreviewScreen } from '../surfaces/auth/LifeWeeksPreviewScreen';
 import { OnboardingPaywallScreen } from '../surfaces/auth/OnboardingPaywallScreen';
+import { AccountPromptScreen } from '../surfaces/auth/AccountPromptScreen';
 
 export type AuthStackParamList = {
   Onboarding: undefined;
   IdentitySetup: undefined;
   LifeWeeksPreview: undefined;
   OnboardingPaywall: undefined;
+  AccountPrompt: undefined;
 };
 
 const Stack = createNativeStackNavigator<AuthStackParamList>();
@@ -49,6 +51,7 @@ export function AuthNavigator({ onComplete }: AuthNavigatorProps) {
             name="OnboardingPaywall"
             component={OnboardingPaywallScreen}
           />
+          <Stack.Screen name="AccountPrompt" component={AccountPromptScreen} />
         </Stack.Navigator>
       </NavigationContainer>
     </OnboardingCompleteContext.Provider>

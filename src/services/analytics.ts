@@ -79,7 +79,14 @@ export type AnalyticsEventName =
   | 'student_verify_succeeded'
   | 'student_verify_failed'
   | 'review_requested'
-  | 'review_store_fallback';
+  | 'review_store_fallback'
+  | 'account_prompt_shown'
+  | 'account_prompt_google_tapped'
+  | 'account_prompt_signin_succeeded'
+  | 'account_prompt_signin_failed'
+  | 'account_prompt_skip_tapped'
+  | 'account_prompt_skip_confirmed'
+  | 'account_prompt_skip_cancelled';
 
 type EventParams = Record<string, string | number | boolean | undefined>;
 
@@ -110,9 +117,11 @@ function getAnalyticsModule(): {
   logEvent: (name: string, params?: Record<string, string | number>) => Promise<void>;
 } | null {
   try {
-    const { getApp } = require('@react-native-firebase/app') as {
+    const { getApp, getApps } = require('@react-native-firebase/app') as {
       getApp: () => unknown;
+      getApps: () => unknown[];
     };
+    if (getApps().length === 0) return null;
     const {
       getAnalytics,
       logEvent,
@@ -141,9 +150,13 @@ function getCrashlyticsModule(): {
   setCrashlyticsCollectionEnabled: (enabled: boolean) => Promise<void>;
 } | null {
   try {
-    const { getApp } = require('@react-native-firebase/app') as {
+    const { getApp, getApps } = require('@react-native-firebase/app') as {
       getApp: () => unknown;
+      getApps: () => unknown[];
     };
+    // Namespaced crashlytics index calls getApp() at import time; skip if
+    // native FIRApp was never configured (e.g. missing configure() / plist).
+    if (getApps().length === 0) return null;
     const {
       getCrashlytics,
       log,

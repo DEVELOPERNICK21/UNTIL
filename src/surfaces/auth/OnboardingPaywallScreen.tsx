@@ -8,18 +8,23 @@ import {
   SafeAreaView,
   useSafeAreaInsets,
 } from 'react-native-safe-area-context';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Text, ScreenGradient } from '../../ui';
 import { PremiumPaywallBody } from '../../components/premium/PremiumPaywallBody';
 import { useObserveTimeState } from '../../hooks';
-import { useOnboardingComplete } from '../onboarding';
 import { Spacing, useTheme } from '../../theme';
 import { MONETIZATION_PAYWALL_COPY } from '../../config/monetization';
 import { logAnalyticsEvent } from '../../services/analytics';
+import type { AuthStackParamList } from '../../navigation/AuthNavigator';
 
 export function OnboardingPaywallScreen() {
   const insets = useSafeAreaInsets();
   const theme = useTheme();
-  const completeAuth = useOnboardingComplete();
+  const navigation =
+    useNavigation<
+      NativeStackNavigationProp<AuthStackParamList, 'OnboardingPaywall'>
+    >();
   const { timeState } = useObserveTimeState();
 
   const lifeProgress =
@@ -41,13 +46,7 @@ export function OnboardingPaywallScreen() {
               headline={MONETIZATION_PAYWALL_COPY.onboardingPaywallTitle}
               subheadline={MONETIZATION_PAYWALL_COPY.onboardingPaywallSub}
               lifeProgress={lifeProgress}
-              onPurchaseSuccess={() =>
-                completeAuth({
-                  exit_type: 'completed',
-                  step: 11,
-                  step_name: 'paywall_purchase',
-                })
-              }
+              onPurchaseSuccess={() => navigation.navigate('AccountPrompt')}
               showRestore={false}
               source="onboarding_paywall"
             />
@@ -63,11 +62,7 @@ export function OnboardingPaywallScreen() {
                 void logAnalyticsEvent('onboarding_paywall_skipped', {
                   life_percent: lifePercent,
                 });
-                completeAuth({
-                  exit_type: 'skipped',
-                  step: 11,
-                  step_name: 'paywall_maybe_later',
-                });
+                navigation.navigate('AccountPrompt');
               }}
               activeOpacity={0.7}
             >
