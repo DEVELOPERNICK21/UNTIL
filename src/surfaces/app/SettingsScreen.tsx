@@ -26,6 +26,7 @@ import {
   useRetentionNotifications,
   useAccessControl,
   useDailyNothingLimit,
+  useAuthSession,
 } from '../../hooks';
 import { useInAppReview } from '../../hooks/useInAppReview';
 import {
@@ -95,6 +96,7 @@ export function SettingsScreen() {
     setEnabled: setRetentionRemindersEnabled,
   } = useRetentionNotifications();
   const { hasPremiumBundle } = useAccessControl();
+  const { signedIn, email } = useAuthSession();
   const { limitHours, setLimitHours } = useDailyNothingLimit();
   const { rateApp } = useInAppReview();
   const theme = useTheme();
@@ -236,7 +238,7 @@ export function SettingsScreen() {
                   </Text>
                 </TouchableOpacity>
                 <TouchableOpacity
-                  style={[styles.row, styles.rowLast]}
+                  style={[styles.row, { borderBottomColor: theme.glassBorder }]}
                   onPress={() => navigation.navigate('Premium')}
                   activeOpacity={0.7}
                 >
@@ -254,6 +256,31 @@ export function SettingsScreen() {
                       {isPremium
                         ? 'Active · manage in Google Play'
                         : 'Yearly subscription or lifetime'}
+                    </Text>
+                  </View>
+                  <Text
+                    style={[styles.chevron, { color: theme.textSecondary }]}
+                  >
+                    ›
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.row, styles.rowLast]}
+                  onPress={() => navigation.navigate('Account')}
+                  activeOpacity={0.7}
+                >
+                  <View style={styles.rowContent}>
+                    <Text variant="body" style={{ color: theme.textPrimary }}>
+                      Account
+                    </Text>
+                    <Text
+                      variant="caption"
+                      style={[
+                        styles.rowSubtitle,
+                        { color: theme.textSecondary },
+                      ]}
+                    >
+                      {signedIn ? email ?? 'Signed in' : 'Sign in to sync across devices'}
                     </Text>
                   </View>
                   <Text

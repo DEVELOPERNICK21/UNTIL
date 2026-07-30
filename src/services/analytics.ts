@@ -86,7 +86,13 @@ export type AnalyticsEventName =
   | 'account_prompt_signin_failed'
   | 'account_prompt_skip_tapped'
   | 'account_prompt_skip_confirmed'
-  | 'account_prompt_skip_cancelled';
+  | 'account_prompt_skip_cancelled'
+  | 'account_screen_viewed'
+  | 'account_screen_google_tapped'
+  | 'account_screen_signin_succeeded'
+  | 'account_screen_signin_failed'
+  | 'account_screen_signout_confirmed'
+  | 'account_screen_device_removed';
 
 type EventParams = Record<string, string | number | boolean | undefined>;
 

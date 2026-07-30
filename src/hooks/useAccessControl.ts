@@ -3,7 +3,11 @@
  */
 
 import { useState, useEffect, useCallback } from 'react';
-import { observeSubscriptionUseCase, getAccessStateUseCase } from '../di';
+import {
+  observeSubscriptionUseCase,
+  observeAuthSessionUseCase,
+  getAccessStateUseCase,
+} from '../di';
 import type { AccessState } from '../types';
 
 export function useAccessControl(): {
@@ -21,8 +25,12 @@ export function useAccessControl(): {
   }, []);
 
   useEffect(() => {
-    const unsubscribe = observeSubscriptionUseCase.subscribe(refresh);
-    return () => unsubscribe();
+    const unsubscribeSubscription = observeSubscriptionUseCase.subscribe(refresh);
+    const unsubscribeAuth = observeAuthSessionUseCase.subscribe(refresh);
+    return () => {
+      unsubscribeSubscription();
+      unsubscribeAuth();
+    };
   }, [refresh]);
 
   return {

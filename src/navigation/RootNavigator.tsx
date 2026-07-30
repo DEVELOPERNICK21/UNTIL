@@ -32,6 +32,7 @@ import { OverlayScreen } from '../surfaces/app/OverlayScreen';
 import { ShareSnapshotScreen } from '../surfaces/app/ShareSnapshotScreen';
 import { PremiumScreen } from '../surfaces/app/PremiumScreen';
 import { TasksComingSoonScreen } from '../surfaces/app/TasksComingSoonScreen';
+import { AccountScreen } from '../surfaces/app/AccountScreen';
 import {
   getPaletteForMode,
   useTheme,
@@ -64,6 +65,7 @@ export type RootStackParamList = {
   ShareSnapshot: undefined;
   Premium: undefined;
   TasksComingSoon: undefined;
+  Account: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -449,6 +451,11 @@ export function RootNavigator() {
           name="TasksComingSoon"
           component={TasksComingSoonScreen}
           options={{ title: 'Tasks & goals', headerBackTitle: 'Back' }}
+        />
+        <Stack.Screen
+          name="Account"
+          component={AccountScreen}
+          options={{ title: 'Account', headerBackTitle: 'Back' }}
         />
       </Stack.Navigator>
       {themeTransition?.visible && themeTransitionCircleStyle ? (
