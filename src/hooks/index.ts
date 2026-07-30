@@ -38,3 +38,5 @@ export { useEngagementModals } from './useEngagementModals';
 export { useReduceMotion } from './useReduceMotion';
 export { usePresenceStreak } from './usePresenceStreak';
 export { useLifeWeeks } from './useLifeWeeks';
+export { useAuthSession } from './useAuthSession';
+export { useAccountActions } from './useAccountActions';
