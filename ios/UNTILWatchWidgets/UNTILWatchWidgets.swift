@@ -14,6 +14,10 @@ struct DayWatchEntry: TimelineEntry {
 }
 
 struct DayWatchProvider: TimelineProvider {
+  private func resolvedCache() -> DayWatchCache {
+    WatchDayStore.load() ?? DayWatchCache.fromLocalDay(WatchTimeClock.day())
+  }
+
   func placeholder(in context: Context) -> DayWatchEntry {
     DayWatchEntry(
       date: Date(),
@@ -31,11 +35,11 @@ struct DayWatchProvider: TimelineProvider {
   }
 
   func getSnapshot(in context: Context, completion: @escaping (DayWatchEntry) -> Void) {
-    completion(DayWatchEntry(date: Date(), cache: WatchDayStore.load()))
+    completion(DayWatchEntry(date: Date(), cache: resolvedCache()))
   }
 
   func getTimeline(in context: Context, completion: @escaping (Timeline<DayWatchEntry>) -> Void) {
-    let entry = DayWatchEntry(date: Date(), cache: WatchDayStore.load())
+    let entry = DayWatchEntry(date: Date(), cache: resolvedCache())
     let next = Calendar.current.date(byAdding: .minute, value: 15, to: Date())
       ?? Date().addingTimeInterval(900)
     completion(Timeline(entries: [entry], policy: .after(next)))
