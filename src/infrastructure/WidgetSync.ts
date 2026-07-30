@@ -9,17 +9,16 @@ import {
   getCustomCountersUseCase,
   getCountdownsUseCase,
   getDailyTaskStatsUseCase,
-  observeSubscriptionUseCase,
+  getAccessStateUseCase,
 } from '../di';
 import { STORAGE_KEYS } from '../persistence/schema';
 import {
   getString,
   setString,
-  getNumber,
   getBoolean,
   setBoolean,
 } from '../persistence/mmkv';
-import { TRIAL_DURATION_MS } from '../config/accessConstants';
+import { hasPremiumBundle } from '../domain/accessControl';
 import { getWidgetAccentColor } from '../config/widgetAccents';
 
 const DEFAULT_ACCENT_HEX = getWidgetAccentColor('ember');
@@ -52,15 +51,12 @@ export function syncWidgetCache(): void {
 }
 /** Sync premium status to native for widget gating. iOS: UserDefaults; Android: MMKV (already shared). */
 /**
- * Trial unlocks the same widget surfaces as paid premium on iOS (UserDefaults bridge).
- * Uses MMKV + shared constant only — avoids importing di (circular with billing wiring).
+ * Trial unlocks the same widget surfaces as paid premium. Reads the same access
+ * state the app UI uses, so a signed-in device over the 3-device cap
+ * (devicePremiumAllowed = false) does not keep premium widgets alive.
  */
 function readEffectivePremiumForNativeBridge(): boolean {
-  const { isPremium } = observeSubscriptionUseCase.observe();
-  if (isPremium) return true;
-  const trialStart = getNumber(STORAGE_KEYS.TRIAL_START_DATE);
-  if (trialStart == null || trialStart <= 0) return false;
-  return Date.now() <= trialStart + TRIAL_DURATION_MS;
+  return hasPremiumBundle(getAccessStateUseCase.execute());
 }
 
 export function syncPremiumStatus(): void {

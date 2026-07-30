@@ -2,6 +2,11 @@
  * RegisterDeviceUseCase — claim one of the account's 3 device slots for this phone.
  * A device that is already active keeps its slot, so re-signing in on the same
  * phone never consumes a new one.
+ *
+ * Fails closed: if the device list cannot be read, or the slot cannot be
+ * written, the device is not registered and the reason says the cloud call
+ * failed. Callers use isConclusiveRegistration() to tell that apart from a real
+ * `limit_reached` answer.
  */
 
 import type { IAccountCloudStore } from '../ports/IAccountCloudStore';
@@ -14,14 +19,22 @@ export class RegisterDeviceUseCase {
     private readonly cloud: IAccountCloudStore,
     private readonly deviceIdProvider: IDeviceIdProvider,
     private readonly getPlatform: () => 'ios' | 'android',
-    private readonly getDeviceLabel?: () => string | null
+    private readonly getDeviceLabel?: () => string | null,
+    private readonly onError?: (error: unknown, context: string) => void
   ) {}
 
   async execute(uid: string, now: number = Date.now()): Promise<RegisterDeviceResult> {
     const deviceId = await this.deviceIdProvider.getDeviceId();
-    const devices = await this.cloud.listDevices(uid);
-    const decision = canRegisterDevice(devices, deviceId);
 
+    let devices: AccountDevice[];
+    try {
+      devices = await this.cloud.listDevices(uid);
+    } catch (e) {
+      this.onError?.(e, 'RegisterDeviceUseCase.listDevices');
+      return { registered: false, deviceId, reason: 'read_failed' };
+    }
+
+    const decision = canRegisterDevice(devices, deviceId);
     if (!decision.ok) {
       return { registered: false, deviceId, reason: decision.reason };
     }
@@ -35,7 +48,13 @@ export class RegisterDeviceUseCase {
       createdAt: existing?.createdAt ?? now,
       active: true,
     };
-    await this.cloud.upsertDevice(uid, device);
+
+    try {
+      await this.cloud.upsertDevice(uid, device);
+    } catch (e) {
+      this.onError?.(e, 'RegisterDeviceUseCase.upsertDevice');
+      return { registered: false, deviceId, reason: 'write_failed' };
+    }
 
     return { registered: true, deviceId };
   }

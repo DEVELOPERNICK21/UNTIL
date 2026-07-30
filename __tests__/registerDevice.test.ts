@@ -1,4 +1,5 @@
 import { RegisterDeviceUseCase } from '../src/domain/useCases/RegisterDeviceUseCase';
+import { isConclusiveRegistration } from '../src/core/account/deviceLimit';
 import type { IAccountCloudStore } from '../src/domain/ports/IAccountCloudStore';
 import type { IDeviceIdProvider } from '../src/domain/ports/IDeviceIdProvider';
 import type { AccountDevice } from '../src/types';
@@ -115,6 +116,62 @@ describe('RegisterDeviceUseCase', () => {
       createdAt: 400,
       active: true,
     });
+  });
+
+  it('does not claim a slot when the device list cannot be read', async () => {
+    const { cloud, upserted } = makeCloud([]);
+    cloud.listDevices = async () => {
+      throw new Error('offline');
+    };
+    const errors: string[] = [];
+
+    const useCase = new RegisterDeviceUseCase(
+      cloud,
+      deviceIdProvider,
+      () => 'android',
+      undefined,
+      (_e, context) => errors.push(context)
+    );
+    const result = await useCase.execute('uid-1', NOW);
+
+    expect(result).toEqual({
+      registered: false,
+      deviceId: 'this-device',
+      reason: 'read_failed',
+    });
+    expect(isConclusiveRegistration(result)).toBe(false);
+    expect(upserted).toHaveLength(0);
+    expect(errors).toEqual(['RegisterDeviceUseCase.listDevices']);
+  });
+
+  it('does not report success when the slot write fails', async () => {
+    const { cloud } = makeCloud([makeDevice('a', true)]);
+    cloud.upsertDevice = async () => {
+      throw new Error('permission denied');
+    };
+
+    const useCase = new RegisterDeviceUseCase(cloud, deviceIdProvider, () => 'ios');
+    const result = await useCase.execute('uid-1', NOW);
+
+    expect(result).toEqual({
+      registered: false,
+      deviceId: 'this-device',
+      reason: 'write_failed',
+    });
+    expect(isConclusiveRegistration(result)).toBe(false);
+  });
+
+  it('treats a real limit answer as conclusive', async () => {
+    const { cloud } = makeCloud([
+      makeDevice('a', true),
+      makeDevice('b', true),
+      makeDevice('c', true),
+    ]);
+
+    const useCase = new RegisterDeviceUseCase(cloud, deviceIdProvider, () => 'ios');
+    const result = await useCase.execute('uid-1', NOW);
+
+    expect(isConclusiveRegistration(result)).toBe(true);
   });
 
   it('keeps a device label when one is provided', async () => {

@@ -1,4 +1,3 @@
-import { TRIAL_DURATION_MS } from '../../config/accessConstants';
 import { generateDailyReflection, getDateKey } from '../reflections/reflectionEngine';
 import type {
   DailyReflection,
@@ -8,8 +7,14 @@ import type {
   ReflectionTone,
 } from '../reflections/reflectionTypes';
 import type { IOnboardingRepository } from '../repository/IOnboardingRepository';
-import type { ISubscriptionRepository } from '../repository/ISubscriptionRepository';
 import type { ITimeRepository } from '../repository/ITimeRepository';
+import type { AccessState } from '../../types';
+import { hasPremiumBundle } from '../accessControl';
+
+/** Same shape as GetAccessStateUseCase; kept narrow so tests can stub it. */
+export interface AccessStateProvider {
+  execute(now?: number): AccessState;
+}
 
 function parseCachedReflection(raw: string | undefined): DailyReflection | null {
   if (!raw) return null;
@@ -24,7 +29,7 @@ function parseCachedReflection(raw: string | undefined): DailyReflection | null 
 export class GetDailyReflectionUseCase {
   constructor(
     private readonly timeRepository: ITimeRepository,
-    private readonly subscriptionRepository: ISubscriptionRepository,
+    private readonly getAccessState: AccessStateProvider,
     private readonly persistence: ReflectionPersistence,
     private readonly onboardingRepository: IOnboardingRepository
   ) {}
@@ -94,10 +99,8 @@ export class GetDailyReflectionUseCase {
     return 'quiet';
   }
 
+  /** Access state already folds in trial and the signed-in device cap. */
   private canUsePremiumReflections(date: Date): boolean {
-    if (this.subscriptionRepository.getIsPremium()) return true;
-    const trialStart = this.subscriptionRepository.getTrialStartDate();
-    if (trialStart == null) return false;
-    return date.getTime() <= trialStart + TRIAL_DURATION_MS;
+    return hasPremiumBundle(this.getAccessState.execute(date.getTime()));
   }
 }

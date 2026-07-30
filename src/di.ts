@@ -125,11 +125,19 @@ import {
   notifyPurchaseSuccess,
 } from './services/purchaseAnalyticsContext';
 
-/** Avoid top-level import of WidgetSync (circular with this file). */
-function syncPremiumAfterEntitlementChange(): void {
+/**
+ * Push effective premium to the native widget bridge only. Used when device
+ * eligibility changes but the purchase itself did not, so trial reminders stay.
+ * Avoids a top-level import of WidgetSync (circular with this file).
+ */
+function syncPremiumBridge(): void {
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   const { syncPremiumStatus } = require('./infrastructure/WidgetSync');
   syncPremiumStatus();
+}
+
+function syncPremiumAfterEntitlementChange(): void {
+  syncPremiumBridge();
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   const { cancelTrialLocalNotifications } = require('./services/trialReminders');
   void cancelTrialLocalNotifications();
@@ -152,7 +160,7 @@ export const authService = new FirebaseAuthServiceAdapter();
 export const accountCloudStore = new FirestoreAccountCloudStoreAdapter();
 const appUpdateService = new AppUpdateServiceAdapter();
 const appVersionProvider = new AppVersionProviderAdapter();
-const deviceIdProvider = new DeviceIdProviderAdapter();
+export const deviceIdProvider = new DeviceIdProviderAdapter();
 const licenseVerificationService = new LicenseVerificationServiceAdapter();
 const inAppReviewService = new StoreReviewAdapter();
 const playPurchaseVerificationService = new PlayPurchaseVerificationServiceAdapter();
@@ -183,7 +191,7 @@ export const getAccessStateUseCase = new GetAccessStateUseCase(
 );
 export const getDailyReflectionUseCase = new GetDailyReflectionUseCase(
   timeRepository,
-  subscriptionRepository,
+  getAccessStateUseCase,
   reflectionRepository,
   onboardingRepository
 );
@@ -486,7 +494,8 @@ export const registerDeviceUseCase = new RegisterDeviceUseCase(
   accountCloudStore,
   deviceIdProvider,
   accountPlatform,
-  currentDeviceLabel
+  currentDeviceLabel,
+  recordCrashError
 );
 
 export const bindEntitlementToAccountUseCase = new BindEntitlementToAccountUseCase(
@@ -508,7 +517,8 @@ export const signInWithGoogleUseCase = new SignInWithGoogleUseCase(
   syncAccountProfileUseCase,
   registerDeviceUseCase,
   bindEntitlementToAccountUseCase,
-  recordCrashError
+  recordCrashError,
+  syncPremiumBridge
 );
 
 export const signOutUseCase = new SignOutUseCase(
@@ -523,5 +533,6 @@ export const removeAccountDeviceUseCase = new RemoveAccountDeviceUseCase(
   authSessionRepository,
   deviceIdProvider,
   registerDeviceUseCase,
-  bindEntitlementToAccountUseCase
+  bindEntitlementToAccountUseCase,
+  syncPremiumBridge
 );

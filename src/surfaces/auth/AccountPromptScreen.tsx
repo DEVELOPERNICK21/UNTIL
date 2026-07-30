@@ -52,6 +52,10 @@ export function AccountPromptScreen() {
     void logAnalyticsEvent('account_prompt_google_tapped');
     try {
       const result = await signInWithGoogle();
+      if (!result) {
+        void logAnalyticsEvent('account_prompt_signin_cancelled');
+        return;
+      }
       void logAnalyticsEvent('account_prompt_signin_succeeded', {
         device_limit_reached: result.deviceLimitReached,
       });
@@ -129,6 +133,11 @@ export function AccountPromptScreen() {
                 </View>
               ) : (
                 <>
+                  {/*
+                    Google is the only provider today. App Store guideline 4.8
+                    requires an equivalent private login option alongside it, so
+                    iOS needs Sign in with Apple here before submission.
+                  */}
                   <TouchableOpacity
                     style={[styles.primaryButton, styles.primaryButtonBg]}
                     onPress={handleGoogleSignIn}

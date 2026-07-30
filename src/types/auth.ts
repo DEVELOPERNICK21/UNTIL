@@ -34,11 +34,20 @@ export interface CloudUserProfile {
   updatedAt: number;
 }
 
+/**
+ * Why a device slot was not claimed. `limit_reached` is a real answer from the
+ * account; the other two mean the cloud call failed and nothing is known.
+ */
+export type RegisterDeviceFailureReason =
+  | 'limit_reached'
+  | 'read_failed'
+  | 'write_failed';
+
 /** Result of trying to claim one of the account's device slots for this phone. */
 export interface RegisterDeviceResult {
   registered: boolean;
   deviceId: string;
-  reason?: 'limit_reached';
+  reason?: RegisterDeviceFailureReason;
 }
 
 export interface SignInResult {

@@ -12,6 +12,7 @@ import type { RegisterDeviceResult, SignInResult } from '../../types';
 import type { RegisterDeviceUseCase } from './RegisterDeviceUseCase';
 import type { SyncAccountProfileUseCase } from './SyncAccountProfileUseCase';
 import type { BindEntitlementToAccountUseCase } from './BindEntitlementToAccountUseCase';
+import { isConclusiveRegistration } from '../../core/account/deviceLimit';
 
 export class SignInWithGoogleUseCase {
   constructor(
@@ -20,7 +21,8 @@ export class SignInWithGoogleUseCase {
     private readonly syncAccountProfile: SyncAccountProfileUseCase,
     private readonly registerDevice: RegisterDeviceUseCase,
     private readonly bindEntitlement: BindEntitlementToAccountUseCase,
-    private readonly onError?: (error: unknown, context: string) => void
+    private readonly onError?: (error: unknown, context: string) => void,
+    private readonly onDeviceAccessChanged?: () => void
   ) {}
 
   async execute(): Promise<SignInResult> {
@@ -42,12 +44,13 @@ export class SignInWithGoogleUseCase {
     }
 
     /**
-     * Keep the previous devicePremiumAllowed value when registration failed
-     * outright: a failed read is not a full account, and stripping premium on a
+     * Keep the previous devicePremiumAllowed value unless the account actually
+     * answered. A failed read is not a full account, and stripping premium on a
      * network error would punish a paying user.
      */
-    if (registration) {
+    if (registration && isConclusiveRegistration(registration)) {
       this.authSession.setDevicePremiumAllowed(registration.registered);
+      this.onDeviceAccessChanged?.();
     }
 
     if (registration?.registered) {

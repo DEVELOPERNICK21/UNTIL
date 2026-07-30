@@ -2,14 +2,16 @@
  * useAccountActions — sign-in, sign-out, device list, and remove device for account UI.
  */
 
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
   accountCloudStore,
   authSessionRepository,
+  deviceIdProvider,
   removeAccountDeviceUseCase,
   signInWithGoogleUseCase,
   signOutUseCase,
 } from '../di';
+import { isAuthCancelledError } from '../domain/errors/authErrors';
 import type { AccountDevice, SignInResult } from '../types';
 
 function toErrorMessage(error: unknown): string {
@@ -22,6 +24,17 @@ function toErrorMessage(error: unknown): string {
 export function useAccountActions() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [currentDeviceId, setCurrentDeviceId] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    void deviceIdProvider.getDeviceId().then(id => {
+      if (!cancelled) setCurrentDeviceId(id);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const runAction = useCallback(async <T>(action: () => Promise<T>): Promise<T> => {
     setBusy(true);
@@ -29,15 +42,26 @@ export function useAccountActions() {
     try {
       return await action();
     } catch (e) {
-      setError(toErrorMessage(e));
+      /** Backing out of the Google sheet is a choice, not a failure to report. */
+      if (!isAuthCancelledError(e)) {
+        setError(toErrorMessage(e));
+      }
       throw e;
     } finally {
       setBusy(false);
     }
   }, []);
 
+  /** Resolves to null when the user backed out of the Google sheet. */
   const signInWithGoogle = useCallback(
-    (): Promise<SignInResult> => runAction(() => signInWithGoogleUseCase.execute()),
+    async (): Promise<SignInResult | null> => {
+      try {
+        return await runAction(() => signInWithGoogleUseCase.execute());
+      } catch (e) {
+        if (isAuthCancelledError(e)) return null;
+        throw e;
+      }
+    },
     [runAction]
   );
 
@@ -76,6 +100,7 @@ export function useAccountActions() {
     signOut,
     removeDevice,
     refreshDevices,
+    currentDeviceId,
     busy,
     error,
   };

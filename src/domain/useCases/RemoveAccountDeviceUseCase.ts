@@ -9,6 +9,7 @@ import type { IDeviceIdProvider } from '../ports/IDeviceIdProvider';
 import type { IAuthSessionRepository } from '../repository/IAuthSessionRepository';
 import type { RegisterDeviceUseCase } from './RegisterDeviceUseCase';
 import type { BindEntitlementToAccountUseCase } from './BindEntitlementToAccountUseCase';
+import { isConclusiveRegistration } from '../../core/account/deviceLimit';
 
 export interface RemoveAccountDeviceResult {
   removed: boolean;
@@ -22,7 +23,8 @@ export class RemoveAccountDeviceUseCase {
     private readonly authSession: IAuthSessionRepository,
     private readonly deviceIdProvider: IDeviceIdProvider,
     private readonly registerDevice: RegisterDeviceUseCase,
-    private readonly bindEntitlement: BindEntitlementToAccountUseCase
+    private readonly bindEntitlement: BindEntitlementToAccountUseCase,
+    private readonly onDeviceAccessChanged?: () => void
   ) {}
 
   async execute(uid: string, deviceId: string): Promise<RemoveAccountDeviceResult> {
@@ -31,6 +33,7 @@ export class RemoveAccountDeviceUseCase {
 
     if (deviceId === currentDeviceId) {
       this.authSession.setDevicePremiumAllowed(false);
+      this.onDeviceAccessChanged?.();
       return { removed: true, devicePremiumAllowed: false, wasCurrentDevice: true };
     }
 
@@ -39,7 +42,16 @@ export class RemoveAccountDeviceUseCase {
     }
 
     const registration = await this.registerDevice.execute(uid);
+    if (!isConclusiveRegistration(registration)) {
+      return {
+        removed: true,
+        devicePremiumAllowed: this.authSession.getDevicePremiumAllowed(),
+        wasCurrentDevice: false,
+      };
+    }
+
     this.authSession.setDevicePremiumAllowed(registration.registered);
+    this.onDeviceAccessChanged?.();
     if (registration.registered) {
       await this.bindEntitlement.execute(uid);
     }

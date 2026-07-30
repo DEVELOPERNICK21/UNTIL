@@ -3,10 +3,10 @@ import {
   getDateKey,
 } from '../src/domain/reflections/reflectionEngine';
 import { GetDailyReflectionUseCase } from '../src/domain/useCases/GetDailyReflectionUseCase';
+import { computeAccessState } from '../src/domain/accessControl';
 import type { ReflectionPersistence } from '../src/domain/reflections/reflectionTypes';
 import type { ITimeRepository } from '../src/domain/repository/ITimeRepository';
 import type { IOnboardingRepository } from '../src/domain/repository/IOnboardingRepository';
-import type { ISubscriptionRepository } from '../src/domain/repository/ISubscriptionRepository';
 
 const evening = new Date(2026, 4, 25, 21, 0, 0);
 const lifeEligibleMorning = new Date(2026, 4, 27, 10, 0, 0);
@@ -81,36 +81,6 @@ function makeOnboardingRepository(): IOnboardingRepository {
   };
 }
 
-function makeSubscriptionRepository(isPremium = true): ISubscriptionRepository {
-  return {
-    getIsPremium: () => isPremium,
-    setIsPremium: () => {},
-    getLicenseKey: () => null,
-    setLicenseKey: () => {},
-    getDeviceId: () => null,
-    setDeviceId: () => {},
-    getLastVerifiedAt: () => null,
-    setLastVerifiedAt: () => {},
-    getPurchaseType: () => null,
-    setPurchaseType: () => {},
-    getPurchaseDate: () => null,
-    setPurchaseDate: () => {},
-    getPurchaseToken: () => null,
-    setPurchaseToken: () => {},
-    getTrialStartDate: () => null,
-    setTrialStartDate: () => {},
-    getAppOpenCount: () => 0,
-    setAppOpenCount: () => {},
-    incrementAppOpenCount: () => 1,
-    getLifeScreenViewed: () => false,
-    setLifeScreenViewed: () => {},
-    getLifeUnlockUntil: () => null,
-    setLifeUnlockUntil: () => {},
-    getState: () => ({ isPremium, deviceId: null, lastVerifiedAt: null }),
-    subscribe: () => () => {},
-  };
-}
-
 describe('reflectionEngine', () => {
   it('formats a stable local date key', () => {
     expect(getDateKey(new Date(2026, 4, 5, 23, 10, 0))).toBe('2026-05-05');
@@ -167,12 +137,28 @@ describe('reflectionEngine', () => {
   });
 });
 
+function makeAccessState(isPremium = true) {
+  return {
+    execute: (now: number = Date.now()) =>
+      computeAccessState({
+        now,
+        isPremium,
+        purchaseType: null,
+        purchaseDate: null,
+        trialStartDate: null,
+        appOpenCount: 0,
+        lifeScreenViewed: false,
+        lifeUnlockUntil: null,
+      }),
+  };
+}
+
 describe('GetDailyReflectionUseCase', () => {
   it('reuses cached reflection on the same day', () => {
     const persistence = makePersistence();
     const useCase = new GetDailyReflectionUseCase(
       makeTimeRepository(),
-      makeSubscriptionRepository(true),
+      makeAccessState(true),
       persistence,
       makeOnboardingRepository()
     );
@@ -187,7 +173,7 @@ describe('GetDailyReflectionUseCase', () => {
     const persistence = makePersistence();
     const useCase = new GetDailyReflectionUseCase(
       makeTimeRepository(),
-      makeSubscriptionRepository(true),
+      makeAccessState(true),
       persistence,
       makeOnboardingRepository()
     );

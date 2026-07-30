@@ -16,18 +16,21 @@
  *    Types) once the iOS OAuth client is created — required for the Google
  *    Sign-In redirect to return to the app.
  *
- * Until step 3/4 are done, `GOOGLE_WEB_CLIENT_ID` is a placeholder and
- * `signInWithGoogle` will fail at `GoogleSignin.signIn()`. Set
- * `UNTIL_GOOGLE_WEB_CLIENT_ID` (env) or replace the constant once a real
- * client id is available. Do not invent one.
+ * Until step 3/4 are done, `GOOGLE_WEB_CLIENT_ID` is the placeholder below and
+ * every sign-in attempt throws with a clear message instead of failing deep
+ * inside `GoogleSignin.signIn()`. Set `UNTIL_GOOGLE_WEB_CLIENT_ID` in `.env`
+ * (inlined by babel.config.js) once a real client id exists. Do not invent one.
  */
 
 import type { IAuthService } from '../../domain/ports/IAuthService';
 import type { AuthUser } from '../../types';
+import { AuthCancelledError, isAuthCancelledError } from '../../domain/errors/authErrors';
 import { recordCrashError } from '../../services/analytics';
 
+const MISSING_GOOGLE_WEB_CLIENT_ID = '<MISSING_GOOGLE_WEB_CLIENT_ID>';
+
 const GOOGLE_WEB_CLIENT_ID: string =
-  process.env.UNTIL_GOOGLE_WEB_CLIENT_ID ?? '<MISSING_GOOGLE_WEB_CLIENT_ID>';
+  process.env.UNTIL_GOOGLE_WEB_CLIENT_ID ?? MISSING_GOOGLE_WEB_CLIENT_ID;
 
 interface MinimalFirebaseUser {
   uid: string;
@@ -130,9 +133,19 @@ function mapFirebaseUser(user: MinimalFirebaseUser | null): AuthUser | null {
 
 let googleSignInConfigured = false;
 
+/**
+ * Throws rather than configuring Google Sign-In with a placeholder: a silent
+ * misconfiguration here looks like a random sign-in failure on device.
+ */
 function ensureGoogleSignInConfigured(): void {
   if (googleSignInConfigured) return;
-  getGoogleSignin().configure({ webClientId: GOOGLE_WEB_CLIENT_ID });
+  const webClientId = GOOGLE_WEB_CLIENT_ID.trim();
+  if (!webClientId || webClientId === MISSING_GOOGLE_WEB_CLIENT_ID) {
+    throw new Error(
+      'Google sign-in is not set up in this build. UNTIL_GOOGLE_WEB_CLIENT_ID is missing.'
+    );
+  }
+  getGoogleSignin().configure({ webClientId });
   googleSignInConfigured = true;
 }
 
@@ -146,9 +159,18 @@ export class FirebaseAuthServiceAdapter implements IAuthService {
 
     const GoogleSignin = getGoogleSignin();
     await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
-    const response = await GoogleSignin.signIn();
+
+    let response: Awaited<ReturnType<GoogleSigninModule['signIn']>>;
+    try {
+      response = await GoogleSignin.signIn();
+    } catch (e) {
+      if (isAuthCancelledError(e)) {
+        throw new AuthCancelledError();
+      }
+      throw e;
+    }
     if (response.type !== 'success') {
-      throw new Error('Google sign-in was cancelled.');
+      throw new AuthCancelledError();
     }
     const { idToken } = response.data;
     if (!idToken) {

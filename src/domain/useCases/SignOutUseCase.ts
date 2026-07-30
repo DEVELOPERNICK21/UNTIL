@@ -18,6 +18,16 @@ export class SignOutUseCase {
 
   async execute(): Promise<{ localPremiumKept: boolean }> {
     await this.authService.signOut();
+    return this.clearLocalSession();
+  }
+
+  /**
+   * The local half of sign-out: drop the session mirror and any premium that
+   * only existed because of the account. Call this directly when Firebase has
+   * already dropped the session (e.g. revoked on another device), so we do not
+   * ask it to sign out again.
+   */
+  clearLocalSession(): { localPremiumKept: boolean } {
     /** Clearing also resets devicePremiumAllowed to true, the unsigned default. */
     this.authSession.clear();
 

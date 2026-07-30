@@ -51,6 +51,7 @@ export function AccountScreen() {
     signOut,
     removeDevice,
     refreshDevices,
+    currentDeviceId,
     busy,
     error,
   } = useAccountActions();
@@ -67,7 +68,13 @@ export function AccountScreen() {
     setDevicesLoading(true);
     try {
       const list = await refreshDevices();
-      setDevices([...list].sort((a, b) => b.lastSeenAt - a.lastSeenAt));
+      /** Removed devices stay in Firestore for their history; only active ones hold a slot. */
+      setDevices(
+        list.filter(d => d.active === true).sort((a, b) => b.lastSeenAt - a.lastSeenAt),
+      );
+    } catch {
+      // Message is already surfaced via the hook's error state.
+      setDevices([]);
     } finally {
       setDevicesLoading(false);
     }
@@ -85,7 +92,11 @@ export function AccountScreen() {
   const handleGoogleSignIn = async () => {
     void logAnalyticsEvent('account_screen_google_tapped');
     try {
-      await signInWithGoogle();
+      const result = await signInWithGoogle();
+      if (!result) {
+        void logAnalyticsEvent('account_screen_signin_cancelled');
+        return;
+      }
       void logAnalyticsEvent('account_screen_signin_succeeded');
       void loadDevices();
     } catch {
@@ -164,6 +175,11 @@ export function AccountScreen() {
                 >
                   Saves DOB, premium, and settings across devices.
                 </Text>
+                {/*
+                  Google is the only provider today. App Store guideline 4.8
+                  requires an equivalent private login option alongside it, so
+                  iOS needs Sign in with Apple here before submission.
+                */}
                 <TouchableOpacity
                   style={[styles.googleButton, styles.googleButtonBg]}
                   onPress={handleGoogleSignIn}
@@ -276,6 +292,9 @@ export function AccountScreen() {
                             style={{ color: theme.textPrimary }}
                           >
                             {deviceLabel(device)}
+                            {device.id === currentDeviceId
+                              ? ' · This device'
+                              : ''}
                           </Text>
                           <Text
                             variant="caption"

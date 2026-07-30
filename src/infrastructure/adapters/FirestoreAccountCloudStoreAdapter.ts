@@ -98,6 +98,11 @@ export class FirestoreAccountCloudStoreAdapter implements IAccountCloudStore {
     }
   }
 
+  /**
+   * Device reads and writes throw on failure. An empty list must only ever mean
+   * "this account has no devices", otherwise a network error would read as a
+   * free slot and the 3-device cap would stop holding.
+   */
   async listDevices(uid: string): Promise<AccountDevice[]> {
     const db = getFirestoreModule();
     if (!db) return [];
@@ -106,7 +111,7 @@ export class FirestoreAccountCloudStoreAdapter implements IAccountCloudStore {
       return snap.docs.map(d => d.data()).filter((d): d is AccountDevice => d !== undefined);
     } catch (e) {
       recordCrashError(e, 'FirestoreAccountCloudStoreAdapter.listDevices');
-      return [];
+      throw new Error('Could not read the devices on this account.');
     }
   }
 
@@ -117,6 +122,7 @@ export class FirestoreAccountCloudStoreAdapter implements IAccountCloudStore {
       await db.setDoc(db.doc('users', uid, 'devices', device.id), { ...device }, { merge: true });
     } catch (e) {
       recordCrashError(e, 'FirestoreAccountCloudStoreAdapter.upsertDevice');
+      throw new Error('Could not register this device on the account.');
     }
   }
 
@@ -127,6 +133,7 @@ export class FirestoreAccountCloudStoreAdapter implements IAccountCloudStore {
       await db.setDoc(db.doc('users', uid, 'devices', deviceId), { active }, { merge: true });
     } catch (e) {
       recordCrashError(e, 'FirestoreAccountCloudStoreAdapter.setDeviceActive');
+      throw new Error('Could not update this device on the account.');
     }
   }
 
