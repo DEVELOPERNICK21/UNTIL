@@ -94,6 +94,9 @@ function computeWidgetCache(): WidgetCache {
     ...(lifeProgress !== undefined && { lifeProgress }),
     ...(remainingDaysLife !== undefined && { remainingDaysLife }),
     ...(lifePercent !== undefined && { lifePercent }),
+    ...(profile.birthDate
+      ? { birthDate: profile.birthDate, deathAge: profile.deathAge }
+      : {}),
     presenceStreakCount,
     presenceStreakDots: presenceStreakDots({
       count: presenceStreakCount,

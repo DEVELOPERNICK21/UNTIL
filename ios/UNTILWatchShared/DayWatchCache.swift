@@ -51,6 +51,19 @@ struct DayWatchCache: Equatable {
     return "\(leftPct)% left"
   }
 
+  static func fromLocalDay(_ snap: PeriodSnapshot, now: Date = Date()) -> DayWatchCache {
+    DayWatchCache(
+      dayProgress: snap.progress,
+      dayPercentDone: snap.percentDone,
+      dayPercentLeft: snap.percentLeft,
+      startOfDay: nil,
+      endOfDay: nil,
+      dayHoursLeft: nil,
+      dayRemainingMinutes: nil,
+      updatedAt: snap.updatedAt
+    )
+  }
+
   static func from(context: [String: Any]) -> DayWatchCache? {
     let progress = (context["dayProgress"] as? NSNumber)?.doubleValue
       ?? (context["dayProgress"] as? Double)

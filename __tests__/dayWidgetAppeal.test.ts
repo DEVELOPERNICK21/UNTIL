@@ -72,4 +72,27 @@ describe('dayWidgetAppeal', () => {
       true,
     ]);
   });
+
+  it('includes birth date and death age in the widget cache when profile is set', () => {
+    mockGetString.mockImplementation((key) =>
+      key === STORAGE_KEYS.USER_BIRTH_DATE ? '1990-01-01' : undefined,
+    );
+    mockGetNumber.mockImplementation((key) =>
+      key === STORAGE_KEYS.USER_DEATH_AGE ? 80 : undefined,
+    );
+
+    const cache = new MmkvTimeRepository().getWidgetCache();
+
+    expect(cache.birthDate).toBe('1990-01-01');
+    expect(cache.deathAge).toBe(80);
+  });
+
+  it('omits birth date from the widget cache when profile is unset', () => {
+    mockGetString.mockReturnValue(undefined);
+    mockGetNumber.mockReturnValue(undefined);
+
+    const cache = new MmkvTimeRepository().getWidgetCache();
+
+    expect(cache.birthDate).toBeUndefined();
+  });
 });
