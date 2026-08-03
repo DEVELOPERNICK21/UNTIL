@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 54;
+	objectVersion = 70;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -54,6 +54,8 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		01AB3933301B192600A734B1 /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
+		01AB3935301B192600A734B1 /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
 		035D65106AE541C79E8159EA /* Inter_18pt-Medium.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "Inter_18pt-Medium.ttf"; path = "../src/assets/fonts/Inter_18pt-Medium.ttf"; sourceTree = "<group>"; };
 		09607095F734BAAEC5271558 /* Pods_UNTIL.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_UNTIL.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		13B07F961A680F5B00A75B9A /* UNTIL.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = UNTIL.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -80,6 +82,42 @@
 		W1D0001BA1234567890ABCDEF /* UNTILLiveActivityAttributes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = UNTILLiveActivityAttributes.swift; path = UNTIL/UNTILLiveActivityAttributes.swift; sourceTree = "<group>"; };
 		W1D0001EA1234567890ABCDEF /* WatchConnectivityBridge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = WatchConnectivityBridge.swift; path = UNTIL/WatchConnectivityBridge.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		01AB3920301B18CB00A734B1 /* UNTILWatch Watch App */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+			);
+			explicitFileTypes = {
+			};
+			explicitFolders = (
+			);
+			path = "UNTILWatch Watch App";
+			sourceTree = "<group>";
+		};
+		01AB3937301B192600A734B1 /* UNTILWatchWidgets */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+			);
+			explicitFileTypes = {
+			};
+			explicitFolders = (
+			);
+			path = UNTILWatchWidgets;
+			sourceTree = "<group>";
+		};
+		01AB3953301B195100A734B1 /* UNTILWatchWidgets */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+			);
+			explicitFileTypes = {
+			};
+			explicitFolders = (
+			);
+			path = UNTILWatchWidgets;
+			sourceTree = "<group>";
+		};
+/* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
 		13B07F8C1A680F5B00A75B9A /* Frameworks */ = {
@@ -124,6 +162,8 @@
 			children = (
 				ED297162215061F000B7C4FE /* JavaScriptCore.framework */,
 				09607095F734BAAEC5271558 /* Pods_UNTIL.framework */,
+				01AB3933301B192600A734B1 /* WidgetKit.framework */,
+				01AB3935301B192600A734B1 /* SwiftUI.framework */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -141,6 +181,9 @@
 				13B07FAE1A68108700A75B9A /* UNTIL */,
 				W1D0000BA1234567890ABCDEF /* UNTILWidgets */,
 				832341AE1AAA6A7D00B99B32 /* Libraries */,
+				01AB3920301B18CB00A734B1 /* UNTILWatch Watch App */,
+				01AB3937301B192600A734B1 /* UNTILWatchWidgets */,
+				01AB3953301B195100A734B1 /* UNTILWatchWidgets */,
 				83CBBA001A601CBA00E9B192 /* Products */,
 				2D16E6871FA4F8E400B85C8A /* Frameworks */,
 				BBD78D7AC51CEA395F1C20DB /* Pods */,
@@ -241,6 +284,7 @@
 		83CBB9F71A601CBA00E9B192 /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
+				LastSwiftUpdateCheck = 2660;
 				LastUpgradeCheck = 1210;
 				TargetAttributes = {
 					13B07F861A680F5B00A75B9A = {

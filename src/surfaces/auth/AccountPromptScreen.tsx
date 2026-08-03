@@ -3,25 +3,65 @@
  */
 
 import React, { useEffect, useState } from 'react';
-import { View, StyleSheet, TouchableOpacity, ActivityIndicator, Modal } from 'react-native';
+import {
+  View,
+  StyleSheet,
+  TouchableOpacity,
+  ActivityIndicator,
+  Modal,
+  Image,
+  Animated,
+  Pressable,
+} from 'react-native';
 import {
   SafeAreaView,
   useSafeAreaInsets,
 } from 'react-native-safe-area-context';
-import { Text, ScreenGradient } from '../../ui';
+import Svg, { Path } from 'react-native-svg';
+import { Text, ScreenGradient, GlassCard } from '../../ui';
 import {
   useTheme,
   Spacing,
   Radius,
-  Shadows,
   Weight,
   getFontFamilyForWeight,
 } from '../../theme';
+import { appLogoIcon } from '../../assets/images';
 import { useAccountActions } from '../../hooks';
 import { useOnboardingComplete } from '../onboarding';
+import { useEnter } from '../onboarding/onboardingMotion';
 import { logAnalyticsEvent } from '../../services/analytics';
 
 const DEVICE_LIMIT_NOTE_MS = 2200;
+
+const BENEFITS = [
+  'DOB and life settings',
+  'Premium on your phones',
+  'Restore after reinstall',
+] as const;
+
+function GoogleMark({ size = 20 }: { size?: number }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 48 48" accessibilityElementsHidden>
+      <Path
+        fill="#EA4335"
+        d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"
+      />
+      <Path
+        fill="#4285F4"
+        d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"
+      />
+      <Path
+        fill="#FBBC05"
+        d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"
+      />
+      <Path
+        fill="#34A853"
+        d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"
+      />
+    </Svg>
+  );
+}
 
 export function AccountPromptScreen() {
   const theme = useTheme();
@@ -30,6 +70,11 @@ export function AccountPromptScreen() {
   const { signInWithGoogle, busy, error } = useAccountActions();
   const [confirmVisible, setConfirmVisible] = useState(false);
   const [deviceLimitNote, setDeviceLimitNote] = useState(false);
+  const isLight = theme.statusBarStyle === 'dark-content';
+
+  const brandEnter = useEnter(true, 0);
+  const copyEnter = useEnter(true, 80);
+  const actionsEnter = useEnter(true, 160);
 
   useEffect(() => {
     void logAnalyticsEvent('account_prompt_shown');
@@ -102,14 +147,30 @@ export function AccountPromptScreen() {
   return (
     <View style={styles.container}>
       <ScreenGradient>
-        <SafeAreaView style={styles.safe}>
+        <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
           <View
             style={[
               styles.content,
               { paddingBottom: Math.max(insets.bottom, Spacing[3]) },
             ]}
           >
-            <View style={styles.intro}>
+            <Animated.View style={[styles.brandBlock, brandEnter]}>
+              <Image
+                source={appLogoIcon}
+                style={styles.logoIcon}
+                resizeMode="contain"
+                accessibilityIgnoresInvertColors
+              />
+              <Text
+                variant="sectionTitle"
+                color="primary"
+                style={styles.appTitle}
+              >
+                UNTIL
+              </Text>
+            </Animated.View>
+
+            <Animated.View style={[styles.intro, copyEnter]}>
               <Text
                 variant="display"
                 color="primary"
@@ -124,50 +185,81 @@ export function AccountPromptScreen() {
                   ? 'Premium needs a free device slot. Manage devices in Settings → Account.'
                   : 'Saves DOB, premium, and settings across devices.'}
               </Text>
-            </View>
 
-            <View style={styles.actions}>
+              {!deviceLimitNote ? (
+                <View style={styles.benefitList}>
+                  {BENEFITS.map(line => (
+                    <View key={line} style={styles.benefitRow}>
+                      <View
+                        style={[
+                          styles.benefitDot,
+                          { backgroundColor: theme.percent },
+                        ]}
+                      />
+                      <Text variant="body" color="secondary">
+                        {line}
+                      </Text>
+                    </View>
+                  ))}
+                </View>
+              ) : null}
+            </Animated.View>
+
+            <Animated.View style={[styles.actions, actionsEnter]}>
               {deviceLimitNote ? (
                 <View style={styles.deviceLimitSpinnerWrap}>
                   <ActivityIndicator color={theme.textSecondary} />
                 </View>
               ) : (
                 <>
-                  {/*
-                    Google is the only provider today. App Store guideline 4.8
-                    requires an equivalent private login option alongside it, so
-                    iOS needs Sign in with Apple here before submission.
-                  */}
-                  <TouchableOpacity
-                    style={[styles.primaryButton, styles.primaryButtonBg]}
-                    onPress={handleGoogleSignIn}
-                    activeOpacity={0.85}
-                    disabled={busy}
-                    accessibilityRole="button"
-                    accessibilityLabel="Continue with Google"
-                  >
-                    {busy ? (
-                      <ActivityIndicator color="#1A1A1A" />
-                    ) : (
-                      <>
-                        <View style={styles.googleG}>
-                          <Text style={styles.googleGText}>G</Text>
-                        </View>
-                        <Text
-                          variant="sectionTitle"
-                          style={styles.primaryButtonLabel}
-                        >
-                          Continue with Google
-                        </Text>
-                      </>
-                    )}
-                  </TouchableOpacity>
+                  <GlassCard style={styles.actionsCard}>
+                    {/*
+                      Google is the only provider today. App Store guideline 4.8
+                      requires an equivalent private login option alongside it, so
+                      iOS needs Sign in with Apple here before submission.
+                    */}
+                    <TouchableOpacity
+                      style={[
+                        styles.primaryButton,
+                        {
+                          backgroundColor: isLight ? '#FFFFFF' : '#F8F8F8',
+                          borderColor: isLight
+                            ? 'rgba(26,26,26,0.12)'
+                            : 'transparent',
+                        },
+                      ]}
+                      onPress={handleGoogleSignIn}
+                      activeOpacity={0.85}
+                      disabled={busy}
+                      accessibilityRole="button"
+                      accessibilityLabel="Continue with Google"
+                      accessibilityState={{ busy, disabled: busy }}
+                    >
+                      {busy ? (
+                        <ActivityIndicator color="#1A1A1A" />
+                      ) : (
+                        <>
+                          <GoogleMark />
+                          <Text
+                            variant="sectionTitle"
+                            style={styles.primaryButtonLabel}
+                          >
+                            Continue with Google
+                          </Text>
+                        </>
+                      )}
+                    </TouchableOpacity>
 
-                  {error ? (
                     <Text
                       variant="caption"
-                      style={styles.errorText}
+                      style={[styles.trustLine, { color: theme.textMuted }]}
                     >
+                      Up to 3 devices per account
+                    </Text>
+                  </GlassCard>
+
+                  {error ? (
+                    <Text variant="caption" style={styles.errorText}>
                       {error}
                     </Text>
                   ) : null}
@@ -185,7 +277,7 @@ export function AccountPromptScreen() {
                   </TouchableOpacity>
                 </>
               )}
-            </View>
+            </Animated.View>
           </View>
         </SafeAreaView>
       </ScreenGradient>
@@ -197,8 +289,21 @@ export function AccountPromptScreen() {
         statusBarTranslucent
         onRequestClose={handleSheetDismiss}
       >
-        <View style={styles.backdrop}>
-          <View style={[styles.sheetCard, { backgroundColor: theme.cardBaseAlpha }]}>
+        <Pressable style={styles.backdrop} onPress={handleSheetDismiss}>
+          <Pressable
+            accessibilityRole="none"
+            style={[
+              styles.sheetCard,
+              {
+                backgroundColor: isLight
+                  ? 'rgba(255,255,255,0.96)'
+                  : 'rgba(40,40,46,0.94)',
+                borderColor: isLight
+                  ? 'rgba(26,26,26,0.08)'
+                  : 'rgba(255,255,255,0.14)',
+              },
+            ]}
+          >
             <Text variant="title" color="primary" style={styles.sheetTitle}>
               Without an account, data stays on this phone
             </Text>
@@ -228,8 +333,8 @@ export function AccountPromptScreen() {
                 Continue anyway
               </Text>
             </TouchableOpacity>
-          </View>
-        </View>
+          </Pressable>
+        </Pressable>
       </Modal>
     </View>
   );
@@ -241,26 +346,65 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     paddingHorizontal: Spacing[4],
-    justifyContent: 'center',
+    paddingTop: Spacing[4],
+    justifyContent: 'space-between',
+  },
+  brandBlock: {
+    alignItems: 'center',
+    paddingTop: Spacing[2],
+  },
+  logoIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: Radius.lg,
+    marginBottom: Spacing.sm,
+  },
+  appTitle: {
+    fontFamily: getFontFamilyForWeight(Weight.bold),
+    letterSpacing: 1.2,
   },
   intro: {
     alignItems: 'center',
     gap: Spacing[2],
-    marginBottom: Spacing[6],
+    paddingHorizontal: Spacing[1],
   },
   headline: {
     textAlign: 'center',
+    letterSpacing: -0.4,
   },
   benefit: {
     textAlign: 'center',
     lineHeight: 22,
-    maxWidth: 320,
+    maxWidth: 300,
+  },
+  benefitList: {
+    marginTop: Spacing[3],
+    alignSelf: 'center',
+    width: '100%',
+    maxWidth: 280,
+    gap: Spacing[2],
+  },
+  benefitRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing[2],
+  },
+  benefitDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
   },
   actions: {
-    alignItems: 'center',
+    alignItems: 'stretch',
+    paddingBottom: Spacing[2],
+  },
+  actionsCard: {
+    padding: Spacing[3],
+    gap: Spacing[2],
   },
   deviceLimitSpinnerWrap: {
     paddingVertical: Spacing[3],
+    alignItems: 'center',
   },
   primaryButton: {
     flexDirection: 'row',
@@ -270,29 +414,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing[4],
     borderRadius: Radius.md,
     minHeight: 52,
-    minWidth: 260,
-    gap: Spacing.sm,
-    ...Shadows.card,
-  },
-  primaryButtonBg: {
-    backgroundColor: '#FFFFFF',
+    gap: Spacing[2],
+    borderWidth: StyleSheet.hairlineWidth * 2,
   },
   primaryButtonLabel: {
     fontFamily: getFontFamilyForWeight(Weight.semibold),
     color: '#1A1A1A',
   },
-  googleG: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: '#4285F4',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  googleGText: {
-    fontSize: 14,
-    fontFamily: getFontFamilyForWeight(Weight.bold),
-    color: '#FFFFFF',
+  trustLine: {
+    textAlign: 'center',
   },
   errorText: {
     color: '#E85C5C',
@@ -300,23 +430,31 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   skipHit: {
-    marginTop: Spacing[4],
+    marginTop: Spacing[3],
     padding: Spacing.sm,
+    alignSelf: 'center',
   },
   backdrop: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.72)',
-    justifyContent: 'center',
+    justifyContent: 'flex-end',
     padding: Spacing[4],
+    paddingBottom: Spacing[6],
   },
-  sheetCard: { borderRadius: Radius.lg, padding: Spacing[4] },
-  sheetTitle: { marginBottom: Spacing[2] },
+  sheetCard: {
+    borderRadius: Radius.lg,
+    padding: Spacing[4],
+    borderWidth: StyleSheet.hairlineWidth * 2,
+  },
+  sheetTitle: { marginBottom: Spacing[2], letterSpacing: -0.2 },
   sheetBody: { marginBottom: Spacing[4], lineHeight: 22 },
   sheetPrimary: {
     borderRadius: Radius.md,
     paddingVertical: Spacing[3],
     alignItems: 'center',
     marginBottom: Spacing[2],
+    minHeight: 48,
+    justifyContent: 'center',
   },
   sheetPrimaryLabel: { color: '#FFFFFF' },
   sheetSecondary: { alignItems: 'center', paddingVertical: Spacing[2] },

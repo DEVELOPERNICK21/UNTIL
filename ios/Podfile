@@ -15,6 +15,20 @@ linkage = ENV['USE_FRAMEWORKS'] || 'static'
 Pod::UI.puts "Configuring Pod with #{linkage}ally linked Frameworks".green
 use_frameworks! :linkage => linkage.to_sym
 
+# react-native-store-review 0.5.0 imports "RNStoreReview-Swift.h" with a quoted
+# path that breaks under use_frameworks! :static. Build it as a static library
+# instead (same pattern as common RNFB workarounds).
+# https://github.com/oblador/react-native-store-review/issues/99
+pre_install do |installer|
+  installer.pod_targets.each do |pod|
+    next unless pod.name == 'RNStoreReview'
+
+    def pod.build_type
+      Pod::BuildType.static_library
+    end
+  end
+end
+
 target 'UNTIL' do
   config = use_native_modules!
 
