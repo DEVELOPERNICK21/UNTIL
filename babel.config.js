@@ -1,4 +1,7 @@
-require('dotenv').config();
+const path = require('path');
+
+// Release Gradle runs with cwd=android/, so load .env from the repo root.
+require('dotenv').config({ path: path.join(__dirname, '.env') });
 
 module.exports = {
   presets: ['module:@react-native/babel-preset'],

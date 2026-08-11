@@ -20,6 +20,8 @@ workflows:
         - UNTILAPP
       vars:
         PACKAGE_NAME: 'app.until.time'
+        # Firebase Web OAuth client (client_type 3). Required for Google Sign-In in release bundles.
+        UNTIL_GOOGLE_WEB_CLIENT_ID: '150745476537-l5sr6mf0ma7le6qqgk88387fmhgc6p3a.apps.googleusercontent.com'
 
     scripts:
       - name: Set Android SDK location
@@ -28,6 +30,19 @@ workflows:
       - name: Install npm dependencies
         script: |
           npm install
+      - name: Write release env for Babel inline
+        script: |
+          # .env is gitignored; Babel inlines UNTIL_* at bundle time.
+          {
+            echo "UNTIL_GOOGLE_WEB_CLIENT_ID=${UNTIL_GOOGLE_WEB_CLIENT_ID}"
+            echo "UNTIL_POSTHOG_API_KEY=${UNTIL_POSTHOG_API_KEY:-}"
+            echo "UNTIL_POSTHOG_HOST=${UNTIL_POSTHOG_HOST:-https://us.i.posthog.com}"
+          } > "$CM_BUILD_DIR/.env"
+          if [ -z "$UNTIL_GOOGLE_WEB_CLIENT_ID" ]; then
+            echo "ERROR: UNTIL_GOOGLE_WEB_CLIENT_ID is empty" >&2
+            exit 1
+          fi
+          echo "Wrote .env with Google Web Client ID"
       - name: Build Android release AAB
         script: |
           set -e
@@ -41,6 +56,8 @@ workflows:
             UPDATED_BUILD_NUMBER=$((LATEST + 1))
           fi
           echo "Using versionCode=$UPDATED_BUILD_NUMBER (Play latest was '${LATEST:-none}')"
+          # Ensure Gradle/Babel child processes see the client id even without .env
+          export UNTIL_GOOGLE_WEB_CLIENT_ID
           cd android
           ./gradlew bundleRelease -PuntilVersionCode="$UPDATED_BUILD_NUMBER"
 
