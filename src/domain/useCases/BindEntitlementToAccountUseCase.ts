@@ -15,6 +15,9 @@ import type { IAuthSessionRepository } from '../repository/IAuthSessionRepositor
 import type { ISubscriptionRepository } from '../repository/ISubscriptionRepository';
 import type { CloudEntitlement } from '../../types';
 import { hasLocalPurchaseProof } from '../../core/account/entitlementProof';
+import { withTimeout } from '../../core/account/withTimeout';
+
+const PROOF_REFRESH_TIMEOUT_MS = 8000;
 
 /** Existing purchase use cases, kept as narrow shapes to avoid a dependency cycle. */
 export interface EntitlementProofRefreshers {
@@ -93,11 +96,17 @@ export class BindEntitlementToAccountUseCase {
   private async refreshLocalProof(): Promise<void> {
     try {
       if (this.subscriptionRepository.getLicenseKey()) {
-        await this.proof?.verifySubscription?.execute();
+        const verify = this.proof?.verifySubscription?.execute();
+        if (verify) {
+          await withTimeout(verify, PROOF_REFRESH_TIMEOUT_MS, 'verifySubscription');
+        }
         return;
       }
       if (this.subscriptionRepository.getPurchaseType() == null) {
-        await this.proof?.restorePurchases?.execute();
+        const restore = this.proof?.restorePurchases?.execute();
+        if (restore) {
+          await withTimeout(restore, PROOF_REFRESH_TIMEOUT_MS, 'restorePurchases');
+        }
       }
     } catch (e) {
       this.onError?.(e, 'BindEntitlementToAccountUseCase.refreshLocalProof');

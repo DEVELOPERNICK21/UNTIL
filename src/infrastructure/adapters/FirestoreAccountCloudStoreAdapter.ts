@@ -13,7 +13,11 @@
 
 import type { IAccountCloudStore } from '../../domain/ports/IAccountCloudStore';
 import type { AccountDevice, CloudEntitlement, CloudUserProfile } from '../../types';
+import { withTimeout } from '../../core/account/withTimeout';
 import { recordCrashError } from '../../services/analytics';
+
+/** Firestore without a created DB (or offline) can hang; fail fast so sign-in can finish. */
+const FIRESTORE_TIMEOUT_MS = 8000;
 
 interface DocSnapshotLike<T> {
   exists: boolean;
@@ -80,7 +84,11 @@ export class FirestoreAccountCloudStoreAdapter implements IAccountCloudStore {
     const db = getFirestoreModule();
     if (!db) return null;
     try {
-      const snap = await db.getDoc<CloudUserProfile>(db.doc('users', uid));
+      const snap = await withTimeout(
+        db.getDoc<CloudUserProfile>(db.doc('users', uid)),
+        FIRESTORE_TIMEOUT_MS,
+        'getProfile'
+      );
       return snap.exists ? (snap.data() ?? null) : null;
     } catch (e) {
       recordCrashError(e, 'FirestoreAccountCloudStoreAdapter.getProfile');
@@ -92,7 +100,11 @@ export class FirestoreAccountCloudStoreAdapter implements IAccountCloudStore {
     const db = getFirestoreModule();
     if (!db) return;
     try {
-      await db.setDoc(db.doc('users', uid), { ...patch, updatedAt: Date.now() }, { merge: true });
+      await withTimeout(
+        db.setDoc(db.doc('users', uid), { ...patch, updatedAt: Date.now() }, { merge: true }),
+        FIRESTORE_TIMEOUT_MS,
+        'upsertProfile'
+      );
     } catch (e) {
       recordCrashError(e, 'FirestoreAccountCloudStoreAdapter.upsertProfile');
     }
@@ -105,9 +117,15 @@ export class FirestoreAccountCloudStoreAdapter implements IAccountCloudStore {
    */
   async listDevices(uid: string): Promise<AccountDevice[]> {
     const db = getFirestoreModule();
-    if (!db) return [];
+    if (!db) {
+      throw new Error('Cloud storage is unavailable on this build.');
+    }
     try {
-      const snap = await db.getDocs<AccountDevice>(db.collection('users', uid, 'devices'));
+      const snap = await withTimeout(
+        db.getDocs<AccountDevice>(db.collection('users', uid, 'devices')),
+        FIRESTORE_TIMEOUT_MS,
+        'listDevices'
+      );
       return snap.docs.map(d => d.data()).filter((d): d is AccountDevice => d !== undefined);
     } catch (e) {
       recordCrashError(e, 'FirestoreAccountCloudStoreAdapter.listDevices');
@@ -117,9 +135,15 @@ export class FirestoreAccountCloudStoreAdapter implements IAccountCloudStore {
 
   async upsertDevice(uid: string, device: AccountDevice): Promise<void> {
     const db = getFirestoreModule();
-    if (!db) return;
+    if (!db) {
+      throw new Error('Cloud storage is unavailable on this build.');
+    }
     try {
-      await db.setDoc(db.doc('users', uid, 'devices', device.id), { ...device }, { merge: true });
+      await withTimeout(
+        db.setDoc(db.doc('users', uid, 'devices', device.id), { ...device }, { merge: true }),
+        FIRESTORE_TIMEOUT_MS,
+        'upsertDevice'
+      );
     } catch (e) {
       recordCrashError(e, 'FirestoreAccountCloudStoreAdapter.upsertDevice');
       throw new Error('Could not register this device on the account.');
@@ -128,9 +152,15 @@ export class FirestoreAccountCloudStoreAdapter implements IAccountCloudStore {
 
   async setDeviceActive(uid: string, deviceId: string, active: boolean): Promise<void> {
     const db = getFirestoreModule();
-    if (!db) return;
+    if (!db) {
+      throw new Error('Cloud storage is unavailable on this build.');
+    }
     try {
-      await db.setDoc(db.doc('users', uid, 'devices', deviceId), { active }, { merge: true });
+      await withTimeout(
+        db.setDoc(db.doc('users', uid, 'devices', deviceId), { active }, { merge: true }),
+        FIRESTORE_TIMEOUT_MS,
+        'setDeviceActive'
+      );
     } catch (e) {
       recordCrashError(e, 'FirestoreAccountCloudStoreAdapter.setDeviceActive');
       throw new Error('Could not update this device on the account.');
@@ -141,7 +171,11 @@ export class FirestoreAccountCloudStoreAdapter implements IAccountCloudStore {
     const db = getFirestoreModule();
     if (!db) return null;
     try {
-      const snap = await db.getDoc<CloudEntitlement>(db.doc('users', uid, 'entitlement', 'current'));
+      const snap = await withTimeout(
+        db.getDoc<CloudEntitlement>(db.doc('users', uid, 'entitlement', 'current')),
+        FIRESTORE_TIMEOUT_MS,
+        'getEntitlement'
+      );
       return snap.exists ? (snap.data() ?? null) : null;
     } catch (e) {
       recordCrashError(e, 'FirestoreAccountCloudStoreAdapter.getEntitlement');
@@ -153,7 +187,11 @@ export class FirestoreAccountCloudStoreAdapter implements IAccountCloudStore {
     const db = getFirestoreModule();
     if (!db) return;
     try {
-      await db.setDoc(db.doc('users', uid, 'entitlement', 'current'), { ...entitlement });
+      await withTimeout(
+        db.setDoc(db.doc('users', uid, 'entitlement', 'current'), { ...entitlement }),
+        FIRESTORE_TIMEOUT_MS,
+        'setEntitlement'
+      );
     } catch (e) {
       recordCrashError(e, 'FirestoreAccountCloudStoreAdapter.setEntitlement');
     }

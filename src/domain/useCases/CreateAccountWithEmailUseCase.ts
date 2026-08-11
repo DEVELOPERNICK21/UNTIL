@@ -1,19 +1,19 @@
 /**
- * SignInWithGoogleUseCase — Google credential, then shared account sync.
+ * CreateAccountWithEmailUseCase — create email/password user, then sync.
  */
 
 import type { IAuthService } from '../ports/IAuthService';
 import type { SignInResult } from '../../types';
 import type { CompleteAccountSignInUseCase } from './CompleteAccountSignInUseCase';
 
-export class SignInWithGoogleUseCase {
+export class CreateAccountWithEmailUseCase {
   constructor(
     private readonly authService: IAuthService,
     private readonly completeSignIn: CompleteAccountSignInUseCase
   ) {}
 
-  async execute(): Promise<SignInResult> {
-    const user = await this.authService.signInWithGoogle();
+  async execute(email: string, password: string): Promise<SignInResult> {
+    const user = await this.authService.createAccountWithEmail(email, password);
     return this.completeSignIn.execute(user);
   }
 }

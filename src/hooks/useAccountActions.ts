@@ -1,13 +1,15 @@
 /**
- * useAccountActions — sign-in, sign-out, device list, and remove device for account UI.
+ * useAccountActions — sign-in (Google / email), sign-out, devices for account UI.
  */
 
 import { useCallback, useEffect, useState } from 'react';
 import {
   accountCloudStore,
   authSessionRepository,
+  createAccountWithEmailUseCase,
   deviceIdProvider,
   removeAccountDeviceUseCase,
+  signInWithEmailUseCase,
   signInWithGoogleUseCase,
   signOutUseCase,
 } from '../di';
@@ -42,7 +44,6 @@ export function useAccountActions() {
     try {
       return await action();
     } catch (e) {
-      /** Backing out of the Google sheet is a choice, not a failure to report. */
       if (!isAuthCancelledError(e)) {
         setError(toErrorMessage(e));
       }
@@ -52,7 +53,6 @@ export function useAccountActions() {
     }
   }, []);
 
-  /** Resolves to null when the user backed out of the Google sheet. */
   const signInWithGoogle = useCallback(
     async (): Promise<SignInResult | null> => {
       try {
@@ -62,6 +62,18 @@ export function useAccountActions() {
         throw e;
       }
     },
+    [runAction]
+  );
+
+  const signInWithEmail = useCallback(
+    (email: string, password: string): Promise<SignInResult> =>
+      runAction(() => signInWithEmailUseCase.execute(email, password)),
+    [runAction]
+  );
+
+  const createAccountWithEmail = useCallback(
+    (email: string, password: string): Promise<SignInResult> =>
+      runAction(() => createAccountWithEmailUseCase.execute(email, password)),
     [runAction]
   );
 
@@ -95,13 +107,18 @@ export function useAccountActions() {
     });
   }, [runAction]);
 
+  const clearError = useCallback(() => setError(null), []);
+
   return {
     signInWithGoogle,
+    signInWithEmail,
+    createAccountWithEmail,
     signOut,
     removeDevice,
     refreshDevices,
     currentDeviceId,
     busy,
     error,
+    clearError,
   };
 }

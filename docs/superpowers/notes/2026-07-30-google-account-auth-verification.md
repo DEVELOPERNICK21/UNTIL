@@ -30,7 +30,14 @@ Covers: 3-device cap logic, access control (premium gating when over limit), dev
 
 1. Create Firebase Google Sign-In OAuth clients (Web client ID for `@react-native-google-signin/google-signin`).
 2. Set `UNTIL_GOOGLE_WEB_CLIENT_ID` in `.env` (or replace constant in `FirebaseAuthServiceAdapter.ts`).
-3. Re-run the manual rows above on at least two devices for the 4-device cap flow.
+3. Android: add debug SHA-1 to Firebase Android app (`E1:34:28:8A:BB:49:E3:4D:AE:4F:7E:76:56:2D:3C:86:F5:D5:7E:CA`), then re-download `google-services.json`.
+4. iOS: URL scheme for reversed iOS client id in `Info.plist` (done if using repo setup).
+5. Restart Metro (`yarn start --reset-cache`) and rebuild the app.
+6. Re-run the manual rows above on at least two devices for the 4-device cap flow.
+
+**2026-08-08:** Web client id wired in `.env`. Email/password is enabled in Firebase Console and built in the app.
+
+**2026-08-08 hang fix:** Firestore / Play restore calls that never resolve left the login spinner stuck. Cloud ops now time out (~8s each) and complete-sign-in has a 12s budget so the UI can finish even if Firestore is not created yet. Still create a Firestore database in Firebase Console for sync/devices to work.
 
 ## Code fixes during verification
 

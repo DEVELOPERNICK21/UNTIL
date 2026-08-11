@@ -82,7 +82,10 @@ import {
   RewindOnboardingFunnelUseCase,
 } from './domain/useCases/OnboardingFunnelNavigationUseCases';
 import { DeviceIdProviderAdapter } from './infrastructure/adapters/DeviceIdProviderAdapter';
+import { CompleteAccountSignInUseCase } from './domain/useCases/CompleteAccountSignInUseCase';
 import { SignInWithGoogleUseCase } from './domain/useCases/SignInWithGoogleUseCase';
+import { SignInWithEmailUseCase } from './domain/useCases/SignInWithEmailUseCase';
+import { CreateAccountWithEmailUseCase } from './domain/useCases/CreateAccountWithEmailUseCase';
 import { SignOutUseCase } from './domain/useCases/SignOutUseCase';
 import { SyncAccountProfileUseCase } from './domain/useCases/SyncAccountProfileUseCase';
 import { RegisterDeviceUseCase } from './domain/useCases/RegisterDeviceUseCase';
@@ -511,14 +514,28 @@ export const bindEntitlementToAccountUseCase = new BindEntitlementToAccountUseCa
   recordCrashError
 );
 
-export const signInWithGoogleUseCase = new SignInWithGoogleUseCase(
-  authService,
+export const completeAccountSignInUseCase = new CompleteAccountSignInUseCase(
   authSessionRepository,
   syncAccountProfileUseCase,
   registerDeviceUseCase,
   bindEntitlementToAccountUseCase,
   recordCrashError,
   syncPremiumBridge
+);
+
+export const signInWithGoogleUseCase = new SignInWithGoogleUseCase(
+  authService,
+  completeAccountSignInUseCase
+);
+
+export const signInWithEmailUseCase = new SignInWithEmailUseCase(
+  authService,
+  completeAccountSignInUseCase
+);
+
+export const createAccountWithEmailUseCase = new CreateAccountWithEmailUseCase(
+  authService,
+  completeAccountSignInUseCase
 );
 
 export const signOutUseCase = new SignOutUseCase(

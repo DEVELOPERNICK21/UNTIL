@@ -31,6 +31,10 @@ import { useAccountActions } from '../../hooks';
 import { useOnboardingComplete } from '../onboarding';
 import { useEnter } from '../onboarding/onboardingMotion';
 import { logAnalyticsEvent } from '../../services/analytics';
+import {
+  EmailPasswordAuthForm,
+  type EmailAuthMode,
+} from './EmailPasswordAuthForm';
 
 const DEVICE_LIMIT_NOTE_MS = 2200;
 
@@ -67,9 +71,18 @@ export function AccountPromptScreen() {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
   const completeAuth = useOnboardingComplete();
-  const { signInWithGoogle, busy, error } = useAccountActions();
+  const {
+    signInWithGoogle,
+    signInWithEmail,
+    createAccountWithEmail,
+    busy,
+    error,
+  } = useAccountActions();
   const [confirmVisible, setConfirmVisible] = useState(false);
   const [deviceLimitNote, setDeviceLimitNote] = useState(false);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [emailMode, setEmailMode] = useState<EmailAuthMode>('sign_in');
   const isLight = theme.statusBarStyle === 'dark-content';
 
   const brandEnter = useEnter(true, 0);
@@ -93,6 +106,18 @@ export function AccountPromptScreen() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [deviceLimitNote]);
 
+  const finishSignedIn = (deviceLimitReached: boolean) => {
+    if (deviceLimitReached) {
+      setDeviceLimitNote(true);
+      return;
+    }
+    completeAuth({
+      exit_type: 'completed',
+      step: 12,
+      step_name: 'account_prompt_google',
+    });
+  };
+
   const handleGoogleSignIn = async () => {
     void logAnalyticsEvent('account_prompt_google_tapped');
     try {
@@ -103,19 +128,36 @@ export function AccountPromptScreen() {
       }
       void logAnalyticsEvent('account_prompt_signin_succeeded', {
         device_limit_reached: result.deviceLimitReached,
+        provider: 'google',
       });
       setConfirmVisible(false);
-      if (result.deviceLimitReached) {
-        setDeviceLimitNote(true);
-        return;
-      }
-      completeAuth({
-        exit_type: 'completed',
-        step: 12,
-        step_name: 'account_prompt_google',
-      });
+      finishSignedIn(result.deviceLimitReached);
     } catch {
-      void logAnalyticsEvent('account_prompt_signin_failed');
+      void logAnalyticsEvent('account_prompt_signin_failed', {
+        provider: 'google',
+      });
+    }
+  };
+
+  const handleEmailSubmit = async () => {
+    void logAnalyticsEvent('account_prompt_email_tapped', { mode: emailMode });
+    try {
+      const result =
+        emailMode === 'sign_in'
+          ? await signInWithEmail(email, password)
+          : await createAccountWithEmail(email, password);
+      void logAnalyticsEvent('account_prompt_signin_succeeded', {
+        device_limit_reached: result.deviceLimitReached,
+        provider: 'password',
+        mode: emailMode,
+      });
+      setConfirmVisible(false);
+      finishSignedIn(result.deviceLimitReached);
+    } catch {
+      void logAnalyticsEvent('account_prompt_signin_failed', {
+        provider: 'password',
+        mode: emailMode,
+      });
     }
   };
 
@@ -249,6 +291,40 @@ export function AccountPromptScreen() {
                         </>
                       )}
                     </TouchableOpacity>
+
+                    <View style={styles.orRow}>
+                      <View
+                        style={[
+                          styles.orLine,
+                          { backgroundColor: theme.divider },
+                        ]}
+                      />
+                      <Text
+                        variant="caption"
+                        style={{ color: theme.textMuted }}
+                      >
+                        or
+                      </Text>
+                      <View
+                        style={[
+                          styles.orLine,
+                          { backgroundColor: theme.divider },
+                        ]}
+                      />
+                    </View>
+
+                    <EmailPasswordAuthForm
+                      email={email}
+                      password={password}
+                      mode={emailMode}
+                      busy={busy}
+                      onEmailChange={setEmail}
+                      onPasswordChange={setPassword}
+                      onModeChange={setEmailMode}
+                      onSubmit={() => {
+                        void handleEmailSubmit();
+                      }}
+                    />
 
                     <Text
                       variant="caption"
@@ -421,8 +497,19 @@ const styles = StyleSheet.create({
     fontFamily: getFontFamilyForWeight(Weight.semibold),
     color: '#1A1A1A',
   },
+  orRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing[2],
+    marginTop: Spacing[3],
+  },
+  orLine: {
+    flex: 1,
+    height: StyleSheet.hairlineWidth,
+  },
   trustLine: {
     textAlign: 'center',
+    marginTop: Spacing[2],
   },
   errorText: {
     color: '#E85C5C',

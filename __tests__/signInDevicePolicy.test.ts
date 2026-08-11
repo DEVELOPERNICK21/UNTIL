@@ -1,3 +1,4 @@
+import { CompleteAccountSignInUseCase } from '../src/domain/useCases/CompleteAccountSignInUseCase';
 import { SignInWithGoogleUseCase } from '../src/domain/useCases/SignInWithGoogleUseCase';
 import type { BindEntitlementToAccountUseCase } from '../src/domain/useCases/BindEntitlementToAccountUseCase';
 import type { RegisterDeviceUseCase } from '../src/domain/useCases/RegisterDeviceUseCase';
@@ -15,13 +16,19 @@ const USER: AuthUser = {
 
 const authService: IAuthService = {
   signInWithGoogle: async () => USER,
+  signInWithEmail: async () => USER,
+  createAccountWithEmail: async () => USER,
   signOut: async () => {},
   getCurrentUser: () => USER,
   subscribe: () => () => {},
 };
 
 function makeAuthSession(devicePremiumAllowed: boolean) {
-  const state = { uid: null as string | null, email: null as string | null, devicePremiumAllowed };
+  const state = {
+    uid: null as string | null,
+    email: null as string | null,
+    devicePremiumAllowed,
+  };
   const repo: IAuthSessionRepository = {
     getUid: () => state.uid,
     setUid: uid => {
@@ -57,8 +64,7 @@ function makeUseCase(
     execute: async () => {},
   } as unknown as BindEntitlementToAccountUseCase;
 
-  return new SignInWithGoogleUseCase(
-    authService,
+  const complete = new CompleteAccountSignInUseCase(
     authSession,
     syncProfile,
     registerDevice,
@@ -66,6 +72,8 @@ function makeUseCase(
     undefined,
     onDeviceAccessChanged
   );
+
+  return new SignInWithGoogleUseCase(authService, complete);
 }
 
 describe('SignInWithGoogleUseCase device policy', () => {

@@ -24,6 +24,10 @@ import {
 } from '../../theme';
 import type { AccountDevice } from '../../types';
 import { logAnalyticsEvent } from '../../services/analytics';
+import {
+  EmailPasswordAuthForm,
+  type EmailAuthMode,
+} from '../auth/EmailPasswordAuthForm';
 
 const DEVICE_LIMIT_BANNER_COPY =
   'This account is already used on 3 devices. Remove one to unlock premium here.';
@@ -48,6 +52,8 @@ export function AccountScreen() {
   const { signedIn, email, devicePremiumAllowed } = useAuthSession();
   const {
     signInWithGoogle,
+    signInWithEmail,
+    createAccountWithEmail,
     signOut,
     removeDevice,
     refreshDevices,
@@ -59,6 +65,9 @@ export function AccountScreen() {
   const [devices, setDevices] = useState<AccountDevice[]>([]);
   const [devicesLoading, setDevicesLoading] = useState(false);
   const [removingId, setRemovingId] = useState<string | null>(null);
+  const [authEmail, setAuthEmail] = useState('');
+  const [authPassword, setAuthPassword] = useState('');
+  const [emailMode, setEmailMode] = useState<EmailAuthMode>('sign_in');
 
   const loadDevices = useCallback(async () => {
     if (!signedIn) {
@@ -97,10 +106,35 @@ export function AccountScreen() {
         void logAnalyticsEvent('account_screen_signin_cancelled');
         return;
       }
-      void logAnalyticsEvent('account_screen_signin_succeeded');
+      void logAnalyticsEvent('account_screen_signin_succeeded', {
+        provider: 'google',
+      });
       void loadDevices();
     } catch {
-      void logAnalyticsEvent('account_screen_signin_failed');
+      void logAnalyticsEvent('account_screen_signin_failed', {
+        provider: 'google',
+      });
+    }
+  };
+
+  const handleEmailSubmit = async () => {
+    void logAnalyticsEvent('account_screen_email_tapped', { mode: emailMode });
+    try {
+      if (emailMode === 'sign_in') {
+        await signInWithEmail(authEmail, authPassword);
+      } else {
+        await createAccountWithEmail(authEmail, authPassword);
+      }
+      void logAnalyticsEvent('account_screen_signin_succeeded', {
+        provider: 'password',
+        mode: emailMode,
+      });
+      void loadDevices();
+    } catch {
+      void logAnalyticsEvent('account_screen_signin_failed', {
+        provider: 'password',
+        mode: emailMode,
+      });
     }
   };
 
@@ -176,9 +210,8 @@ export function AccountScreen() {
                   Saves DOB, premium, and settings across devices.
                 </Text>
                 {/*
-                  Google is the only provider today. App Store guideline 4.8
-                  requires an equivalent private login option alongside it, so
-                  iOS needs Sign in with Apple here before submission.
+                  Google + email/password. App Store guideline 4.8 still needs
+                  Sign in with Apple before iOS submission if Google stays.
                 */}
                 <TouchableOpacity
                   style={[styles.googleButton, styles.googleButtonBg]}
@@ -204,6 +237,32 @@ export function AccountScreen() {
                     </>
                   )}
                 </TouchableOpacity>
+
+                <View style={styles.orRow}>
+                  <View
+                    style={[styles.orLine, { backgroundColor: theme.divider }]}
+                  />
+                  <Text variant="caption" style={{ color: theme.textMuted }}>
+                    or
+                  </Text>
+                  <View
+                    style={[styles.orLine, { backgroundColor: theme.divider }]}
+                  />
+                </View>
+
+                <EmailPasswordAuthForm
+                  email={authEmail}
+                  password={authPassword}
+                  mode={emailMode}
+                  busy={busy}
+                  onEmailChange={setAuthEmail}
+                  onPasswordChange={setAuthPassword}
+                  onModeChange={setEmailMode}
+                  onSubmit={() => {
+                    void handleEmailSubmit();
+                  }}
+                />
+
                 {error ? (
                   <Text variant="caption" style={styles.errorText}>
                     {error}
@@ -236,7 +295,7 @@ export function AccountScreen() {
                           { color: theme.textSecondary },
                         ]}
                       >
-                        Google account
+                        Google or email account
                       </Text>
                     </View>
                   </View>
@@ -421,6 +480,17 @@ const styles = StyleSheet.create({
   googleButtonLabel: {
     fontFamily: getFontFamilyForWeight(Weight.semibold),
     color: '#1A1A1A',
+  },
+  orRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing[2],
+    marginTop: Spacing[3],
+    width: '100%',
+  },
+  orLine: {
+    flex: 1,
+    height: StyleSheet.hairlineWidth,
   },
   googleG: {
     width: 24,

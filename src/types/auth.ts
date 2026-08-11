@@ -2,7 +2,7 @@
  * Account / auth DTOs — provider-agnostic (Google first, Apple later).
  */
 
-export type AuthProviderId = 'google' | 'apple';
+export type AuthProviderId = 'google' | 'apple' | 'password';
 
 export interface AuthUser {
   uid: string;

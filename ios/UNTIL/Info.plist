@@ -77,6 +77,14 @@
 			<key>CFBundleURLName</key>
 			<string>org.reactjs.native.example.UNTIL</string>
 		</dict>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>GoogleSignIn</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>com.googleusercontent.apps.150745476537-ldr7o4ajnb3341cubae0va1q3k56ftat</string>
+			</array>
+		</dict>
 	</array>
 </dict>
 </plist>

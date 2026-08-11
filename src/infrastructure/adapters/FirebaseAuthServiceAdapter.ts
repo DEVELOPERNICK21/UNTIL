@@ -1,29 +1,13 @@
 /**
- * FirebaseAuthServiceAdapter — Google Sign-In via Firebase Auth.
+ * FirebaseAuthServiceAdapter — Google + email/password via Firebase Auth.
  *
- * Console setup required before device QA (not done by this adapter):
- * 1. Firebase Console -> Authentication -> Sign-in method -> enable Google.
- * 2. Firestore -> create database (see firestore.rules at repo root).
- * 3. Google Cloud Console -> APIs & Services -> Credentials -> OAuth 2.0 Client IDs:
- *    - Android client (package + release/debug SHA-1)
- *    - iOS client (bundle id `com.develoeprnick.UNTIL`)
- *    - Web client (auto-created alongside the above; this is `webClientId` below)
- * 4. Re-download `android/app/google-services.json` and
- *    `ios/GoogleService-Info.plist` once those OAuth clients exist — the
- *    versions committed at the time this adapter was written have an empty
- *    `oauth_client` list, so there is no real web client id to read yet.
- * 5. iOS: add the reversed iOS client id as a URL scheme (Xcode > Info > URL
- *    Types) once the iOS OAuth client is created — required for the Google
- *    Sign-In redirect to return to the app.
- *
- * Until step 3/4 are done, `GOOGLE_WEB_CLIENT_ID` is the placeholder below and
- * every sign-in attempt throws with a clear message instead of failing deep
- * inside `GoogleSignin.signIn()`. Set `UNTIL_GOOGLE_WEB_CLIENT_ID` in `.env`
- * (inlined by babel.config.js) once a real client id exists. Do not invent one.
+ * Console: enable Google and Email/Password under Authentication → Sign-in method.
+ * Google also needs UNTIL_GOOGLE_WEB_CLIENT_ID and platform OAuth clients
+ * (see earlier adapter notes / verification doc).
  */
 
 import type { IAuthService } from '../../domain/ports/IAuthService';
-import type { AuthUser } from '../../types';
+import type { AuthProviderId, AuthUser } from '../../types';
 import { AuthCancelledError, isAuthCancelledError } from '../../domain/errors/authErrors';
 import { recordCrashError } from '../../services/analytics';
 
@@ -32,10 +16,15 @@ const MISSING_GOOGLE_WEB_CLIENT_ID = '<MISSING_GOOGLE_WEB_CLIENT_ID>';
 const GOOGLE_WEB_CLIENT_ID: string =
   process.env.UNTIL_GOOGLE_WEB_CLIENT_ID ?? MISSING_GOOGLE_WEB_CLIENT_ID;
 
+interface ProviderDataEntry {
+  providerId: string;
+}
+
 interface MinimalFirebaseUser {
   uid: string;
   email: string | null;
   displayName: string | null;
+  providerData?: ProviderDataEntry[];
 }
 
 interface AuthCredentialLike {
@@ -53,6 +42,16 @@ interface AuthModule {
   signInWithCredential: (
     auth: unknown,
     credential: AuthCredentialLike
+  ) => Promise<{ user: MinimalFirebaseUser }>;
+  signInWithEmailAndPassword: (
+    auth: unknown,
+    email: string,
+    password: string
+  ) => Promise<{ user: MinimalFirebaseUser }>;
+  createUserWithEmailAndPassword: (
+    auth: unknown,
+    email: string,
+    password: string
   ) => Promise<{ user: MinimalFirebaseUser }>;
   signOut: (auth: unknown) => Promise<void>;
   GoogleAuthProvider: {
@@ -79,11 +78,6 @@ function getGoogleSignin(): GoogleSigninModule {
   return mod.GoogleSignin;
 }
 
-/**
- * Lazily resolves the Firebase Auth module. Returns null if the native
- * FIRApp was never configured (e.g. missing plist/config on this build),
- * mirroring the guard used in services/analytics.ts.
- */
 function getAuthModule(): AuthModule | null {
   try {
     // eslint-disable-next-line @typescript-eslint/no-require-imports
@@ -97,12 +91,16 @@ function getAuthModule(): AuthModule | null {
       getAuth,
       onAuthStateChanged,
       signInWithCredential,
+      signInWithEmailAndPassword,
+      createUserWithEmailAndPassword,
       signOut,
       GoogleAuthProvider,
     } = require('@react-native-firebase/auth') as {
       getAuth: (app: unknown) => unknown & { currentUser: MinimalFirebaseUser | null };
       onAuthStateChanged: AuthModule['onAuthStateChanged'];
       signInWithCredential: AuthModule['signInWithCredential'];
+      signInWithEmailAndPassword: AuthModule['signInWithEmailAndPassword'];
+      createUserWithEmailAndPassword: AuthModule['createUserWithEmailAndPassword'];
       signOut: AuthModule['signOut'];
       GoogleAuthProvider: AuthModule['GoogleAuthProvider'];
     };
@@ -111,6 +109,8 @@ function getAuthModule(): AuthModule | null {
       instance,
       onAuthStateChanged,
       signInWithCredential,
+      signInWithEmailAndPassword,
+      createUserWithEmailAndPassword,
       signOut,
       GoogleAuthProvider,
       currentUser: () => instance.currentUser,
@@ -121,22 +121,71 @@ function getAuthModule(): AuthModule | null {
   }
 }
 
+function mapProviders(user: MinimalFirebaseUser): AuthProviderId[] {
+  const ids = (user.providerData ?? []).map(p => p.providerId);
+  const providers: AuthProviderId[] = [];
+  if (ids.includes('google.com')) providers.push('google');
+  if (ids.includes('apple.com')) providers.push('apple');
+  if (ids.includes('password')) providers.push('password');
+  if (providers.length === 0) providers.push('password');
+  return providers;
+}
+
 function mapFirebaseUser(user: MinimalFirebaseUser | null): AuthUser | null {
   if (!user) return null;
   return {
     uid: user.uid,
     email: user.email,
     displayName: user.displayName,
-    providers: ['google'],
+    providers: mapProviders(user),
   };
+}
+
+function requireAuth(): AuthModule {
+  const auth = getAuthModule();
+  if (!auth) {
+    throw new Error('Firebase Auth is unavailable on this device/build.');
+  }
+  return auth;
+}
+
+function normalizeEmail(email: string): string {
+  return email.trim().toLowerCase();
+}
+
+function mapAuthError(error: unknown, fallback: string): Error {
+  const code =
+    error && typeof error === 'object' && 'code' in error
+      ? String((error as { code: unknown }).code)
+      : '';
+  switch (code) {
+    case 'auth/invalid-email':
+      return new Error('Enter a valid email address.');
+    case 'auth/user-disabled':
+      return new Error('This account is disabled.');
+    case 'auth/user-not-found':
+    case 'auth/wrong-password':
+    case 'auth/invalid-credential':
+    case 'auth/invalid-login-credentials':
+      return new Error('Email or password is wrong.');
+    case 'auth/email-already-in-use':
+      return new Error('That email already has an account. Sign in instead.');
+    case 'auth/weak-password':
+      return new Error('Use a password with at least 6 characters.');
+    case 'auth/too-many-requests':
+      return new Error('Too many tries. Wait a bit and try again.');
+    case 'auth/network-request-failed':
+      return new Error('Network error. Check your connection.');
+    default:
+      if (error instanceof Error && error.message) {
+        return new Error(error.message);
+      }
+      return new Error(fallback);
+  }
 }
 
 let googleSignInConfigured = false;
 
-/**
- * Throws rather than configuring Google Sign-In with a placeholder: a silent
- * misconfiguration here looks like a random sign-in failure on device.
- */
 function ensureGoogleSignInConfigured(): void {
   if (googleSignInConfigured) return;
   const webClientId = GOOGLE_WEB_CLIENT_ID.trim();
@@ -151,10 +200,7 @@ function ensureGoogleSignInConfigured(): void {
 
 export class FirebaseAuthServiceAdapter implements IAuthService {
   async signInWithGoogle(): Promise<AuthUser> {
-    const auth = getAuthModule();
-    if (!auth) {
-      throw new Error('Firebase Auth is unavailable on this device/build.');
-    }
+    const auth = requireAuth();
     ensureGoogleSignInConfigured();
 
     const GoogleSignin = getGoogleSignin();
@@ -184,6 +230,53 @@ export class FirebaseAuthServiceAdapter implements IAuthService {
       throw new Error('Firebase sign-in did not return a user.');
     }
     return mapped;
+  }
+
+  async signInWithEmail(email: string, password: string): Promise<AuthUser> {
+    const auth = requireAuth();
+    const normalized = normalizeEmail(email);
+    if (!normalized || !password) {
+      throw new Error('Enter email and password.');
+    }
+    try {
+      const { user } = await auth.signInWithEmailAndPassword(
+        auth.instance,
+        normalized,
+        password
+      );
+      const mapped = mapFirebaseUser(user);
+      if (!mapped) {
+        throw new Error('Sign-in did not return a user.');
+      }
+      return mapped;
+    } catch (e) {
+      throw mapAuthError(e, 'Could not sign in with email.');
+    }
+  }
+
+  async createAccountWithEmail(email: string, password: string): Promise<AuthUser> {
+    const auth = requireAuth();
+    const normalized = normalizeEmail(email);
+    if (!normalized || !password) {
+      throw new Error('Enter email and password.');
+    }
+    if (password.length < 6) {
+      throw new Error('Use a password with at least 6 characters.');
+    }
+    try {
+      const { user } = await auth.createUserWithEmailAndPassword(
+        auth.instance,
+        normalized,
+        password
+      );
+      const mapped = mapFirebaseUser(user);
+      if (!mapped) {
+        throw new Error('Account create did not return a user.');
+      }
+      return mapped;
+    } catch (e) {
+      throw mapAuthError(e, 'Could not create account.');
+    }
   }
 
   async signOut(): Promise<void> {

@@ -105,7 +105,7 @@ android {
         // Overridable in CI: ./gradlew bundleRelease -PuntilVersionCode=N
         // Keep above Wear versionCode when both ship in the same Play listing.
         versionCode (
-            (project.findProperty("untilVersionCode") ?: "20").toString().toInteger()
+            (project.findProperty("untilVersionCode") ?: "24").toString().toInteger()
         )
         versionName "1.2"
     }
