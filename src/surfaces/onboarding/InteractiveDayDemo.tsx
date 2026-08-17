@@ -191,7 +191,7 @@ function LiveDayRing({
       <Animated.View
         pointerEvents="none"
         style={[
-          StyleSheet.absoluteFillObject,
+          StyleSheet.absoluteFill,
           { transform: [{ rotate: orbitRotate }] },
         ]}
       >

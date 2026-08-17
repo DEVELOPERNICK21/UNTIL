@@ -346,7 +346,7 @@ export function PeriodGlyph({
         <Animated.View
           pointerEvents="none"
           style={[
-            StyleSheet.absoluteFillObject,
+            StyleSheet.absoluteFill,
             {
               borderRadius: size / 2,
               borderWidth: 2,
@@ -359,7 +359,7 @@ export function PeriodGlyph({
 
         <Animated.View
           style={[
-            StyleSheet.absoluteFillObject,
+            StyleSheet.absoluteFill,
             { transform: [{ scale: beat }] },
           ]}
         >
@@ -422,7 +422,7 @@ export function PeriodGlyph({
           {kind === 'day' ? (
             <Animated.View
               style={[
-                StyleSheet.absoluteFillObject,
+                StyleSheet.absoluteFill,
                 { transform: [{ rotate: shouldAnimate ? rotate : '0deg' }] },
               ]}
             >
@@ -452,7 +452,7 @@ export function PeriodGlyph({
           {kind === 'year' ? (
             <Animated.View
               style={[
-                StyleSheet.absoluteFillObject,
+                StyleSheet.absoluteFill,
                 { transform: [{ rotate: shouldAnimate ? rotate : '0deg' }] },
               ]}
             >
@@ -476,7 +476,7 @@ export function PeriodGlyph({
           {kind === 'month' ? (
             <Animated.View
               style={[
-                StyleSheet.absoluteFillObject,
+                StyleSheet.absoluteFill,
                 {
                   transform: [
                     { scaleY: pageScale },
@@ -526,7 +526,7 @@ export function PeriodGlyph({
           ) : null}
 
           {kind === 'life' ? (
-            <View style={StyleSheet.absoluteFillObject} pointerEvents="none">
+            <View style={StyleSheet.absoluteFill} pointerEvents="none">
               <Svg width={size} height={size} viewBox="0 0 36 36">
                 <Path
                   d="M18 25.2s-6.6-4-6.6-8.4c0-2.4 1.85-4 3.95-4 1.35 0 2.3.75 2.65 1.5.35-.75 1.3-1.5 2.65-1.5 2.1 0 3.95 1.6 3.95 4 0 4.4-6.6 8.4-6.6 8.4z"

@@ -72,7 +72,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
   },
   labelContainer: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     alignItems: 'center',
     justifyContent: 'center',
   },

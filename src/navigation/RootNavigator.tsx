@@ -494,7 +494,7 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(0, 0, 0, 0.26)',
   },
   themePulseRing: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     borderWidth: 1.2,
     borderRadius: 16,
   },
@@ -505,7 +505,7 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(0, 0, 0, 0.35)',
   },
   themeTransitionOverlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     overflow: 'hidden',
   },
   themeTransitionCircle: {

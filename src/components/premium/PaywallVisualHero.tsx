@@ -195,7 +195,7 @@ const styles = StyleSheet.create({
     marginBottom: Spacing[3],
   },
   emberCenter: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     alignItems: 'center',
     justifyContent: 'center',
   },

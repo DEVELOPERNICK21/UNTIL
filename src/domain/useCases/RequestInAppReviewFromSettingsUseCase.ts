@@ -1,5 +1,10 @@
 import type { IInAppReviewService } from '../ports/IInAppReviewService';
 
+/**
+ * Settings "Rate UNTIL" must open the public store listing.
+ * In-app review is for unsolicited prompts only: the OS may no-op, and
+ * Google/Apple tell you not to call it from a Rate button.
+ */
 export class RequestInAppReviewFromSettingsUseCase {
   constructor(
     private readonly reviewService: IInAppReviewService,
@@ -11,20 +16,10 @@ export class RequestInAppReviewFromSettingsUseCase {
 
   async execute(): Promise<void> {
     try {
-      if (this.reviewService.isAvailable()) {
-        await this.reviewService.requestReview();
-        this.onEvent?.('review_requested', { source: 'settings' });
-        return;
-      }
-    } catch {
-      // Fall through to the store listing.
-    }
-
-    try {
       await this.reviewService.openStoreListing();
       this.onEvent?.('review_store_fallback', { source: 'settings' });
     } catch {
-      // The fallback is best effort.
+      // The listing open is best effort.
     }
   }
 }

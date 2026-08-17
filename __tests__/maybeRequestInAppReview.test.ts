@@ -159,21 +159,35 @@ describe('MaybeRequestInAppReviewUseCase', () => {
 });
 
 describe('RequestInAppReviewFromSettingsUseCase', () => {
-  it('falls back to store listing when request fails', async () => {
-    const { reviewService, calls } = createFakes({
-      requestThrows: true,
-    });
-    const uc = new RequestInAppReviewFromSettingsUseCase(reviewService);
+  it('opens the store listing and never uses in-app review', async () => {
+    const { reviewService, calls } = createFakes();
+    const events: string[] = [];
+    const uc = new RequestInAppReviewFromSettingsUseCase(
+      reviewService,
+      name => {
+        events.push(name);
+      },
+    );
     await uc.execute();
-    expect(calls.requestReview).toBe(1);
+    expect(calls.requestReview).toBe(0);
     expect(calls.openStoreListing).toBe(1);
+    expect(events).toEqual(['review_store_fallback']);
   });
 
-  it('falls back when unavailable', async () => {
+  it('still opens the listing when the native module is missing', async () => {
     const { reviewService, calls } = createFakes({ available: false });
     const uc = new RequestInAppReviewFromSettingsUseCase(reviewService);
     await uc.execute();
     expect(calls.requestReview).toBe(0);
     expect(calls.openStoreListing).toBe(1);
+  });
+
+  it('swallows listing errors', async () => {
+    const { reviewService } = createFakes();
+    reviewService.openStoreListing = async () => {
+      throw new Error('no store');
+    };
+    const uc = new RequestInAppReviewFromSettingsUseCase(reviewService);
+    await expect(uc.execute()).resolves.toBeUndefined();
   });
 });

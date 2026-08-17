@@ -1,6 +1,10 @@
 import { Linking, Platform } from 'react-native';
 import type { IInAppReviewService } from '../../domain/ports/IInAppReviewService';
-import { IOS_APP_STORE_ID, PLAY_STORE_LISTING_URL } from '../../config/storeUrls';
+import {
+  IOS_APP_STORE_ID,
+  PLAY_STORE_LISTING_URL,
+  PLAY_STORE_MARKET_URL,
+} from '../../config/storeUrls';
 
 type StoreReviewModule = {
   requestReview: () => void | Promise<void>;
@@ -36,7 +40,11 @@ export class StoreReviewAdapter implements IInAppReviewService {
 
   async openStoreListing(): Promise<void> {
     if (Platform.OS === 'android') {
-      await Linking.openURL(PLAY_STORE_LISTING_URL);
+      try {
+        await Linking.openURL(PLAY_STORE_MARKET_URL);
+      } catch {
+        await Linking.openURL(PLAY_STORE_LISTING_URL);
+      }
       return;
     }
     if (Platform.OS === 'ios' && IOS_APP_STORE_ID.trim()) {

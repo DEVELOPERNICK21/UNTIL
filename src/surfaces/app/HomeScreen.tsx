@@ -5,7 +5,6 @@ import {
   Animated,
   Easing,
   Pressable,
-  TouchableOpacity,
   ScrollView,
   useWindowDimensions,
   NativeSyntheticEvent,
@@ -22,6 +21,7 @@ import {
   ProgressLine,
   PeriodGlyph,
   Ember,
+  FAB,
 } from '../../ui';
 import type { PeriodGlyphKind } from '../../ui';
 import {
@@ -37,7 +37,6 @@ import {
   FontFamily,
   getProgressColor,
   useTheme,
-  Shadows,
   feelForPeriod,
   homeHeroSupport,
   timeOfDayLabel,
@@ -684,17 +683,15 @@ export function HomeScreen() {
         </View>
 
         {pageIndex === 0 ? (
-          <TouchableOpacity
-            style={[
-              styles.fab,
-              {
-                backgroundColor: theme.percent,
-                right: Spacing[4],
-                bottom: Math.max(insets.bottom, Spacing[3]) + Spacing[2],
-              },
-            ]}
+          <FAB
             onPress={handleFabPress}
-            activeOpacity={0.85}
+            label="Tasks"
+            accessibilityLabel="Today's tasks"
+            style={{
+              position: 'absolute',
+              right: Spacing[4],
+              bottom: Math.max(insets.bottom, Spacing[3]) + Spacing[2],
+            }}
           >
             <Svg width={24} height={24} viewBox="0 0 24 24" fill="none">
               <Rect
@@ -735,7 +732,7 @@ export function HomeScreen() {
                 strokeLinecap="round"
               />
             </Svg>
-          </TouchableOpacity>
+          </FAB>
         ) : null}
       </ScreenGradient>
     </View>
@@ -853,14 +850,5 @@ const styles = StyleSheet.create({
   },
   settingsLink: {
     textDecorationLine: 'underline',
-  },
-  fab: {
-    position: 'absolute',
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    justifyContent: 'center',
-    alignItems: 'center',
-    ...Shadows.fab,
   },
 });

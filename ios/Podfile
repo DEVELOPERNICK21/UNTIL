@@ -1,3 +1,9 @@
+# RN 0.84+ precompiled RN Core breaks @react-native-firebase under
+# use_frameworks! :static (non-modular React-Core headers in RNFBApp).
+# Build RN from source until RNFB ships a prebuilt-core-compatible release.
+ENV['RCT_USE_PREBUILT_RNCORE'] = '0'
+ENV['RCT_USE_RN_DEP'] = '0'
+
 # Resolve react_native_pods.rb with node to allow for hoisting
 require Pod::Executable.execute_command('node', ['-p',
   'require.resolve(
@@ -47,11 +53,15 @@ target 'UNTIL' do
     )
 
     # Xcode 26+ / Apple Clang: fmt 11.0.2 consteval fails in format-inl.h (RN #55601).
+    # RNFB + use_frameworks! :static: allow React-Core headers in framework modules.
     installer.pods_project.targets.each do |target|
-      next unless target.name == 'fmt'
-
       target.build_configurations.each do |build_config|
-        build_config.build_settings['CLANG_CXX_LANGUAGE_STANDARD'] = 'c++17'
+        if target.name == 'fmt'
+          build_config.build_settings['CLANG_CXX_LANGUAGE_STANDARD'] = 'c++17'
+        end
+        if target.name.start_with?('RNFB')
+          build_config.build_settings['CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES'] = 'YES'
+        end
       end
     end
 
