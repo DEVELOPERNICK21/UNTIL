@@ -100,6 +100,10 @@ export function CountdownsScreen() {
                 if (!hasDeadline) setShowPicker(true);
               }}
               disabled={hasDeadline}
+              accessibilityRole="button"
+              accessibilityLabel={`Target date: ${toDateString(newDate)}`}
+              accessibilityHint="Tap to select deadline target date"
+              accessibilityState={{ disabled: hasDeadline }}
             >
               <Text variant="body" color="primary">
                 {toDateString(newDate)}
@@ -121,6 +125,8 @@ export function CountdownsScreen() {
               <TouchableOpacity
                 style={styles.pickerDone}
                 onPress={() => setShowPicker(false)}
+                accessibilityRole="button"
+                accessibilityLabel="Done selecting date"
               >
                 <Text variant="caption" color="primary">
                   Done
@@ -134,6 +140,9 @@ export function CountdownsScreen() {
               ]}
               onPress={handleAdd}
               disabled={!newTitle.trim() || hasDeadline}
+              accessibilityRole="button"
+              accessibilityLabel="Add deadline"
+              accessibilityState={{ disabled: !newTitle.trim() || hasDeadline }}
             >
               <Text variant="caption" style={styles.addButtonText}>
                 Add
@@ -171,6 +180,8 @@ export function CountdownsScreen() {
                       onPress={() => handleRemove(item)}
                       style={styles.deleteBtn}
                       hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+                      accessibilityRole="button"
+                      accessibilityLabel={`Remove deadline ${item.title}`}
                     >
                       <Text variant="caption" style={styles.deleteText}>
                         Remove
