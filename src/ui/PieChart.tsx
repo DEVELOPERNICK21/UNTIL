@@ -67,7 +67,7 @@ function describeArcFull(
   ].join(' ');
 }
 
-export function PieChart({
+function PieChartComponent({
   data,
   size,
   strokeWidth = 0,
@@ -139,6 +139,12 @@ export function PieChart({
     </View>
   );
 }
+
+/**
+ * Memoized to prevent trigonometric arc path recalculations (Math.cos/sin) and SVG DOM
+ * re-renders when parent views (e.g. TaskReportContent) re-render without data changes.
+ */
+export const PieChart = React.memo(PieChartComponent);
 
 const styles = StyleSheet.create({
   wrap: {},

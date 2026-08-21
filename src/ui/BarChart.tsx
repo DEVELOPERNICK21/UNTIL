@@ -27,7 +27,7 @@ interface BarChartProps {
   showLegend?: boolean;
 }
 
-export function BarChart({
+function BarChartComponent({
   data,
   width,
   barColor = '#34C759',
@@ -49,7 +49,6 @@ export function BarChart({
         style={styles.svg}
       >
         {data.map((point, i) => {
-          const total = point.value + (point.value2 ?? 0);
           const x = MARGIN_LEFT + i * (barWidth + barGap);
           const h1 = maxVal > 0 ? (point.value / maxVal) * PLOT_HEIGHT : 0;
           const h2 = maxVal > 0 && point.value2 != null ? (point.value2 / maxVal) * PLOT_HEIGHT : 0;
@@ -117,6 +116,12 @@ export function BarChart({
     </View>
   );
 }
+
+/**
+ * Memoized to avoid re-computing SVG bar layouts and re-rendering SVG elements
+ * when parent components (e.g. TaskReportContent) re-render with identical data.
+ */
+export const BarChart = React.memo(BarChartComponent);
 
 const styles = StyleSheet.create({
   wrap: {},
