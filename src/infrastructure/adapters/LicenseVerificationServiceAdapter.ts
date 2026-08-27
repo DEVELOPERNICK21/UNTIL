@@ -48,8 +48,12 @@ export class LicenseVerificationServiceAdapter implements ILicenseVerificationSe
 
   async verify(licenseKey: string, deviceId: string): Promise<VerificationResult> {
     try {
-      const params = new URLSearchParams({ licenseKey, deviceId });
-      const res = await fetch(`${API_BASE_URL}/verify?${params}`, { method: 'GET' });
+      const body = { licenseKey: licenseKey.trim(), deviceId };
+      const res = await fetch(`${API_BASE_URL}/verify`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
       const data = (await res.json()) as {
         valid?: boolean;
         error?: string;
