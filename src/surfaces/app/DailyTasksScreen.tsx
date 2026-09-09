@@ -14,12 +14,13 @@ import {
 } from 'react-native';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { useDailyTasks, useWidgetSyncActions } from '../../hooks';
+import { useDailyTasks, useTodayIso, useWidgetSyncActions } from '../../hooks';
 import type { RootStackParamList } from '../../navigation/RootNavigator';
 import { Text, ScreenGradient, Card, ProgressLine } from '../../ui';
 import { Spacing, Colors, Radius, Typography, FontFamily } from '../../theme';
 import type { DailyTask, TaskCategory } from '../../types';
 import { EmberLocalDock } from '../../components/engagement/EmberLocalDock';
+import { TaskMoveSheet } from '../../components/tasks/TaskMoveSheet';
 import { setEmberModalCoveringSource } from '../../services/emberSurface';
 
 const TASK_CATEGORIES: { value: TaskCategory; label: string }[] = [
@@ -30,10 +31,6 @@ const TASK_CATEGORIES: { value: TaskCategory; label: string }[] = [
   { value: 'other', label: 'Other' },
 ];
 
-function todayIso(): string {
-  return new Date().toISOString().slice(0, 10);
-}
-
 function categoryLabel(cat: TaskCategory): string {
   return TASK_CATEGORIES.find(c => c.value === cat)?.label ?? cat;
 }
@@ -43,6 +40,7 @@ interface TaskRowProps {
   goalTitle?: string | null;
   onToggle: () => void;
   onEdit: () => void;
+  onMove?: () => void;
   onRemove: () => void;
 }
 
@@ -51,6 +49,7 @@ function TaskRow({
   goalTitle,
   onToggle,
   onEdit,
+  onMove,
   onRemove,
 }: TaskRowProps) {
   const scaleAnim = useRef(new Animated.Value(1)).current;
@@ -141,6 +140,20 @@ function TaskRow({
                 )}
               </Text>
             </View>
+            {!task.completed && onMove ? (
+              <TouchableOpacity
+                onPress={e => {
+                  e?.stopPropagation?.();
+                  onMove();
+                }}
+                style={styles.actionBtn}
+                hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+              >
+                <Text variant="caption" style={styles.actionText}>
+                  Move
+                </Text>
+              </TouchableOpacity>
+            ) : null}
             <TouchableOpacity
               onPress={e => {
                 e?.stopPropagation?.();
@@ -177,7 +190,7 @@ export function DailyTasksScreen() {
     useNavigation<
       NativeStackNavigationProp<RootStackParamList, 'DailyTasks'>
     >();
-  const today = todayIso();
+  const today = useTodayIso();
   const {
     tasks,
     stats,
@@ -186,6 +199,7 @@ export function DailyTasksScreen() {
     toggleTask,
     updateTask,
     removeTask,
+    moveTasks,
     getGoalTitle,
   } = useDailyTasks(today);
   const { syncDailyTasksWidget } = useWidgetSyncActions();
@@ -196,6 +210,11 @@ export function DailyTasksScreen() {
   const [editingTask, setEditingTask] = React.useState<DailyTask | null>(null);
   const [editTitle, setEditTitle] = React.useState('');
   const [editCategory, setEditCategory] = React.useState<TaskCategory>('other');
+  const [moveTargetIds, setMoveTargetIds] = React.useState<string[] | null>(
+    null,
+  );
+  const [moveSheetTitle, setMoveSheetTitle] = React.useState('Move task');
+  const [moveShowToday, setMoveShowToday] = React.useState(false);
 
   useFocusEffect(
     useCallback(() => {
@@ -241,6 +260,26 @@ export function DailyTasksScreen() {
   const closeEdit = useCallback(() => {
     setEditingTask(null);
   }, []);
+
+  const openMove = useCallback((task: DailyTask) => {
+    setMoveTargetIds([task.id]);
+    setMoveSheetTitle('Move task');
+    setMoveShowToday(false);
+  }, []);
+
+  const closeMove = useCallback(() => {
+    setMoveTargetIds(null);
+  }, []);
+
+  const handleMoveDate = useCallback(
+    (dateIso: string) => {
+      if (moveTargetIds == null) return;
+      moveTasks(moveTargetIds, dateIso);
+      syncDailyTasksWidget();
+      setMoveTargetIds(null);
+    },
+    [moveTargetIds, moveTasks, syncDailyTasksWidget],
+  );
 
   const handleSaveEdit = useCallback(() => {
     if (!editingTask) return;
@@ -424,6 +463,7 @@ export function DailyTasksScreen() {
                 }
                 onToggle={() => handleToggle(task.id)}
                 onEdit={() => openEdit(task)}
+                onMove={() => openMove(task)}
                 onRemove={() => handleRemove(task)}
               />
             ))
@@ -539,6 +579,13 @@ export function DailyTasksScreen() {
       {editingTask == null ? (
         <EmberLocalDock place="DailyTasks" autoIntro />
       ) : null}
+      <TaskMoveSheet
+        visible={moveTargetIds != null}
+        title={moveSheetTitle}
+        showTodayOption={moveShowToday}
+        onClose={closeMove}
+        onSelectDate={handleMoveDate}
+      />
     </View>
   );
 }
