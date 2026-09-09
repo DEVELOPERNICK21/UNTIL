@@ -4,6 +4,7 @@
  */
 
 import type { ITaskRepository } from '../../domain/repository/ITaskRepository';
+import { applyMoveTask } from '../../domain/tasks/taskMove';
 import type { DailyTask } from '../../types';
 import { STORAGE_KEYS } from '../../persistence/schema';
 import { getString, setString } from '../../persistence/mmkv';
@@ -81,6 +82,14 @@ export class MmkvTaskRepository implements ITaskRepository {
   removeTask(id: string): void {
     const all = loadAllTasks().filter((t) => t.id !== id);
     saveAllTasks(all);
+    this.notifySubscribers();
+  }
+
+  moveTask(id: string, date: string): void {
+    const all = loadAllTasks();
+    const next = applyMoveTask(all, id, date);
+    if (next === all) return;
+    saveAllTasks(next);
     this.notifySubscribers();
   }
 

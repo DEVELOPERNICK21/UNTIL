@@ -12,5 +12,6 @@ export interface ITaskRepository {
   updateTask(id: string, patch: Partial<Pick<DailyTask, 'title' | 'category'>>): void;
   toggleTask(id: string): void;
   removeTask(id: string): void;
+  moveTask(id: string, date: string): void;
   subscribe(callback: Subscriber): () => void;
 }
