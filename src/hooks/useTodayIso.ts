@@ -25,7 +25,11 @@ export function useTodayIso(): string {
     const sub = AppState.addEventListener('change', state => {
       if (state === 'active') sync();
     });
-    return () => sub.remove();
+    const interval = setInterval(sync, 60_000);
+    return () => {
+      sub.remove();
+      clearInterval(interval);
+    };
   }, [sync]);
 
   return today;

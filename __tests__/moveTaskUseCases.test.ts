@@ -1,6 +1,7 @@
 import type { ITaskRepository } from '../src/domain/repository/ITaskRepository';
 import type { DailyTask } from '../src/types';
 import { applyMoveTask } from '../src/domain/tasks/taskMove';
+import { GetStoredTasksForDayUseCase } from '../src/domain/useCases/GetStoredTasksForDayUseCase';
 import { MoveTaskUseCase } from '../src/domain/useCases/MoveTaskUseCase';
 import { MoveTasksUseCase } from '../src/domain/useCases/MoveTasksUseCase';
 
@@ -9,7 +10,7 @@ class FakeTaskRepo implements ITaskRepository {
   getTasksForDay(date: string) {
     return this.tasks.filter(t => t.date === date);
   }
-  addTask() {
+  addTask(_task: Omit<DailyTask, 'id' | 'completed'>): DailyTask {
     throw new Error('unused');
   }
   updateTask() {}
@@ -73,8 +74,31 @@ describe('MoveTasksUseCase', () => {
         sourceGoalTaskId: 't',
       },
     ];
-    new MoveTasksUseCase(repo).execute(['1', '2'], '2026-09-10');
+    const movedCount = new MoveTasksUseCase(repo).execute(
+      ['1', '2'],
+      '2026-09-10',
+    );
     expect(repo.tasks.find(t => t.id === '1')!.date).toBe('2026-09-09'); // skipped
     expect(repo.tasks.find(t => t.id === '2')!.date).toBe('2026-09-10');
+    expect(movedCount).toBe(1);
+  });
+});
+
+describe('GetStoredTasksForDayUseCase', () => {
+  it('reads stored tasks without materializing new tasks', () => {
+    const repo = new FakeTaskRepo();
+    repo.tasks = [
+      {
+        id: 'stored',
+        date: '2026-09-08',
+        title: 'Stored task',
+        category: 'other',
+        completed: false,
+      },
+    ];
+
+    expect(new GetStoredTasksForDayUseCase(repo).execute('2026-09-08')).toEqual(
+      repo.tasks,
+    );
   });
 });

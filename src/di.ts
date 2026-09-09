@@ -50,6 +50,7 @@ import { UpdateTaskUseCase } from './domain/useCases/UpdateTaskUseCase';
 import { RemoveTaskUseCase } from './domain/useCases/RemoveTaskUseCase';
 import { MoveTaskUseCase } from './domain/useCases/MoveTaskUseCase';
 import { MoveTasksUseCase } from './domain/useCases/MoveTasksUseCase';
+import { GetStoredTasksForDayUseCase } from './domain/useCases/GetStoredTasksForDayUseCase';
 import { GetDailyTaskStatsUseCase } from './domain/useCases/GetDailyTaskStatsUseCase';
 import { GetWeeklyTaskStatsUseCase } from './domain/useCases/GetWeeklyTaskStatsUseCase';
 import { GetMonthlyTaskStatsUseCase } from './domain/useCases/GetMonthlyTaskStatsUseCase';
@@ -394,6 +395,7 @@ export const addCountdownUseCase = new AddCountdownUseCase(
 );
 export const removeCountdownUseCase = new RemoveCountdownUseCase(countdownRepository);
 export const getTasksForDayUseCase = new GetTasksForDayUseCase(taskRepository, monthlyGoalRepository);
+export const getStoredTasksForDayUseCase = new GetStoredTasksForDayUseCase(taskRepository);
 export const addTaskUseCase = new AddTaskUseCase(taskRepository);
 export const toggleTaskUseCase = new ToggleTaskUseCase(taskRepository);
 export const updateTaskUseCase = new UpdateTaskUseCase(taskRepository);

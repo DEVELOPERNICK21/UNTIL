@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
 
-import { getTasksForDayUseCase, removeTaskUseCase } from '../di';
+import { getStoredTasksForDayUseCase, removeTaskUseCase } from '../di';
 import { addDaysIso } from '../domain/tasks/taskMove';
 import { getString, setString } from '../persistence/mmkv';
 import { STORAGE_KEYS } from '../persistence/schema';
@@ -33,12 +33,10 @@ export function useTaskCarryoverPrompt(today: string) {
 
   useFocusEffect(
     useCallback(() => {
-      const unfinished = getTasksForDayUseCase
+      const unfinished = getStoredTasksForDayUseCase
         .execute(yesterday)
         .filter(task => !task.completed);
-      const dismissed = getString(
-        STORAGE_KEYS.TASK_CARRYOVER_DISMISSED_DATE,
-      );
+      const dismissed = getString(STORAGE_KEYS.TASK_CARRYOVER_DISMISSED_DATE);
 
       setUnfinishedYesterday(unfinished);
       setVisible(unfinished.length > 0 && dismissed !== yesterday);

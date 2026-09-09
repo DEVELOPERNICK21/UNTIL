@@ -81,8 +81,9 @@ export function useDailyTasks(date: string) {
 
   const moveTasks = useCallback(
     (ids: string[], targetDate: string) => {
-      moveTasksUseCase.execute(ids, targetDate);
+      const movedCount = moveTasksUseCase.execute(ids, targetDate);
       refresh();
+      return movedCount;
     },
     [refresh]
   );

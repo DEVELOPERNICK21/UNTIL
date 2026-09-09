@@ -6,7 +6,9 @@ import {
 } from '../src/domain/tasks/taskMove';
 import type { DailyTask } from '../src/types';
 
-function task(partial: Partial<DailyTask> & Pick<DailyTask, 'id' | 'date'>): DailyTask {
+function task(
+  partial: Partial<DailyTask> & Pick<DailyTask, 'id' | 'date'>,
+): DailyTask {
   return {
     title: 'T',
     category: 'other',
@@ -18,6 +20,7 @@ function task(partial: Partial<DailyTask> & Pick<DailyTask, 'id' | 'date'>): Dai
 describe('taskMove', () => {
   it('addDaysIso adds calendar days in local time', () => {
     expect(addDaysIso('2026-09-09', 1)).toBe('2026-09-10');
+    expect(addDaysIso('2026-09-09', -1)).toBe('2026-09-08');
   });
 
   it('isLastHourOfDay is true after 23:00 local', () => {
@@ -52,5 +55,11 @@ describe('taskMove', () => {
     const moved = next.find(t => t.id === 'a')!;
     expect(moved.date).toBe('2026-09-10');
     expect(moved.order).toBe(3);
+  });
+
+  it('applyMoveTask returns the same reference for a no-op', () => {
+    const all = [task({ id: 'a', date: '2026-09-09', order: 1 })];
+
+    expect(applyMoveTask(all, 'a', '2026-09-09')).toBe(all);
   });
 });

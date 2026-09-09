@@ -11,6 +11,8 @@ import {
   Easing,
   RefreshControl,
   Pressable,
+  InteractionManager,
+  Platform,
 } from 'react-native';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -229,6 +231,7 @@ export function DailyTasksScreen() {
   );
   const [moveSheetTitle, setMoveSheetTitle] = React.useState('Move task');
   const [moveShowToday, setMoveShowToday] = React.useState(false);
+  const [moveIsCarryover, setMoveIsCarryover] = React.useState(false);
   const [pendingCarryoverMove, setPendingCarryoverMove] = React.useState<{
     taskIds: string[];
     title: string;
@@ -289,20 +292,35 @@ export function DailyTasksScreen() {
     setMoveTargetIds([task.id]);
     setMoveSheetTitle('Move task');
     setMoveShowToday(false);
+    setMoveIsCarryover(false);
   }, []);
 
   const closeMove = useCallback(() => {
     setMoveTargetIds(null);
+    setMoveIsCarryover(false);
   }, []);
 
   const handleMoveDate = useCallback(
     (dateIso: string) => {
       if (moveTargetIds == null) return;
-      moveTasks(moveTargetIds, dateIso);
+      const movedCount = moveTasks(moveTargetIds, dateIso);
       syncDailyTasksWidget();
       setMoveTargetIds(null);
+      setMoveIsCarryover(false);
+      if (moveIsCarryover) {
+        dismissCarryoverNotNow();
+        if (movedCount === 0) {
+          Alert.alert('Tasks already moved', 'These tasks are already on that day.');
+        }
+      }
     },
-    [moveTargetIds, moveTasks, syncDailyTasksWidget],
+    [
+      dismissCarryoverNotNow,
+      moveIsCarryover,
+      moveTargetIds,
+      moveTasks,
+      syncDailyTasksWidget,
+    ],
   );
 
   const handleSaveEdit = useCallback(() => {
@@ -352,22 +370,33 @@ export function DailyTasksScreen() {
 
   const handleChooseBulkMoveDate = useCallback(() => {
     setMoveTargetIds(unfinishedTaskIds);
-    setMoveSheetTitle(`Move ${unfinishedTasks.length} tasks`);
+    setMoveSheetTitle(
+      `Move ${unfinishedTasks.length} ${
+        unfinishedTasks.length === 1 ? 'task' : 'tasks'
+      }`,
+    );
     setMoveShowToday(false);
+    setMoveIsCarryover(false);
   }, [unfinishedTaskIds, unfinishedTasks.length]);
 
   const handleClearUnfinished = useCallback(() => {
-    Alert.alert(`Remove ${unfinishedTasks.length} unfinished tasks?`, undefined, [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Remove',
-        style: 'destructive',
-        onPress: () => {
-          removeTasks(unfinishedTaskIds);
-          syncDailyTasksWidget();
+    Alert.alert(
+      `Remove ${unfinishedTasks.length} unfinished ${
+        unfinishedTasks.length === 1 ? 'task' : 'tasks'
+      }?`,
+      undefined,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Remove',
+          style: 'destructive',
+          onPress: () => {
+            removeTasks(unfinishedTaskIds);
+            syncDailyTasksWidget();
+          },
         },
-      },
-    ]);
+      ],
+    );
   }, [
     removeTasks,
     syncDailyTasksWidget,
@@ -382,13 +411,16 @@ export function DailyTasksScreen() {
 
   const handleCarryoverMove = useCallback(
     (dateIso: string) => {
-      moveTasks(carryoverTaskIds, dateIso);
+      const movedCount = moveTasks(carryoverTaskIds, dateIso);
       syncDailyTasksWidget();
-      closeCarryoverPrompt();
+      dismissCarryoverNotNow();
+      if (movedCount === 0) {
+        Alert.alert('Tasks already moved', 'These tasks are already on that day.');
+      }
     },
     [
       carryoverTaskIds,
-      closeCarryoverPrompt,
+      dismissCarryoverNotNow,
       moveTasks,
       syncDailyTasksWidget,
     ],
@@ -397,7 +429,9 @@ export function DailyTasksScreen() {
   const handleCarryoverPickDate = useCallback(() => {
     setPendingCarryoverMove({
       taskIds: carryoverTaskIds,
-      title: `Move ${unfinishedYesterday.length} tasks`,
+      title: `Move ${unfinishedYesterday.length} ${
+        unfinishedYesterday.length === 1 ? 'task' : 'tasks'
+      }`,
     });
     closeCarryoverPrompt();
   }, [
@@ -412,12 +446,23 @@ export function DailyTasksScreen() {
     setMoveTargetIds(pendingCarryoverMove.taskIds);
     setMoveSheetTitle(pendingCarryoverMove.title);
     setMoveShowToday(false);
+    setMoveIsCarryover(true);
     setPendingCarryoverMove(null);
   }, [pendingCarryoverMove]);
 
+  useEffect(() => {
+    if (Platform.OS === 'ios' || pendingCarryoverMove == null) return;
+    const interaction = InteractionManager.runAfterInteractions(
+      handleCarryoverDismiss,
+    );
+    return () => interaction.cancel();
+  }, [handleCarryoverDismiss, pendingCarryoverMove]);
+
   const handleClearYesterday = useCallback(() => {
     Alert.alert(
-      `Remove ${unfinishedYesterday.length} unfinished tasks?`,
+      `Remove ${unfinishedYesterday.length} unfinished ${
+        unfinishedYesterday.length === 1 ? 'task' : 'tasks'
+      }?`,
       undefined,
       [
         { text: 'Cancel', style: 'cancel' },
@@ -508,7 +553,8 @@ export function DailyTasksScreen() {
                 color="primary"
                 style={styles.lastHourTitle}
               >
-                {unfinishedTasks.length} tasks still open
+                {unfinishedTasks.length}{' '}
+                {unfinishedTasks.length === 1 ? 'task' : 'tasks'} still open
               </Text>
               <View style={styles.lastHourActions}>
                 <TouchableOpacity
@@ -745,7 +791,9 @@ export function DailyTasksScreen() {
         transparent
         animationType="fade"
         onRequestClose={dismissCarryoverNotNow}
-        onDismiss={handleCarryoverDismiss}
+        onDismiss={
+          Platform.OS === 'ios' ? handleCarryoverDismiss : undefined
+        }
       >
         <Pressable
           style={styles.modalOverlay}
