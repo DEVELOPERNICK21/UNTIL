@@ -229,6 +229,10 @@ export function DailyTasksScreen() {
   );
   const [moveSheetTitle, setMoveSheetTitle] = React.useState('Move task');
   const [moveShowToday, setMoveShowToday] = React.useState(false);
+  const [pendingCarryoverMove, setPendingCarryoverMove] = React.useState<{
+    taskIds: string[];
+    title: string;
+  } | null>(null);
   const [lastHourTick, setLastHourTick] = React.useState(() => Date.now());
 
   useFocusEffect(
@@ -391,15 +395,25 @@ export function DailyTasksScreen() {
   );
 
   const handleCarryoverPickDate = useCallback(() => {
-    setMoveTargetIds(carryoverTaskIds);
-    setMoveSheetTitle(`Move ${unfinishedYesterday.length} tasks`);
-    setMoveShowToday(false);
+    setPendingCarryoverMove({
+      taskIds: carryoverTaskIds,
+      title: `Move ${unfinishedYesterday.length} tasks`,
+    });
     closeCarryoverPrompt();
   }, [
     carryoverTaskIds,
     closeCarryoverPrompt,
     unfinishedYesterday.length,
   ]);
+
+  const handleCarryoverDismiss = useCallback(() => {
+    if (pendingCarryoverMove == null) return;
+
+    setMoveTargetIds(pendingCarryoverMove.taskIds);
+    setMoveSheetTitle(pendingCarryoverMove.title);
+    setMoveShowToday(false);
+    setPendingCarryoverMove(null);
+  }, [pendingCarryoverMove]);
 
   const handleClearYesterday = useCallback(() => {
     Alert.alert(
@@ -731,6 +745,7 @@ export function DailyTasksScreen() {
         transparent
         animationType="fade"
         onRequestClose={dismissCarryoverNotNow}
+        onDismiss={handleCarryoverDismiss}
       >
         <Pressable
           style={styles.modalOverlay}
