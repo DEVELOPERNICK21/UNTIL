@@ -14,7 +14,12 @@ import {
 } from 'react-native';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { useDailyTasks, useTodayIso, useWidgetSyncActions } from '../../hooks';
+import {
+  useDailyTasks,
+  useTaskCarryoverPrompt,
+  useTodayIso,
+  useWidgetSyncActions,
+} from '../../hooks';
 import type { RootStackParamList } from '../../navigation/RootNavigator';
 import { Text, ScreenGradient, Card, ProgressLine } from '../../ui';
 import { Spacing, Colors, Radius, Typography, FontFamily } from '../../theme';
@@ -204,6 +209,13 @@ export function DailyTasksScreen() {
     removeTasks,
     getGoalTitle,
   } = useDailyTasks(today);
+  const {
+    visible: carryoverVisible,
+    unfinishedYesterday,
+    closePrompt: closeCarryoverPrompt,
+    dismissNotNow: dismissCarryoverNotNow,
+    clearYesterday,
+  } = useTaskCarryoverPrompt(today);
   const { syncDailyTasksWidget } = useWidgetSyncActions();
   const [newTitle, setNewTitle] = React.useState('');
   const [selectedCategory, setSelectedCategory] =
@@ -358,6 +370,54 @@ export function DailyTasksScreen() {
     unfinishedTaskIds,
     unfinishedTasks.length,
   ]);
+
+  const carryoverTaskIds = React.useMemo(
+    () => unfinishedYesterday.map(task => task.id),
+    [unfinishedYesterday],
+  );
+
+  const handleCarryoverMove = useCallback(
+    (dateIso: string) => {
+      moveTasks(carryoverTaskIds, dateIso);
+      syncDailyTasksWidget();
+      closeCarryoverPrompt();
+    },
+    [
+      carryoverTaskIds,
+      closeCarryoverPrompt,
+      moveTasks,
+      syncDailyTasksWidget,
+    ],
+  );
+
+  const handleCarryoverPickDate = useCallback(() => {
+    setMoveTargetIds(carryoverTaskIds);
+    setMoveSheetTitle(`Move ${unfinishedYesterday.length} tasks`);
+    setMoveShowToday(false);
+    closeCarryoverPrompt();
+  }, [
+    carryoverTaskIds,
+    closeCarryoverPrompt,
+    unfinishedYesterday.length,
+  ]);
+
+  const handleClearYesterday = useCallback(() => {
+    Alert.alert(
+      `Remove ${unfinishedYesterday.length} unfinished tasks?`,
+      undefined,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Remove',
+          style: 'destructive',
+          onPress: () => {
+            clearYesterday();
+            syncDailyTasksWidget();
+          },
+        },
+      ],
+    );
+  }, [clearYesterday, syncDailyTasksWidget, unfinishedYesterday.length]);
 
   const progress = stats.total > 0 ? stats.completed / stats.total : 0;
 
@@ -666,6 +726,83 @@ export function DailyTasksScreen() {
       {editingTask == null ? (
         <EmberLocalDock place="DailyTasks" autoIntro />
       ) : null}
+      <Modal
+        visible={carryoverVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={dismissCarryoverNotNow}
+      >
+        <Pressable
+          style={styles.modalOverlay}
+          onPress={dismissCarryoverNotNow}
+        >
+          <Pressable
+            style={styles.modalContent}
+            onPress={event => event.stopPropagation()}
+          >
+            <Text
+              variant="sectionTitle"
+              color="primary"
+              style={styles.modalTitle}
+            >
+              Yesterday&apos;s unfinished tasks
+            </Text>
+            <Text
+              variant="body"
+              color="secondary"
+              style={styles.carryoverDescription}
+            >
+              Move or remove {unfinishedYesterday.length} open{' '}
+              {unfinishedYesterday.length === 1 ? 'task' : 'tasks'}.
+            </Text>
+            <TouchableOpacity
+              style={[styles.carryoverButton, styles.carryoverPrimaryButton]}
+              onPress={() => handleCarryoverMove(today)}
+              accessibilityRole="button"
+            >
+              <Text variant="body" style={styles.carryoverPrimaryText}>
+                Today
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.carryoverButton}
+              onPress={() => handleCarryoverMove(addDaysIso(today, 1))}
+              accessibilityRole="button"
+            >
+              <Text variant="body" color="primary">
+                Tomorrow
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.carryoverButton}
+              onPress={handleCarryoverPickDate}
+              accessibilityRole="button"
+            >
+              <Text variant="body" color="primary">
+                Pick a date
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.carryoverButton}
+              onPress={handleClearYesterday}
+              accessibilityRole="button"
+            >
+              <Text variant="body" style={styles.carryoverClearText}>
+                Clear them
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.carryoverNotNowButton}
+              onPress={dismissCarryoverNotNow}
+              accessibilityRole="button"
+            >
+              <Text variant="body" color="secondary">
+                Not now
+              </Text>
+            </TouchableOpacity>
+          </Pressable>
+        </Pressable>
+      </Modal>
       <TaskMoveSheet
         visible={moveTargetIds != null}
         title={moveSheetTitle}
@@ -856,4 +993,25 @@ const styles = StyleSheet.create({
     borderRadius: Radius.sm,
   },
   modalButtonPrimaryText: { color: Colors.textPrimary },
+  carryoverDescription: { marginBottom: Spacing[3] },
+  carryoverButton: {
+    borderWidth: 1,
+    borderColor: Colors.divider,
+    borderRadius: Radius.md,
+    backgroundColor: Colors.cardLighter,
+    paddingVertical: Spacing[3],
+    paddingHorizontal: Spacing[4],
+    marginBottom: Spacing[2],
+    alignItems: 'center',
+  },
+  carryoverPrimaryButton: {
+    backgroundColor: Colors.accent,
+    borderColor: Colors.accent,
+  },
+  carryoverPrimaryText: { color: Colors.background },
+  carryoverClearText: { color: '#E9A23A' },
+  carryoverNotNowButton: {
+    paddingVertical: Spacing[2],
+    alignItems: 'center',
+  },
 });
