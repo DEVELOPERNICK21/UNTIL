@@ -8,7 +8,7 @@ import {
   RefreshControl,
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
-import { useTaskReportStats } from '../../hooks';
+import { useTaskReportStats, useTodayIso } from '../../hooks';
 import {
   Text,
   Card,
@@ -39,10 +39,6 @@ const CATEGORY_COLORS: Record<TaskCategory, string> = {
 const CHART_SIZE = Math.min(200, Dimensions.get('window').width - Spacing[4] * 2 - 32);
 const BAR_CHART_WIDTH = Dimensions.get('window').width - Spacing[4] * 2 - 8;
 
-function todayIso(): string {
-  return new Date().toISOString().slice(0, 10);
-}
-
 function shortDayLabel(dateStr: string): string {
   const d = new Date(dateStr + 'Z');
   const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -61,6 +57,7 @@ export function TaskReportContent({ embedded = false }: TaskReportContentProps) 
   const [period, setPeriod] = useState<ReportPeriod>('daily');
   const [refreshKey, setRefreshKey] = useState(0);
   const [refreshing, setRefreshing] = useState(false);
+  const today = useTodayIso();
 
   useFocusEffect(
     useCallback(() => {
@@ -74,7 +71,6 @@ export function TaskReportContent({ embedded = false }: TaskReportContentProps) 
     setTimeout(() => setRefreshing(false), 400);
   }, []);
 
-  const today = todayIso();
   const now = useMemo(() => new Date(), [refreshKey]);
   const { dailyStats, weeklyStats, monthlyStats } = useTaskReportStats({
     today,

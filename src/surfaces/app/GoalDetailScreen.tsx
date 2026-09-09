@@ -17,6 +17,7 @@ import { useGoalDetail, useWidgetSyncActions } from '../../hooks';
 import { Spacing, Colors, Radius, Typography } from '../../theme';
 import type { RootStackParamList } from '../../navigation/RootNavigator';
 import type { GoalTask, TaskCategory } from '../../types';
+import { todayIso } from '../../core/time/clock';
 
 const TASK_CATEGORIES: { value: TaskCategory; label: string }[] = [
   { value: 'health', label: 'Health' },
@@ -25,10 +26,6 @@ const TASK_CATEGORIES: { value: TaskCategory; label: string }[] = [
   { value: 'learning', label: 'Learning' },
   { value: 'other', label: 'Other' },
 ];
-
-function todayIso(): string {
-  return new Date().toISOString().slice(0, 10);
-}
 
 function categoryLabel(cat: TaskCategory): string {
   return TASK_CATEGORIES.find((c) => c.value === cat)?.label ?? cat;

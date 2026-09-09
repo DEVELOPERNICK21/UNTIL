@@ -20,12 +20,9 @@ import {
 } from '../persistence/mmkv';
 import { hasPremiumBundle } from '../domain/accessControl';
 import { getWidgetAccentColor } from '../config/widgetAccents';
+import { todayIso } from '../core/time/clock';
 
 const DEFAULT_ACCENT_HEX = getWidgetAccentColor('ember');
-
-function todayIso(): string {
-  return new Date().toISOString().slice(0, 10);
-}
 
 function readAccentColorForNative(): string {
   const stored = getString(STORAGE_KEYS.WIDGET_ACCENT_COLOR);

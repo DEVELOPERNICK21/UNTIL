@@ -11,6 +11,7 @@ export { useRegretProjection } from './useRegretProjection';
 export { useInterventionState } from './useInterventionState';
 export { useDailyNothingLimit } from './useDailyNothingLimit';
 export { useDailyTasks } from './useDailyTasks';
+export { useTodayIso } from './useTodayIso';
 export { useOnboardingState } from './useOnboardingState';
 export { useOnboardingFunnel } from './useOnboardingFunnel';
 export { useOnboardingQuizAnswers } from './useOnboardingQuizAnswers';

@@ -103,11 +103,19 @@ export function parseDate(isoDate: string): Date {
 }
 
 /**
- * Format Date to ISO date string (YYYY-MM-DD)
+ * Format Date to ISO date string (YYYY-MM-DD) in local timezone.
+ * Do not use `date.toISOString().slice(0, 10)` for day keys — that is UTC
+ * and stays on the previous calendar day for hours after local midnight
+ * in positive offsets (e.g. IST).
  */
 export function formatDateToIso(date: Date): string {
   const y = date.getFullYear();
   const m = String(date.getMonth() + 1).padStart(2, '0');
   const d = String(date.getDate()).padStart(2, '0');
   return `${y}-${m}-${d}`;
+}
+
+/** Today's local calendar day as YYYY-MM-DD. */
+export function todayIso(): string {
+  return formatDateToIso(new Date());
 }

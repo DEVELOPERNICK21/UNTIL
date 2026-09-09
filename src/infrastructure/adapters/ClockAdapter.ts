@@ -1,5 +1,10 @@
 import type { IClock } from '../../domain/ports/IClock';
-import { endOfDay, formatDateToIso, nowMs } from '../../core/time/clock';
+import {
+  endOfDay,
+  formatDateToIso,
+  nowMs,
+  todayIso as localTodayIso,
+} from '../../core/time/clock';
 
 export class ClockAdapter implements IClock {
   nowMs(): number {
@@ -7,7 +12,7 @@ export class ClockAdapter implements IClock {
   }
 
   todayIso(): string {
-    return formatDateToIso(new Date());
+    return localTodayIso();
   }
 
   formatDateToIso(date: Date): string {
