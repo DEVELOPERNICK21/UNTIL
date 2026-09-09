@@ -103,6 +103,8 @@ export function PeriodDetailScreen({
   const cardY = useRef(new Animated.Value(reduceMotion ? 0 : 24)).current;
   const persona = useRef(new Animated.Value(reduceMotion ? 1 : 0)).current;
 
+  const hasHero = hero != null;
+
   useEffect(() => {
     if (reduceMotion) {
       enter.setValue(1);
@@ -112,30 +114,40 @@ export function PeriodDetailScreen({
       return;
     }
 
+    // Hero screens (Life/Year dots) skip ring spring and use a shorter enter
+    // so the push transition isn't competing with heavy first paint.
+    const enterMs = hasHero ? 280 : 480;
+    const cardMs = hasHero ? 320 : 520;
+    const personaMs = hasHero ? 360 : 600;
+
     Animated.parallel([
       Animated.timing(enter, {
         toValue: 1,
-        duration: 480,
+        duration: enterMs,
         easing: Easing.out(Easing.cubic),
         useNativeDriver: true,
       }),
-      Animated.spring(ringScale, {
-        toValue: 1,
-        friction: 6,
-        tension: 70,
-        useNativeDriver: true,
-      }),
+      ...(hasHero
+        ? []
+        : [
+            Animated.spring(ringScale, {
+              toValue: 1,
+              friction: 6,
+              tension: 70,
+              useNativeDriver: true,
+            }),
+          ]),
       Animated.timing(cardY, {
         toValue: 0,
-        duration: 520,
-        delay: 120,
+        duration: cardMs,
+        delay: hasHero ? 40 : 120,
         easing: Easing.out(Easing.cubic),
         useNativeDriver: true,
       }),
       Animated.timing(persona, {
         toValue: 1,
-        duration: 600,
-        delay: 80,
+        duration: personaMs,
+        delay: hasHero ? 30 : 80,
         easing: Easing.out(Easing.cubic),
         useNativeDriver: true,
       }),
@@ -189,7 +201,16 @@ export function PeriodDetailScreen({
             );
     loop.start();
     return () => loop.stop();
-  }, [enter, ringScale, cardY, leftPulse, persona, kind, reduceMotion]);
+  }, [
+    enter,
+    ringScale,
+    cardY,
+    leftPulse,
+    persona,
+    kind,
+    reduceMotion,
+    hasHero,
+  ]);
 
   const bounceRing = () => {
     if (!reduceMotion) Vibration.vibrate(kind === 'life' ? 12 : 8);

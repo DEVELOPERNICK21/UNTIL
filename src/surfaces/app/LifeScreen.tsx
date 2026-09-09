@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, StyleSheet, TouchableOpacity } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -28,6 +28,18 @@ export function LifeScreen() {
     userProfile.deathAge,
     timeState.remainingDaysLife,
   );
+  // Let the stack push finish before building the weeks canvas.
+  const [gridReady, setGridReady] = useState(false);
+  useEffect(() => {
+    let cancelled = false;
+    const timer = setTimeout(() => {
+      if (!cancelled) setGridReady(true);
+    }, 0);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, []);
   const {
     visible: lifeUnlockPaywallVisible,
     dismiss: dismissLifeUnlockPaywall,
@@ -114,11 +126,15 @@ export function LifeScreen() {
             <Text style={[styles.heroWeeks, { color: theme.percent }]}>
               {livedWeeksLabel} weeks / {totalWeeksLabel} weeks
             </Text>
-            <LifeWeeksGrid
-              livedWeeks={renderLivedWeeks}
-              renderWeeks={renderWeeks}
-              fillColor={theme.percent}
-            />
+            {gridReady ? (
+              <LifeWeeksGrid
+                livedWeeks={renderLivedWeeks}
+                renderWeeks={renderWeeks}
+                fillColor={theme.percent}
+              />
+            ) : (
+              <View style={styles.gridPlaceholder} />
+            )}
           </View>
         }
       />
@@ -162,5 +178,9 @@ const styles = StyleSheet.create({
   heroWeeks: {
     textAlign: 'center',
     marginBottom: Spacing[5],
+  },
+  gridPlaceholder: {
+    width: '100%',
+    minHeight: 180,
   },
 });
