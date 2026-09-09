@@ -19,6 +19,7 @@ import type { RootStackParamList } from '../../navigation/RootNavigator';
 import { Text, ScreenGradient, Card, ProgressLine } from '../../ui';
 import { Spacing, Colors, Radius, Typography, FontFamily } from '../../theme';
 import type { DailyTask, TaskCategory } from '../../types';
+import { addDaysIso, isLastHourOfDay } from '../../domain/tasks/taskMove';
 import { EmberLocalDock } from '../../components/engagement/EmberLocalDock';
 import { TaskMoveSheet } from '../../components/tasks/TaskMoveSheet';
 import { setEmberModalCoveringSource } from '../../services/emberSurface';
@@ -200,6 +201,7 @@ export function DailyTasksScreen() {
     updateTask,
     removeTask,
     moveTasks,
+    removeTasks,
     getGoalTitle,
   } = useDailyTasks(today);
   const { syncDailyTasksWidget } = useWidgetSyncActions();
@@ -215,12 +217,18 @@ export function DailyTasksScreen() {
   );
   const [moveSheetTitle, setMoveSheetTitle] = React.useState('Move task');
   const [moveShowToday, setMoveShowToday] = React.useState(false);
+  const [lastHourTick, setLastHourTick] = React.useState(() => Date.now());
 
   useFocusEffect(
     useCallback(() => {
       // Local dock on this screen (add form); keep global Ember suppressed.
       setEmberModalCoveringSource('DailyTasksScreen', true);
-      return () => setEmberModalCoveringSource('DailyTasksScreen', false);
+      setLastHourTick(Date.now());
+      const interval = setInterval(() => setLastHourTick(Date.now()), 60_000);
+      return () => {
+        clearInterval(interval);
+        setEmberModalCoveringSource('DailyTasksScreen', false);
+      };
     }, []),
   );
 
@@ -310,6 +318,47 @@ export function DailyTasksScreen() {
     [removeTask, syncDailyTasksWidget],
   );
 
+  const unfinishedTasks = React.useMemo(
+    () => tasks.filter(task => !task.completed),
+    [tasks],
+  );
+  const unfinishedTaskIds = React.useMemo(
+    () => unfinishedTasks.map(task => task.id),
+    [unfinishedTasks],
+  );
+  const showLastHourBanner =
+    isLastHourOfDay(new Date(lastHourTick)) && unfinishedTasks.length > 0;
+
+  const handleMoveAllTomorrow = useCallback(() => {
+    moveTasks(unfinishedTaskIds, addDaysIso(today, 1));
+    syncDailyTasksWidget();
+  }, [moveTasks, syncDailyTasksWidget, today, unfinishedTaskIds]);
+
+  const handleChooseBulkMoveDate = useCallback(() => {
+    setMoveTargetIds(unfinishedTaskIds);
+    setMoveSheetTitle(`Move ${unfinishedTasks.length} tasks`);
+    setMoveShowToday(false);
+  }, [unfinishedTaskIds, unfinishedTasks.length]);
+
+  const handleClearUnfinished = useCallback(() => {
+    Alert.alert(`Remove ${unfinishedTasks.length} unfinished tasks?`, undefined, [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Remove',
+        style: 'destructive',
+        onPress: () => {
+          removeTasks(unfinishedTaskIds);
+          syncDailyTasksWidget();
+        },
+      },
+    ]);
+  }, [
+    removeTasks,
+    syncDailyTasksWidget,
+    unfinishedTaskIds,
+    unfinishedTasks.length,
+  ]);
+
   const progress = stats.total > 0 ? stats.completed / stats.total : 0;
 
   return (
@@ -377,6 +426,44 @@ export function DailyTasksScreen() {
               </Text>
             </Card>
           </TouchableOpacity>
+
+          {showLastHourBanner && (
+            <Card style={styles.lastHourBanner}>
+              <Text
+                variant="sectionTitle"
+                color="primary"
+                style={styles.lastHourTitle}
+              >
+                {unfinishedTasks.length} tasks still open
+              </Text>
+              <View style={styles.lastHourActions}>
+                <TouchableOpacity
+                  style={[styles.lastHourButton, styles.lastHourPrimaryButton]}
+                  onPress={handleMoveAllTomorrow}
+                >
+                  <Text variant="body" style={styles.lastHourPrimaryText}>
+                    Move all to tomorrow
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.lastHourButton}
+                  onPress={handleChooseBulkMoveDate}
+                >
+                  <Text variant="body" color="primary">
+                    Choose date
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.lastHourButton}
+                  onPress={handleClearUnfinished}
+                >
+                  <Text variant="body" style={styles.lastHourClearText}>
+                    Clear unfinished
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </Card>
+          )}
 
           <View style={styles.addSection}>
             <Text
@@ -608,6 +695,27 @@ const styles = StyleSheet.create({
   reportRow: { marginBottom: Spacing[2] },
   progress: { marginTop: Spacing[1] },
   reportLink: { marginTop: Spacing[2], textDecorationLine: 'underline' },
+  lastHourBanner: {
+    marginBottom: Spacing[4],
+    borderWidth: 1,
+    borderColor: '#E9A23A',
+  },
+  lastHourTitle: { marginBottom: Spacing[3] },
+  lastHourActions: { gap: Spacing[2] },
+  lastHourButton: {
+    paddingVertical: Spacing[2],
+    paddingHorizontal: Spacing[3],
+    borderRadius: Radius.md,
+    borderWidth: 1,
+    borderColor: Colors.divider,
+    alignItems: 'center',
+  },
+  lastHourPrimaryButton: {
+    backgroundColor: Colors.accent,
+    borderColor: Colors.accent,
+  },
+  lastHourPrimaryText: { color: Colors.background },
+  lastHourClearText: { color: '#E9A23A' },
   addSection: {
     marginBottom: Spacing[4],
     padding: Spacing[4],
