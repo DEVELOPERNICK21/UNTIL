@@ -60,6 +60,7 @@ export const STORAGE_KEYS = {
   // Daily tasks (task list + widget payload)
   DAILY_TASKS: 'daily.tasks',
   DAILY_TASKS_WIDGET: 'daily.tasks.widget',
+  TASK_CARRYOVER_DISMISSED_DATE: 'tasks.carryoverDismissedDate',
 
   // Hour calculation (stopwatch) widget — single timer, tap to start/stop
   HOUR_CALCULATION_WIDGET: 'hour.calculation.widget',

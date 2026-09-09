@@ -48,6 +48,8 @@ import { AddTaskUseCase } from './domain/useCases/AddTaskUseCase';
 import { ToggleTaskUseCase } from './domain/useCases/ToggleTaskUseCase';
 import { UpdateTaskUseCase } from './domain/useCases/UpdateTaskUseCase';
 import { RemoveTaskUseCase } from './domain/useCases/RemoveTaskUseCase';
+import { MoveTaskUseCase } from './domain/useCases/MoveTaskUseCase';
+import { MoveTasksUseCase } from './domain/useCases/MoveTasksUseCase';
 import { GetDailyTaskStatsUseCase } from './domain/useCases/GetDailyTaskStatsUseCase';
 import { GetWeeklyTaskStatsUseCase } from './domain/useCases/GetWeeklyTaskStatsUseCase';
 import { GetMonthlyTaskStatsUseCase } from './domain/useCases/GetMonthlyTaskStatsUseCase';
@@ -396,6 +398,8 @@ export const addTaskUseCase = new AddTaskUseCase(taskRepository);
 export const toggleTaskUseCase = new ToggleTaskUseCase(taskRepository);
 export const updateTaskUseCase = new UpdateTaskUseCase(taskRepository);
 export const removeTaskUseCase = new RemoveTaskUseCase(taskRepository);
+export const moveTaskUseCase = new MoveTaskUseCase(taskRepository);
+export const moveTasksUseCase = new MoveTasksUseCase(taskRepository);
 export const getDailyTaskStatsUseCase = new GetDailyTaskStatsUseCase(taskRepository);
 export const getWeeklyTaskStatsUseCase = new GetWeeklyTaskStatsUseCase(
   taskRepository,

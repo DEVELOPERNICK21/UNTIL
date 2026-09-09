@@ -8,6 +8,8 @@ import {
   getTasksForDayUseCase,
   getDailyTaskStatsUseCase,
   getGoalUseCase,
+  moveTaskUseCase,
+  moveTasksUseCase,
   observeDailyTasksUseCase,
   removeTaskUseCase,
   toggleTaskUseCase,
@@ -69,11 +71,36 @@ export function useDailyTasks(date: string) {
     [refresh]
   );
 
+  const moveTask = useCallback(
+    (id: string, targetDate: string) => {
+      moveTaskUseCase.execute(id, targetDate);
+      refresh();
+    },
+    [refresh]
+  );
+
+  const moveTasks = useCallback(
+    (ids: string[], targetDate: string) => {
+      moveTasksUseCase.execute(ids, targetDate);
+      refresh();
+    },
+    [refresh]
+  );
+
+  const removeTasks = useCallback(
+    (ids: string[]) => {
+      for (const id of ids) removeTaskUseCase.execute(id);
+      refresh();
+    },
+    [refresh]
+  );
+
   const getGoalTitle = useCallback((goalId: string): string | null => {
     return getGoalUseCase.execute(goalId)?.title ?? null;
   }, []);
 
   useEffect(() => {
+    refresh();
     return observeDailyTasksUseCase.subscribe(refresh);
   }, [refresh]);
 
@@ -85,6 +112,9 @@ export function useDailyTasks(date: string) {
     toggleTask,
     updateTask,
     removeTask,
+    moveTask,
+    moveTasks,
+    removeTasks,
     getGoalTitle,
   };
 }
