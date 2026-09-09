@@ -9,7 +9,8 @@ Critical and Important whole-branch findings are fixed.
 - Added `GetStoredTasksForDayUseCase` and switched the carryover prompt to it, so reading yesterday never materializes repeat-daily goal tasks.
 - Made bulk moves return the number of tasks actually moved.
 - Marked carryover move choices as handled, including duplicate-only no-ops, and added an already-on-target-day alert.
-- Added an Android `InteractionManager.runAfterInteractions` path for opening `TaskMoveSheet` after the carryover modal closes. iOS continues to use `Modal.onDismiss`.
+- Added an Android deferred-open path for `TaskMoveSheet` after the carryover modal closes (`setTimeout(fn, 0)`). iOS continues to use `Modal.onDismiss`.
+- Replaced deprecated `InteractionManager.runAfterInteractions` with `setTimeout(fn, 0)` so tests stay warning-free.
 - Added a 60-second refresh inside `useTodayIso` so a focused task screen changes day after local midnight.
 - Fixed test repository and renderer typing issues.
 - Pluralized one-task banner, move, and clear copy.

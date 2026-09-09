@@ -1,11 +1,5 @@
 import React from 'react';
-import {
-  Alert,
-  InteractionManager,
-  Modal,
-  Platform,
-  TouchableOpacity,
-} from 'react-native';
+import { Alert, Modal, Platform, TouchableOpacity } from 'react-native';
 import ReactTestRenderer from 'react-test-renderer';
 
 import { DailyTasksScreen } from '../src/surfaces/app/DailyTasksScreen';
@@ -124,17 +118,13 @@ describe('DailyTasksScreen carryover move sheet', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockMoveTasks.mockReturnValue(1);
-    jest
-      .spyOn(InteractionManager, 'runAfterInteractions')
-      .mockImplementation(callback => {
-        (callback as () => void)();
-        return {
-          cancel: jest.fn(),
-        } as unknown as ReturnType<
-          typeof InteractionManager.runAfterInteractions
-        >;
-      });
   });
+
+  async function flushDeferredOpen() {
+    await ReactTestRenderer.act(async () => {
+      await new Promise<void>(resolve => setTimeout(resolve, 0));
+    });
+  }
 
   it('opens the move sheet after closing carryover on Android and moves selected tasks', async () => {
     let renderer!: ReactTestRenderer.ReactTestRenderer;
@@ -156,6 +146,7 @@ describe('DailyTasksScreen carryover move sheet', () => {
     await ReactTestRenderer.act(async () => {
       pickDateButton!.props.onPress();
     });
+    await flushDeferredOpen();
 
     expect(mockCloseCarryoverPrompt).toHaveBeenCalledTimes(1);
     const carryoverModal = renderer.root

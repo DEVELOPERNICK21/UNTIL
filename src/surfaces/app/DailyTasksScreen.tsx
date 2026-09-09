@@ -11,7 +11,6 @@ import {
   Easing,
   RefreshControl,
   Pressable,
-  InteractionManager,
   Platform,
 } from 'react-native';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
@@ -452,10 +451,8 @@ export function DailyTasksScreen() {
 
   useEffect(() => {
     if (Platform.OS === 'ios' || pendingCarryoverMove == null) return;
-    const interaction = InteractionManager.runAfterInteractions(
-      handleCarryoverDismiss,
-    );
-    return () => interaction.cancel();
+    const timeoutId = setTimeout(handleCarryoverDismiss, 0);
+    return () => clearTimeout(timeoutId);
   }, [handleCarryoverDismiss, pendingCarryoverMove]);
 
   const handleClearYesterday = useCallback(() => {
