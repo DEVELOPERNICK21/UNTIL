@@ -16,7 +16,35 @@ This doc explains how to sign your app for the Play Store and **never lose your 
 
 ## One-time setup (do this once per app)
 
-### 1. Generate the release keystore
+Signing secrets never go in `android/gradle.properties` (that file is committed). Local release builds read gitignored `android/app/keystore.properties`. CI (Codemagic) uses the `UNTILAPP` keystore identity and `CM_KEYSTORE_*` env vars.
+
+### Already have a Play upload `.jks`
+
+Use the existing key. Do not generate a new one.
+
+1. Copy the JKS to `android/app/until-release.jks` (gitignored).
+2. Copy the example and fill in the real alias and passwords:
+
+```bash
+cd android/app
+cp keystore.properties.example keystore.properties
+```
+
+```properties
+storeFile=until-release.jks
+storePassword=YOUR_STORE_PASSWORD
+keyAlias=YOUR_KEY_ALIAS
+keyPassword=YOUR_KEY_PASSWORD
+```
+
+3. Back up the JKS file plus alias and both passwords in a password manager.
+4. Confirm Codemagic’s `UNTILAPP` identity is this same JKS.
+
+To build Wear locally with the same key, copy `keystore.properties` to `android/wear/` and set `storeFile=../app/until-release.jks`.
+
+Then skip to [Building release AAB and APK](#building-release-aab-and-apk).
+
+### 1. Generate the release keystore (new apps only)
 
 Run this in a terminal (from any directory). You’ll be asked for passwords and a few details; **remember the passwords** and store them safely.
 
@@ -159,12 +187,12 @@ Follow the one-time setup above, then build again.
 
 | Step | Action |
 |------|--------|
-| **Once** | Generate `until-release.keystore` with `keytool` |
-| **Once** | Create `android/app/keystore.properties` from the example and set passwords + path |
+| **Once** | Copy your existing Play upload `.jks` to `android/app/until-release.jks`, or generate a PKCS12 keystore with `keytool` |
+| **Once** | Create `android/app/keystore.properties` from the example and set `storeFile`, passwords, and alias |
 | **Once** | Back up the keystore file and passwords somewhere safe |
 | **Every release** | Run `npm run android:release-aab` (or `assembleRelease` for APK) and upload the AAB to Play Console |
 
-The keystore and `keystore.properties` are **not** in git. Only you have them; keep backups so you never lose the ability to update Until: Days left on the Play Store.
+The `.jks` / `.keystore` file and `keystore.properties` are **not** in git. Only you have them; keep backups so you never lose the ability to update Until: Days left on the Play Store.
 
 ---
 

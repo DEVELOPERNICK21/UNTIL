@@ -33,6 +33,7 @@ local.properties
 .cxx/
 # Keystores: do not commit. Back up release keystore + passwords securely (see docs/ANDROID_RELEASE_BUILD.md).
 *.keystore
+*.jks
 android/app/keystore.properties
 android/wear/keystore.properties
 .kotlin/

@@ -8,6 +8,7 @@ export { Card } from './Card';
 export { GlassCard } from './GlassCard';
 export { PeriodGlyph } from './PeriodGlyph';
 export type { PeriodGlyphKind } from './PeriodGlyph';
+export { PeriodCardBackdrop } from './PeriodCardBackdrop';
 export { ThemeModeGlyph } from './ThemeModeGlyph';
 export { Ember } from './Ember';
 export type { EmberMood } from './Ember';

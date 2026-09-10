@@ -18,8 +18,8 @@ import {
   Text,
   ScreenGradient,
   GlassCard,
-  ProgressLine,
   PeriodGlyph,
+  PeriodCardBackdrop,
   Ember,
   FAB,
 } from '../../ui';
@@ -37,7 +37,6 @@ import {
   FontFamily,
   getProgressColor,
   useTheme,
-  feelForPeriod,
   homeHeroSupport,
   timeOfDayLabel,
 } from '../../theme';
@@ -169,7 +168,6 @@ const TimeBlock = React.memo(function TimeBlock({
   passedLabel,
   leftLabel,
   progress,
-  passedPct,
   leftPct,
   index = 0,
   scrollY,
@@ -208,54 +206,37 @@ const TimeBlock = React.memo(function TimeBlock({
   }, [opacity, enterY, index, reduceMotion]);
 
   const content = (
-    <GlassCard style={styles.block}>
-      <View style={styles.blockHeader}>
+    <GlassCard style={styles.tile}>
+      <PeriodCardBackdrop kind={glyph} />
+      <View style={styles.tileTop}>
         <PeriodGlyph
           kind={glyph}
-          size={36}
+          size={28}
           accent={progressColor}
           progress={progress}
           pressed={pressed}
           animated={!reduceMotion}
         />
-        <View style={styles.headerText}>
-          <Text
-            variant="sectionTitle"
-            color="secondary"
-            style={styles.blockTitle}
-          >
-            {title}
-          </Text>
-          <Text variant="caption" color="secondary">
-            {leftPct}% left · {passedLabel} passed
-          </Text>
-        </View>
+        <Text variant="caption" color="secondary" style={styles.tileTitle}>
+          {title}
+        </Text>
       </View>
-
       <Text
         variant="title"
-        style={[styles.heroLeft, { color: leftColor }]}
+        numberOfLines={2}
+        style={[styles.tileValue, { color: leftColor }]}
         accessibilityRole="text"
       >
         {leftLabel}
       </Text>
-      <Text variant="caption" color="secondary" style={styles.heroCaption}>
-        left
+      <Text variant="micro" color="secondary">
+        {leftPct}% left
       </Text>
-      <Text variant="caption" color="secondary" style={styles.feelLine}>
-        {feelForPeriod(glyph, progress)}
-      </Text>
-
-      <ProgressLine
-        progress={progress}
-        fillColor={progressColor}
-        style={styles.progress}
-      />
     </GlassCard>
   );
 
   return (
-    <Animated.View style={{ opacity, transform: [{ translateY: enterY }] }}>
+    <Animated.View style={[styles.tileAnim, { opacity, transform: [{ translateY: enterY }] }]}>
       <Animated.View style={reveal}>
         {onPress ? (
           <Pressable
@@ -263,7 +244,7 @@ const TimeBlock = React.memo(function TimeBlock({
             onPressIn={() => setPressed(true)}
             onPressOut={() => setPressed(false)}
             accessibilityRole="button"
-            accessibilityLabel={`${title}: ${leftLabel} left, ${passedPct}% passed. Tap for details.`}
+            accessibilityLabel={`${title}: ${leftLabel} left, ${passedLabel} passed. Tap for details.`}
           >
             {content}
           </Pressable>
@@ -337,6 +318,8 @@ export function HomeScreen() {
   } = useDailyReflection();
   const scrollY = useRef(new Animated.Value(0)).current;
   const { width: pageWidth } = useWindowDimensions();
+  const tileGap = Spacing[2];
+  const tileWidth = (pageWidth - Spacing[4] * 2 - tileGap) / 2;
   const [pageIndex, setPageIndex] = useState(0);
   const loggedReportSwipe = useRef(false);
 
@@ -521,116 +504,119 @@ export function HomeScreen() {
                 />
               ) : null}
 
-              <TodayTimeBlock
-                index={0}
-                scrollY={scrollY}
-                reduceMotion={reduceMotion}
-                onPress={handleDayPress}
-              />
-
-              <TimeBlock
-                index={1}
-                scrollY={scrollY}
-                reduceMotion={reduceMotion}
-                glyph="month"
-                title="This month"
-                passedLabel={`${month.passedDays} days`}
-                leftLabel={`${month.leftDays} days`}
-                progress={timeState.month}
-                passedPct={month.passedPct}
-                leftPct={month.leftPct}
-                onPress={handleMonthPress}
-              />
-
-              <TimeBlock
-                index={2}
-                scrollY={scrollY}
-                reduceMotion={reduceMotion}
-                glyph="year"
-                title="This year"
-                passedLabel={`${year.passedDays} days`}
-                leftLabel={`${year.leftDays} days`}
-                progress={timeState.year}
-                passedPct={year.passedPct}
-                leftPct={year.leftPct}
-                onPress={handleYearPress}
-              />
-
-              {hasBirthDate ? (
-                canAccessLife ? (
-                  <TimeBlock
-                    index={3}
+              <View style={styles.tileGrid}>
+                <View style={[styles.tileCell, { width: tileWidth }]}>
+                  <TodayTimeBlock
+                    index={0}
                     scrollY={scrollY}
                     reduceMotion={reduceMotion}
-                    glyph="life"
-                    title="Your life"
-                    passedLabel={`${life.passedDays.toLocaleString()} days`}
-                    leftLabel={`${life.leftDays.toLocaleString()} days`}
-                    progress={timeState.life}
-                    passedPct={life.passedPct}
-                    leftPct={life.leftPct}
-                    onPress={handleLifePress}
+                    onPress={handleDayPress}
                   />
-                ) : (
-                  <GlassCard style={styles.block}>
-                    <View style={styles.blockHeader}>
-                      <PeriodGlyph
-                        kind="life"
-                        size={36}
-                        animated={!reduceMotion}
+                </View>
+                <View style={[styles.tileCell, { width: tileWidth }]}>
+                  <TimeBlock
+                    index={1}
+                    scrollY={scrollY}
+                    reduceMotion={reduceMotion}
+                    glyph="month"
+                    title="Month"
+                    passedLabel={`${month.passedDays} days`}
+                    leftLabel={`${month.leftDays} days`}
+                    progress={timeState.month}
+                    passedPct={month.passedPct}
+                    leftPct={month.leftPct}
+                    onPress={handleMonthPress}
+                  />
+                </View>
+                <View style={[styles.tileCell, { width: tileWidth }]}>
+                  <TimeBlock
+                    index={2}
+                    scrollY={scrollY}
+                    reduceMotion={reduceMotion}
+                    glyph="year"
+                    title="Year"
+                    passedLabel={`${year.passedDays} days`}
+                    leftLabel={`${year.leftDays} days`}
+                    progress={timeState.year}
+                    passedPct={year.passedPct}
+                    leftPct={year.leftPct}
+                    onPress={handleYearPress}
+                  />
+                </View>
+                <View style={[styles.tileCell, { width: tileWidth }]}>
+                  {hasBirthDate ? (
+                    canAccessLife ? (
+                      <TimeBlock
+                        index={3}
+                        scrollY={scrollY}
+                        reduceMotion={reduceMotion}
+                        glyph="life"
+                        title="Life"
+                        passedLabel={`${life.passedDays.toLocaleString()} days`}
+                        leftLabel={`${life.leftDays.toLocaleString()} days`}
+                        progress={timeState.life}
+                        passedPct={life.passedPct}
+                        leftPct={life.leftPct}
+                        onPress={handleLifePress}
                       />
-                      <Text
-                        variant="sectionTitle"
-                        color="secondary"
-                        style={styles.blockTitle}
+                    ) : (
+                      <Pressable
+                        onPress={handlePremiumPress}
+                        accessibilityRole="button"
+                        accessibilityLabel="Life is locked. Open Premium to unlock."
                       >
-                        Your life
-                      </Text>
-                    </View>
-                    <Text
-                      variant="body"
-                      color="secondary"
-                      style={styles.lifePrompt}
+                        <GlassCard style={styles.tile}>
+                          <PeriodCardBackdrop kind="life" />
+                          <View style={styles.tileTop}>
+                            <PeriodGlyph
+                              kind="life"
+                              size={28}
+                              animated={!reduceMotion}
+                            />
+                            <Text
+                              variant="caption"
+                              color="secondary"
+                              style={styles.tileTitle}
+                            >
+                              Life
+                            </Text>
+                          </View>
+                          <Text variant="caption" color="primary">
+                            Unlock
+                          </Text>
+                        </GlassCard>
+                      </Pressable>
+                    )
+                  ) : (
+                    <Pressable
+                      onPress={handleSettingsPress}
+                      accessibilityRole="button"
+                      accessibilityLabel="Set birth date in Settings to see life progress."
                     >
-                      Premium, free preview, or a short unlock is required for Life
-                      details. Open Premium to subscribe or restore.
-                    </Text>
-                    <Text
-                      variant="caption"
-                      color="primary"
-                      style={styles.settingsLink}
-                      onPress={handlePremiumPress}
-                    >
-                      Unlock Premium
-                    </Text>
-                  </GlassCard>
-                )
-              ) : (
-                <GlassCard style={styles.block}>
-                  <View style={styles.blockHeader}>
-                    <PeriodGlyph kind="life" size={36} animated={!reduceMotion} />
-                    <Text
-                      variant="sectionTitle"
-                      color="secondary"
-                      style={styles.blockTitle}
-                    >
-                      Your life
-                    </Text>
-                  </View>
-                  <Text variant="body" color="secondary" style={styles.lifePrompt}>
-                    Set birth date in Settings to see how much life has passed and
-                    how much is left.
-                  </Text>
-                  <Text
-                    variant="caption"
-                    color="primary"
-                    style={styles.settingsLink}
-                    onPress={handleSettingsPress}
-                  >
-                    Open Settings
-                  </Text>
-                </GlassCard>
-              )}
+                      <GlassCard style={styles.tile}>
+                        <PeriodCardBackdrop kind="life" />
+                        <View style={styles.tileTop}>
+                          <PeriodGlyph
+                            kind="life"
+                            size={28}
+                            animated={!reduceMotion}
+                          />
+                          <Text
+                            variant="caption"
+                            color="secondary"
+                            style={styles.tileTitle}
+                          >
+                            Life
+                          </Text>
+                        </View>
+                        <Text variant="caption" color="primary">
+                          Set birth date
+                        </Text>
+                      </GlassCard>
+                    </Pressable>
+                  )}
+                </View>
+              </View>
 
               {!goalsFeatureEnabled ? (
                 <GlassCard style={styles.comingSoonBlock}>
@@ -804,51 +790,40 @@ const styles = StyleSheet.create({
     height: 6,
     borderRadius: 3,
   },
-  block: {
-    marginBottom: Spacing[4],
-  },
-  comingSoonBlock: {
-    marginBottom: Spacing[4],
-  },
-  blockHeader: {
+  tileGrid: {
     flexDirection: 'row',
-    alignItems: 'center',
+    flexWrap: 'wrap',
     gap: Spacing[2],
     marginBottom: Spacing[3],
   },
-  headerText: {
-    flex: 1,
-    gap: 2,
+  tileCell: {},
+  tileAnim: {
+    width: '100%',
   },
-  blockTitle: {
-    letterSpacing: 0.3,
+  tile: {
+    minHeight: 118,
+    padding: Spacing[2],
+  },
+  tileTop: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing[1],
+    marginBottom: Spacing[2],
+  },
+  tileTitle: {
+    letterSpacing: 0.2,
     flexShrink: 1,
   },
-  blockTitleAlone: {
-    marginBottom: Spacing[3],
-    letterSpacing: 0.3,
-  },
-  heroLeft: {
+  tileValue: {
     fontFamily: FontFamily.medium,
-    fontSize: 28,
+    fontSize: 20,
     marginBottom: 2,
   },
-  heroCaption: {
-    marginBottom: Spacing[2],
-  },
-  feelLine: {
+  comingSoonBlock: {
     marginBottom: Spacing[3],
-    fontStyle: 'italic',
-    opacity: 0.9,
-    lineHeight: 18,
   },
-  progress: {
-    marginTop: Spacing[1],
-  },
-  lifePrompt: {
+  blockTitleAlone: {
     marginBottom: Spacing[2],
-  },
-  settingsLink: {
-    textDecorationLine: 'underline',
+    letterSpacing: 0.3,
   },
 });

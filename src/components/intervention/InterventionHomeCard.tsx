@@ -2,7 +2,7 @@ import React, { useCallback } from 'react';
 import { View, StyleSheet, TouchableOpacity } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { Text, GlassCard, ProgressLine } from '../../ui';
+import { Text, GlassCard } from '../../ui';
 import {
   useAccessControl,
   useInterventionState,
@@ -37,9 +37,7 @@ export function InterventionHomeCard() {
 
   const nothingHours = totals.today.nothing;
   const trackingNothing = totals.currentCategory === 'nothing';
-  const progress = limitHours > 0 ? Math.min(1, nothingHours / limitHours) : 0;
   const limitCrossed = intervention.limitCrossed;
-  const overLimitHours = Math.max(0, nothingHours - limitHours);
   const remainingBeforeAlert = Math.max(0, limitHours - nothingHours);
 
   const goPremium = useCallback(() => {
@@ -70,36 +68,17 @@ export function InterventionHomeCard() {
       <GlassCard style={styles.card}>
         <View style={styles.headerRow}>
           <Text variant="caption" color="secondary" style={styles.eyebrow}>
-            Premium
+            Lost-time alerts
           </Text>
-          <View style={[styles.pill, { borderColor: theme.divider }]}>
-            <Text variant="micro" color="secondary">
-              Locked
+          <TouchableOpacity onPress={goPremium} hitSlop={8} activeOpacity={0.85}>
+            <Text variant="caption" style={{ color: theme.percent }}>
+              Unlock
             </Text>
-          </View>
+          </TouchableOpacity>
         </View>
-        <Text variant="title" style={{ color: theme.textPrimary }}>
-          Lost-time alerts
+        <Text variant="caption" color="secondary" numberOfLines={2} style={styles.hint}>
+          Log wasted hours. Get a nudge when you cross your daily limit.
         </Text>
-        <Text variant="body" color="secondary" style={styles.body}>
-          Log wasted hours and get a red moment when you cross your daily limit:
-          &quot;This day will never repeat.&quot;
-        </Text>
-        <TouchableOpacity
-          style={[styles.cta, { backgroundColor: theme.percent }]}
-          onPress={goPremium}
-          activeOpacity={0.85}
-        >
-          <Text
-            variant="body"
-            style={{
-              color: '#0E0E10',
-              fontFamily: getFontFamilyForWeight(Weight.semibold),
-            }}
-          >
-            Unlock intervention alerts
-          </Text>
-        </TouchableOpacity>
       </GlassCard>
     );
   }
@@ -115,49 +94,24 @@ export function InterventionHomeCard() {
         </Text>
       </View>
 
-      <ProgressLine
-        progress={progress}
-        fillColor={limitCrossed ? '#C45A4A' : theme.percent}
-        style={styles.progressLine}
-      />
-
       {limitCrossed && intervention.message ? (
-        <View
-          style={[
-            styles.alert,
-            {
-              backgroundColor: 'rgba(196, 90, 74, 0.14)',
-              borderColor: 'rgba(196, 90, 74, 0.35)',
-            },
-          ]}
+        <Text
+          variant="caption"
+          numberOfLines={2}
+          style={{
+            color: '#D4786A',
+            fontFamily: getFontFamilyForWeight(Weight.semibold),
+          }}
         >
-          <Text
-            variant="body"
-            style={{
-              color: '#D4786A',
-              fontFamily: getFontFamilyForWeight(Weight.semibold),
-              textAlign: 'center',
-            }}
-          >
-            {intervention.message}
-          </Text>
-          {overLimitHours > 0 ? (
-            <Text
-              variant="caption"
-              color="secondary"
-              style={styles.overLimitHint}
-            >
-              {formatHours(overLimitHours)} over your {formatHours(limitHours)} limit
-            </Text>
-          ) : null}
-        </View>
+          {intervention.message}
+        </Text>
       ) : (
-        <Text variant="caption" color="secondary" style={styles.hint}>
+        <Text variant="caption" color="secondary" numberOfLines={1} style={styles.hint}>
           {trackingNothing
-            ? 'Tracking wasted time now. Tap Stop when you refocus.'
+            ? 'Tracking now. Stop when you refocus.'
             : remainingBeforeAlert > 0
-              ? `${formatHours(remainingBeforeAlert)} left before the red alert.`
-              : 'Log scroll / doom time so UNTIL can nudge you before the day is gone.'}
+              ? `${formatHours(remainingBeforeAlert)} left before the alert.`
+              : 'Log scroll time before the day is gone.'}
         </Text>
       )}
 
@@ -174,6 +128,9 @@ export function InterventionHomeCard() {
           ]}
           onPress={handleToggleTrack}
           activeOpacity={0.8}
+          accessibilityLabel={
+            trackingNothing ? 'Stop tracking wasted time' : 'Track wasted time'
+          }
         >
           <Text
             variant="caption"
@@ -182,7 +139,7 @@ export function InterventionHomeCard() {
               fontFamily: getFontFamilyForWeight(Weight.medium),
             }}
           >
-            {trackingNothing ? 'Stop tracking' : 'Track wasted time'}
+            {trackingNothing ? 'Stop' : 'Track'}
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
@@ -222,9 +179,10 @@ export function InterventionHomeCard() {
 
 const styles = StyleSheet.create({
   card: {
-    marginBottom: Spacing[4],
-    padding: Spacing[4],
-    gap: Spacing[3],
+    marginBottom: Spacing[3],
+    paddingVertical: Spacing[2],
+    paddingHorizontal: Spacing[3],
+    gap: Spacing[2],
   },
   headerRow: {
     flexDirection: 'row',
@@ -232,50 +190,19 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   eyebrow: {
-    letterSpacing: 0.4,
-  },
-  pill: {
-    paddingHorizontal: Spacing[2],
-    paddingVertical: 2,
-    borderRadius: Radius.full ?? 999,
-    borderWidth: 1,
-  },
-  body: {
-    lineHeight: 22,
+    letterSpacing: 0.3,
   },
   hint: {
-    lineHeight: 18,
-  },
-  progressLine: {
-    alignSelf: 'stretch',
-    width: '100%',
-  },
-  alert: {
-    paddingVertical: Spacing[3],
-    paddingHorizontal: Spacing[3],
-    borderRadius: Radius.md,
-    borderWidth: StyleSheet.hairlineWidth * 2,
-    gap: Spacing[1],
-  },
-  overLimitHint: {
-    textAlign: 'center',
-    lineHeight: 18,
+    lineHeight: 16,
   },
   actions: {
     flexDirection: 'row',
     gap: Spacing[2],
-    flexWrap: 'wrap',
   },
   actionBtn: {
-    paddingVertical: Spacing[2],
-    paddingHorizontal: Spacing[3],
+    paddingVertical: 6,
+    paddingHorizontal: Spacing[2],
     borderRadius: Radius.md,
     borderWidth: 1,
-  },
-  cta: {
-    marginTop: Spacing[1],
-    paddingVertical: Spacing[3],
-    borderRadius: Radius.md,
-    alignItems: 'center',
   },
 });

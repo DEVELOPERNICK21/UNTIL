@@ -57,7 +57,7 @@ export function TimeCoachCard({
     <GlassCard style={styles.card}>
       <View style={styles.headerRow}>
         <Text variant="caption" color="secondary" style={styles.overline}>
-          {reflection.category === 'weekly' ? 'WEEKLY REFLECTION' : 'TIME COACH'}
+          {reflection.category === 'weekly' ? 'Weekly' : 'Time coach'}
         </Text>
         <TouchableOpacity onPress={handleDismiss} hitSlop={10}>
           <Text variant="caption" color="secondary">
@@ -66,10 +66,20 @@ export function TimeCoachCard({
         </TouchableOpacity>
       </View>
 
-      <Text variant="sectionTitle" color="primary" style={styles.title}>
+      <Text
+        variant="sectionTitle"
+        color="primary"
+        numberOfLines={1}
+        style={styles.title}
+      >
         {reflection.title}
       </Text>
-      <Text variant="body" color="secondary" style={styles.message}>
+      <Text
+        variant="caption"
+        color="secondary"
+        numberOfLines={2}
+        style={styles.message}
+      >
         {reflection.message}
       </Text>
 
@@ -129,24 +139,25 @@ export function TimeCoachCard({
 
 const styles = StyleSheet.create({
   card: {
-    marginBottom: Spacing[4],
-    padding: Spacing[3],
+    marginBottom: Spacing[3],
+    paddingVertical: Spacing[2],
+    paddingHorizontal: Spacing[3],
   },
   headerRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: Spacing[2],
+    marginBottom: 4,
   },
   overline: {
-    letterSpacing: 1,
+    letterSpacing: 0.3,
   },
   title: {
-    marginBottom: Spacing[1],
+    marginBottom: 2,
   },
   message: {
-    lineHeight: 22,
-    marginBottom: Spacing[3],
+    lineHeight: 18,
+    marginBottom: Spacing[2],
   },
   footerRow: {
     flexDirection: 'row',
@@ -162,16 +173,16 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderRadius: Radius.full,
     paddingHorizontal: Spacing[2],
-    paddingVertical: 6,
+    paddingVertical: 4,
   },
   lockHint: {
     flex: 1,
-    lineHeight: 18,
+    lineHeight: 16,
   },
   cta: {
     borderWidth: 1,
     borderRadius: Radius.full,
     paddingHorizontal: Spacing[2],
-    paddingVertical: 6,
+    paddingVertical: 4,
   },
 });
