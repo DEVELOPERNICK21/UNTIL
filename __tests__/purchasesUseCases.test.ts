@@ -242,4 +242,17 @@ describe('ResetPurchasesUserUseCase', () => {
     expect(sub.getPurchaseType()).toBe(null);
     expect(onApplied).toHaveBeenCalledTimes(1);
   });
+
+  it('logs out then syncs, keeping store purchaseType when RC is empty', async () => {
+    const purchases = new FakePurchases();
+    purchases.customerInfo = emptyInfo;
+    const sub = fakeSub({ isPremium: true, purchaseType: 'yearly' });
+    await new ResetPurchasesUserUseCase(
+      purchases,
+      new SyncCustomerInfoUseCase(sub),
+    ).execute();
+    expect(purchases.loggedOut).toBe(true);
+    expect(sub.getIsPremium()).toBe(true);
+    expect(sub.getPurchaseType()).toBe('yearly');
+  });
 });

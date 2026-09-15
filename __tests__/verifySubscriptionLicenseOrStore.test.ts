@@ -104,6 +104,54 @@ describe('VerifySubscriptionUseCase license OR store', () => {
     expect(sub.getPurchaseType()).toBe('yearly');
   });
 
+  it('device mismatch revokes license only and keeps store premium', async () => {
+    const sub = fakeSub({
+      isPremium: true,
+      licenseKey: 'KEY',
+      deviceId: 'other-device',
+      lastVerifiedAt: Date.now(),
+      purchaseType: 'yearly',
+      purchaseDate: 1_700_000_000_000,
+      purchaseToken: 'store-token',
+    });
+    const licenseService: ILicenseVerificationService = {
+      activate: async () => ({ success: true }),
+      verify: async () => ({ valid: true }),
+    };
+    const uc = new VerifySubscriptionUseCase(sub, deviceIdProvider, licenseService);
+
+    const result = await uc.execute();
+
+    expect(result.valid).toBe(false);
+    expect(result.code).toBe('device_mismatch');
+    expect(sub.getLicenseKey()).toBeNull();
+    expect(sub.getDeviceId()).toBeNull();
+    expect(sub.getLastVerifiedAt()).toBe(0);
+    expect(sub.getIsPremium()).toBe(true);
+    expect(sub.getPurchaseType()).toBe('yearly');
+    expect(sub.getPurchaseDate()).toBe(1_700_000_000_000);
+    expect(sub.getPurchaseToken()).toBe('store-token');
+  });
+
+  it('does not clear isPremium when no license and no purchaseType', async () => {
+    const sub = fakeSub({
+      isPremium: true,
+      licenseKey: null,
+      purchaseType: null,
+    });
+    const licenseService: ILicenseVerificationService = {
+      activate: async () => ({ success: true }),
+      verify: async () => ({ valid: true }),
+    };
+    const uc = new VerifySubscriptionUseCase(sub, deviceIdProvider, licenseService);
+
+    const result = await uc.execute();
+
+    expect(result.valid).toBe(false);
+    expect(result.code).toBe('invalid');
+    expect(sub.getIsPremium()).toBe(true);
+  });
+
   it('invalid license without store purchase clears premium', async () => {
     const sub = fakeSub({
       isPremium: true,

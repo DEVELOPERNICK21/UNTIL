@@ -80,8 +80,9 @@ export class RevenueCatPurchasesRepository implements IPurchasesRepository {
 
   async getOfferings(): Promise<PurchasesOfferingDTO | null> {
     const offerings = await Purchases.getOfferings();
-    if (!offerings.current) return null;
-    return toOfferingDTO(offerings.current);
+    const offering = offerings.current ?? offerings.all?.['default'] ?? null;
+    if (!offering) return null;
+    return toOfferingDTO(offering);
   }
 
   async purchaseProductId(productId: string): Promise<CustomerInfoDTO> {

@@ -28,10 +28,7 @@ export class VerifySubscriptionUseCase {
       if (this.subscriptionRepository.getPurchaseType() != null) {
         return { valid: true };
       }
-      // No license — ensure premium is off
-      if (this.subscriptionRepository.getIsPremium()) {
-        this.subscriptionRepository.setIsPremium(false);
-      }
+      // RC sync owns store premium. Leave orphan isPremium until sync clears it.
       return { valid: false, code: 'invalid', message: 'No license' };
     }
 
@@ -39,10 +36,7 @@ export class VerifySubscriptionUseCase {
 
     // Device mismatch: user switched device without deactivating
     if (storedDeviceId && storedDeviceId !== deviceId) {
-      this.subscriptionRepository.setIsPremium(false);
-      this.subscriptionRepository.setLicenseKey(null);
-      this.subscriptionRepository.setDeviceId(null);
-      this.subscriptionRepository.setLastVerifiedAt(0);
+      this.revokeLicenseOnly();
       return { valid: false, code: 'device_mismatch', message: 'License is bound to another device' };
     }
 

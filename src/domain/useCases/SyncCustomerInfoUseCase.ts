@@ -11,6 +11,7 @@ export class SyncCustomerInfoUseCase {
   execute(info: CustomerInfoDTO): void {
     const plan = mapCustomerInfoToSyncPlan(info, {
       hasLicenseKey: Boolean(this.subscriptionRepository.getLicenseKey()?.trim()),
+      hasStorePurchase: this.subscriptionRepository.getPurchaseType() != null,
     });
     this.subscriptionRepository.setIsPremium(plan.setIsPremium);
     if (plan.clearStorePurchaseFields) {
@@ -18,7 +19,9 @@ export class SyncCustomerInfoUseCase {
       this.subscriptionRepository.setPurchaseDate(null);
       this.subscriptionRepository.setPurchaseToken(null);
     } else {
-      this.subscriptionRepository.setPurchaseType(plan.purchaseType);
+      if (plan.purchaseType != null) {
+        this.subscriptionRepository.setPurchaseType(plan.purchaseType);
+      }
       if (plan.purchaseDateMs != null) {
         this.subscriptionRepository.setPurchaseDate(plan.purchaseDateMs);
       }

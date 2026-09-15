@@ -15,7 +15,7 @@ describe('mapCustomerInfoToSyncPlan', () => {
         ],
         allPurchasedProductIds: ['yearly_subscription'],
       },
-      { hasLicenseKey: false }
+      { hasLicenseKey: false, hasStorePurchase: false }
     );
     expect(plan.setIsPremium).toBe(true);
     expect(plan.purchaseType).toBe('yearly');
@@ -37,25 +37,34 @@ describe('mapCustomerInfoToSyncPlan', () => {
         ],
         allPurchasedProductIds: ['lifetime_unlock'],
       },
-      { hasLicenseKey: false }
+      { hasLicenseKey: false, hasStorePurchase: false }
     );
     expect(plan.purchaseType).toBe('lifetime');
   });
 
-  it('clears store fields and premium when no entitlement and no license', () => {
+  it('clears store fields and premium when no entitlement, no license, and no store purchase', () => {
     const plan = mapCustomerInfoToSyncPlan(
       { activeEntitlements: [], allPurchasedProductIds: [] },
-      { hasLicenseKey: false }
+      { hasLicenseKey: false, hasStorePurchase: false }
     );
     expect(plan.setIsPremium).toBe(false);
     expect(plan.purchaseType).toBe(null);
     expect(plan.clearStorePurchaseFields).toBe(true);
   });
 
+  it('keeps premium and does not clear store fields when empty RC has existing store purchase', () => {
+    const plan = mapCustomerInfoToSyncPlan(
+      { activeEntitlements: [], allPurchasedProductIds: [] },
+      { hasLicenseKey: false, hasStorePurchase: true }
+    );
+    expect(plan.setIsPremium).toBe(true);
+    expect(plan.clearStorePurchaseFields).toBe(false);
+  });
+
   it('clears store fields but keeps premium true when license present', () => {
     const plan = mapCustomerInfoToSyncPlan(
       { activeEntitlements: [], allPurchasedProductIds: [] },
-      { hasLicenseKey: true }
+      { hasLicenseKey: true, hasStorePurchase: false }
     );
     expect(plan.setIsPremium).toBe(true);
     expect(plan.clearStorePurchaseFields).toBe(true);

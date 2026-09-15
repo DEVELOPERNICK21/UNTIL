@@ -5,7 +5,7 @@ export const PREMIUM_ENTITLEMENT_ID = 'premium';
 
 export function mapCustomerInfoToSyncPlan(
   info: CustomerInfoDTO,
-  opts: { hasLicenseKey: boolean }
+  opts: { hasLicenseKey: boolean; hasStorePurchase: boolean }
 ): CustomerInfoSyncPlan {
   const premiumEntitlement = info.activeEntitlements.find(
     (e) => e.identifier === PREMIUM_ENTITLEMENT_ID
@@ -26,6 +26,15 @@ export function mapCustomerInfoToSyncPlan(
       purchaseType: null,
       purchaseDateMs: null,
       clearStorePurchaseFields: true,
+    };
+  }
+
+  if (opts.hasStorePurchase) {
+    return {
+      setIsPremium: true,
+      purchaseType: null,
+      purchaseDateMs: null,
+      clearStorePurchaseFields: false,
     };
   }
 

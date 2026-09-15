@@ -69,4 +69,19 @@ describe('SyncCustomerInfoUseCase', () => {
     expect(sub.getIsPremium()).toBe(true);
     expect(sub.getPurchaseType()).toBe(null);
   });
+
+  it('keeps premium and purchaseType when empty RC has existing store purchase', () => {
+    const sub = fakeSub({
+      isPremium: true,
+      purchaseType: 'yearly',
+    });
+    sub.state.purchaseDate = 1_700_000_000_000;
+    sub.state.purchaseToken = 'store-token';
+    const uc = new SyncCustomerInfoUseCase(sub);
+    uc.execute({ activeEntitlements: [], allPurchasedProductIds: [] });
+    expect(sub.getIsPremium()).toBe(true);
+    expect(sub.getPurchaseType()).toBe('yearly');
+    expect(sub.getPurchaseDate()).toBe(1_700_000_000_000);
+    expect(sub.getPurchaseToken()).toBe('store-token');
+  });
 });
