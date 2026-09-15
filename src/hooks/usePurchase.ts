@@ -1,24 +1,24 @@
 /**
- * usePurchase — Play Billing surface for paywall (Android). Listeners are attached via ensurePlayBillingSession.
+ * usePurchase — RevenueCat offerings surface for the custom paywall.
  */
 
 import { useCallback, useState } from 'react';
 import {
-  ensurePlayBillingSession,
-  playBillingRepository,
+  ensurePurchasesConfigured,
+  getOfferingsUseCase,
+  purchasePackageUseCase,
   restorePurchasesUseCase,
 } from '../di';
-import { BILLING_PAYWALL_IDS, BILLING_PRODUCT_IDS } from '../config/billing';
+import { BILLING_PRODUCT_IDS } from '../config/billing';
+import {
+  mapOfferingPackagesToRows,
+  type OfferingProductRow,
+} from '../domain/billing/mapOfferingPackages';
+import type { PurchasePackageResult } from '../domain/useCases/PurchasePackageUseCase';
 
-export type BillingProductRow = {
-  productId: string;
-  title: string;
-  description?: string;
-  price: string;
-  currency?: string;
-};
+export type BillingProductRow = OfferingProductRow;
 
-const PAYWALL_PRODUCT_IDS = BILLING_PAYWALL_IDS;
+export type { PurchasePackageResult };
 
 export function usePurchase() {
   const [products, setProducts] = useState<BillingProductRow[]>([]);
@@ -27,8 +27,9 @@ export function usePurchase() {
   const getProducts = useCallback(async (): Promise<BillingProductRow[]> => {
     setLoading(true);
     try {
-      await ensurePlayBillingSession();
-      const list = await playBillingRepository.getProducts(PAYWALL_PRODUCT_IDS);
+      ensurePurchasesConfigured();
+      const offering = await getOfferingsUseCase.execute();
+      const list = mapOfferingPackagesToRows(offering);
       setProducts(list);
       return list;
     } finally {
@@ -36,17 +37,19 @@ export function usePurchase() {
     }
   }, []);
 
-  const requestPurchase = useCallback(async (productId: string): Promise<void> => {
-    await ensurePlayBillingSession();
-    await playBillingRepository.requestPurchase(productId);
-  }, []);
+  const requestPurchase = useCallback(
+    async (productId: string): Promise<PurchasePackageResult> => {
+      ensurePurchasesConfigured();
+      return purchasePackageUseCase.execute(productId);
+    },
+    []
+  );
 
   const restorePurchases = useCallback(async (): Promise<{ restored: boolean }> => {
-    await ensurePlayBillingSession();
+    ensurePurchasesConfigured();
     return restorePurchasesUseCase.execute();
   }, []);
 
-  /** Reserved for parity with spec; purchase updates run through PlayBillingRepository listeners. */
   const handlePurchaseUpdate = useCallback(() => {}, []);
 
   return {

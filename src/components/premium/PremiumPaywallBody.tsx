@@ -15,7 +15,6 @@ import {
   UIManager,
   Vibration,
 } from 'react-native';
-import { ErrorCode } from 'react-native-iap';
 import { Text } from '../../ui';
 import { usePurchase } from '../../hooks/usePurchase';
 import { useObserveSubscription } from '../../hooks/useObserveSubscription';
@@ -50,7 +49,6 @@ import {
 import {
   clearPendingPurchase,
   setPendingPurchase,
-  setPurchaseSuccessListener,
 } from '../../services/purchaseAnalyticsContext';
 import { PaywallVisualHero } from './PaywallVisualHero';
 import { PaywallLossFrame } from './PaywallLossFrame';
@@ -111,6 +109,7 @@ export function PremiumPaywallBody({
     productIds,
   } = usePurchase();
   const [restoring, setRestoring] = useState(false);
+  const [purchasing, setPurchasing] = useState(false);
   const [termsOpen, setTermsOpen] = useState(false);
   const [selectedPlanId, setSelectedPlanId] = useState(productIds.yearly);
   const [studentModalOpen, setStudentModalOpen] = useState(false);
@@ -121,17 +120,8 @@ export function PremiumPaywallBody({
     (typeof timeState.life === 'number' ? timeState.life : undefined);
 
   useEffect(() => {
-    if (Platform.OS === 'android') {
-      void getProducts().catch(() => {});
-    }
+    void getProducts().catch(() => {});
   }, [getProducts]);
-
-  useEffect(() => {
-    setPurchaseSuccessListener(() => {
-      onPurchaseSuccess?.();
-    });
-    return () => setPurchaseSuccessListener(null);
-  }, [onPurchaseSuccess]);
 
   const yearlyPrice = useMemo(
     () => priceLabel(products, productIds.yearly, FALLBACK_YEARLY_PRICE),
@@ -248,8 +238,11 @@ export function PremiumPaywallBody({
 
   const onBuy = useCallback(
     async (productId: string) => {
-      if (Platform.OS !== 'android') {
-        Alert.alert('Premium', 'Purchases are available on Android.');
+      if (purchasing || loading) {
+        return;
+      }
+      if (products.length === 0) {
+        void getProducts().catch(() => {});
         return;
       }
       if (
@@ -262,6 +255,7 @@ export function PremiumPaywallBody({
       }
       Vibration.vibrate(10);
       const priceDisplay = priceLabel(products, productId, '');
+      const wasTrialActive = access.trialActive;
       setPendingPurchase({
         plan_id: productId,
         source,
@@ -272,11 +266,10 @@ export function PremiumPaywallBody({
         source,
         price_display: priceDisplay,
       });
+      setPurchasing(true);
       try {
-        await requestPurchase(productId);
-      } catch (e: unknown) {
-        const err = e as { code?: string; message?: string };
-        if (err?.code === ErrorCode.UserCancelled) {
+        const result = await requestPurchase(productId);
+        if (result.status === 'cancelled') {
           clearPendingPurchase();
           void logAnalyticsEvent('premium_purchase_cancelled', {
             plan_id: productId,
@@ -284,6 +277,43 @@ export function PremiumPaywallBody({
           });
           return;
         }
+        if (result.status === 'error') {
+          clearPendingPurchase();
+          void logAnalyticsEvent('premium_purchase_failed', {
+            plan_id: productId,
+            source,
+            price_display: priceDisplay,
+            error_code: 'purchase_failed',
+            error_message: result.message,
+            payment_provider: 'revenuecat',
+          });
+          recordCrashError(
+            new Error(result.message),
+            'PremiumPaywallBody.requestPurchase'
+          );
+          Alert.alert(
+            'Purchase failed',
+            result.message ||
+              'Something went wrong. Check your connection and try again.'
+          );
+          return;
+        }
+        clearPendingPurchase();
+        void logAnalyticsEvent('premium_purchase_completed', {
+          plan_id: productId,
+          source,
+          price_display: priceDisplay,
+          payment_provider: 'revenuecat',
+        });
+        if (wasTrialActive) {
+          void logAnalyticsEvent('trial_preview_ended', {
+            converted: 1,
+            plan_id: productId,
+          });
+        }
+        onPurchaseSuccess?.();
+      } catch (e: unknown) {
+        const err = e as { code?: string; message?: string };
         clearPendingPurchase();
         void logAnalyticsEvent('premium_purchase_failed', {
           plan_id: productId,
@@ -291,7 +321,7 @@ export function PremiumPaywallBody({
           price_display: priceDisplay,
           error_code: err?.code ?? 'unknown',
           error_message: err?.message ?? 'Unknown error',
-          payment_provider: 'google_play',
+          payment_provider: 'revenuecat',
         });
         recordCrashError(e, 'PremiumPaywallBody.requestPurchase');
         Alert.alert(
@@ -299,9 +329,21 @@ export function PremiumPaywallBody({
           err?.message ??
             'Something went wrong. Check your connection and try again.'
         );
+      } finally {
+        setPurchasing(false);
       }
     },
-    [requestPurchase, products, source, productIds.yearlyStudent]
+    [
+      purchasing,
+      loading,
+      products,
+      getProducts,
+      requestPurchase,
+      source,
+      productIds.yearlyStudent,
+      access.trialActive,
+      onPurchaseSuccess,
+    ]
   );
 
   const onRestore = useCallback(async () => {
@@ -312,7 +354,7 @@ export function PremiumPaywallBody({
         restored ? 'Restored' : 'Nothing to restore',
         restored
           ? 'Your purchase has been restored.'
-          : 'No active purchase found for this Google account.'
+          : 'No active purchase found for this account.'
       );
       if (restored) {
         void logAnalyticsEvent('premium_restore_completed', { source });
@@ -327,13 +369,7 @@ export function PremiumPaywallBody({
     }
   }, [restorePurchases, onPurchaseSuccess, source]);
 
-  if (Platform.OS !== 'android') {
-    return (
-      <Text variant="body" color="secondary">
-        Premium purchases are available on Android via Google Play.
-      </Text>
-    );
-  }
+  const continueDisabled = purchasing || loading;
 
   return (
     <View>
@@ -427,6 +463,7 @@ export function PremiumPaywallBody({
           <TouchableOpacity
             style={[styles.continueBtn, { backgroundColor: theme.percent }]}
             onPress={() => void onBuy(selectedPlan.productId)}
+            disabled={continueDisabled}
             activeOpacity={0.85}
             accessibilityRole="button"
             accessibilityLabel={`Continue with ${selectedPlan.title} for ${selectedPlan.price}${
@@ -470,9 +507,9 @@ export function PremiumPaywallBody({
       {/* Compact trust chips */}
       <View style={styles.trustRow}>
         {[
-          'Cancel anytime in Play',
+          'Cancel anytime',
           'Day + Year stay free',
-          'Secure Google Play pay',
+          'Secure in-app purchase',
         ].map(signal => (
           <View
             key={signal}
