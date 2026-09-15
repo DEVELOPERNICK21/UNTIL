@@ -60,7 +60,7 @@ export class VerifySubscriptionUseCase {
       return { valid: true };
     }
 
-    this.revokePremium();
+    this.revokeLicenseOnly();
     return result;
   }
 
@@ -72,13 +72,13 @@ export class VerifySubscriptionUseCase {
     return Date.now() - lastVerified < OFFLINE_GRACE_MS;
   }
 
-  private revokePremium(): void {
-    this.subscriptionRepository.setIsPremium(false);
+  private revokeLicenseOnly(): void {
     this.subscriptionRepository.setLicenseKey(null);
     this.subscriptionRepository.setDeviceId(null);
     this.subscriptionRepository.setLastVerifiedAt(0);
-    this.subscriptionRepository.setPurchaseType(null);
-    this.subscriptionRepository.setPurchaseDate(null);
-    this.subscriptionRepository.setPurchaseToken(null);
+    const hasStore = this.subscriptionRepository.getPurchaseType() != null;
+    if (!hasStore) {
+      this.subscriptionRepository.setIsPremium(false);
+    }
   }
 }
