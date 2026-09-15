@@ -14,6 +14,8 @@ module.exports = {
           'UNTIL_POSTHOG_HOST',
           'UNTIL_POSTHOG_DEV',
           'UNTIL_GOOGLE_WEB_CLIENT_ID',
+          'REVENUECAT_API_KEY_IOS',
+          'REVENUECAT_API_KEY_ANDROID',
         ],
       },
     ],
