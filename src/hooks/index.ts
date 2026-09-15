@@ -3,6 +3,7 @@ export { useUpdateUserProfile } from './useUpdateUserProfile';
 export { useObserveSubscription } from './useObserveSubscription';
 export { useAccessControl } from './useAccessControl';
 export { usePurchase } from './usePurchase';
+export { usePresentRevenueCatPaywall } from './usePresentRevenueCatPaywall';
 export { useTrackLifeScreenVisit } from './useTrackLifeScreenVisit';
 export { useUpdateSubscription } from './useUpdateSubscription';
 export { useLogActivity } from './useLogActivity';

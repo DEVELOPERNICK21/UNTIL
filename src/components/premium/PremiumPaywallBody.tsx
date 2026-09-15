@@ -103,6 +103,8 @@ export function PremiumPaywallBody({
   const {
     products,
     loading,
+    productsError,
+    offeringsReady,
     getProducts,
     requestPurchase,
     restorePurchases,
@@ -241,8 +243,15 @@ export function PremiumPaywallBody({
       if (purchasing || loading) {
         return;
       }
-      if (products.length === 0) {
-        void getProducts().catch(() => {});
+      if (!offeringsReady) {
+        const list = await getProducts();
+        if (list.length === 0) {
+          Alert.alert(
+            'Plans not ready',
+            productsError ??
+              'Could not load subscription plans from RevenueCat. Rebuild the app after setting REVENUECAT_API_KEY_* in .env, then check your network and the RevenueCat dashboard.'
+          );
+        }
         return;
       }
       if (
@@ -337,6 +346,8 @@ export function PremiumPaywallBody({
       purchasing,
       loading,
       products,
+      offeringsReady,
+      productsError,
       getProducts,
       requestPurchase,
       source,
@@ -428,6 +439,15 @@ export function PremiumPaywallBody({
 
       {loading && (
         <ActivityIndicator color={theme.textPrimary} style={styles.loader} />
+      )}
+
+      {!loading && !offeringsReady && productsError && (
+        <Text
+          variant="caption"
+          style={[styles.offeringsError, { color: theme.percent }]}
+        >
+          {productsError}
+        </Text>
       )}
 
       {!isPremium && (
@@ -639,6 +659,12 @@ const styles = StyleSheet.create({
   },
   previewBody: { lineHeight: 18 },
   loader: { marginVertical: Spacing[2] },
+  offeringsError: {
+    textAlign: 'center',
+    marginBottom: Spacing[2],
+    paddingHorizontal: Spacing[2],
+    lineHeight: 18,
+  },
   socialProof: {
     textAlign: 'center',
     marginTop: Spacing[3],

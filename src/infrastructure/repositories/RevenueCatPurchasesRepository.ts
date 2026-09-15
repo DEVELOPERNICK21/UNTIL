@@ -21,6 +21,7 @@ import {
   PurchaseCancelledError,
   isPurchaseCancelledError,
 } from '../../domain/errors/purchasesErrors';
+import { storeProductIdsMatch, normalizeStoreProductId } from '../../domain/billing/mapProductId';
 import type {
   CustomerInfoDTO,
   PurchasesOfferingDTO,
@@ -46,7 +47,8 @@ function toDTO(info: CustomerInfo): CustomerInfoDTO {
 function toPackageDTO(pkg: PurchasesPackage): PurchasesPackageDTO {
   return {
     identifier: pkg.identifier,
-    productId: pkg.product.identifier,
+    // Custom paywall keys off base product ids (yearly_subscription), not base-plan suffixes.
+    productId: normalizeStoreProductId(pkg.product.identifier),
     title: pkg.product.title,
     description: pkg.product.description,
     priceString: pkg.product.priceString,
@@ -64,8 +66,8 @@ function findPackageByProductId(
   productId: string,
   offering: PurchasesOffering | null | undefined,
 ): PurchasesPackage | undefined {
-  return offering?.availablePackages.find(
-    pkg => pkg.product.identifier === productId,
+  return offering?.availablePackages.find(pkg =>
+    storeProductIdsMatch(pkg.product.identifier, productId),
   );
 }
 

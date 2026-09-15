@@ -1564,6 +1564,9 @@ PODS:
     - PromisesObjC (= 2.4.0)
   - PurchasesHybridCommon (18.37.0):
     - RevenueCat (= 5.88.0)
+  - PurchasesHybridCommonUI (18.37.0):
+    - PurchasesHybridCommon (= 18.37.0)
+    - RevenueCatUI (= 5.88.0)
   - RCT-Folly (2024.11.18.00):
     - boost
     - DoubleConversion
@@ -4207,6 +4210,8 @@ PODS:
     - SocketRocket
   - RecaptchaInterop (101.0.0)
   - RevenueCat (5.88.0)
+  - RevenueCatUI (5.88.0):
+    - RevenueCat (= 5.88.0)
   - RNDateTimePicker (8.6.0):
     - boost
     - DoubleConversion
@@ -4259,7 +4264,7 @@ PODS:
     - RNFBApp
   - RNFS (2.20.0):
     - React-Core
-  - RNGoogleSignin (16.1.4):
+  - RNGoogleSignin (16.1.5):
     - boost
     - DoubleConversion
     - fast_float
@@ -4292,6 +4297,9 @@ PODS:
     - React-Core
     - RNNotifee/NotifeeCore (= 9.1.8)
   - RNNotifee/NotifeeCore (9.1.8):
+    - React-Core
+  - RNPaywalls (10.9.1):
+    - PurchasesHybridCommonUI (= 18.37.0)
     - React-Core
   - RNPurchases (10.9.1):
     - PurchasesHybridCommon (= 18.37.0)
@@ -4567,6 +4575,7 @@ DEPENDENCIES:
   - RNFS (from `../node_modules/react-native-fs`)
   - "RNGoogleSignin (from `../node_modules/@react-native-google-signin/google-signin`)"
   - "RNNotifee (from `../node_modules/@notifee/react-native`)"
+  - RNPaywalls (from `../node_modules/react-native-purchases-ui`)
   - RNPurchases (from `../node_modules/react-native-purchases`)
   - RNScreens (from `../node_modules/react-native-screens`)
   - RNShare (from `../node_modules/react-native-share`)
@@ -4610,8 +4619,10 @@ SPEC REPOS:
     - PromisesObjC
     - PromisesSwift
     - PurchasesHybridCommon
+    - PurchasesHybridCommonUI
     - RecaptchaInterop
     - RevenueCat
+    - RevenueCatUI
     - SocketRocket
 
 EXTERNAL SOURCES:
@@ -4804,6 +4815,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/@react-native-google-signin/google-signin"
   RNNotifee:
     :path: "../node_modules/@notifee/react-native"
+  RNPaywalls:
+    :path: "../node_modules/react-native-purchases-ui"
   RNPurchases:
     :path: "../node_modules/react-native-purchases"
   RNScreens:
@@ -4861,6 +4874,7 @@ SPEC CHECKSUMS:
   PromisesObjC: f5707f49cb48b9636751c5b2e7d227e43fba9f47
   PromisesSwift: 9d77319bbe72ebf6d872900551f7eeba9bce2851
   PurchasesHybridCommon: 2e72564d3393d480ca126d4d057737435dd7ccba
+  PurchasesHybridCommonUI: b9e63653fa3abb753b702e0a9b074fbf452b0cbb
   RCT-Folly: 36c4f904fb6cd0219dcb76b94e9502d2a72fab0b
   RCTDeprecation: 8f1dc8057e54ea6fd01df47d0d29487adc92c1a9
   RCTRequired: 9d02105f758490fab48d77fead2599a449321ab7
@@ -4937,6 +4951,7 @@ SPEC CHECKSUMS:
   ReactCommon: e1aed63c1bbecc37c3895db32d8fe1ef58025ede
   RecaptchaInterop: 11e0b637842dfb48308d242afc3f448062325aba
   RevenueCat: 96e12da1f3de201c65f337ff661506ac28ee1514
+  RevenueCatUI: 86e2209d13c41893a4e24da4e26370d4bd9f8b93
   RNDateTimePicker: bfb315bc0439c9aeb649fbf7944475a7f268f9f6
   RNDeviceInfo: 4c852998208b60dc192ae3529e5867817719ad1e
   RNFBAnalytics: 03c83ba4617a3754c99e66267983efcc908932a9
@@ -4945,8 +4960,9 @@ SPEC CHECKSUMS:
   RNFBCrashlytics: c3bb5533f9957eddc88f3ea383583309a4ce9f89
   RNFBFirestore: 03f3648f47529a14b54e9b427c722898c9046917
   RNFS: 89de7d7f4c0f6bafa05343c578f61118c8282ed8
-  RNGoogleSignin: de7de6abb882b8285d8a3ec3af84b228374660d4
+  RNGoogleSignin: 7b0ccc118722527cb69db78e7c7b13f05efafee9
   RNNotifee: 5e3b271e8ea7456a36eec994085543c9adca9168
+  RNPaywalls: 660b29b1fb64fd90776a21b4005631d43e2e3e9c
   RNPurchases: 2575285384b5e4705a0aca11dfd0791c8484f216
   RNScreens: 199799bdab32fa1e17ebf938b06fec52033e81e5
   RNShare: 046ed18f676242d46dad6186524dbfee3edb49bd

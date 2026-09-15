@@ -117,13 +117,14 @@ import { TrialPreviewApiAdapter } from './infrastructure/adapters/TrialPreviewAp
 import { TrackLifeScreenViewedUseCase } from './domain/useCases/TrackLifeScreenViewedUseCase';
 import { RestorePurchasesUseCase } from './domain/useCases/RestorePurchasesUseCase';
 import { RevenueCatPurchasesRepository } from './infrastructure/repositories/RevenueCatPurchasesRepository';
-import { NoOpPaywallPresenter } from './infrastructure/repositories/NoOpPaywallPresenter';
+import { RevenueCatPaywallPresenter } from './infrastructure/repositories/RevenueCatPaywallPresenter';
 import { ConfigurePurchasesUseCase } from './domain/useCases/ConfigurePurchasesUseCase';
 import { SyncCustomerInfoUseCase } from './domain/useCases/SyncCustomerInfoUseCase';
 import { GetOfferingsUseCase } from './domain/useCases/GetOfferingsUseCase';
 import { PurchasePackageUseCase } from './domain/useCases/PurchasePackageUseCase';
 import { IdentifyPurchasesUserUseCase } from './domain/useCases/IdentifyPurchasesUserUseCase';
 import { ResetPurchasesUserUseCase } from './domain/useCases/ResetPurchasesUserUseCase';
+import { PresentRevenueCatPaywallUseCase } from './domain/useCases/PresentRevenueCatPaywallUseCase';
 import { logAnalyticsEvent, recordCrashError } from './services/analytics';
 import { getTrialDurationDays } from './services/analyticsUserProperties';
 
@@ -251,10 +252,15 @@ export const clearSharePromptPendingUseCase = new ClearSharePromptPendingUseCase
 export const trackLifeScreenViewedUseCase = new TrackLifeScreenViewedUseCase(subscriptionRepository);
 
 export const purchasesRepository = new RevenueCatPurchasesRepository();
-export const paywallPresenter = new NoOpPaywallPresenter();
+export const paywallPresenter = new RevenueCatPaywallPresenter();
 export const syncCustomerInfoUseCase = new SyncCustomerInfoUseCase(
   subscriptionRepository,
   syncPremiumAfterEntitlementChange
+);
+export const presentRevenueCatPaywallUseCase = new PresentRevenueCatPaywallUseCase(
+  paywallPresenter,
+  purchasesRepository,
+  syncCustomerInfoUseCase
 );
 export const configurePurchasesUseCase = new ConfigurePurchasesUseCase(
   purchasesRepository

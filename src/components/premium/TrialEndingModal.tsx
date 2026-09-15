@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo } from 'react';
-import { Modal, View, StyleSheet, TouchableOpacity } from 'react-native';
+import { Modal, View, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { Text } from '../../ui';
 import { Spacing, Radius, useTheme } from '../../theme';
 import { getTrialReminderMessage } from '../../services/trialReminders';
@@ -7,6 +7,7 @@ import { recordPaywallDismissed } from '../../services/paywallPrompt';
 import { navigateToPremium } from '../../navigation/rootNavigationRef';
 import { logAnalyticsEvent } from '../../services/analytics';
 import { usePurchase } from '../../hooks/usePurchase';
+import { usePresentRevenueCatPaywall } from '../../hooks/usePresentRevenueCatPaywall';
 import {
   FALLBACK_YEARLY_PRICE,
   MONETIZATION_PAYWALL_COPY,
@@ -25,6 +26,7 @@ export function TrialEndingModal({
 }: TrialEndingModalProps) {
   const theme = useTheme();
   const { products, productIds, getProducts } = usePurchase();
+  const { present, presenting } = usePresentRevenueCatPaywall();
 
   useEffect(() => {
     if (visible) {
@@ -46,9 +48,16 @@ export function TrialEndingModal({
   };
 
   const handleUpgrade = () => {
-    recordPaywallDismissed();
-    onDismiss();
-    navigateToPremium();
+    void (async () => {
+      const result = await present();
+      recordPaywallDismissed();
+      onDismiss();
+      if (result === 'purchased' || result === 'restored') {
+        return;
+      }
+      // Closed RC or unavailable → custom main paywall
+      navigateToPremium();
+    })();
   };
 
   return (
@@ -69,12 +78,22 @@ export function TrialEndingModal({
             style={[styles.primary, { backgroundColor: theme.percent }]}
             onPress={handleUpgrade}
             activeOpacity={0.9}
+            disabled={presenting}
           >
-            <Text variant="sectionTitle" style={styles.primaryLabel}>
-              View Premium plans ({yearlyPrice}/year)
-            </Text>
+            {presenting ? (
+              <ActivityIndicator color="#FFFFFF" />
+            ) : (
+              <Text variant="sectionTitle" style={styles.primaryLabel}>
+                View Premium plans ({yearlyPrice}/year)
+              </Text>
+            )}
           </TouchableOpacity>
-          <TouchableOpacity style={styles.secondary} onPress={handleLater} activeOpacity={0.7}>
+          <TouchableOpacity
+            style={styles.secondary}
+            onPress={handleLater}
+            activeOpacity={0.7}
+            disabled={presenting}
+          >
             <Text variant="body" style={{ color: theme.textSecondary }}>
               Not now
             </Text>
@@ -98,6 +117,8 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing[3],
     alignItems: 'center',
     marginBottom: Spacing[2],
+    minHeight: 48,
+    justifyContent: 'center',
   },
   primaryLabel: { color: '#FFFFFF', textAlign: 'center' },
   secondary: { alignItems: 'center', paddingVertical: Spacing[2] },

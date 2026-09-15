@@ -4,15 +4,19 @@ Companion to `MONETIZATION_STRATEGY.md` and `PLAY_BILLING.md`.
 
 ## RevenueCat
 
-Store purchases (offerings, buy, restore, entitlement sync) go through RevenueCat. Custom paywall UI is unchanged.
+Store purchases (offerings, buy, restore, entitlement sync) go through RevenueCat. Custom paywall UI remains for **Settings → Premium**.
+
+**First-offer screens** (onboarding, deferred modal, trial ending) use RevenueCat Paywalls UI (`react-native-purchases-ui`). If the RC paywall is missing or fails, the app falls back to the custom paywall / Premium screen.
 
 | Item | Value |
 |------|-------|
 | Entitlement | `premium` |
 | Offering | `default` (current offering) |
 | Product IDs | Unchanged: `yearly_subscription`, `monthly_subscription`, `lifetime_unlock`, optional `yearly_subscription_student` |
+| First-offer paywall | Dashboard paywall attached to `default` (publish in RC before release) |
+| Main paywall | Custom `PremiumPaywallBody` on Settings → Premium |
 
-Public SDK keys (never secret keys). For Test Store, set both to the same `test_` key:
+Public SDK keys (never secret keys). For Test Store, set both to the same `test_` key. For Play release builds, use the `goog_` key on Android:
 
 ```
 REVENUECAT_API_KEY_IOS=
@@ -21,7 +25,7 @@ REVENUECAT_API_KEY_ANDROID=
 
 Copy from `.env.example` into `.env`. Rebuild after changing keys.
 
-Dashboard: attach the Play / App Store products above to packages on offering `default`, and grant entitlement `premium`.
+Dashboard: attach the Play / App Store products above to packages on offering `default`, grant entitlement `premium`, and **publish** the first-offer paywall for that offering.
 
 ## Play Console products
 

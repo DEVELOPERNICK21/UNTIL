@@ -1,76 +1,73 @@
-import React, { useEffect } from 'react';
-import {
-  Modal,
-  View,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  useWindowDimensions,
-} from 'react-native';
+import React, { useEffect, useRef } from 'react';
+import { Modal, View, StyleSheet, ActivityIndicator } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Text, ScreenGradient } from '../../ui';
-import { PremiumPaywallBody } from '../premium/PremiumPaywallBody';
+import { ScreenGradient } from '../../ui';
 import { Spacing, useTheme } from '../../theme';
-import { MONETIZATION_PAYWALL_COPY } from '../../config/monetization';
 import { markDeferredPaywallShown } from '../../services/deferredPaywall';
 import { logAnalyticsEvent } from '../../services/analytics';
 import { recordPaywallDismissed } from '../../services/paywallPrompt';
+import { usePresentRevenueCatPaywall } from '../../hooks/usePresentRevenueCatPaywall';
+import { navigateToPremium } from '../../navigation/rootNavigationRef';
 
 interface DeferredPaywallModalProps {
   visible: boolean;
   onClose: () => void;
 }
 
+/**
+ * First-offer deferred paywall via RevenueCat UI.
+ * On purchase success closes. On cancel / error falls through to custom Premium screen.
+ */
 export function DeferredPaywallModal({ visible, onClose }: DeferredPaywallModalProps) {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
-  const { height } = useWindowDimensions();
+  const { present, presenting } = usePresentRevenueCatPaywall();
+  const ranForVisible = useRef(false);
 
   useEffect(() => {
-    if (visible) {
-      void logAnalyticsEvent('deferred_paywall_shown');
-      void logAnalyticsEvent('onboarding_paywall_seen', { deferred: true });
-      void logAnalyticsEvent('premium_viewed', { source: 'deferred_paywall' });
+    if (!visible) {
+      ranForVisible.current = false;
+      return;
     }
-  }, [visible]);
+    if (ranForVisible.current) return;
+    ranForVisible.current = true;
+
+    void logAnalyticsEvent('deferred_paywall_shown');
+    void logAnalyticsEvent('onboarding_paywall_seen', { deferred: true });
+    void logAnalyticsEvent('premium_viewed', { source: 'deferred_paywall' });
+
+    void (async () => {
+      const result = await present();
+      if (result === 'purchased' || result === 'restored') {
+        markDeferredPaywallShown();
+        onClose();
+        return;
+      }
+      void logAnalyticsEvent('deferred_paywall_dismissed');
+      recordPaywallDismissed();
+      markDeferredPaywallShown();
+      onClose();
+      // After RC first screen, open custom main paywall
+      navigateToPremium();
+    })();
+  }, [visible, present, onClose]);
 
   if (!visible) return null;
 
-  const handleDismiss = () => {
-    void logAnalyticsEvent('deferred_paywall_dismissed');
-    recordPaywallDismissed();
-    markDeferredPaywallShown();
-    onClose();
-  };
-
   return (
-    <Modal visible animationType="slide" statusBarTranslucent>
-      <View style={[styles.container, { minHeight: height }]}>
+    <Modal visible transparent animationType="fade" statusBarTranslucent>
+      <View
+        style={[
+          styles.backdrop,
+          { paddingTop: insets.top, paddingBottom: insets.bottom },
+        ]}
+      >
         <ScreenGradient>
-          <ScrollView
-            contentContainerStyle={[
-              styles.scroll,
-              {
-                paddingTop: insets.top + Spacing[3],
-                paddingBottom: insets.bottom + Spacing[6],
-              },
-            ]}
-          >
-            <TouchableOpacity onPress={handleDismiss} style={styles.skipWrap}>
-              <Text variant="body" color="secondary">
-                Not now
-              </Text>
-            </TouchableOpacity>
-            <PremiumPaywallBody
-              headline={MONETIZATION_PAYWALL_COPY.onboardingPaywallTitle}
-              subheadline={MONETIZATION_PAYWALL_COPY.onboardingPaywallSub}
-              source="deferred_paywall"
-              onPurchaseSuccess={() => {
-                markDeferredPaywallShown();
-                onClose();
-              }}
-            />
-          </ScrollView>
+          <View style={styles.center}>
+            {presenting ? (
+              <ActivityIndicator color={theme.textPrimary} />
+            ) : null}
+          </View>
         </ScreenGradient>
       </View>
     </Modal>
@@ -78,7 +75,11 @@ export function DeferredPaywallModal({ visible, onClose }: DeferredPaywallModalP
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
-  scroll: { paddingHorizontal: Spacing[4] },
-  skipWrap: { alignSelf: 'flex-end', marginBottom: Spacing[2] },
+  backdrop: { flex: 1 },
+  center: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: Spacing[4],
+  },
 });
