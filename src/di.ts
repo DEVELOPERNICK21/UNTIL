@@ -122,6 +122,14 @@ import { ReconcilePlayEntitlementUseCase } from './domain/useCases/ReconcilePlay
 import { PlayBillingRepository } from './infrastructure/repositories/PlayBillingRepository';
 import { NoOpPlayBillingRepository } from './infrastructure/repositories/NoOpPlayBillingRepository';
 import type { IPlayBillingRepository } from './domain/repository/IPlayBillingRepository';
+import { RevenueCatPurchasesRepository } from './infrastructure/repositories/RevenueCatPurchasesRepository';
+import { NoOpPaywallPresenter } from './infrastructure/repositories/NoOpPaywallPresenter';
+import { ConfigurePurchasesUseCase } from './domain/useCases/ConfigurePurchasesUseCase';
+import { SyncCustomerInfoUseCase } from './domain/useCases/SyncCustomerInfoUseCase';
+import { GetOfferingsUseCase } from './domain/useCases/GetOfferingsUseCase';
+import { PurchasePackageUseCase } from './domain/useCases/PurchasePackageUseCase';
+import { IdentifyPurchasesUserUseCase } from './domain/useCases/IdentifyPurchasesUserUseCase';
+import { ResetPurchasesUserUseCase } from './domain/useCases/ResetPurchasesUserUseCase';
 import { productIdToPurchaseType } from './domain/billing/mapProductId';
 import { logAnalyticsEvent, recordCrashError } from './services/analytics';
 import { getTrialDurationDays } from './services/analyticsUserProperties';
@@ -338,11 +346,45 @@ export const playBillingRepository: IPlayBillingRepository =
       })()
     : new NoOpPlayBillingRepository();
 
-export const restorePurchasesUseCase = new RestorePurchasesUseCase(
+const purchasesRepository = new RevenueCatPurchasesRepository();
+export const paywallPresenter = new NoOpPaywallPresenter();
+export const syncCustomerInfoUseCase = new SyncCustomerInfoUseCase(
   subscriptionRepository,
-  playBillingRepository,
   syncPremiumAfterEntitlementChange
 );
+export const configurePurchasesUseCase = new ConfigurePurchasesUseCase(
+  purchasesRepository
+);
+export const getOfferingsUseCase = new GetOfferingsUseCase(purchasesRepository);
+export const purchasePackageUseCase = new PurchasePackageUseCase(
+  purchasesRepository,
+  syncCustomerInfoUseCase
+);
+export const restorePurchasesUseCase = new RestorePurchasesUseCase(
+  purchasesRepository,
+  syncCustomerInfoUseCase
+);
+export const identifyPurchasesUserUseCase = new IdentifyPurchasesUserUseCase(
+  purchasesRepository,
+  syncCustomerInfoUseCase
+);
+export const resetPurchasesUserUseCase = new ResetPurchasesUserUseCase(
+  purchasesRepository,
+  syncCustomerInfoUseCase
+);
+
+let purchasesConfigured = false;
+
+export function ensurePurchasesConfigured(): { configured: boolean } {
+  if (purchasesConfigured) {
+    return { configured: true };
+  }
+  const result = configurePurchasesUseCase.execute();
+  if (result.configured) {
+    purchasesConfigured = true;
+  }
+  return result;
+}
 
 export const reconcilePlayEntitlementUseCase = new ReconcilePlayEntitlementUseCase(
   subscriptionRepository,
