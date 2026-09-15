@@ -567,6 +567,7 @@ export const completeAccountSignInUseCase = new CompleteAccountSignInUseCase(
   syncAccountProfileUseCase,
   registerDeviceUseCase,
   bindEntitlementToAccountUseCase,
+  identifyPurchasesUserUseCase,
   recordCrashError,
   syncPremiumBridge
 );
@@ -590,6 +591,8 @@ export const signOutUseCase = new SignOutUseCase(
   authService,
   authSessionRepository,
   subscriptionRepository,
+  resetPurchasesUserUseCase,
+  recordCrashError,
   syncPremiumAfterEntitlementChange
 );
 

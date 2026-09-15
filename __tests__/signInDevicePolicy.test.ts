@@ -64,11 +64,15 @@ function makeUseCase(
     execute: async () => {},
   } as unknown as BindEntitlementToAccountUseCase;
 
+  const identifyPurchasesUser = {
+    execute: async () => {},
+  };
   const complete = new CompleteAccountSignInUseCase(
     authSession,
     syncProfile,
     registerDevice,
     bindEntitlement,
+    identifyPurchasesUser as never,
     undefined,
     onDeviceAccessChanged
   );

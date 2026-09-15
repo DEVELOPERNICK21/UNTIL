@@ -22,7 +22,9 @@ import {
   authService,
   authSessionRepository,
   bindEntitlementToAccountUseCase,
+  identifyPurchasesUserUseCase,
   registerDeviceUseCase,
+  resetPurchasesUserUseCase,
   signOutUseCase,
   syncAccountProfileUseCase,
 } from '../di';
@@ -32,8 +34,17 @@ import { recordCrashError } from '../services/analytics';
 import type { AuthUser } from '../types';
 
 async function bootstrapSignedInUser(user: AuthUser): Promise<void> {
+  const hadUid = authSessionRepository.getUid() != null;
   authSessionRepository.setUid(user.uid);
   authSessionRepository.setEmail(user.email);
+
+  if (!hadUid) {
+    try {
+      await identifyPurchasesUserUseCase.execute(user.uid);
+    } catch (e) {
+      recordCrashError(e, 'useAuthBootstrap.identifyPurchases');
+    }
+  }
 
   try {
     await syncAccountProfileUseCase.execute(user.uid);
@@ -70,7 +81,14 @@ export function useAuthBootstrap(): void {
 
       if (!user) {
         if (authSessionRepository.getUid() != null) {
-          signOutUseCase.clearLocalSession();
+          void (async () => {
+            try {
+              await resetPurchasesUserUseCase.execute();
+            } catch (e) {
+              recordCrashError(e, 'useAuthBootstrap.resetPurchases');
+            }
+            signOutUseCase.clearLocalSession();
+          })();
         }
         return;
       }

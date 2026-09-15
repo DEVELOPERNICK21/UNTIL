@@ -12,6 +12,7 @@ import type { AuthUser, RegisterDeviceResult, SignInResult } from '../../types';
 import type { RegisterDeviceUseCase } from './RegisterDeviceUseCase';
 import type { SyncAccountProfileUseCase } from './SyncAccountProfileUseCase';
 import type { BindEntitlementToAccountUseCase } from './BindEntitlementToAccountUseCase';
+import type { IdentifyPurchasesUserUseCase } from './IdentifyPurchasesUserUseCase';
 import { isConclusiveRegistration } from '../../core/account/deviceLimit';
 import { withTimeout } from '../../core/account/withTimeout';
 
@@ -23,6 +24,7 @@ export class CompleteAccountSignInUseCase {
     private readonly syncAccountProfile: SyncAccountProfileUseCase,
     private readonly registerDevice: RegisterDeviceUseCase,
     private readonly bindEntitlement: BindEntitlementToAccountUseCase,
+    private readonly identifyPurchasesUser: IdentifyPurchasesUserUseCase,
     private readonly onError?: (error: unknown, context: string) => void,
     private readonly onDeviceAccessChanged?: () => void
   ) {}
@@ -30,6 +32,12 @@ export class CompleteAccountSignInUseCase {
   async execute(user: AuthUser): Promise<SignInResult> {
     this.authSession.setUid(user.uid);
     this.authSession.setEmail(user.email);
+
+    try {
+      await this.identifyPurchasesUser.execute(user.uid);
+    } catch (e) {
+      this.onError?.(e, 'CompleteAccountSignInUseCase.identifyPurchases');
+    }
 
     try {
       return await withTimeout(

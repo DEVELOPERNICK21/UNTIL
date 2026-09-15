@@ -6,6 +6,7 @@
 import type { IAuthService } from '../ports/IAuthService';
 import type { IAuthSessionRepository } from '../repository/IAuthSessionRepository';
 import type { ISubscriptionRepository } from '../repository/ISubscriptionRepository';
+import type { ResetPurchasesUserUseCase } from './ResetPurchasesUserUseCase';
 import { hasLocalPurchaseProof } from '../../core/account/entitlementProof';
 
 export class SignOutUseCase {
@@ -13,11 +14,18 @@ export class SignOutUseCase {
     private readonly authService: IAuthService,
     private readonly authSession: IAuthSessionRepository,
     private readonly subscriptionRepository: ISubscriptionRepository,
+    private readonly resetPurchasesUser: ResetPurchasesUserUseCase,
+    private readonly onError?: (error: unknown, context: string) => void,
     private readonly onEntitlementChanged?: () => void
   ) {}
 
   async execute(): Promise<{ localPremiumKept: boolean }> {
     await this.authService.signOut();
+    try {
+      await this.resetPurchasesUser.execute();
+    } catch (e) {
+      this.onError?.(e, 'SignOutUseCase.resetPurchases');
+    }
     return this.clearLocalSession();
   }
 
