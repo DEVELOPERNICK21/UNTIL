@@ -13,3 +13,5 @@ export type {
   AuthSessionState,
   IAuthSessionRepository,
 } from './IAuthSessionRepository';
+export type { IPurchasesRepository } from './IPurchasesRepository';
+export type { IPaywallPresenter } from './IPaywallPresenter';
