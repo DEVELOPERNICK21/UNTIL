@@ -12,6 +12,9 @@
  *
  * No-op when Firebase isn't configured on this build: subscribe() never fires,
  * so a stored session is left alone rather than wrongly cleared.
+ *
+ * Cold-start RevenueCat identify reads MMKV uid in app.tsx so it does not wait
+ * on this Firebase subscription.
  */
 
 import { useEffect } from 'react';

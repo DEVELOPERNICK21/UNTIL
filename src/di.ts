@@ -346,7 +346,7 @@ export const playBillingRepository: IPlayBillingRepository =
       })()
     : new NoOpPlayBillingRepository();
 
-const purchasesRepository = new RevenueCatPurchasesRepository();
+export const purchasesRepository = new RevenueCatPurchasesRepository();
 export const paywallPresenter = new NoOpPaywallPresenter();
 export const syncCustomerInfoUseCase = new SyncCustomerInfoUseCase(
   subscriptionRepository,

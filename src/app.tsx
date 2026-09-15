@@ -52,13 +52,12 @@ import {
   verifySubscriptionUseCase,
   runAppOpenSideEffectsUseCase,
   getPresenceStreakUseCase,
-  ensurePlayBillingSession,
-  reconcilePlayEntitlementUseCase,
+  ensurePurchasesConfigured,
+  identifyPurchasesUserUseCase,
+  syncCustomerInfoUseCase,
+  purchasesRepository,
+  authSessionRepository,
 } from './di';
-import {
-  recordPlayEntitlementReconcile,
-  shouldReconcilePlayEntitlement,
-} from './services/playEntitlementReconcile';
 import { ForceUpdateModal } from './components/update/ForceUpdateModal';
 import { OptionalUpdateModal } from './components/update/OptionalUpdateModal';
 
@@ -68,16 +67,15 @@ function refreshPresenceStreakSaver(): void {
   void schedulePresenceStreakSaver(getPresenceStreakUseCase.execute());
 }
 
-function reconcilePlayEntitlementIfNeeded(): void {
-  if (Platform.OS !== 'android' || !shouldReconcilePlayEntitlement()) {
-    return;
-  }
-  recordPlayEntitlementReconcile();
-  ensurePlayBillingSession()
-    .then(() => reconcilePlayEntitlementUseCase.execute())
-    .then(() => syncPremiumStatus())
+function refreshPurchasesCustomerInfo(): void {
+  if (!ensurePurchasesConfigured().configured) return;
+  purchasesRepository
+    .getCustomerInfo()
+    .then(info => {
+      syncCustomerInfoUseCase.execute(info);
+    })
     .catch(() => {
-      /* Play unreachable */
+      /* RevenueCat unreachable */
     });
 }
 
@@ -121,16 +119,44 @@ function App() {
   }, [showSplash]);
 
   useEffect(() => {
+    let cancelled = false;
+    let removeCustomerInfoListener: (() => void) | undefined;
+
+    const { configured } = ensurePurchasesConfigured();
+    const startPurchases = async () => {
+      if (!configured || cancelled) return;
+
+      try {
+        const uid = authSessionRepository.getUid();
+        if (uid) {
+          await identifyPurchasesUserUseCase.execute(uid);
+        } else {
+          const info = await purchasesRepository.getCustomerInfo();
+          if (!cancelled) {
+            syncCustomerInfoUseCase.execute(info);
+          }
+        }
+      } catch {
+        /* RevenueCat unreachable */
+      }
+
+      if (cancelled) return;
+      const unsub = purchasesRepository.addCustomerInfoListener(info => {
+        syncCustomerInfoUseCase.execute(info);
+        syncPremiumStatus();
+      });
+      if (cancelled) {
+        unsub();
+        return;
+      }
+      removeCustomerInfoListener = unsub;
+    };
+
+    void startPurchases();
     initCrashlyticsCollection();
     verifySubscriptionUseCase.execute().then(() => {
       syncPremiumStatus();
     });
-    if (Platform.OS === 'android') {
-      ensurePlayBillingSession().catch(() => {
-        /* ignore */
-      });
-      reconcilePlayEntitlementIfNeeded();
-    }
     // Engagement tracking for event-based Life unlock.
     runAppOpenSideEffectsUseCase.execute();
     refreshPresenceStreakSaver();
@@ -173,7 +199,7 @@ function App() {
         logAppOpen().catch(() => {});
         scheduleRetentionNotifications().catch(() => {});
         verifySubscriptionUseCase.execute().then(() => syncPremiumStatus());
-        reconcilePlayEntitlementIfNeeded();
+        refreshPurchasesCustomerInfo();
         if (
           Platform.OS === 'ios' &&
           NativeModules.WidgetBridge?.getCustomCountersFromAppGroup
@@ -213,6 +239,8 @@ function App() {
     });
 
     return () => {
+      cancelled = true;
+      removeCustomerInfoListener?.();
       clearTimeout(t);
       subAppState.remove();
       subLinking.remove();
