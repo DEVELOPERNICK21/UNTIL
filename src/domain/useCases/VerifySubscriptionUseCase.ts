@@ -24,7 +24,7 @@ export class VerifySubscriptionUseCase {
     const lastVerified = this.subscriptionRepository.getLastVerifiedAt();
 
     if (!licenseKey) {
-      /** Play Billing entitlement (Android): no web license; trust stored store purchase metadata. */
+      /** Store entitlement (RevenueCat): no web license; trust stored purchase metadata. */
       if (this.subscriptionRepository.getPurchaseType() != null) {
         return { valid: true };
       }

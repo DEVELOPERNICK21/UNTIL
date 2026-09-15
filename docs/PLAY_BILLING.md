@@ -1,5 +1,7 @@
 # Google Play Premium (yearly + lifetime)
 
+**Superseded:** In-app purchases go through RevenueCat (`react-native-purchases`), not `react-native-iap`. Product IDs below stay the same in Play Console. See [MONETIZATION_SETUP.md](./MONETIZATION_SETUP.md) for RC keys, the `premium` entitlement, and the `default` offering.
+
 UNTIL Premium on Android offers two purchase options:
 
 | Plan | Product ID | Play Console type |
@@ -84,9 +86,9 @@ Set final prices in Play Console.
 | File | Role |
 |------|------|
 | `src/config/billing.ts` | Product IDs + paywall list |
+| `src/config/revenueCat.ts` | Public SDK keys |
+| `src/infrastructure/repositories/RevenueCatPurchasesRepository.ts` | Purchase / restore / offerings |
 | `src/surfaces/app/PremiumScreen.tsx` | Paywall UI |
-| `src/infrastructure/repositories/PlayBillingRepository.ts` | Billing API |
-| `src/domain/useCases/ReconcilePlayEntitlementUseCase.ts` | Expired **yearly** subs only (not lifetime) |
 
 ---
 
@@ -103,7 +105,7 @@ Reviewers compare **in-app subscription copy** with the **Google Play payment sh
 If you later add a **Play free trial** in Play Console on `yearly_subscription`, you must:
 
 1. Create an **offer** with free trial on the yearly base plan and activate it.
-2. Update `PlayBillingRepository` to select that offer token (not only the base plan).
+2. Attach that offer in RevenueCat (and confirm the paywall package maps to it).
 3. Restore paywall copy to describe the **Play** trial terms (must match the payment sheet exactly).
 
 Until then, keep paywall copy in `src/config/monetization.ts` aligned with immediate yearly billing.

@@ -35,7 +35,6 @@
     "react-native": "0.86.0",
     "react-native-device-info": "^15.0.2",
     "react-native-fs": "^2.20.0",
-    "react-native-iap": "^14.4.0",
     "react-native-mmkv": "^4.2.0",
     "react-native-nitro-modules": "^0.35.1",
     "react-native-purchases": "^10.9.1",

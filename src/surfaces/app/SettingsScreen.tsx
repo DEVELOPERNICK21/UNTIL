@@ -254,7 +254,7 @@ export function SettingsScreen() {
                       ]}
                     >
                       {isPremium
-                        ? 'Active · manage in Google Play'
+                        ? 'Active · manage in your app store account'
                         : 'Yearly subscription or lifetime'}
                     </Text>
                   </View>

@@ -18,7 +18,7 @@ export interface ISubscriptionRepository {
   getLastVerifiedAt(): number | null;
   setLastVerifiedAt(ms: number): void;
 
-  /** Play / store purchase metadata (SSOT). Null type = no active store entitlement recorded. */
+  /** Store purchase metadata (SSOT). Null type = no active store entitlement recorded. */
   getPurchaseType(): PurchaseType | null;
   setPurchaseType(value: PurchaseType | null): void;
   getPurchaseDate(): number | null;

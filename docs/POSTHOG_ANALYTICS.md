@@ -37,7 +37,7 @@ Full implementation spec: [`POSTHOG_ANALYTICS_SPEC.md`](./POSTHOG_ANALYTICS_SPEC
 
 ## Payments
 
-Android purchases use **Google Play Billing** (`react-native-iap`), not RevenueCat. Purchase events include `payment_provider: 'google_play'`.
+Store purchases go through **RevenueCat**. Purchase events include `payment_provider: 'revenuecat'`.
 
 ## Events (high value)
 

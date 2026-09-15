@@ -1,6 +1,9 @@
 # UNTIL — Subscription & License Management
 
-One-device license model: purchase on website → enter license key in app → bound to this device only.
+Two premium paths:
+
+1. **Store purchase** via RevenueCat (Play / App Store). Entitlement `premium` on offering `default`.
+2. **Website license key**: purchase on website → enter key in app → bound to this device only.
 
 ---
 
@@ -8,10 +11,11 @@ One-device license model: purchase on website → enter license key in app → b
 
 | Item | Value |
 |------|-------|
-| **Purchase** | Website (Stripe, Paddle, or custom) |
-| **Activation** | User enters license key in Settings → app calls backend |
-| **Device binding** | One device per license; backend rejects if already activated elsewhere |
-| **Verification** | On app launch and when app becomes active; revokes if invalid |
+| **Store purchase** | RevenueCat (`react-native-purchases`). See `MONETIZATION_SETUP.md`. |
+| **Website purchase** | License key (Stripe, Paddle, or custom) |
+| **Activation (license)** | User enters license key in Settings → app calls backend |
+| **Device binding (license)** | One device per license; backend rejects if already activated elsewhere |
+| **License verification** | On app launch and when app becomes active; revokes if invalid |
 
 ---
 

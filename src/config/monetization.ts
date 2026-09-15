@@ -70,28 +70,28 @@ export const LEGAL_URLS = {
   terms: 'https://until-app.com/terms',
 } as const;
 
-export const PLAY_SUBSCRIPTION_CANCEL_PATH =
-  'Google Play → Payments & subscriptions → Subscriptions';
+export const STORE_SUBSCRIPTION_MANAGE_PATH =
+  'your app store account';
 
 export const MONETIZATION_PAYWALL_COPY = {
   headline: 'Your life is passing. Start watching it.',
   subheadline:
     'See every day, month, and year of your life. Live on your home screen and overlay.',
-  /** Shown on yearly plan — subscription bills immediately via Google Play (no Play free trial). */
+  /** Shown on yearly plan: subscription bills immediately (no store free trial). */
   yearlyCta: 'Subscribe yearly',
   yearlyCtaSub:
-    'Billed at the yearly price shown when you subscribe in Google Play. Cancel anytime in Google Play → Subscriptions before renewal.',
+    'Billed at the yearly price shown when you subscribe. Cancel anytime in your app store account before renewal.',
   yearlyCtaSubDuringPreview:
-    'Your free app preview does not charge you. Subscribing bills the yearly price in Google Play. Cancel anytime in Google Play → Subscriptions.',
+    'Your free app preview does not charge you. Subscribing bills the yearly price. Cancel anytime in your app store account.',
   monthlyCta: 'Monthly',
   monthlySub:
-    'Billed monthly in Google Play when you subscribe. Cancel anytime in Google Play → Subscriptions.',
+    'Billed monthly when you subscribe. Cancel anytime in your app store account.',
   lifetimeCta: 'Own it forever',
-  lifetimeSub: 'One-time payment in Google Play · all Premium features · no renewal',
+  lifetimeSub: 'One-time payment · all Premium features · no renewal',
   studentCta: 'Student yearly',
   studentSub: 'Verify with a school email · same Premium features',
   regionalNote:
-    'Prices in your currency are set by Google Play (regional pricing may apply).',
+    'Prices in your currency are set by the app store (regional pricing may apply).',
   previewActiveTitle: 'Free app preview active',
   previewActiveBody:
     'Premium features unlocked for {days}. No payment or subscription yet. When the preview ends, Premium locks unless you subscribe. You will not be charged automatically.',
@@ -103,9 +103,9 @@ export const MONETIZATION_PAYWALL_COPY = {
   onboardingPaywallSub:
     'Month, life, and overlay stay with you so the plan you just built doesn’t disappear.',
   previewEndingNoChargeNote:
-    'No payment is taken during the free app preview. You are only charged if you choose to subscribe in Google Play.',
+    'No payment is taken during the free app preview. You are only charged if you choose to subscribe.',
   previewEndingCancelNote:
-    'To cancel an active subscription: open Google Play → Payments & subscriptions → Subscriptions → UNTIL.',
+    'To cancel an active subscription, manage it in your app store account.',
   freeForeverLine: 'Day & year widgets and Share stay free forever.',
 } as const;
 
@@ -165,11 +165,11 @@ export const PREMIUM_BENEFITS = [
 ] as const;
 
 export const PAYWALL_TRUST_SIGNALS = [
-  `Free ${MONETIZATION_TRIAL_DAYS}-day app preview. No Google Play charge`,
+  `Free ${MONETIZATION_TRIAL_DAYS}-day app preview. No charge until you subscribe`,
   'No automatic charge when the preview ends',
-  `Cancel subscriptions in ${PLAY_SUBSCRIPTION_CANCEL_PATH}`,
+  `Cancel subscriptions in ${STORE_SUBSCRIPTION_MANAGE_PATH}`,
   'Day + Year widgets free forever',
-  'Secure payment via Google Play',
+  'Secure payment via your app store',
 ] as const;
 
 /** Days left in the in-app preview (ceil), 0 if ended or unknown. */
@@ -211,7 +211,7 @@ export function buildSubscriptionDisclosure(params: {
 
   if (params.trialActive && daysLeft > 0) {
     lines.push(
-      `${MONETIZATION_TRIAL_DAYS}-day free app preview (in-app only, not a Google Play subscription trial). No payment is required during the preview.`
+      `${MONETIZATION_TRIAL_DAYS}-day free app preview (in-app only, not a store subscription trial). No payment is required during the preview.`
     );
     if (endDate) {
       lines.push(
@@ -221,13 +221,13 @@ export function buildSubscriptionDisclosure(params: {
   }
 
   lines.push(
-    `Yearly subscription: ${params.yearlyPrice}/year. Google Play charges this amount when you subscribe. Renews yearly until you cancel at least 24 hours before renewal in ${PLAY_SUBSCRIPTION_CANCEL_PATH}.`
+    `Yearly subscription: ${params.yearlyPrice}/year. Charged when you subscribe. Renews yearly until you cancel at least 24 hours before renewal in ${STORE_SUBSCRIPTION_MANAGE_PATH}.`
   );
   lines.push(
-    `Monthly subscription: ${params.monthlyPrice}/month. Billed when you subscribe. Cancel anytime in ${PLAY_SUBSCRIPTION_CANCEL_PATH}.`
+    `Monthly subscription: ${params.monthlyPrice}/month. Billed when you subscribe. Cancel anytime in ${STORE_SUBSCRIPTION_MANAGE_PATH}.`
   );
   lines.push(
-    `Lifetime: ${params.lifetimePrice} one-time payment in Google Play. No renewal.`
+    `Lifetime: ${params.lifetimePrice} one-time payment. No renewal.`
   );
 
   return lines;
@@ -238,13 +238,13 @@ export function formatPreviewEndingMessage(
   yearlyPrice: string = FALLBACK_YEARLY_PRICE
 ): string {
   const total = MONETIZATION_TRIAL_DAYS;
-  const cancelPath = PLAY_SUBSCRIPTION_CANCEL_PATH;
+  const cancelPath = STORE_SUBSCRIPTION_MANAGE_PATH;
 
   if (trialDay >= total) {
-    return `Your free app preview ends today. You will not be charged unless you subscribe. To keep Premium, subscribe at ${yearlyPrice}/year in Google Play. Cancel any subscription in ${cancelPath}.`;
+    return `Your free app preview ends today. You will not be charged unless you subscribe. To keep Premium, subscribe at ${yearlyPrice}/year. Cancel any subscription in ${cancelPath}.`;
   }
   if (trialDay === total - 1) {
-    return `Your free app preview ends tomorrow. No automatic charge. Subscribe at ${yearlyPrice}/year in Google Play to keep month & life widgets. Cancel in ${cancelPath}.`;
+    return `Your free app preview ends tomorrow. No automatic charge. Subscribe at ${yearlyPrice}/year to keep month & life widgets. Cancel in ${cancelPath}.`;
   }
   const daysLeft = total - trialDay;
   const leftLabel = daysLeft === 1 ? '1 day' : `${daysLeft} days`;

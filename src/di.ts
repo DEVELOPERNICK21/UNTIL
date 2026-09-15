@@ -115,13 +115,7 @@ import { GetPresenceStreakUseCase } from './domain/useCases/GetPresenceStreakUse
 import { SyncTrialPreviewUseCase } from './domain/useCases/SyncTrialPreviewUseCase';
 import { TrialPreviewApiAdapter } from './infrastructure/adapters/TrialPreviewApiAdapter';
 import { TrackLifeScreenViewedUseCase } from './domain/useCases/TrackLifeScreenViewedUseCase';
-import { ApplyStorePurchaseUseCase } from './domain/useCases/ApplyStorePurchaseUseCase';
-import { PlayPurchaseVerificationServiceAdapter } from './infrastructure/adapters/PlayPurchaseVerificationServiceAdapter';
 import { RestorePurchasesUseCase } from './domain/useCases/RestorePurchasesUseCase';
-import { ReconcilePlayEntitlementUseCase } from './domain/useCases/ReconcilePlayEntitlementUseCase';
-import { PlayBillingRepository } from './infrastructure/repositories/PlayBillingRepository';
-import { NoOpPlayBillingRepository } from './infrastructure/repositories/NoOpPlayBillingRepository';
-import type { IPlayBillingRepository } from './domain/repository/IPlayBillingRepository';
 import { RevenueCatPurchasesRepository } from './infrastructure/repositories/RevenueCatPurchasesRepository';
 import { NoOpPaywallPresenter } from './infrastructure/repositories/NoOpPaywallPresenter';
 import { ConfigurePurchasesUseCase } from './domain/useCases/ConfigurePurchasesUseCase';
@@ -130,14 +124,8 @@ import { GetOfferingsUseCase } from './domain/useCases/GetOfferingsUseCase';
 import { PurchasePackageUseCase } from './domain/useCases/PurchasePackageUseCase';
 import { IdentifyPurchasesUserUseCase } from './domain/useCases/IdentifyPurchasesUserUseCase';
 import { ResetPurchasesUserUseCase } from './domain/useCases/ResetPurchasesUserUseCase';
-import { productIdToPurchaseType } from './domain/billing/mapProductId';
 import { logAnalyticsEvent, recordCrashError } from './services/analytics';
 import { getTrialDurationDays } from './services/analyticsUserProperties';
-import {
-  clearPendingPurchase,
-  consumePendingPurchase,
-  notifyPurchaseSuccess,
-} from './services/purchaseAnalyticsContext';
 
 /**
  * Push effective premium to the native widget bridge only. Used when device
@@ -177,7 +165,6 @@ const appVersionProvider = new AppVersionProviderAdapter();
 export const deviceIdProvider = new DeviceIdProviderAdapter();
 const licenseVerificationService = new LicenseVerificationServiceAdapter();
 const inAppReviewService = new StoreReviewAdapter();
-const playPurchaseVerificationService = new PlayPurchaseVerificationServiceAdapter();
 const trialPreviewService = new TrialPreviewApiAdapter();
 const clock = new ClockAdapter();
 const activityAnalysisService = new ActivityAnalysisAdapter();
@@ -262,89 +249,6 @@ export const clearSharePromptPendingUseCase = new ClearSharePromptPendingUseCase
   engagementRepository
 );
 export const trackLifeScreenViewedUseCase = new TrackLifeScreenViewedUseCase(subscriptionRepository);
-export const applyStorePurchaseUseCase = new ApplyStorePurchaseUseCase(
-  subscriptionRepository,
-  playPurchaseVerificationService,
-  syncPremiumAfterEntitlementChange
-);
-
-let playBillingAndroid: PlayBillingRepository | undefined;
-
-function logPurchaseFailed(
-  planId: string,
-  errorCode: string,
-  errorMessage: string,
-  pending?: ReturnType<typeof consumePendingPurchase>
-): void {
-  const ctx = pending === undefined ? consumePendingPurchase() : pending;
-  void logAnalyticsEvent('premium_purchase_failed', {
-    plan_id: planId || ctx?.plan_id || 'unknown',
-    source: ctx?.source ?? 'unknown',
-    price_display: ctx?.price_display ?? '',
-    error_code: errorCode,
-    error_message: errorMessage,
-    payment_provider: 'google_play',
-  });
-  clearPendingPurchase();
-}
-
-export const playBillingRepository: IPlayBillingRepository =
-  Platform.OS === 'android'
-    ? (() => {
-        let instance: PlayBillingRepository;
-        instance = new PlayBillingRepository(
-          async purchase => {
-            if (purchase.purchaseState === 'pending') {
-              return;
-            }
-            if (!productIdToPurchaseType(purchase.productId)) {
-              return;
-            }
-            const wasTrialActive = getAccessStateUseCase.execute().trialActive;
-            const pending = consumePendingPurchase();
-            const result = await applyStorePurchaseUseCase.execute({
-              productId: purchase.productId,
-              purchaseToken: purchase.purchaseToken ?? null,
-              transactionDate: purchase.transactionDate,
-            });
-            if (!result.applied) {
-              logPurchaseFailed(
-                purchase.productId,
-                'verification_failed',
-                result.error ?? 'Purchase verification failed',
-                pending
-              );
-              return;
-            }
-            void logAnalyticsEvent('premium_purchase_completed', {
-              plan_id: purchase.productId,
-              source: pending?.source ?? 'unknown',
-              price_display: pending?.price_display ?? '',
-              payment_provider: 'google_play',
-            });
-            if (wasTrialActive) {
-              void logAnalyticsEvent('trial_preview_ended', {
-                converted: 1,
-                plan_id: purchase.productId,
-              });
-            }
-            notifyPurchaseSuccess();
-            await instance.finalizePurchase(purchase);
-          },
-          (message, code) => {
-            const pending = consumePendingPurchase();
-            logPurchaseFailed(
-              pending?.plan_id ?? 'unknown',
-              code ?? 'unknown',
-              message,
-              pending
-            );
-          }
-        );
-        playBillingAndroid = instance;
-        return instance;
-      })()
-    : new NoOpPlayBillingRepository();
 
 export const purchasesRepository = new RevenueCatPurchasesRepository();
 export const paywallPresenter = new NoOpPaywallPresenter();
@@ -384,18 +288,6 @@ export function ensurePurchasesConfigured(): { configured: boolean } {
     purchasesConfigured = true;
   }
   return result;
-}
-
-export const reconcilePlayEntitlementUseCase = new ReconcilePlayEntitlementUseCase(
-  subscriptionRepository,
-  restorePurchasesUseCase,
-  syncPremiumAfterEntitlementChange
-);
-
-export async function ensurePlayBillingSession(): Promise<void> {
-  if (Platform.OS !== 'android' || !playBillingAndroid) return;
-  await playBillingAndroid.initConnection();
-  playBillingAndroid.attachPurchaseListeners();
 }
 
 export const logActivityUseCase = new LogActivityUseCase(

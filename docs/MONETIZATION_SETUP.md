@@ -2,6 +2,27 @@
 
 Companion to `MONETIZATION_STRATEGY.md` and `PLAY_BILLING.md`.
 
+## RevenueCat
+
+Store purchases (offerings, buy, restore, entitlement sync) go through RevenueCat. Custom paywall UI is unchanged.
+
+| Item | Value |
+|------|-------|
+| Entitlement | `premium` |
+| Offering | `default` (current offering) |
+| Product IDs | Unchanged: `yearly_subscription`, `monthly_subscription`, `lifetime_unlock`, optional `yearly_subscription_student` |
+
+Public SDK keys (never secret keys). For Test Store, set both to the same `test_` key:
+
+```
+REVENUECAT_API_KEY_IOS=
+REVENUECAT_API_KEY_ANDROID=
+```
+
+Copy from `.env.example` into `.env`. Rebuild after changing keys.
+
+Dashboard: attach the Play / App Store products above to packages on offering `default`, and grant entitlement `premium`.
+
 ## Play Console products
 
 | Product ID | Type | Price (INR) |
@@ -22,23 +43,11 @@ cd ios && pod install && cd ..
 
 `@notifee/react-native` powers trial reminder local notifications (days 10, 13, 14). Android `POST_NOTIFICATIONS` is already in the manifest.
 
-## Server purchase verification
+## Server purchase verification (unused by the app)
 
-1. Deploy website with `website/src/app/api/verify-purchase/route.ts`.
-2. Set Vercel env:
-   - `UNTIL_VERIFY_API_SECRET` — random string; same value in app env `UNTIL_VERIFY_API_SECRET`
-   - `GOOGLE_PLAY_PACKAGE_NAME` — `app.until.time`
-   - `GOOGLE_PLAY_SERVICE_ACCOUNT_JSON` — service account JSON (Play Console → API access)
-3. App calls verify on each purchase before granting Premium.
+The website `POST /api/verify-purchase` route and `PlayPurchaseVerificationServiceAdapter` remain on disk. The app purchase path does **not** call them. RevenueCat is the store grant path.
 
-Without `GOOGLE_PLAY_SERVICE_ACCOUNT_JSON`, API returns `valid: true, serverVerified: false` (client trust mode for dev).
-
-## Optional app env
-
-```
-UNTIL_VERIFY_PURCHASE_URL=https://your-domain.com/api/verify-purchase
-UNTIL_VERIFY_API_SECRET=your-secret
-```
+Keep the API only if you still need it for tooling or a later server check. Env vars `UNTIL_VERIFY_PURCHASE_URL` and `UNTIL_VERIFY_API_SECRET` are unused by the current purchase flow.
 
 ## Implemented app features
 

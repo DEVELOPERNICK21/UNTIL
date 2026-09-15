@@ -237,9 +237,9 @@ All events in `AnalyticsEventName` today — no renames (avoids breaking Firebas
 | Event | When | Properties | File |
 |-------|------|------------|------|
 | `premium_purchase_started` | Before `requestPurchase()` | `plan_id`, `source`, `price_display` | `PremiumPaywallBody.tsx` |
-| `premium_purchase_completed` | After `applyStorePurchaseUseCase` succeeds | `plan_id`, `purchase_type` | `di.ts` `onApplied` callback |
-| `premium_purchase_failed` | Catch in `onBuy` (non-cancel) | `plan_id`, `error_code` | `PremiumPaywallBody.tsx` |
-| `premium_purchase_cancelled` | `ErrorCode.UserCancelled` | `plan_id` | `PremiumPaywallBody.tsx` |
+| `premium_purchase_completed` | After RevenueCat purchase succeeds | `plan_id`, `source`, `price_display`, `payment_provider` | `PremiumPaywallBody.tsx` |
+| `premium_purchase_failed` | Catch in `onBuy` (non-cancel) | `plan_id`, `error_code`, `payment_provider` | `PremiumPaywallBody.tsx` |
+| `premium_purchase_cancelled` | User cancelled | `plan_id` | `PremiumPaywallBody.tsx` |
 | `premium_restore_completed` | `restorePurchasesUseCase` returns `restored: true` | — | `di.ts` or `PremiumPaywallBody.tsx` |
 
 **`source` enum:** `premium_screen` | `deferred_paywall` | `onboarding_paywall` | `trial_ending_modal` | `widget_gate` | `unknown`
