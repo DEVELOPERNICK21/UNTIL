@@ -157,7 +157,13 @@ export function GoalDetailScreen() {
                 {goal.targetDescription}
               </Text>
             ) : null}
-            <TouchableOpacity onPress={handleRemoveGoal} style={styles.removeGoalBtn}>
+            <TouchableOpacity
+              onPress={handleRemoveGoal}
+              style={styles.removeGoalBtn}
+              accessibilityRole="button"
+              accessibilityLabel={`Remove goal ${goal.title}`}
+              accessibilityHint="Deletes this goal and its associated tasks"
+            >
               <Text variant="caption" style={styles.removeText}>Remove goal</Text>
             </TouchableOpacity>
           </Card>
@@ -194,21 +200,38 @@ export function GoalDetailScreen() {
                       <TouchableOpacity
                         onPress={() => handleAddToToday(task)}
                         style={styles.smallBtn}
+                        accessibilityRole="button"
+                        accessibilityLabel={`Add task ${task.title} to today`}
+                        accessibilityHint="Adds this task as a daily task for today"
                       >
                         <Text variant="caption" style={styles.actionText}>Add to today</Text>
                       </TouchableOpacity>
                       <TouchableOpacity
                         onPress={() => handleToggleRepeatDaily(task)}
                         style={[styles.smallBtn, isRepeat && styles.smallBtnActive]}
+                        accessibilityRole="button"
+                        accessibilityLabel={isRepeat ? `Stop repeating ${task.title} daily` : `Repeat ${task.title} daily`}
+                        accessibilityHint="Toggles automatically creating this task every day"
                       >
                         <Text variant="caption" style={[styles.actionText, isRepeat && styles.actionTextActive]}>
                           {isRepeat ? 'Stop repeat' : 'Repeat daily'}
                         </Text>
                       </TouchableOpacity>
-                      <TouchableOpacity onPress={() => openEditTask(task)} style={styles.smallBtn}>
+                      <TouchableOpacity
+                        onPress={() => openEditTask(task)}
+                        style={styles.smallBtn}
+                        accessibilityRole="button"
+                        accessibilityLabel={`Edit task ${task.title}`}
+                      >
                         <Text variant="caption" style={styles.actionText}>Edit</Text>
                       </TouchableOpacity>
-                      <TouchableOpacity onPress={() => handleRemoveTask(task)} style={styles.smallBtn}>
+                      <TouchableOpacity
+                        onPress={() => handleRemoveTask(task)}
+                        style={styles.smallBtn}
+                        accessibilityRole="button"
+                        accessibilityLabel={`Remove task ${task.title}`}
+                        accessibilityHint="Deletes this task from the goal"
+                      >
                         <Text variant="caption" style={styles.removeText}>Remove</Text>
                       </TouchableOpacity>
                     </View>
@@ -218,7 +241,13 @@ export function GoalDetailScreen() {
             })
           )}
 
-          <TouchableOpacity style={styles.addButton} onPress={() => setAddModalVisible(true)}>
+          <TouchableOpacity
+            style={styles.addButton}
+            onPress={() => setAddModalVisible(true)}
+            accessibilityRole="button"
+            accessibilityLabel="Add task to goal"
+            accessibilityHint="Opens modal to enter new task details"
+          >
             <Text variant="caption" style={styles.addButtonText}>Add task to goal</Text>
           </TouchableOpacity>
         </ScrollView>
