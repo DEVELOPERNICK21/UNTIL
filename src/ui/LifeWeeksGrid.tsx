@@ -7,7 +7,12 @@ export type LifeWeeksGridProps = {
   fillColor?: string;
 };
 
-export function LifeWeeksGrid({
+/**
+ * Renders a grid of life weeks.
+ * Optimized with React.memo to prevent redundant component execution and re-renders
+ * when parent screens (e.g. LifeScreen) re-render with unchanged props.
+ */
+function LifeWeeksGridInternal({
   livedWeeks,
   renderWeeks,
   fillColor,
@@ -21,3 +26,5 @@ export function LifeWeeksGrid({
     />
   );
 }
+
+export const LifeWeeksGrid = React.memo(LifeWeeksGridInternal);
