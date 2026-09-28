@@ -146,7 +146,17 @@ export async function fetchUpdateConfig(): Promise<UpdateConfig | null> {
   }
 }
 
+/**
+ * Kill switch for force / optional update modals on launch.
+ * Set to `false` and rebuild when you want the remote update-config prompts back.
+ */
+export const APP_UPDATE_PROMPTS_PAUSED = true;
+
 export async function checkForAppUpdate(): Promise<UpdateCheckResult> {
+  if (APP_UPDATE_PROMPTS_PAUSED) {
+    return { type: 'NO_UPDATE' };
+  }
+
   const config = await fetchUpdateConfig();
   if (!config) {
     return { type: 'NO_UPDATE' };

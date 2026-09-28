@@ -1,7 +1,5 @@
 import type { Metadata } from 'next';
 import './globals.css';
-import { Header } from '@/components/Header';
-import { Footer } from '@/components/Footer';
 import { SITE_CONFIG } from '@/domain';
 
 export const metadata: Metadata = {
@@ -29,9 +27,7 @@ export default function RootLayout({
         <a href="#main-content" className="skip-link">
           Skip to content
         </a>
-        <Header />
-        <main id="main-content">{children}</main>
-        <Footer />
+        {children}
       </body>
     </html>
   );

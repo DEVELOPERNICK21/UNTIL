@@ -3,7 +3,7 @@
 <plist version="1.0">
 <dict>
 	<key>AppGroupIdentifier</key>
-	<string>group.org.reactjs.native.example.UNTIL</string>
+	<string>group.com.developernick.until</string>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
 	<key>CFBundleDevelopmentRegion</key>
@@ -24,6 +24,25 @@
 	<string>$(MARKETING_VERSION)</string>
 	<key>CFBundleSignature</key>
 	<string>????</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>org.reactjs.native.example.UNTIL</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>until</string>
+			</array>
+		</dict>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>GoogleSignIn</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>com.googleusercontent.apps.150745476537-s8541naq6mqei7qsu3anpkb6hso256pe</string>
+			</array>
+		</dict>
+	</array>
 	<key>CFBundleVersion</key>
 	<string>$(CURRENT_PROJECT_VERSION)</string>
 	<key>LSApplicationQueriesSchemes</key>
@@ -40,7 +59,7 @@
 		<true/>
 	</dict>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string/>
+	<string>Until uses your location only when a feature needs it, like local time or place-based reminders.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Until uses your photo library when you pick images or share content that includes pictures.</string>
 	<key>NSSupportsLiveActivities</key>
@@ -67,24 +86,5 @@
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<false/>
-	<key>CFBundleURLTypes</key>
-	<array>
-		<dict>
-			<key>CFBundleURLSchemes</key>
-			<array>
-				<string>until</string>
-			</array>
-			<key>CFBundleURLName</key>
-			<string>org.reactjs.native.example.UNTIL</string>
-		</dict>
-		<dict>
-			<key>CFBundleURLName</key>
-			<string>GoogleSignIn</string>
-			<key>CFBundleURLSchemes</key>
-			<array>
-				<string>com.googleusercontent.apps.150745476537-ldr7o4ajnb3341cubae0va1q3k56ftat</string>
-			</array>
-		</dict>
-	</array>
 </dict>
 </plist>

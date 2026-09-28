@@ -19,7 +19,12 @@ import {
 
 type Subscriber = () => void;
 
-const PURCHASE_TYPES: readonly PurchaseType[] = ['monthly', 'yearly', 'lifetime'];
+const PURCHASE_TYPES: readonly PurchaseType[] = [
+  'weekly',
+  'monthly',
+  'yearly',
+  'lifetime',
+];
 
 function parsePurchaseType(raw: string | undefined | null): PurchaseType | null {
   if (!raw || !raw.trim()) return null;

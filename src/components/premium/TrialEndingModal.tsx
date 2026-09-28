@@ -49,9 +49,10 @@ export function TrialEndingModal({
 
   const handleUpgrade = () => {
     void (async () => {
-      const result = await present();
+      // Dismiss this RN Modal before native RC paywall to avoid a touch blocker.
       recordPaywallDismissed();
       onDismiss();
+      const result = await present();
       if (result === 'purchased' || result === 'restored') {
         return;
       }

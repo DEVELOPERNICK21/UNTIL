@@ -7,7 +7,7 @@ import Foundation
 import React
 import WidgetKit
 
-private let appGroupID = "group.org.reactjs.native.example.UNTIL"
+private let appGroupID = "group.com.developernick.until"
 private let widgetCacheKey = "widget.cache"
 private let customCountersKey = "custom.counters"
 private let countdownsKey = "countdowns"

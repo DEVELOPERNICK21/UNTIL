@@ -19,6 +19,9 @@ const authService: IAuthService = {
   signInWithEmail: async () => USER,
   createAccountWithEmail: async () => USER,
   signOut: async () => {},
+  deleteAccount: async () => {},
+  reauthenticateWithGoogle: async () => {},
+  reauthenticateWithEmail: async () => {},
   getCurrentUser: () => USER,
   subscribe: () => () => {},
 };

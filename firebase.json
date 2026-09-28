@@ -5,6 +5,16 @@
     "crashlytics_javascript_exception_handler_chaining_enabled": true
   },
   "firestore": {
-    "rules": "firestore.rules"
+    "rules": "firestore.rules",
+    "indexes": "firestore.indexes.json"
+  },
+  "auth": {
+    "providers": {
+      "emailPassword": true,
+      "googleSignIn": {
+        "oAuthBrandDisplayName": "UNTIL",
+        "supportEmail": "developernick1@gmail.com"
+      }
+    }
   }
 }

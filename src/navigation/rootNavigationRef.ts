@@ -3,6 +3,7 @@
  * (e.g. modals rendered in app.tsx).
  */
 
+import { InteractionManager } from 'react-native';
 import { createNavigationContainerRef } from '@react-navigation/native';
 import type { RootStackParamList } from './RootNavigator';
 
@@ -10,7 +11,15 @@ export const rootNavigationRef =
   createNavigationContainerRef<RootStackParamList>();
 
 export function navigateToPremium(): void {
-  if (rootNavigationRef.isReady()) {
+  const go = (): boolean => {
+    if (!rootNavigationRef.isReady()) return false;
     rootNavigationRef.navigate('Premium');
-  }
+    return true;
+  };
+
+  if (go()) return;
+
+  InteractionManager.runAfterInteractions(() => {
+    go();
+  });
 }

@@ -10,7 +10,7 @@ import SwiftUI
 import WidgetKit
 
 struct UNTILWatchWidgetsControl: ControlWidget {
-    static let kind: String = "com.develoeprnick.UNTIL.UNTILWatch.watchkitapp.UNTILWatchWidgets"
+    static let kind: String = "com.developernick.until.watchapp.UNTILWatchWidgets"
 
     var body: some ControlWidgetConfiguration {
         AppIntentControlConfiguration(

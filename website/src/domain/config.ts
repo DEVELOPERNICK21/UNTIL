@@ -13,8 +13,10 @@ import {
 export const APP_NAME = 'UNTIL : Countdown & Time Left' as const;
 
 export const SITE_CONFIG = {
-  /** Base URL for canonical links and sitemap (replace with your domain) */
-  baseUrl: process.env.NEXT_PUBLIC_SITE_URL ?? 'https://until-app.com',
+  /** Base URL for canonical links and sitemap */
+  baseUrl:
+    process.env.NEXT_PUBLIC_SITE_URL ??
+    'https://developernick1-until.vercel.app',
   appName: APP_NAME,
   tagline: 'Countdown & time left. Day, month, year, life.',
   /** Contact email for privacy/legal inquiries (required for store listings) */
@@ -29,7 +31,7 @@ export const SITE_CONFIG = {
     oneTimeLabel: `Free day & year + ${WEBSITE_PRICING.trialDays}-day Premium preview`,
     price: PRICING_DISPLAY.yearly,
     wasPrice: `${formatInr(WEBSITE_PRICING.monthlyInr * 12)}/year at monthly`,
-    secondaryLine: `${PRICING_DISPLAY.lifetime} · ${PRICING_DISPLAY.monthly} · ${PRICING_DISPLAY.studentYearly}`,
+    secondaryLine: `${PRICING_DISPLAY.weekly} · ${PRICING_DISPLAY.monthly} · ${PRICING_DISPLAY.lifetime}`,
     savePercent: yearlySavePercentVsMonthly,
     perDayLine: PRICING_DISPLAY.yearlyPerDay,
     savingsLine: PRICING_DISPLAY.yearlySavings,

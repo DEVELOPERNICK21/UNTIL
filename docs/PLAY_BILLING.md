@@ -1,17 +1,18 @@
-# Google Play Premium (yearly + lifetime)
+# Google Play Premium (subscriptions + lifetime)
 
 **Superseded:** In-app purchases go through RevenueCat (`react-native-purchases`), not `react-native-iap`. Product IDs below stay the same in Play Console. See [MONETIZATION_SETUP.md](./MONETIZATION_SETUP.md) for RC keys, the `premium` entitlement, and the `default` offering.
 
-UNTIL Premium on Android offers two purchase options:
-
 | Plan | Product ID | Play Console type |
 |------|------------|-------------------|
+| **Weekly** | `weekly_subscription` | Subscription (weekly) — **₹49** |
+| **Monthly** | `monthly_subscription` | Subscription (monthly) — **₹149** |
 | **Yearly** | `yearly_subscription` | Subscription (yearly) — **₹499** |
-| **Monthly** | `monthly_subscription` | Subscription (monthly) — **₹99** |
-| **Lifetime** | `lifetime_unlock` | One-time — **₹1,499** |
+| **Lifetime** | `lifetime_unlock` | One-time — **₹1,999** |
 | **Student yearly** (optional) | `yearly_subscription_student` | Subscription (yearly) — **₹249** |
 
 Product IDs are in `src/config/billing.ts` and **must match Play Console exactly**. Regional prices are set in Play Console; the app displays localized amounts from Google.
+
+**Paywall:** 3 cards (yearly · monthly · weekly). Lifetime is a secondary CTA; student stays behind email verify.
 
 ---
 
@@ -22,26 +23,31 @@ Product IDs are in `src/config/billing.ts` and **must match Play Console exactly
 1. [Google Play Console](https://play.google.com/console) → your app.
 2. **Monetize** → complete **Payments profile** (merchant, tax, bank).
 
-### 2. Yearly subscription
+### 2. Subscriptions
 
-**Monetize → Products → Subscriptions → Create subscription**
+**Monetize → Products → Subscriptions → Create subscription** (or edit base-plan price)
 
-1. **Product ID:** `yearly_subscription`
-2. Name/description for the store purchase UI.
-3. **Base plan:** billing period **Yearly**, set price **₹499** (required — matches app fallbacks).
-4. **Do not add a Play “free trial” offer** unless you also update app copy and offer selection — UNTIL’s 5-day offer is an **in-app preview** (no Google charge). The paywall must not promise a billing trial that the Google payment sheet does not show.
-5. **Activate** the base plan (status **Active**).
+| Product ID | Base plan period | Price (INR) |
+|------------|------------------|-------------|
+| `weekly_subscription` | Weekly | ₹49 |
+| `monthly_subscription` | Monthly | ₹149 |
+| `yearly_subscription` | Yearly | ₹499 |
+| `yearly_subscription_student` (optional) | Yearly | ₹249 |
+
+For each:
+
+1. Name/description for the store purchase UI.
+2. **Do not add a Play “free trial” offer** unless you also update app copy — UNTIL’s 5-day offer is an **in-app preview** (no Google charge).
+3. **Activate** the base plan (status **Active**).
 
 ### 3. Lifetime one-time product
 
-**Monetize → Products → In-app products → Create product**
+**Monetize → Products → In-app products → Create product** (or edit price)
 
 1. **Product ID:** `lifetime_unlock`
 2. Type: **One-time** (managed product / non-consumable).
-3. Set price **₹1,499** (≥3× yearly so ₹499/year stays the rational choice).
+3. Set price **₹1,999** (≥3× yearly so ₹499/year stays the rational choice).
 4. **Activate** the product.
-
-You do **not** need to create `monthly_subscription` unless you already had it for early testers.
 
 ### 4. Internal testing build
 
@@ -56,14 +62,14 @@ You do **not** need to create `monthly_subscription` unless you already had it f
 
 - Privacy policy URL.
 - Describe Premium benefits (widgets, Life, overlay, etc.).
-- Yearly: users cancel via **Google Play → Payments & subscriptions**.
+- Subscriptions: users cancel via **Google Play → Payments & subscriptions**.
 
 ---
 
 ## Test checklist
 
 1. Install from **Internal testing** with a license tester account.
-2. **Settings → Premium** → **Yearly** and **Lifetime** show Play prices (not only fallbacks ₹499 / ₹999).
+2. **Settings → Premium** → Yearly / Monthly / Weekly show Play prices (not only fallbacks).
 3. Buy **Lifetime** (test) → Premium unlocks, no renewal.
 4. Buy **Yearly** (test) → Premium unlocks; cancel in Play → after period ends, premium clears (reconcile ~12h).
 5. **Restore purchases** after reinstall → Premium returns.
@@ -72,10 +78,13 @@ You do **not** need to create `monthly_subscription` unless you already had it f
 
 ## Suggested pricing (India)
 
-| Plan | Example | Notes |
-|------|---------|--------|
-| Yearly | **₹499** | Primary revenue |
-| Lifetime | **₹1,499** | Decoy + high ARPU (3× yearly) |
+| Plan | Price | Notes |
+|------|-------|--------|
+| Weekly | **₹49** | Low-risk try |
+| Monthly | **₹149** | Flexible |
+| Yearly | **₹499** | Primary / best value |
+| Lifetime | **₹1,999** | Decoy + high ARPU |
+| Student yearly | **₹249** | Keep accessible |
 
 Set final prices in Play Console.
 
@@ -88,48 +97,5 @@ Set final prices in Play Console.
 | `src/config/billing.ts` | Product IDs + paywall list |
 | `src/config/revenueCat.ts` | Public SDK keys |
 | `src/infrastructure/repositories/RevenueCatPurchasesRepository.ts` | Purchase / restore / offerings |
-| `src/surfaces/app/PremiumScreen.tsx` | Paywall UI |
-
----
-
-## Google Play Subscriptions policy (trial clarity)
-
-Reviewers compare **in-app subscription copy** with the **Google Play payment sheet**.
-
-| What users see | Requirement |
-|----------------|-------------|
-| In-app yearly button | Must not say “Start free trial” if Play charges **today** at the yearly price. |
-| Google payment sheet | Must list trial length, price after trial, and cancellation — **only if** you configure a Play free trial / intro offer. |
-| In-app preview | UNTIL’s 5-day preview is **not** a Play subscription trial; label it “free app preview” and state that subscribing bills through Google Play immediately. |
-
-If you later add a **Play free trial** in Play Console on `yearly_subscription`, you must:
-
-1. Create an **offer** with free trial on the yearly base plan and activate it.
-2. Attach that offer in RevenueCat (and confirm the paywall package maps to it).
-3. Restore paywall copy to describe the **Play** trial terms (must match the payment sheet exactly).
-
-Until then, keep paywall copy in `src/config/monetization.ts` aligned with immediate yearly billing.
-
----
-
-## Trial preview API (anti-reset)
-
-Deploy `POST /api/trial-preview` on the website (Vercel) before or with the app build that syncs preview start.
-
-| Env | Purpose |
-|-----|---------|
-| `UNTIL_TRIAL_API_SECRET` or `UNTIL_VERIFY_API_SECRET` | Bearer auth from app |
-| `KV_REST_API_URL` + `KV_REST_API_TOKEN` | Vercel KV (or Upstash REST vars) |
-| `UNTIL_TRIAL_PREVIEW_DAYS` | Default `5` (match `MONETIZATION_TRIAL_DAYS`) |
-| `UNTIL_TRIAL_SALT` | Optional hash salt for stored device keys |
-
-App env (optional overrides):
-
-- `UNTIL_TRIAL_PREVIEW_URL` — defaults to production website `/api/trial-preview`
-- `UNTIL_TRIAL_API_SECRET` — same Bearer as server
-
----
-
-## Ship
-
-Include billing changes in your release AAB, upload to Internal testing first, then Production when purchases work.
+| `src/config/monetization.ts` | Fallback INR + paywall copy |
+| `src/components/premium/PremiumPaywallBody.tsx` | Custom paywall UI |

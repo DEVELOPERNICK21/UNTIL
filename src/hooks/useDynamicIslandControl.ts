@@ -6,7 +6,6 @@ import {
   endLiveActivity,
   getLiveActivityWidgetType,
   setLiveActivityWidgetType,
-  updateLiveActivity,
 } from '../infrastructure/WidgetSync';
 import type { LiveActivityWidgetType } from '../infrastructure/WidgetSync';
 import { useAccessControl } from './useAccessControl';
@@ -25,22 +24,22 @@ const WIDGET_OPTIONS: {
   {
     type: 'day',
     title: 'Today',
-    description: '57% done · 42% left. Day progress with hours.',
+    description: 'How much of today is left · hours remaining.',
   },
   {
     type: 'month',
     title: 'This month',
-    description: 'Feb 17% · 23d left. Month progress.',
+    description: 'Days left in the month · Premium.',
   },
   {
     type: 'year',
     title: 'This year',
-    description: '9% · 329d left. Year progress.',
+    description: 'How much of the year is left.',
   },
   {
     type: 'life',
     title: 'Your life',
-    description: 'Life progress. Set birth date in Settings.',
+    description: 'Days left in life · set birth date · Premium.',
   },
   {
     type: 'hourCalc',
@@ -82,7 +81,9 @@ export function useDynamicIslandControl() {
       setLiveActivityWidgetType(type);
       setActiveWidget(type);
       if (liveActivityActive) {
-        updateLiveActivity(type);
+        // Restart so Dynamic Island / Lock Screen switch to the new type now.
+        // ContentState-only updates can no-op if an older activity is still running.
+        syncLiveActivity(type);
       }
     },
     [liveActivityActive, hasPremiumBundle],

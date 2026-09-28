@@ -112,7 +112,7 @@ export const LANDING_COPY = {
       {
         question: 'Is Until free or paid?',
         answer:
-          `Until has a free core experience (day/year progress and sharing). Premium unlocks month/life widgets, full Life progress, lost-time alerts, widget accents, Dynamic Island on iOS, and floating overlay on Android. Start with a ${WEBSITE_PRICING.trialDays}-day free app preview, then ${formatInr(WEBSITE_PRICING.yearlyInr)}/year, ${formatInr(WEBSITE_PRICING.lifetimeInr)} lifetime, ${formatInr(WEBSITE_PRICING.monthlyInr)}/month, or ${formatInr(WEBSITE_PRICING.yearlyStudentInr)}/year student on Android.`,
+          `Until has a free core experience (day/year progress and sharing). Premium unlocks month/life widgets, full Life progress, lost-time alerts, widget accents, Dynamic Island on iOS, and floating overlay on Android. Start with a ${WEBSITE_PRICING.trialDays}-day free app preview, then ${formatInr(WEBSITE_PRICING.yearlyInr)}/year, ${formatInr(WEBSITE_PRICING.monthlyInr)}/month, ${formatInr(WEBSITE_PRICING.weeklyInr)}/week, ${formatInr(WEBSITE_PRICING.lifetimeInr)} lifetime, or ${formatInr(WEBSITE_PRICING.yearlyStudentInr)}/year student.`,
       },
       {
         question: 'What can I put on widgets?',
@@ -200,7 +200,7 @@ export const LANDING_COPY = {
     checkmarks: [
       'Free forever: day + year widgets and share snapshot',
       `Best value: ${PRICING_DISPLAY.yearly} (${PRICING_DISPLAY.yearlyPerDay})`,
-      `${PRICING_DISPLAY.lifetime} · ${PRICING_DISPLAY.monthly}`,
+      `${PRICING_DISPLAY.weekly} · ${PRICING_DISPLAY.monthly} · ${PRICING_DISPLAY.lifetime}`,
       `${PRICING_DISPLAY.studentYearly} with school email verify`,
       'Premium: month/life widgets, overlay, intervention alerts',
     ],

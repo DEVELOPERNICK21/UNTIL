@@ -32,17 +32,29 @@ workflows:
           npm install
       - name: Write release env for Babel inline
         script: |
-          # .env is gitignored; Babel inlines UNTIL_* at bundle time.
+          # .env is gitignored; Babel inlines UNTIL_* / REVENUECAT_* at bundle time.
           {
             echo "UNTIL_GOOGLE_WEB_CLIENT_ID=${UNTIL_GOOGLE_WEB_CLIENT_ID}"
             echo "UNTIL_POSTHOG_API_KEY=${UNTIL_POSTHOG_API_KEY:-}"
             echo "UNTIL_POSTHOG_HOST=${UNTIL_POSTHOG_HOST:-https://us.i.posthog.com}"
+            echo "REVENUECAT_API_KEY_IOS=${REVENUECAT_API_KEY_IOS:-}"
+            echo "REVENUECAT_API_KEY_ANDROID=${REVENUECAT_API_KEY_ANDROID:-}"
           } > "$CM_BUILD_DIR/.env"
           if [ -z "$UNTIL_GOOGLE_WEB_CLIENT_ID" ]; then
             echo "ERROR: UNTIL_GOOGLE_WEB_CLIENT_ID is empty" >&2
             exit 1
           fi
-          echo "Wrote .env with Google Web Client ID"
+          if [ -z "$REVENUECAT_API_KEY_ANDROID" ]; then
+            echo "ERROR: REVENUECAT_API_KEY_ANDROID is empty (use goog_ key, never test_)" >&2
+            exit 1
+          fi
+          case "$REVENUECAT_API_KEY_ANDROID" in
+            test_*)
+              echo "ERROR: REVENUECAT_API_KEY_ANDROID must not be a Test Store test_ key in release" >&2
+              exit 1
+              ;;
+          esac
+          echo "Wrote .env with Google Web Client ID + RevenueCat keys"
       - name: Build Android release AAB
         script: |
           set -e
@@ -104,9 +116,9 @@ workflows:
     environment:
       ios_signing:
         distribution_type: app_store # or ad_hoc for TestFlight/internal
-        bundle_identifier: com.develoeprnick.UNTIL
+        bundle_identifier: com.developernick.until
       vars:
-        BUNDLE_ID: 'com.develoeprnick.UNTIL'
+        BUNDLE_ID: 'com.developernick.until'
         XCODE_WORKSPACE: 'UNTIL.xcworkspace'
         XCODE_SCHEME: 'UNTIL'
 
@@ -114,6 +126,32 @@ workflows:
       - name: Install npm dependencies
         script: |
           npm install
+      - name: Write release env for Babel inline
+        script: |
+          # .env is gitignored; Babel inlines REVENUECAT_* at bundle time.
+          # test_ keys crash release (RevenueCat checkForSimulatedStoreAPIKeyInRelease).
+          {
+            echo "UNTIL_POSTHOG_API_KEY=${UNTIL_POSTHOG_API_KEY:-}"
+            echo "UNTIL_POSTHOG_HOST=${UNTIL_POSTHOG_HOST:-https://us.i.posthog.com}"
+            echo "UNTIL_GOOGLE_WEB_CLIENT_ID=${UNTIL_GOOGLE_WEB_CLIENT_ID:-}"
+            echo "REVENUECAT_API_KEY_IOS=${REVENUECAT_API_KEY_IOS:-}"
+            echo "REVENUECAT_API_KEY_ANDROID=${REVENUECAT_API_KEY_ANDROID:-}"
+          } > "$CM_BUILD_DIR/.env"
+          if [ -z "$REVENUECAT_API_KEY_IOS" ]; then
+            echo "ERROR: REVENUECAT_API_KEY_IOS is empty (use appl_ key, never test_)" >&2
+            exit 1
+          fi
+          case "$REVENUECAT_API_KEY_IOS" in
+            test_*)
+              echo "ERROR: REVENUECAT_API_KEY_IOS must not be a Test Store test_ key in release" >&2
+              exit 1
+              ;;
+            appl_*) ;;
+            *)
+              echo "WARNING: REVENUECAT_API_KEY_IOS does not start with appl_" >&2
+              ;;
+          esac
+          echo "Wrote .env with RevenueCat iOS key"
       - name: Install CocoaPods dependencies
         script: |
           cd ios && pod install

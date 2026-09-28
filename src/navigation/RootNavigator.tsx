@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import {
   Animated,
   Easing,
+  Platform,
   StyleSheet,
   useWindowDimensions,
   View,
@@ -430,12 +431,15 @@ export function RootNavigator() {
         <Stack.Screen
           name="DynamicIsland"
           component={DynamicIslandScreen}
-          options={{ title: 'Dynamic Island', headerBackTitle: 'Back' }}
+          options={{
+            title: Platform.OS === 'android' ? 'Live Island' : 'Dynamic Island',
+            headerBackTitle: 'Back',
+          }}
         />
         <Stack.Screen
           name="Overlay"
           component={OverlayScreen}
-          options={{ title: 'Floating overlay', headerBackTitle: 'Back' }}
+          options={{ title: 'Live Island', headerBackTitle: 'Back' }}
         />
         <Stack.Screen
           name="ShareSnapshot"

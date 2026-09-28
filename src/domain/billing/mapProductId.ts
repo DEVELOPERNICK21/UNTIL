@@ -15,6 +15,7 @@ export function normalizeStoreProductId(productId: string): string {
 
 export function productIdToPurchaseType(productId: string): PurchaseType | null {
   const id = normalizeStoreProductId(productId);
+  if (id === BILLING_PRODUCT_IDS.weekly) return 'weekly';
   if (id === BILLING_PRODUCT_IDS.monthly) return 'monthly';
   if (
     id === BILLING_PRODUCT_IDS.yearly ||

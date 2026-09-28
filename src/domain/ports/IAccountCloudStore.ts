@@ -13,4 +13,6 @@ export interface IAccountCloudStore {
   setDeviceActive(uid: string, deviceId: string, active: boolean): Promise<void>;
   getEntitlement(uid: string): Promise<CloudEntitlement | null>;
   setEntitlement(uid: string, entitlement: CloudEntitlement): Promise<void>;
+  /** Idempotent: removes users/{uid} tree (devices, entitlement, profile doc). */
+  deleteUserData(uid: string): Promise<void>;
 }

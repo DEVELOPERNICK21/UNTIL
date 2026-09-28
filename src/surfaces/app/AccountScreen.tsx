@@ -11,9 +11,13 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Alert,
+  Modal,
+  Platform,
+  TextInput,
 } from 'react-native';
 import { Text, ScreenGradient, GlassCard } from '../../ui';
 import { useAuthSession, useAccountActions } from '../../hooks';
+import { isAuthRequiresPasswordError } from '../../domain/errors/authErrors';
 import {
   useTheme,
   Spacing,
@@ -28,9 +32,16 @@ import {
   EmailPasswordAuthForm,
   type EmailAuthMode,
 } from '../auth/EmailPasswordAuthForm';
+import { GoogleMark } from '../auth/GoogleMark';
 
 const DEVICE_LIMIT_BANNER_COPY =
   'This account is already used on 3 devices. Remove one to unlock premium here.';
+
+const SIGN_IN_BENEFITS = [
+  'Birth date and life settings',
+  'Premium on up to 3 phones',
+  'Restore after reinstall',
+] as const;
 
 function deviceLabel(device: AccountDevice): string {
   if (device.label) return device.label;
@@ -55,11 +66,13 @@ export function AccountScreen() {
     signInWithEmail,
     createAccountWithEmail,
     signOut,
+    deleteAccount,
     removeDevice,
     refreshDevices,
     currentDeviceId,
     busy,
     error,
+    clearError,
   } = useAccountActions();
 
   const [devices, setDevices] = useState<AccountDevice[]>([]);
@@ -68,6 +81,12 @@ export function AccountScreen() {
   const [authEmail, setAuthEmail] = useState('');
   const [authPassword, setAuthPassword] = useState('');
   const [emailMode, setEmailMode] = useState<EmailAuthMode>('sign_in');
+  const [passwordForDelete, setPasswordForDelete] = useState('');
+  const [passwordForDeleteVisible, setPasswordForDeleteVisible] =
+    useState(false);
+  const [passwordForDeleteError, setPasswordForDeleteError] = useState<
+    string | null
+  >(null);
 
   const loadDevices = useCallback(async () => {
     if (!signedIn) {
@@ -79,7 +98,9 @@ export function AccountScreen() {
       const list = await refreshDevices();
       /** Removed devices stay in Firestore for their history; only active ones hold a slot. */
       setDevices(
-        list.filter(d => d.active === true).sort((a, b) => b.lastSeenAt - a.lastSeenAt),
+        list
+          .filter(d => d.active === true)
+          .sort((a, b) => b.lastSeenAt - a.lastSeenAt),
       );
     } catch {
       // Message is already surfaced via the hook's error state.
@@ -152,10 +173,87 @@ export function AccountScreen() {
     ]);
   };
 
+  const runDeleteAccount = async (emailPassword?: string) => {
+    setPasswordForDeleteError(null);
+    try {
+      await deleteAccount(emailPassword);
+      setPasswordForDelete('');
+      setPasswordForDeleteError(null);
+      setPasswordForDeleteVisible(false);
+      void logAnalyticsEvent('account_deleted');
+    } catch (e) {
+      if (isAuthRequiresPasswordError(e)) {
+        if (Platform.OS === 'ios') {
+          Alert.prompt(
+            'Confirm password',
+            'Enter your password to delete your account.',
+            [
+              { text: 'Cancel', style: 'cancel' },
+              {
+                text: 'Delete',
+                style: 'destructive',
+                onPress: (password?: string) => {
+                  if (!password) return;
+                  void runDeleteAccount(password);
+                },
+              },
+            ],
+            'secure-text',
+          );
+          return;
+        }
+        setPasswordForDeleteError(null);
+        setPasswordForDeleteVisible(true);
+        return;
+      }
+      if (
+        Platform.OS === 'android' &&
+        (passwordForDeleteVisible || emailPassword !== undefined)
+      ) {
+        setPasswordForDeleteError(
+          e instanceof Error && e.message
+            ? e.message
+            : 'Account not deleted. Try again.',
+        );
+        return;
+      }
+      Alert.alert('Account not deleted', 'Try again.');
+    }
+  };
+
+  const handleDeleteAccount = () => {
+    Alert.alert(
+      'Delete account?',
+      `This removes your UNTIL account and cloud data. Progress on this phone stays. Purchases stay with your ${
+        Platform.OS === 'ios' ? 'Apple ID' : 'Google Play account'
+      }.`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: () => {
+            void logAnalyticsEvent('account_delete_started');
+            void runDeleteAccount();
+          },
+        },
+      ],
+    );
+  };
+
+  const dismissPasswordForDelete = () => {
+    setPasswordForDelete('');
+    setPasswordForDeleteError(null);
+    setPasswordForDeleteVisible(false);
+    clearError();
+  };
+
   const handleRemoveDevice = (device: AccountDevice) => {
     Alert.alert(
       'Remove device',
-      `Remove ${deviceLabel(device)}? It will need to sign in again to use premium.`,
+      `Remove ${deviceLabel(
+        device,
+      )}? It will need to sign in again to use premium.`,
       [
         { text: 'Cancel', style: 'cancel' },
         {
@@ -191,43 +289,59 @@ export function AccountScreen() {
           {!signedIn ? (
             <View style={styles.section}>
               <Text
-                variant="caption"
-                style={[styles.sectionLabel, { color: theme.textSecondary }]}
+                variant="display"
+                style={[styles.introTitle, { color: theme.textPrimary }]}
               >
-                Account
+                Keep your data with you
               </Text>
+              <Text
+                variant="body"
+                style={[styles.introBody, { color: theme.textSecondary }]}
+              >
+                Sync birth date, premium, and settings across phones.
+              </Text>
+
+              <View style={styles.benefitList}>
+                {SIGN_IN_BENEFITS.map(line => (
+                  <View key={line} style={styles.benefitRow}>
+                    <View
+                      style={[
+                        styles.benefitDot,
+                        { backgroundColor: theme.percent },
+                      ]}
+                    />
+                    <Text variant="body" style={{ color: theme.textSecondary }}>
+                      {line}
+                    </Text>
+                  </View>
+                ))}
+              </View>
+
               <GlassCard style={styles.introCard}>
-                <Text
-                  variant="title"
-                  style={[styles.introTitle, { color: theme.textPrimary }]}
-                >
-                  Sign in to keep your data
-                </Text>
-                <Text
-                  variant="body"
-                  style={[styles.introBody, { color: theme.textSecondary }]}
-                >
-                  Saves DOB, premium, and settings across devices.
-                </Text>
                 {/*
                   Google + email/password. App Store guideline 4.8 still needs
                   Sign in with Apple before iOS submission if Google stays.
                 */}
                 <TouchableOpacity
-                  style={[styles.googleButton, styles.googleButtonBg]}
+                  style={[
+                    styles.googleButton,
+                    {
+                      backgroundColor: '#F8F8F8',
+                      borderColor: theme.glassBorder,
+                    },
+                  ]}
                   onPress={handleGoogleSignIn}
                   activeOpacity={0.85}
                   disabled={busy}
                   accessibilityRole="button"
                   accessibilityLabel="Continue with Google"
+                  accessibilityState={{ busy, disabled: busy }}
                 >
                   {busy ? (
                     <ActivityIndicator color="#1A1A1A" />
                   ) : (
                     <>
-                      <View style={styles.googleG}>
-                        <Text style={styles.googleGText}>G</Text>
-                      </View>
+                      <GoogleMark />
                       <Text
                         variant="sectionTitle"
                         style={styles.googleButtonLabel}
@@ -243,7 +357,7 @@ export function AccountScreen() {
                     style={[styles.orLine, { backgroundColor: theme.divider }]}
                   />
                   <Text variant="caption" style={{ color: theme.textMuted }}>
-                    or
+                    or with email
                   </Text>
                   <View
                     style={[styles.orLine, { backgroundColor: theme.divider }]}
@@ -263,8 +377,18 @@ export function AccountScreen() {
                   }}
                 />
 
+                <Text
+                  variant="caption"
+                  style={[styles.trustLine, { color: theme.textMuted }]}
+                >
+                  Up to 3 devices per account
+                </Text>
+
                 {error ? (
-                  <Text variant="caption" style={styles.errorText}>
+                  <Text
+                    variant="caption"
+                    style={[styles.errorText, styles.errorBelowForm]}
+                  >
                     {error}
                   </Text>
                 ) : null}
@@ -282,10 +406,7 @@ export function AccountScreen() {
                 <GlassCard style={styles.sectionCard}>
                   <View style={[styles.row, styles.rowLast]}>
                     <View style={styles.rowContent}>
-                      <Text
-                        variant="body"
-                        style={{ color: theme.textPrimary }}
-                      >
+                      <Text variant="body" style={{ color: theme.textPrimary }}>
                         {email ?? 'Signed in'}
                       </Text>
                       <Text
@@ -373,10 +494,7 @@ export function AccountScreen() {
                           {removingId === device.id ? (
                             <ActivityIndicator color={theme.textSecondary} />
                           ) : (
-                            <Text
-                              variant="caption"
-                              style={styles.removeLabel}
-                            >
+                            <Text variant="caption" style={styles.removeLabel}>
                               Remove
                             </Text>
                           )}
@@ -397,7 +515,10 @@ export function AccountScreen() {
               ) : null}
 
               <TouchableOpacity
-                style={[styles.signOutButton, { borderColor: theme.glassBorder }]}
+                style={[
+                  styles.signOutButton,
+                  { borderColor: theme.glassBorder },
+                ]}
                 onPress={handleSignOut}
                 activeOpacity={0.7}
                 disabled={busy}
@@ -406,10 +527,116 @@ export function AccountScreen() {
                   Sign out
                 </Text>
               </TouchableOpacity>
+              <TouchableOpacity
+                style={[
+                  styles.deleteButton,
+                  { borderColor: theme.glassBorder },
+                ]}
+                onPress={handleDeleteAccount}
+                activeOpacity={0.7}
+                disabled={busy}
+                accessibilityRole="button"
+                accessibilityLabel="Delete account"
+              >
+                {busy ? (
+                  <ActivityIndicator color="#C62828" />
+                ) : (
+                  <Text variant="body" style={{ color: '#C62828' }}>
+                    Delete account
+                  </Text>
+                )}
+              </TouchableOpacity>
             </>
           )}
         </ScrollView>
       </ScreenGradient>
+      <Modal
+        visible={passwordForDeleteVisible}
+        transparent
+        animationType="fade"
+        statusBarTranslucent
+        onRequestClose={dismissPasswordForDelete}
+      >
+        <View style={styles.modalBackdrop}>
+          <View
+            style={[
+              styles.passwordModal,
+              {
+                backgroundColor: theme.cardBase,
+                borderColor: theme.glassBorder,
+              },
+            ]}
+          >
+            <Text variant="title" style={{ color: theme.textPrimary }}>
+              Confirm password
+            </Text>
+            <Text
+              variant="body"
+              style={[styles.passwordModalBody, { color: theme.textSecondary }]}
+            >
+              Enter your password to delete your account.
+            </Text>
+            <TextInput
+              value={passwordForDelete}
+              onChangeText={setPasswordForDelete}
+              placeholder="Password"
+              placeholderTextColor={theme.textMuted}
+              secureTextEntry
+              textContentType="password"
+              autoComplete="password"
+              autoFocus
+              editable={!busy}
+              style={[
+                styles.passwordInput,
+                {
+                  color: theme.textPrimary,
+                  borderColor: theme.glassBorder,
+                },
+              ]}
+              accessibilityLabel="Password"
+              onSubmitEditing={() => {
+                if (passwordForDelete) {
+                  void runDeleteAccount(passwordForDelete);
+                }
+              }}
+            />
+            {passwordForDeleteError ? (
+              <Text
+                variant="caption"
+                style={[styles.errorText, styles.passwordModalError]}
+              >
+                {passwordForDeleteError}
+              </Text>
+            ) : null}
+            <View style={styles.passwordModalActions}>
+              <TouchableOpacity
+                style={styles.passwordModalAction}
+                onPress={dismissPasswordForDelete}
+                disabled={busy}
+                accessibilityRole="button"
+                accessibilityLabel="Cancel"
+              >
+                <Text variant="body" style={{ color: theme.textSecondary }}>
+                  Cancel
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.passwordModalAction}
+                onPress={() => {
+                  void runDeleteAccount(passwordForDelete);
+                }}
+                disabled={busy || !passwordForDelete}
+                accessibilityRole="button"
+                accessibilityLabel="Delete"
+              >
+                <Text variant="body" style={{ color: '#C62828' }}>
+                  Delete
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -450,17 +677,30 @@ const styles = StyleSheet.create({
   },
   introCard: {
     padding: Spacing[4],
-    alignItems: 'center',
+    alignItems: 'stretch',
   },
   introTitle: {
     fontFamily: getFontFamilyForWeight(Weight.semibold),
     marginBottom: Spacing[2],
-    textAlign: 'center',
+    letterSpacing: -0.4,
   },
   introBody: {
-    textAlign: 'center',
     lineHeight: 22,
+    marginBottom: Spacing[3],
+  },
+  benefitList: {
+    gap: Spacing[2],
     marginBottom: Spacing[4],
+  },
+  benefitRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing[2],
+  },
+  benefitDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
   },
   googleButton: {
     flexDirection: 'row',
@@ -469,13 +709,11 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing[3],
     paddingHorizontal: Spacing[4],
     borderRadius: Radius.md,
+    borderWidth: StyleSheet.hairlineWidth,
     minHeight: 52,
     width: '100%',
     gap: Spacing.sm,
     ...Shadows.card,
-  },
-  googleButtonBg: {
-    backgroundColor: '#FFFFFF',
   },
   googleButtonLabel: {
     fontFamily: getFontFamilyForWeight(Weight.semibold),
@@ -485,29 +723,23 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing[2],
-    marginTop: Spacing[3],
+    marginVertical: Spacing[3],
     width: '100%',
   },
   orLine: {
     flex: 1,
     height: StyleSheet.hairlineWidth,
   },
-  googleG: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: '#4285F4',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  googleGText: {
-    fontSize: 14,
-    fontFamily: getFontFamilyForWeight(Weight.bold),
-    color: '#FFFFFF',
+  trustLine: {
+    textAlign: 'center',
+    marginTop: Spacing[3],
   },
   errorText: {
     color: '#E85C5C',
     textAlign: 'center',
+  },
+  errorBelowForm: {
+    marginTop: Spacing[2],
   },
   errorTextSpacing: {
     marginBottom: Spacing[3],
@@ -528,5 +760,49 @@ const styles = StyleSheet.create({
     borderRadius: Radius.md,
     paddingVertical: Spacing[3],
     alignItems: 'center',
+  },
+  deleteButton: {
+    borderWidth: StyleSheet.hairlineWidth,
+    borderRadius: Radius.md,
+    paddingVertical: Spacing[3],
+    alignItems: 'center',
+    marginTop: Spacing[3],
+  },
+  modalBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.55)',
+    justifyContent: 'center',
+    padding: Spacing[4],
+  },
+  passwordModal: {
+    borderWidth: StyleSheet.hairlineWidth,
+    borderRadius: Radius.lg,
+    padding: Spacing[4],
+  },
+  passwordModalBody: {
+    marginTop: Spacing[2],
+    marginBottom: Spacing[3],
+  },
+  passwordInput: {
+    borderWidth: StyleSheet.hairlineWidth,
+    borderRadius: Radius.md,
+    paddingHorizontal: Spacing[3],
+    paddingVertical: Spacing[3],
+    minHeight: 48,
+    fontFamily: getFontFamilyForWeight(Weight.regular),
+    fontSize: 16,
+  },
+  passwordModalActions: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    gap: Spacing[2],
+    marginTop: Spacing[3],
+  },
+  passwordModalError: {
+    marginTop: Spacing[2],
+  },
+  passwordModalAction: {
+    paddingHorizontal: Spacing[3],
+    paddingVertical: Spacing[2],
   },
 });

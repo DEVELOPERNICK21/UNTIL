@@ -14,17 +14,23 @@ globs:
 
 Read `docs/MONETIZATION_STRATEGY.md` before changing pricing, paywall, or gates.
 
-## Plans (Android paywall)
+## Plans (INR ladder)
 
-- **Yearly** ₹500/year — `yearly_subscription` — primary, “Best value”
-- **Monthly** ₹100/month — `monthly_subscription` — flexible option
-- **Lifetime** ₹1,500 — `lifetime_unlock` — decoy (≥3× yearly)
-- **Student yearly** ₹500/year — `yearly_subscription_student` (optional, flag in `monetization.ts`)
+Paywall cards (3 only):
+
+- **Yearly** ₹499/year — `yearly_subscription` — best value
+- **Monthly** ₹149/month — `monthly_subscription` — flexible
+- **Weekly** ₹49/week — `weekly_subscription` — low-risk try
+
+Secondary (not cards):
+
+- **Lifetime** ₹1,999 once — `lifetime_unlock` — decoy + high ARPU
+- **Student yearly** ₹249/year — `yearly_subscription_student` (optional, behind email verify)
 
 ## SSOT
 
 - Copy & fallback prices: `src/config/monetization.ts`
-- Play product IDs: `src/config/billing.ts`
+- Store product IDs: `src/config/billing.ts` (`BILLING_PAYWALL_IDS` = yearly · monthly · weekly)
 - Shared paywall UI: `src/components/premium/PremiumPaywallBody.tsx`
 - Social proof: set `PAYWALL_SOCIAL_PROOF.verifiedActiveWatchers` only from verified analytics (null = hidden)
 

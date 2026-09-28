@@ -90,6 +90,7 @@ import { SignInWithGoogleUseCase } from './domain/useCases/SignInWithGoogleUseCa
 import { SignInWithEmailUseCase } from './domain/useCases/SignInWithEmailUseCase';
 import { CreateAccountWithEmailUseCase } from './domain/useCases/CreateAccountWithEmailUseCase';
 import { SignOutUseCase } from './domain/useCases/SignOutUseCase';
+import { DeleteAccountUseCase } from './domain/useCases/DeleteAccountUseCase';
 import { SyncAccountProfileUseCase } from './domain/useCases/SyncAccountProfileUseCase';
 import { RegisterDeviceUseCase } from './domain/useCases/RegisterDeviceUseCase';
 import { RemoveAccountDeviceUseCase } from './domain/useCases/RemoveAccountDeviceUseCase';
@@ -492,6 +493,14 @@ export const signOutUseCase = new SignOutUseCase(
   resetPurchasesUserUseCase,
   recordCrashError,
   syncPremiumAfterEntitlementChange
+);
+
+export const deleteAccountUseCase = new DeleteAccountUseCase(
+  authService,
+  accountCloudStore,
+  resetPurchasesUserUseCase,
+  signOutUseCase,
+  recordCrashError
 );
 
 export const removeAccountDeviceUseCase = new RemoveAccountDeviceUseCase(

@@ -20,6 +20,7 @@ import { recordCrashError } from '../../services/analytics';
 const FIRESTORE_TIMEOUT_MS = 8000;
 
 interface DocSnapshotLike<T> {
+  id: string;
   exists: boolean;
   data(): T | undefined;
 }
@@ -38,6 +39,7 @@ interface FirestoreModule {
   getDoc: <T>(ref: DocRefLike) => Promise<DocSnapshotLike<T>>;
   getDocs: <T>(ref: DocRefLike) => Promise<QuerySnapshotLike<T>>;
   setDoc: (ref: DocRefLike, data: Record<string, unknown>, options?: { merge?: boolean }) => Promise<void>;
+  deleteDoc: (ref: unknown) => Promise<void>;
 }
 
 /**
@@ -53,7 +55,7 @@ function getFirestoreModule(): FirestoreModule | null {
     };
     if (getApps().length === 0) return null;
     // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { getFirestore, doc, collection, getDoc, getDocs, setDoc } = require('@react-native-firebase/firestore') as {
+    const { getFirestore, doc, collection, getDoc, getDocs, setDoc, deleteDoc } = require('@react-native-firebase/firestore') as {
       getFirestore: (app: unknown) => unknown;
       doc: (db: unknown, path: string, ...segments: string[]) => DocRefLike;
       collection: (db: unknown, path: string, ...segments: string[]) => DocRefLike;
@@ -64,6 +66,7 @@ function getFirestoreModule(): FirestoreModule | null {
         data: Record<string, unknown>,
         options?: { merge?: boolean }
       ) => Promise<void>;
+      deleteDoc: (ref: unknown) => Promise<void>;
     };
     const db = getFirestore(getApp());
     return {
@@ -72,6 +75,7 @@ function getFirestoreModule(): FirestoreModule | null {
       getDoc,
       getDocs,
       setDoc,
+      deleteDoc,
     };
   } catch (e) {
     recordCrashError(e, 'FirestoreAccountCloudStoreAdapter.getFirestoreModule');
@@ -194,6 +198,44 @@ export class FirestoreAccountCloudStoreAdapter implements IAccountCloudStore {
       );
     } catch (e) {
       recordCrashError(e, 'FirestoreAccountCloudStoreAdapter.setEntitlement');
+    }
+  }
+
+  async deleteUserData(uid: string): Promise<void> {
+    const db = getFirestoreModule();
+    if (!db) {
+      throw new Error('Cloud storage is unavailable on this build.');
+    }
+    try {
+      const devicesSnap = await withTimeout(
+        db.getDocs(db.collection('users', uid, 'devices')),
+        FIRESTORE_TIMEOUT_MS,
+        'deleteUserData.devices'
+      );
+      for (const d of devicesSnap.docs) {
+        await withTimeout(
+          db.deleteDoc(db.doc('users', uid, 'devices', d.id)),
+          FIRESTORE_TIMEOUT_MS,
+          'deleteUserData.device'
+        );
+      }
+      await withTimeout(
+        db.deleteDoc(db.doc('users', uid, 'entitlement', 'current')),
+        FIRESTORE_TIMEOUT_MS,
+        'deleteUserData.entitlement'
+      ).catch(() => {
+        /* entitlement doc may not exist */
+      });
+      await withTimeout(
+        db.deleteDoc(db.doc('users', uid)),
+        FIRESTORE_TIMEOUT_MS,
+        'deleteUserData.user'
+      ).catch(() => {
+        /* user doc may already be gone */
+      });
+    } catch (e) {
+      recordCrashError(e, 'FirestoreAccountCloudStoreAdapter.deleteUserData');
+      throw new Error('Could not delete cloud account data.');
     }
   }
 }

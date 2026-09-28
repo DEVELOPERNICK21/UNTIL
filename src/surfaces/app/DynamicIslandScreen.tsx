@@ -1,6 +1,5 @@
 /**
- * Dedicated Dynamic Island / Live Activity screen
- * Configure widget type (Day, Month, Year, Life, Daily Task, Hour Calc) and start/stop
+ * Live Island screen (iOS Dynamic Island / Live Activity · Android floating pill + live notification)
  */
 
 import React from 'react';
@@ -9,15 +8,23 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
+  Platform,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Text, ScreenGradient } from '../../ui';
 import { Colors, Spacing, Typography } from '../../theme';
-import { useDynamicIslandControl } from '../../hooks';
+import { useDynamicIslandControl, useOverlayControl } from '../../hooks';
 import type { RootStackParamList } from '../../navigation/RootNavigator';
 
 export function DynamicIslandScreen() {
+  if (Platform.OS === 'android') {
+    return <AndroidLiveIslandScreen />;
+  }
+  return <IosDynamicIslandScreen />;
+}
+
+function IosDynamicIslandScreen() {
   const navigation =
     useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const {
@@ -26,21 +33,126 @@ export function DynamicIslandScreen() {
     handleSelectWidget,
     handleStart,
     handleStop,
-    isIos,
   } = useDynamicIslandControl();
 
-  if (!isIos) {
-    return (
-      <View style={styles.container}>
-        <ScreenGradient>
-          <Text variant="body" color="secondary" style={styles.unsupported}>
-            Dynamic Island is available on iPhone with iOS 16.2 or later.
-          </Text>
-        </ScreenGradient>
-      </View>
-    );
-  }
+  return (
+    <LiveIslandLayout
+      title="Dynamic Island"
+      subtitle="See how much time you have left on Dynamic Island and Lock Screen. Compact shows % left and time left. Long-press for more. iPhone 14 Pro or later for Dynamic Island."
+      sectionTitle="What to show"
+      sectionSubtitle="Pick one. Change anytime while Live Activity is running. Updates when you open the app."
+      hint="Numbers refresh when you open UNTIL. Live Activity can stay up to about 8 hours. Stickers pulse while active."
+      active={liveActivityActive}
+      options={options}
+      onSelect={type => {
+        const option = options.find(o => o.type === type);
+        if (option?.lockedPremium) {
+          navigation.navigate('Premium');
+          return;
+        }
+        handleSelectWidget(type);
+      }}
+      onStart={handleStart}
+      onStop={handleStop}
+      startDisabled={liveActivityActive}
+      stopDisabled={!liveActivityActive}
+    />
+  );
+}
 
+function AndroidLiveIslandScreen() {
+  const navigation =
+    useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const {
+    options,
+    hasPermission,
+    overlayActive,
+    error,
+    handleSelectWidget,
+    handleStart,
+    handleStop,
+    handleOpenSettings,
+  } = useOverlayControl();
+
+  return (
+    <LiveIslandLayout
+      title="Live Island"
+      subtitle="Lock-screen progress notification, plus a floating pill over other apps when you allow “Display over other apps.” On Android 16, the system can promote this to a status-bar chip."
+      sectionTitle="What to show"
+      sectionSubtitle="Pick one. Compact pill and notification update together."
+      hint="Lock-screen progress works without overlay permission. Grant “Display over other apps” for the floating pill. Drag to move · long-press to open Until."
+      active={overlayActive}
+      options={options}
+      onSelect={type => {
+        const option = options.find(o => o.type === type);
+        if (option?.lockedPremium) {
+          navigation.navigate('Premium');
+          return;
+        }
+        handleSelectWidget(type);
+      }}
+      onStart={handleStart}
+      onStop={handleStop}
+      startDisabled={overlayActive}
+      stopDisabled={!overlayActive}
+      permissionBanner={
+        error || hasPermission === false
+          ? {
+              text:
+                error ??
+                'Optional: allow “Display over other apps” for the floating pill. Lock-screen progress still works after Start.',
+              actionLabel: 'Open settings',
+              onAction: handleOpenSettings,
+            }
+          : null
+      }
+    />
+  );
+}
+
+type IslandOption = {
+  type: string;
+  title: string;
+  description: string;
+  selected: boolean;
+  comingSoon?: boolean;
+  lockedPremium?: boolean;
+  locked?: boolean;
+};
+
+function LiveIslandLayout({
+  title,
+  subtitle,
+  sectionTitle,
+  sectionSubtitle,
+  hint,
+  active,
+  options,
+  onSelect,
+  onStart,
+  onStop,
+  startDisabled,
+  stopDisabled,
+  permissionBanner,
+}: {
+  title: string;
+  subtitle: string;
+  sectionTitle: string;
+  sectionSubtitle: string;
+  hint: string;
+  active: boolean;
+  options: IslandOption[];
+  onSelect: (type: any) => void;
+  onStart: () => void;
+  onStop: () => void;
+  startDisabled: boolean;
+  stopDisabled: boolean;
+  permissionBanner?: {
+    text: string;
+    actionLabel: string;
+    onAction: () => void;
+  } | null;
+}) {
   return (
     <View style={styles.container}>
       <ScreenGradient>
@@ -49,12 +161,31 @@ export function DynamicIslandScreen() {
           showsVerticalScrollIndicator={false}
         >
           <Text variant="sectionTitle" color="primary" style={styles.title}>
-            Dynamic Island
+            {title}
           </Text>
           <Text variant="body" color="secondary" style={styles.subtitle}>
-            Live Activity in Dynamic Island and Lock Screen. Choose what to
-            show. iPhone 14 Pro or later for Dynamic Island.
+            {subtitle}
           </Text>
+
+          {permissionBanner ? (
+            <View style={styles.permissionCard}>
+              <Text
+                variant="body"
+                color="primary"
+                style={styles.permissionText}
+              >
+                {permissionBanner.text}
+              </Text>
+              <TouchableOpacity
+                style={styles.permissionButton}
+                onPress={permissionBanner.onAction}
+              >
+                <Text variant="body" color="primary">
+                  {permissionBanner.actionLabel}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          ) : null}
 
           <View style={styles.statusCard}>
             <View style={styles.statusRow}>
@@ -64,36 +195,28 @@ export function DynamicIslandScreen() {
               <View
                 style={[
                   styles.badge,
-                  liveActivityActive
-                    ? styles.badgeActive
-                    : styles.badgeInactive,
+                  active ? styles.badgeActive : styles.badgeInactive,
                 ]}
               >
                 <Text variant="caption" style={styles.badgeText}>
-                  {liveActivityActive ? 'Active' : 'Inactive'}
+                  {active ? 'Active' : 'Inactive'}
                 </Text>
               </View>
             </View>
             <View style={styles.actions}>
               <TouchableOpacity
-                style={[
-                  styles.button,
-                  liveActivityActive && styles.buttonDisabled,
-                ]}
-                onPress={handleStart}
-                disabled={liveActivityActive}
+                style={[styles.button, startDisabled && styles.buttonDisabled]}
+                onPress={onStart}
+                disabled={startDisabled}
               >
                 <Text variant="body" color="primary">
                   Start
                 </Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={[
-                  styles.button,
-                  !liveActivityActive && styles.buttonDisabled,
-                ]}
-                onPress={handleStop}
-                disabled={!liveActivityActive}
+                style={[styles.button, stopDisabled && styles.buttonDisabled]}
+                onPress={onStop}
+                disabled={stopDisabled}
               >
                 <Text variant="body" color="primary">
                   Stop
@@ -103,74 +226,65 @@ export function DynamicIslandScreen() {
           </View>
 
           <Text variant="title" color="primary" style={styles.sectionTitle}>
-            Show in Dynamic Island
+            {sectionTitle}
           </Text>
           <Text
             variant="caption"
             color="secondary"
             style={styles.sectionSubtitle}
           >
-            Tap to select. Compact view shows key metric; long-press to expand.
+            {sectionSubtitle}
           </Text>
 
-          {options.map(({ type, title, description, selected, comingSoon, lockedPremium, locked }) => {
-            return (
-              <TouchableOpacity
-                key={type}
-                style={[
-                  styles.optionCard,
-                  selected && styles.optionCardSelected,
-                  locked && styles.optionCardLocked,
-                ]}
-                onPress={() => {
-                  if (lockedPremium) {
-                    navigation.navigate('Premium');
-                    return;
-                  }
-                  handleSelectWidget(type);
-                }}
-                activeOpacity={locked && !lockedPremium ? 1 : 0.7}
-              >
-                <View style={styles.optionHeader}>
-                  <Text variant="title" color="primary">
-                    {title}
-                  </Text>
-                  {comingSoon && (
-                    <View style={[styles.premiumBadge, styles.soonBadge]}>
-                      <Text variant="caption" style={styles.premiumBadgeText}>
-                        Soon
-                      </Text>
-                    </View>
-                  )}
-                  {lockedPremium && (
-                    <View style={styles.premiumBadge}>
-                      <Text variant="caption" style={styles.premiumBadgeText}>
-                        Premium
-                      </Text>
-                    </View>
-                  )}
-                  {selected && !locked && (
-                    <View style={styles.selectedDot} />
-                  )}
-                </View>
-                <Text
-                  variant="caption"
-                  color="secondary"
-                  style={styles.optionDescription}
-                >
-                  {comingSoon
-                    ? 'Coming in a future update.'
-                    : lockedPremium
-                    ? 'Upgrade to Premium to use this'
-                    : description}
+          {options.map(option => (
+            <TouchableOpacity
+              key={option.type}
+              style={[
+                styles.optionCard,
+                option.selected && styles.optionCardSelected,
+                option.locked && styles.optionCardLocked,
+              ]}
+              onPress={() => onSelect(option.type)}
+              activeOpacity={option.locked && !option.lockedPremium ? 1 : 0.7}
+            >
+              <View style={styles.optionHeader}>
+                <Text variant="title" color="primary">
+                  {option.title}
                 </Text>
-              </TouchableOpacity>
-            );
-          })}
+                {option.comingSoon && (
+                  <View style={[styles.premiumBadge, styles.soonBadge]}>
+                    <Text variant="caption" style={styles.premiumBadgeText}>
+                      Soon
+                    </Text>
+                  </View>
+                )}
+                {option.lockedPremium && (
+                  <View style={styles.premiumBadge}>
+                    <Text variant="caption" style={styles.premiumBadgeText}>
+                      Premium
+                    </Text>
+                  </View>
+                )}
+                {option.selected && !option.locked && (
+                  <View style={styles.selectedDot} />
+                )}
+              </View>
+              <Text
+                variant="caption"
+                color="secondary"
+                style={styles.optionDescription}
+              >
+                {option.comingSoon
+                  ? 'Coming in a future update.'
+                  : option.lockedPremium
+                    ? 'Upgrade to Premium to use this'
+                    : option.description}
+              </Text>
+            </TouchableOpacity>
+          ))}
 
           <Text variant="caption" color="secondary" style={styles.hint}>
-            Data updates when you open the app. Live Activity lasts up to 8
-            hours in Dynamic Island.
+            {hint}
           </Text>
         </ScrollView>
       </ScreenGradient>
@@ -187,9 +301,23 @@ const styles = StyleSheet.create({
   },
   title: { marginBottom: Spacing[2] },
   subtitle: { marginBottom: Spacing[4] },
-  unsupported: {
+  permissionCard: {
+    backgroundColor: Colors.cardLighter,
+    borderRadius: 12,
     padding: Spacing[4],
-    textAlign: 'center',
+    marginBottom: Spacing[4],
+    borderWidth: 1,
+    borderColor: Colors.percent,
+  },
+  permissionText: {
+    marginBottom: Spacing[2],
+  },
+  permissionButton: {
+    alignSelf: 'flex-start',
+    paddingVertical: Spacing[2],
+    paddingHorizontal: Spacing[3],
+    backgroundColor: Colors.percent,
+    borderRadius: 8,
   },
   statusCard: {
     backgroundColor: Colors.cardLighter,

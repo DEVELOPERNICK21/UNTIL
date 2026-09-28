@@ -28,7 +28,7 @@ export interface SubscriptionState {
  * Purchase metadata for store-based premium (Play Billing on Android).
  * Keep this minimal; store raw tokens separately for future backend verification.
  */
-export type PurchaseType = 'monthly' | 'yearly' | 'lifetime';
+export type PurchaseType = 'weekly' | 'monthly' | 'yearly' | 'lifetime';
 
 /**
  * AccessState — computed entitlement decision for feature gating.

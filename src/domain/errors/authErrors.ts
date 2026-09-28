@@ -35,3 +35,36 @@ export function isAuthCancelledError(error: unknown): boolean {
   }
   return false;
 }
+
+export const AUTH_REQUIRES_RECENT_LOGIN_CODE = 'auth/requires-recent-login';
+export const AUTH_REQUIRES_PASSWORD_REAUTH_CODE = 'auth/requires-password-reauth';
+
+export class AuthRequiresRecentLoginError extends Error {
+  readonly code = AUTH_REQUIRES_RECENT_LOGIN_CODE;
+
+  constructor(message = 'Sign in again to delete your account.') {
+    super(message);
+    this.name = 'AuthRequiresRecentLoginError';
+  }
+}
+
+export class AuthRequiresPasswordError extends Error {
+  readonly code = AUTH_REQUIRES_PASSWORD_REAUTH_CODE;
+
+  constructor(message = 'Enter your password to delete your account.') {
+    super(message);
+    this.name = 'AuthRequiresPasswordError';
+  }
+}
+
+export function isAuthRequiresRecentLoginError(error: unknown): boolean {
+  if (error instanceof AuthRequiresRecentLoginError) return true;
+  const code = (error as { code?: unknown } | null | undefined)?.code;
+  return code === AUTH_REQUIRES_RECENT_LOGIN_CODE;
+}
+
+export function isAuthRequiresPasswordError(error: unknown): boolean {
+  if (error instanceof AuthRequiresPasswordError) return true;
+  const code = (error as { code?: unknown } | null | undefined)?.code;
+  return code === AUTH_REQUIRES_PASSWORD_REAUTH_CODE;
+}

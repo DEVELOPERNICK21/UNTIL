@@ -180,11 +180,10 @@ export function WidgetScreen() {
             Settings
           </Text>
           <Text variant="body" color="secondary" style={styles.subtitle}>
-            Widgets, Dynamic Island, and floating overlay. Add home screen
-            widgets and configure what appears in Dynamic Island or overlay.
+            Widgets, Dynamic Island, and Live Island. Add home screen widgets
+            and configure what stays visible when the app is closed.
           </Text>
 
-          {/* Section: Always visible (Dynamic Island / Floating overlay) */}
           <SectionHeader label="Always visible" />
           <View style={styles.sectionGroup}>
             {Platform.OS === 'ios' && (
@@ -198,11 +197,11 @@ export function WidgetScreen() {
             )}
             {Platform.OS === 'android' && (
               <SettingTile
-                title="Floating overlay"
-                description="Floating pill over other apps. Drag to move."
+                title="Live Island"
+                description="Lock-screen progress, floating pill, and status-bar chip where supported."
                 status={overlayActive ? 'active' : 'inactive'}
                 statusLabel={overlayActive ? 'Active' : 'Inactive'}
-                onPress={() => navigation.navigate('Overlay')}
+                onPress={() => navigation.navigate('DynamicIsland')}
               />
             )}
           </View>

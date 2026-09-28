@@ -4,12 +4,13 @@ import {
 } from '../src/config/monetization';
 
 describe('monetization pricing', () => {
-  it('matches live Play Store pricing', () => {
-    expect(MONETIZATION_PRICING.monthlyInr).toBe(100);
-    expect(MONETIZATION_PRICING.yearlyInr).toBe(500);
-    expect(MONETIZATION_PRICING.lifetimeInr).toBe(1500);
-    expect(MONETIZATION_PRICING.yearlyStudentInr).toBe(500);
-    expect(MONETIZATION_PRICING.yearlySavingsVsMonthlyDisplay).toBe('₹700');
+  it('matches approved INR ladder', () => {
+    expect(MONETIZATION_PRICING.weeklyInr).toBe(49);
+    expect(MONETIZATION_PRICING.monthlyInr).toBe(149);
+    expect(MONETIZATION_PRICING.yearlyInr).toBe(499);
+    expect(MONETIZATION_PRICING.lifetimeInr).toBe(1999);
+    expect(MONETIZATION_PRICING.yearlyStudentInr).toBe(249);
+    expect(MONETIZATION_PRICING.yearlySavingsVsMonthlyDisplay).toBe('₹1,289');
   });
 
   it('hides social proof when count is unverified', () => {

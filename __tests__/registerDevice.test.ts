@@ -31,6 +31,7 @@ function makeCloud(devices: AccountDevice[]) {
     setDeviceActive: async () => {},
     getEntitlement: async () => null,
     setEntitlement: async () => {},
+    deleteUserData: async () => {},
   };
   return { cloud, upserted };
 }

@@ -4,13 +4,15 @@
  */
 
 export const MONETIZATION_PRICING = {
-  monthlyInr: 100,
-  yearlyInr: 500,
-  lifetimeInr: 1500,
-  yearlyStudentInr: 500,
+  weeklyInr: 49,
+  monthlyInr: 149,
+  yearlyInr: 499,
+  lifetimeInr: 1999,
+  yearlyStudentInr: 249,
   yearlyRegionalTier2Inr: 399,
   yearlyPerDayDisplay: '₹1.37',
-  yearlySavingsVsMonthlyDisplay: '₹700',
+  /** ₹149 × 12 − ₹499 */
+  yearlySavingsVsMonthlyDisplay: '₹1,289',
 } as const;
 
 /** Optional Play products — enable when created in Console. */
@@ -64,10 +66,10 @@ export const TRIAL_REMINDER_DAYS: readonly number[] =
 
 export const PAYWALL_DISMISS_COOLDOWN_MS = 48 * 60 * 60 * 1000;
 
-/** Legal pages — must match Play Store listing URLs. */
+/** Legal pages — must be live HTTPS pages used in App Store / Play listing. */
 export const LEGAL_URLS = {
-  privacy: 'https://until-app.com/privacy',
-  terms: 'https://until-app.com/terms',
+  privacy: 'https://developernick1-until.vercel.app/privacy',
+  terms: 'https://developernick1-until.vercel.app/terms',
 } as const;
 
 export const STORE_SUBSCRIPTION_MANAGE_PATH =
@@ -86,10 +88,14 @@ export const MONETIZATION_PAYWALL_COPY = {
   monthlyCta: 'Monthly',
   monthlySub:
     'Billed monthly when you subscribe. Cancel anytime in your app store account.',
+  weeklyCta: 'Weekly',
+  weeklySub:
+    'Billed weekly when you subscribe. Cancel anytime in your app store account.',
   lifetimeCta: 'Own it forever',
   lifetimeSub: 'One-time payment · all Premium features · no renewal',
   studentCta: 'Student yearly',
   studentSub: 'Verify with a school email · same Premium features',
+  lifetimeSecondaryCta: 'Prefer one-time? Own it forever',
   regionalNote:
     'Prices in your currency are set by the app store (regional pricing may apply).',
   previewActiveTitle: 'Free app preview active',
@@ -158,8 +164,8 @@ export function formatPaywallLossPreviewFooter(
 export const PREMIUM_BENEFITS = [
   'Month & Life home screen widgets',
   'Full Life progress screen',
-  'Floating overlay for month & life (Android)',
-  'Dynamic Island for month & life (iOS)',
+  'Live Island for month & life',
+  'Dynamic Island / Live Activities',
   'Activity intervention alerts',
   `${MONETIZATION_TRIAL_DAYS}-day free app preview (no payment)`,
 ] as const;
@@ -201,6 +207,7 @@ export function formatPreviewEndDate(trialEndsAtMs: number | null): string | nul
 export function buildSubscriptionDisclosure(params: {
   yearlyPrice: string;
   monthlyPrice: string;
+  weeklyPrice?: string;
   lifetimePrice: string;
   trialActive: boolean;
   trialEndsAtMs: number | null;
@@ -226,6 +233,11 @@ export function buildSubscriptionDisclosure(params: {
   lines.push(
     `Monthly subscription: ${params.monthlyPrice}/month. Billed when you subscribe. Cancel anytime in ${STORE_SUBSCRIPTION_MANAGE_PATH}.`
   );
+  if (params.weeklyPrice) {
+    lines.push(
+      `Weekly subscription: ${params.weeklyPrice}/week. Billed when you subscribe. Cancel anytime in ${STORE_SUBSCRIPTION_MANAGE_PATH}.`
+    );
+  }
   lines.push(
     `Lifetime: ${params.lifetimePrice} one-time payment. No renewal.`
   );
@@ -255,6 +267,7 @@ export function formatInr(amount: number): string {
   return `₹${amount.toLocaleString('en-IN')}`;
 }
 
+export const FALLBACK_WEEKLY_PRICE = formatInr(MONETIZATION_PRICING.weeklyInr);
 export const FALLBACK_MONTHLY_PRICE = formatInr(MONETIZATION_PRICING.monthlyInr);
 export const FALLBACK_YEARLY_PRICE = formatInr(MONETIZATION_PRICING.yearlyInr);
 export const FALLBACK_LIFETIME_PRICE = formatInr(MONETIZATION_PRICING.lifetimeInr);

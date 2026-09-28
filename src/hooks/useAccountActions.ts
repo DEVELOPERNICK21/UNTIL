@@ -7,13 +7,14 @@ import {
   accountCloudStore,
   authSessionRepository,
   createAccountWithEmailUseCase,
+  deleteAccountUseCase,
   deviceIdProvider,
   removeAccountDeviceUseCase,
   signInWithEmailUseCase,
   signInWithGoogleUseCase,
   signOutUseCase,
 } from '../di';
-import { isAuthCancelledError } from '../domain/errors/authErrors';
+import { isAuthCancelledError, isAuthRequiresPasswordError } from '../domain/errors/authErrors';
 import type { AccountDevice, SignInResult } from '../types';
 
 function toErrorMessage(error: unknown): string {
@@ -38,43 +39,44 @@ export function useAccountActions() {
     };
   }, []);
 
-  const runAction = useCallback(async <T>(action: () => Promise<T>): Promise<T> => {
-    setBusy(true);
-    setError(null);
-    try {
-      return await action();
-    } catch (e) {
-      if (!isAuthCancelledError(e)) {
-        setError(toErrorMessage(e));
+  const runAction = useCallback(
+    async <T>(action: () => Promise<T>): Promise<T> => {
+      setBusy(true);
+      setError(null);
+      try {
+        return await action();
+      } catch (e) {
+        if (!isAuthCancelledError(e) && !isAuthRequiresPasswordError(e)) {
+          setError(toErrorMessage(e));
+        }
+        throw e;
+      } finally {
+        setBusy(false);
       }
-      throw e;
-    } finally {
-      setBusy(false);
-    }
-  }, []);
+    },
+    [],
+  );
 
-  const signInWithGoogle = useCallback(
-    async (): Promise<SignInResult | null> => {
+  const signInWithGoogle =
+    useCallback(async (): Promise<SignInResult | null> => {
       try {
         return await runAction(() => signInWithGoogleUseCase.execute());
       } catch (e) {
         if (isAuthCancelledError(e)) return null;
         throw e;
       }
-    },
-    [runAction]
-  );
+    }, [runAction]);
 
   const signInWithEmail = useCallback(
     (email: string, password: string): Promise<SignInResult> =>
       runAction(() => signInWithEmailUseCase.execute(email, password)),
-    [runAction]
+    [runAction],
   );
 
   const createAccountWithEmail = useCallback(
     (email: string, password: string): Promise<SignInResult> =>
       runAction(() => createAccountWithEmailUseCase.execute(email, password)),
-    [runAction]
+    [runAction],
   );
 
   const signOut = useCallback(
@@ -82,7 +84,15 @@ export function useAccountActions() {
       runAction(async () => {
         await signOutUseCase.execute();
       }),
-    [runAction]
+    [runAction],
+  );
+
+  const deleteAccount = useCallback(
+    (emailPassword?: string): Promise<void> =>
+      runAction(() =>
+        deleteAccountUseCase.execute(emailPassword ? { emailPassword } : {}),
+      ),
+    [runAction],
   );
 
   const removeDevice = useCallback(
@@ -94,7 +104,7 @@ export function useAccountActions() {
         }
         await removeAccountDeviceUseCase.execute(uid, deviceId);
       }),
-    [runAction]
+    [runAction],
   );
 
   const refreshDevices = useCallback((): Promise<AccountDevice[]> => {
@@ -114,6 +124,7 @@ export function useAccountActions() {
     signInWithEmail,
     createAccountWithEmail,
     signOut,
+    deleteAccount,
     removeDevice,
     refreshDevices,
     currentDeviceId,

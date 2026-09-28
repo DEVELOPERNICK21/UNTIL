@@ -3,10 +3,7 @@
  * Safe no-op when unavailable (local dev without keys).
  */
 
-import {
-  capturePostHogEvent,
-  getPostHogClient,
-} from './posthogClient';
+import { capturePostHogEvent, getPostHogClient } from './posthogClient';
 
 export type AnalyticsPaywallSource =
   | 'premium_screen'
@@ -96,7 +93,9 @@ export type AnalyticsEventName =
   | 'account_screen_signin_failed'
   | 'account_screen_signin_cancelled'
   | 'account_screen_signout_confirmed'
-  | 'account_screen_device_removed';
+  | 'account_screen_device_removed'
+  | 'account_delete_started'
+  | 'account_deleted';
 
 type EventParams = Record<string, string | number | boolean | undefined>;
 
@@ -112,7 +111,7 @@ function sanitizeParams(params?: EventParams): Record<string, string | number> {
 }
 
 function toPostHogProperties(
-  params?: EventParams
+  params?: EventParams,
 ): Record<string, string | number | boolean> | undefined {
   if (!params) return undefined;
   const out: Record<string, string | number | boolean> = {};
@@ -124,7 +123,10 @@ function toPostHogProperties(
 }
 
 function getAnalyticsModule(): {
-  logEvent: (name: string, params?: Record<string, string | number>) => Promise<void>;
+  logEvent: (
+    name: string,
+    params?: Record<string, string | number>,
+  ) => Promise<void>;
 } | null {
   try {
     const { getApp, getApps } = require('@react-native-firebase/app') as {
@@ -132,17 +134,15 @@ function getAnalyticsModule(): {
       getApps: () => unknown[];
     };
     if (getApps().length === 0) return null;
-    const {
-      getAnalytics,
-      logEvent,
-    } = require('@react-native-firebase/analytics') as {
-      getAnalytics: (app: unknown) => unknown;
-      logEvent: (
-        analytics: unknown,
-        name: string,
-        params?: Record<string, string | number>
-      ) => Promise<void>;
-    };
+    const { getAnalytics, logEvent } =
+      require('@react-native-firebase/analytics') as {
+        getAnalytics: (app: unknown) => unknown;
+        logEvent: (
+          analytics: unknown,
+          name: string,
+          params?: Record<string, string | number>,
+        ) => Promise<void>;
+      };
     const instance = getAnalytics(getApp());
     return {
       logEvent: (name, params) => logEvent(instance, name, params),
@@ -181,11 +181,11 @@ function getCrashlyticsModule(): {
       setUserId: (crashlytics: unknown, userId: string) => Promise<null>;
       setAttributes: (
         crashlytics: unknown,
-        attributes: Record<string, string>
+        attributes: Record<string, string>,
       ) => Promise<null>;
       setCrashlyticsCollectionEnabled: (
         crashlytics: unknown,
-        enabled: boolean
+        enabled: boolean,
       ) => Promise<null>;
     };
     const instance = getCrashlytics(getApp());
@@ -197,7 +197,7 @@ function getCrashlyticsModule(): {
         setAttributes(instance, attributes).then(() => undefined),
       setCrashlyticsCollectionEnabled: enabled =>
         setCrashlyticsCollectionEnabled(instance, enabled).then(
-          () => undefined
+          () => undefined,
         ),
     };
   } catch {
@@ -207,7 +207,7 @@ function getCrashlyticsModule(): {
 
 async function sendToFirebase(
   name: string,
-  payload: Record<string, string | number>
+  payload: Record<string, string | number>,
 ): Promise<void> {
   const analytics = getAnalyticsModule();
   if (!analytics) return;
@@ -218,17 +218,14 @@ async function sendToFirebase(
   }
 }
 
-function sendToPostHog(
-  name: string,
-  params?: EventParams
-): void {
+function sendToPostHog(name: string, params?: EventParams): void {
   if (!getPostHogClient()) return;
   capturePostHogEvent(name, toPostHogProperties(params));
 }
 
 export async function logAnalyticsEvent(
   name: AnalyticsEventName,
-  params?: EventParams
+  params?: EventParams,
 ): Promise<void> {
   const payload = sanitizeParams(params);
   if (__DEV__) {
@@ -283,7 +280,7 @@ export function setCrashUserId(userId: string): void {
 
 /** String attributes visible on Crashlytics issues (values coerced to string). */
 export function setCrashAttributes(
-  attributes: Record<string, string | number | boolean | undefined>
+  attributes: Record<string, string | number | boolean | undefined>,
 ): void {
   const crashlytics = getCrashlyticsModule();
   if (!crashlytics) return;

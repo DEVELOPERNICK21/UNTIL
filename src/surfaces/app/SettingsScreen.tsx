@@ -419,7 +419,9 @@ export function SettingsScreen() {
                         { color: theme.textSecondary },
                       ]}
                     >
-                      Leave a Play Store or App Store review
+                      {Platform.OS === 'ios'
+                        ? 'Leave an App Store review'
+                        : 'Leave a Play Store review'}
                     </Text>
                   </View>
                   <Text

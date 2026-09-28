@@ -15,42 +15,19 @@ class LiveActivityBridge: NSObject {
   @objc func startActivity(_ stateJson: String) {
     guard #available(iOS 16.2, *) else { return }
     guard let state = parseState(stateJson) else { return }
-    let attrs = UNTILLiveActivityAttributes(activeWidget: state.activeWidget)
-    let contentState = UNTILLiveActivityAttributes.ContentState(
-      dayProgress: state.dayProgress,
-      dayPercentDone: state.dayPercentDone,
-      dayPercentLeft: state.dayPercentLeft,
-      dayHoursPassed: state.dayHoursPassed,
-      dayHoursLeft: state.dayHoursLeft,
-      startOfDay: state.startOfDay,
-      endOfDay: state.endOfDay,
-      monthProgress: state.monthProgress,
-      monthDaysPassed: state.monthDaysPassed,
-      monthDaysLeft: state.monthDaysLeft,
-      monthPercent: state.monthPercent,
-      yearProgress: state.yearProgress,
-      yearDaysPassed: state.yearDaysPassed,
-      yearDaysLeft: state.yearDaysLeft,
-      yearPercent: state.yearPercent,
-      lifeProgress: state.lifeProgress,
-      remainingDaysLife: state.remainingDaysLife,
-      lifePercent: state.lifePercent,
-      dailyTasksCompleted: state.dailyTasksCompleted,
-      dailyTasksTotal: state.dailyTasksTotal,
-      hourCalcTitle: state.hourCalcTitle,
-      hourCalcElapsedMs: state.hourCalcElapsedMs,
-      hourCalcIsRunning: state.hourCalcIsRunning,
-      updatedAt: state.updatedAt
-    )
+    let contentState = makeContentState(state)
     Task {
       do {
+        // End any existing activity so a fresh type/layout starts cleanly.
+        for activity in Activity<UNTILLiveActivityAttributes>.activities {
+          await activity.end(nil, dismissalPolicy: .immediate)
+        }
         _ = try Activity.request(
-          attributes: attrs,
+          attributes: UNTILLiveActivityAttributes(),
           content: .init(state: contentState, staleDate: nil),
           pushType: nil
         )
       } catch {
-        // Activity may already be running; try update instead
         await updateActivity(stateJson)
       }
     }
@@ -59,34 +36,22 @@ class LiveActivityBridge: NSObject {
   @objc func updateActivity(_ stateJson: String) {
     guard #available(iOS 16.2, *) else { return }
     guard let state = parseState(stateJson) else { return }
-    let contentState = UNTILLiveActivityAttributes.ContentState(
-      dayProgress: state.dayProgress,
-      dayPercentDone: state.dayPercentDone,
-      dayPercentLeft: state.dayPercentLeft,
-      dayHoursPassed: state.dayHoursPassed,
-      dayHoursLeft: state.dayHoursLeft,
-      startOfDay: state.startOfDay,
-      endOfDay: state.endOfDay,
-      monthProgress: state.monthProgress,
-      monthDaysPassed: state.monthDaysPassed,
-      monthDaysLeft: state.monthDaysLeft,
-      monthPercent: state.monthPercent,
-      yearProgress: state.yearProgress,
-      yearDaysPassed: state.yearDaysPassed,
-      yearDaysLeft: state.yearDaysLeft,
-      yearPercent: state.yearPercent,
-      lifeProgress: state.lifeProgress,
-      remainingDaysLife: state.remainingDaysLife,
-      lifePercent: state.lifePercent,
-      dailyTasksCompleted: state.dailyTasksCompleted,
-      dailyTasksTotal: state.dailyTasksTotal,
-      hourCalcTitle: state.hourCalcTitle,
-      hourCalcElapsedMs: state.hourCalcElapsedMs,
-      hourCalcIsRunning: state.hourCalcIsRunning,
-      updatedAt: state.updatedAt
-    )
+    let contentState = makeContentState(state)
     Task {
-      for activity in Activity<UNTILLiveActivityAttributes>.activities {
+      let activities = Activity<UNTILLiveActivityAttributes>.activities
+      if activities.isEmpty {
+        do {
+          _ = try Activity.request(
+            attributes: UNTILLiveActivityAttributes(),
+            content: .init(state: contentState, staleDate: nil),
+            pushType: nil
+          )
+        } catch {
+          // Ignore: Live Activities may be disabled in Focus / settings.
+        }
+        return
+      }
+      for activity in activities {
         await activity.update(ActivityContent(state: contentState, staleDate: nil))
       }
     }
@@ -108,6 +73,36 @@ class LiveActivityBridge: NSObject {
     }
     let active = !Activity<UNTILLiveActivityAttributes>.activities.isEmpty
     resolve(active)
+  }
+
+  private func makeContentState(_ state: LiveActivityState) -> UNTILLiveActivityAttributes.ContentState {
+    UNTILLiveActivityAttributes.ContentState(
+      activeWidget: state.activeWidget,
+      dayProgress: state.dayProgress,
+      dayPercentDone: state.dayPercentDone,
+      dayPercentLeft: state.dayPercentLeft,
+      dayHoursPassed: state.dayHoursPassed,
+      dayHoursLeft: state.dayHoursLeft,
+      startOfDay: state.startOfDay,
+      endOfDay: state.endOfDay,
+      monthProgress: state.monthProgress,
+      monthDaysPassed: state.monthDaysPassed,
+      monthDaysLeft: state.monthDaysLeft,
+      monthPercent: state.monthPercent,
+      yearProgress: state.yearProgress,
+      yearDaysPassed: state.yearDaysPassed,
+      yearDaysLeft: state.yearDaysLeft,
+      yearPercent: state.yearPercent,
+      lifeProgress: state.lifeProgress,
+      remainingDaysLife: state.remainingDaysLife,
+      lifePercent: state.lifePercent,
+      dailyTasksCompleted: state.dailyTasksCompleted,
+      dailyTasksTotal: state.dailyTasksTotal,
+      hourCalcTitle: state.hourCalcTitle,
+      hourCalcElapsedMs: state.hourCalcElapsedMs,
+      hourCalcIsRunning: state.hourCalcIsRunning,
+      updatedAt: state.updatedAt
+    )
   }
 
   private func parseState(_ json: String) -> LiveActivityState? {

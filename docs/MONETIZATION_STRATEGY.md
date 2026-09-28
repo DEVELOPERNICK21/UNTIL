@@ -8,16 +8,17 @@ When changing prices, paywall text, or what is free vs Premium, update **this fi
 
 ## Plans we sell (Android)
 
-| Plan | Price (INR) | Play product ID | Role |
-|------|-------------|-----------------|------|
-| **Yearly** | **₹499/year** | `yearly_subscription` | Primary conversion (~70% target mix) |
-| **Monthly** | **₹99/month** | `monthly_subscription` | Impulse / low commitment |
-| **Lifetime** | **₹1,499 once** | `lifetime_unlock` | Decoy + high ARPU (~15% mix); **≥3× yearly** |
-| **Student yearly** | **₹249/year** | `yearly_subscription_student` | Optional (flag `studentPlanEnabled`) |
+| Plan | Price (INR) | Product ID | Role | Paywall |
+|------|-------------|------------|------|---------|
+| **Yearly** | **₹499/year** | `yearly_subscription` | Best value (~70% target) | Card |
+| **Monthly** | **₹149/month** | `monthly_subscription` | Flexible | Card |
+| **Weekly** | **₹49/week** | `weekly_subscription` | Low-risk try | Card |
+| **Lifetime** | **₹1,999 once** | `lifetime_unlock` | Decoy + high ARPU; **≥3× yearly** | Secondary CTA |
+| **Student yearly** | **₹249/year** | `yearly_subscription_student` | Accessible (flag `studentPlanEnabled`) | Behind email verify |
 
-**Preview:** 5-day in-app preview (`TRIAL_DURATION_MS`) — same Premium as paid; **not** a Google Play billing trial. Start is synced server-side per device (clearing app storage does not restart). Subscriptions bill at the Play price when the user subscribes.
+**Preview:** 5-day in-app preview (`TRIAL_DURATION_MS`) — same Premium as paid; **not** a Google Play billing trial. Start is synced server-side per device (clearing app storage does not restart). Subscriptions bill at the store price when the user subscribes.
 
-**Not sold:** Monthly on paywall (optional later per audit; user chose yearly + lifetime only).
+**Paywall rule:** show **3 cards only** (yearly · monthly · weekly). Lifetime and student stay off the card grid so choice stays clear.
 
 **Social proof:** `PAYWALL_SOCIAL_PROOF.verifiedActiveWatchers` in `monetization.ts` — set only from a verified Play/analytics count; line hidden while `null`.
 
@@ -47,19 +48,22 @@ When changing prices, paywall text, or what is free vs Premium, update **this fi
 
 1. **Yearly = Best value** — badge only on yearly.  
 2. **Per-day framing** — “Less than ₹1.37/day” on yearly.  
-3. **Loss framing vs monthly reference** — “Save ₹692/year vs monthly” (₹99×12 − ₹499); monthly not sold but anchors yearly.  
-4. **Lifetime decoy** — ₹1,499 makes ₹499/year the “smart” choice; lifetime for anti-subscription users.  
-5. **Emotional paywall** — “Your life is passing. Start watching it.” (not “Unlock Premium”).  
-6. **24h Life preview → paywall** — modal when preview ends (`LifeUnlockEndedModal`).  
-7. **48h paywall cooldown** — after dismissing interstitial (`paywallPrompt.ts`).
+3. **Loss framing vs monthly** — “Save ₹1,289/year vs monthly” (₹149×12 − ₹499).  
+4. **Lifetime decoy** — ₹1,999 makes ₹499/year the smart choice; lifetime as secondary CTA.  
+5. **Weekly as try** — ₹49/week for low commitment; not the primary upsell.  
+6. **Emotional paywall** — “Your life is passing. Start watching it.” (not “Unlock Premium”).  
+7. **24h Life preview → paywall** — modal when preview ends (`LifeUnlockEndedModal`).  
+8. **48h paywall cooldown** — after dismissing interstitial (`paywallPrompt.ts`).
 
 ---
 
 ## Play Console checklist
 
 - [ ] Payments profile complete  
+- [ ] `weekly_subscription` — weekly base plan **₹49**, Active  
+- [ ] `monthly_subscription` — monthly base plan **₹149**, Active  
 - [ ] `yearly_subscription` — yearly base plan **₹499**, Active  
-- [ ] `lifetime_unlock` — one-time **₹1,499**, Active  
+- [ ] `lifetime_unlock` — one-time **₹1,999**, Active  
 - [ ] Internal testing AAB + license testers  
 - [ ] Store listing: privacy policy, subscription terms, “cancel in Play”
 
@@ -104,5 +108,5 @@ When changing prices, paywall text, or what is free vs Premium, update **this fi
 | Metric | Direction |
 |--------|-----------|
 | Trial → paid | 35–45% (with full funnel) |
-| Pay mix | ~70% yearly, ~15% lifetime, ~15% monthly if added later |
-| Lifetime price | ₹1,499 minimum while yearly is ₹499 |
+| Pay mix | ~70% yearly, ~15% lifetime, ~15% monthly/weekly |
+| Lifetime price | ₹1,999 while yearly is ₹499 (≥3×) |

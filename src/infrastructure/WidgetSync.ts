@@ -271,7 +271,7 @@ export function setOverlayWidgetType(type: OverlayWidgetType): void {
   setString(STORAGE_KEYS.OVERLAY_WIDGET_TYPE, type);
 }
 
-/** Start floating overlay. Android only. Requires overlay permission. */
+/** Start Live Island (floating pill + live notification). Android only. */
 export function startOverlay(): void {
   if (Platform.OS !== 'android') return;
   setBoolean(STORAGE_KEYS.OVERLAY_ENABLED, true);

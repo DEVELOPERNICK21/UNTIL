@@ -12,11 +12,13 @@
     "@vercel/kv": "^3.0.0",
     "google-auth-library": "^9.15.1",
     "gsap": "^3.15.0",
+    "jszip": "^3.10.2",
     "next": "^14.2.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
   },
   "devDependencies": {
+    "@types/jszip": "^3.4.0",
     "@types/node": "^20.0.0",
     "@types/react": "^18.2.0",
     "@types/react-dom": "^18.2.0",

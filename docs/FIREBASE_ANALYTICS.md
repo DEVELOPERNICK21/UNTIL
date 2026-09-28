@@ -2,7 +2,11 @@
 
 UNTIL uses Firebase project **until-b7624** (number `150745476537`).
 
-Android package: `app.until.time` — config file: `android/app/google-services.json` (fetched via Firebase CLI).
+Android package: `app.until.time` — config: `android/app/google-services.json`.
+
+iOS bundle ID: `com.developernick.until` — config: `ios/UNTIL/GoogleService-Info.plist` (app ID `1:150745476537:ios:dbd0e149fe0c61e7399a68`).
+
+> Note: An older iOS app registration used the mistyped bundle ID `com.develoeprnick.UNTIL`. Do not use that config.
 
 UNTIL logs product events via [`src/services/analytics.ts`](../src/services/analytics.ts). Events are sent to Firebase when native modules are installed and `google-services.json` is present. The same events are **dual-written to PostHog** when configured — see [`POSTHOG_ANALYTICS.md`](./POSTHOG_ANALYTICS.md).
 

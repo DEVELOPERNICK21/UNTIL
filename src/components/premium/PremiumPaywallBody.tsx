@@ -31,6 +31,7 @@ import {
   FALLBACK_LIFETIME_PRICE,
   FALLBACK_MONTHLY_PRICE,
   FALLBACK_STUDENT_YEARLY_PRICE,
+  FALLBACK_WEEKLY_PRICE,
   FALLBACK_YEARLY_PRICE,
   MONETIZATION_FEATURE_FLAGS,
   MONETIZATION_PAYWALL_COPY,
@@ -133,6 +134,15 @@ export function PremiumPaywallBody({
     () => priceLabel(products, productIds.monthly, FALLBACK_MONTHLY_PRICE),
     [products, productIds.monthly]
   );
+  const weeklyPrice = useMemo(
+    () =>
+      priceLabel(
+        products,
+        productIds.weekly ?? 'weekly_subscription',
+        FALLBACK_WEEKLY_PRICE
+      ),
+    [products, productIds.weekly]
+  );
   const lifetimePrice = useMemo(
     () => priceLabel(products, productIds.lifetime, FALLBACK_LIFETIME_PRICE),
     [products, productIds.lifetime]
@@ -144,7 +154,7 @@ export function PremiumPaywallBody({
         productIds.yearlyStudent ?? 'yearly_subscription_student',
         FALLBACK_STUDENT_YEARLY_PRICE
       ),
-    [products, productIds]
+    [products, productIds.yearlyStudent]
   );
 
   const monthlyAnchorYearly = useMemo(
@@ -152,6 +162,7 @@ export function PremiumPaywallBody({
     []
   );
 
+  /** Three cards only: yearly (primary), monthly, weekly. */
   const planOptions = useMemo((): PaywallPlanOption[] => {
     const plans: PaywallPlanOption[] = [
       {
@@ -166,30 +177,19 @@ export function PremiumPaywallBody({
       {
         productId: productIds.monthly,
         title: 'Monthly',
-        subtitle: 'Flexible monthly billing',
+        subtitle: 'Flexible month to month',
         price: monthlyPrice,
         periodLabel: '/month',
       },
-      {
-        productId: productIds.lifetime,
-        title: 'Lifetime',
-        subtitle: MONETIZATION_PAYWALL_COPY.lifetimeSub.split('·')[0]?.trim(),
-        price: lifetimePrice,
-      },
     ];
 
-    if (
-      MONETIZATION_FEATURE_FLAGS.studentPlanEnabled &&
-      productIds.yearlyStudent
-    ) {
+    if (productIds.weekly) {
       plans.push({
-        productId: productIds.yearlyStudent,
-        title: 'Student yearly',
-        subtitle: isVerified
-          ? `Verified · ${verifiedEmail ?? 'school email'}`
-          : MONETIZATION_PAYWALL_COPY.studentSub,
-        price: studentPrice,
-        periodLabel: '/year',
+        productId: productIds.weekly,
+        title: 'Weekly',
+        subtitle: 'Try Premium for a week',
+        price: weeklyPrice,
+        periodLabel: '/week',
       });
     }
 
@@ -197,15 +197,11 @@ export function PremiumPaywallBody({
   }, [
     productIds.yearly,
     productIds.monthly,
-    productIds.lifetime,
-    productIds.yearlyStudent,
+    productIds.weekly,
     yearlyPrice,
     monthlyPrice,
-    lifetimePrice,
-    studentPrice,
+    weeklyPrice,
     monthlyAnchorYearly,
-    isVerified,
-    verifiedEmail,
   ]);
 
   const selectedPlan =
@@ -218,6 +214,7 @@ export function PremiumPaywallBody({
       buildSubscriptionDisclosure({
         yearlyPrice,
         monthlyPrice,
+        weeklyPrice,
         lifetimePrice,
         trialActive: !isPremium && access.trialActive,
         trialEndsAtMs: access.trialEndsAt,
@@ -225,6 +222,7 @@ export function PremiumPaywallBody({
     [
       yearlyPrice,
       monthlyPrice,
+      weeklyPrice,
       lifetimePrice,
       isPremium,
       access.trialActive,
@@ -503,6 +501,48 @@ export function PremiumPaywallBody({
               Cancel anytime
             </Text>
           </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={() => void onBuy(productIds.lifetime)}
+            disabled={continueDisabled}
+            style={styles.secondaryPlanHit}
+            accessibilityRole="button"
+            accessibilityLabel={`${MONETIZATION_PAYWALL_COPY.lifetimeSecondaryCta}, ${lifetimePrice}`}
+          >
+            <Text
+              variant="caption"
+              style={{ color: theme.textSecondary, textAlign: 'center' }}
+            >
+              {MONETIZATION_PAYWALL_COPY.lifetimeSecondaryCta} · {lifetimePrice}
+            </Text>
+          </TouchableOpacity>
+
+          {MONETIZATION_FEATURE_FLAGS.studentPlanEnabled &&
+          productIds.yearlyStudent ? (
+            <TouchableOpacity
+              onPress={() => {
+                if (isVerified) {
+                  void onBuy(productIds.yearlyStudent!);
+                } else {
+                  void logAnalyticsEvent('student_verify_shown', { source });
+                  setStudentModalOpen(true);
+                }
+              }}
+              disabled={continueDisabled}
+              style={styles.secondaryPlanHit}
+              accessibilityRole="button"
+              accessibilityLabel={`${MONETIZATION_PAYWALL_COPY.studentCta}, ${studentPrice}`}
+            >
+              <Text
+                variant="caption"
+                style={{ color: theme.textMuted, textAlign: 'center' }}
+              >
+                {isVerified
+                  ? `Student yearly · ${studentPrice}`
+                  : `Student discount · ${studentPrice}`}
+              </Text>
+            </TouchableOpacity>
+          ) : null}
         </>
       )}
 
@@ -691,6 +731,10 @@ const styles = StyleSheet.create({
     marginTop: 2,
     fontSize: 11,
     lineHeight: 14,
+  },
+  secondaryPlanHit: {
+    paddingVertical: Spacing[2],
+    alignItems: 'center',
   },
   trustRow: {
     flexDirection: 'row',

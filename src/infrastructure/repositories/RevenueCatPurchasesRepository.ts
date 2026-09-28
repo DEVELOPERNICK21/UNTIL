@@ -22,11 +22,21 @@ import {
   isPurchaseCancelledError,
 } from '../../domain/errors/purchasesErrors';
 import { storeProductIdsMatch, normalizeStoreProductId } from '../../domain/billing/mapProductId';
+import { BILLING_PRODUCT_IDS } from '../../config/billing';
 import type {
   CustomerInfoDTO,
   PurchasesOfferingDTO,
   PurchasesPackageDTO,
 } from '../../types/purchases';
+
+/** Map app product ids → RevenueCat package lookup keys. */
+const PACKAGE_LOOKUP_BY_PRODUCT: Record<string, string> = {
+  [BILLING_PRODUCT_IDS.weekly]: '$rc_weekly',
+  [BILLING_PRODUCT_IDS.monthly]: '$rc_monthly',
+  [BILLING_PRODUCT_IDS.yearly]: '$rc_annual',
+  [BILLING_PRODUCT_IDS.lifetime]: '$rc_lifetime',
+  [BILLING_PRODUCT_IDS.yearlyStudent]: 'student_yearly',
+};
 
 function toDTO(info: CustomerInfo): CustomerInfoDTO {
   const active = Object.entries(info.entitlements.active).map(([id, e]) => ({
@@ -66,9 +76,38 @@ function findPackageByProductId(
   productId: string,
   offering: PurchasesOffering | null | undefined,
 ): PurchasesPackage | undefined {
-  return offering?.availablePackages.find(pkg =>
+  if (!offering) return undefined;
+
+  const normalized = normalizeStoreProductId(productId);
+  const packageKey = PACKAGE_LOOKUP_BY_PRODUCT[normalized];
+
+  const byProduct = offering.availablePackages.find(pkg =>
     storeProductIdsMatch(pkg.product.identifier, productId),
   );
+  if (byProduct) return byProduct;
+
+  if (packageKey) {
+    const byPackageId = offering.availablePackages.find(
+      pkg => pkg.identifier === packageKey,
+    );
+    if (byPackageId) return byPackageId;
+  }
+
+  // Convenience accessors from the SDK
+  if (normalized === BILLING_PRODUCT_IDS.yearly && offering.annual) {
+    return offering.annual;
+  }
+  if (normalized === BILLING_PRODUCT_IDS.monthly && offering.monthly) {
+    return offering.monthly;
+  }
+  if (normalized === BILLING_PRODUCT_IDS.weekly && offering.weekly) {
+    return offering.weekly;
+  }
+  if (normalized === BILLING_PRODUCT_IDS.lifetime && offering.lifetime) {
+    return offering.lifetime;
+  }
+
+  return undefined;
 }
 
 export class RevenueCatPurchasesRepository implements IPurchasesRepository {
@@ -144,14 +183,46 @@ export class RevenueCatPurchasesRepository implements IPurchasesRepository {
   }
 }
 
+function formatPurchasesError(error: unknown): string {
+  if (error == null) return 'Purchase failed';
+  if (typeof error === 'string') return error;
+
+  const e = error as {
+    message?: unknown;
+    underlyingErrorMessage?: unknown;
+    userInfo?: { underlyingErrorMessage?: unknown; message?: unknown };
+    code?: unknown;
+  };
+  const message =
+    (typeof e.message === 'string' && e.message) ||
+    (typeof e.userInfo?.message === 'string' && e.userInfo.message) ||
+    'Purchase failed';
+  const underlying =
+    (typeof e.underlyingErrorMessage === 'string' &&
+      e.underlyingErrorMessage) ||
+    (typeof e.userInfo?.underlyingErrorMessage === 'string' &&
+      e.userInfo.underlyingErrorMessage) ||
+    '';
+  const code =
+    e.code != null && String(e.code).length > 0 ? ` [${String(e.code)}]` : '';
+  if (underlying && !message.includes(underlying)) {
+    return `${message}${code}: ${underlying}`;
+  }
+  return `${message}${code}`;
+}
+
 function wrapPurchaseError(error: unknown): Error {
   if (isSdkUserCancelled(error) || isPurchaseCancelledError(error)) {
     return new PurchaseCancelledError();
   }
-  if (error instanceof Error) return error;
-  return new Error(
-    typeof error === 'string' ? error : 'Purchase failed',
-  );
+  if (error instanceof Error) {
+    const detail = formatPurchasesError(error);
+    if (detail !== error.message) {
+      return new Error(detail);
+    }
+    return error;
+  }
+  return new Error(formatPurchasesError(error));
 }
 
 function isSdkUserCancelled(error: unknown): boolean {

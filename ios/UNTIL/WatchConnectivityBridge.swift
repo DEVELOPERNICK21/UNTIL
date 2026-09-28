@@ -12,7 +12,7 @@ final class WatchConnectivityBridge: NSObject, WCSessionDelegate {
   @objc static let shared = WatchConnectivityBridge()
 
   private let widgetCacheKey = "widget.cache"
-  private let appGroupID = "group.org.reactjs.native.example.UNTIL"
+  private let appGroupID = "group.com.developernick.until"
   private var didActivate = false
 
   private override init() {

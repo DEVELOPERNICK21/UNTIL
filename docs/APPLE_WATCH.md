@@ -18,6 +18,8 @@ Design: [`docs/superpowers/specs/2026-07-14-apple-watch-day-design.md`](./superp
 | `ios/UNTILWatch/` | watchOS app (Day detail) |
 | `ios/UNTILWatchWidgets/` | Circular complication |
 
+**Time Hub UI:** Detailed page (title, %, bar, remaining). Bar fill uses progress color with a soft pulsing tip and light tap bounce; respects Reduce Motion. Circular complication chrome is unchanged.
+
 **Phone-side wiring is done** (bridge + pbxproj). You still need to **create Watch targets in Xcode** once (Apple doesn’t auto-pick up new watchOS app targets from folders alone).
 
 ---

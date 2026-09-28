@@ -8,7 +8,11 @@
 
 import type { IAuthService } from '../../domain/ports/IAuthService';
 import type { AuthProviderId, AuthUser } from '../../types';
-import { AuthCancelledError, isAuthCancelledError } from '../../domain/errors/authErrors';
+import {
+  AuthCancelledError,
+  AuthRequiresRecentLoginError,
+  isAuthCancelledError,
+} from '../../domain/errors/authErrors';
 import { recordCrashError } from '../../services/analytics';
 
 const MISSING_GOOGLE_WEB_CLIENT_ID = '<MISSING_GOOGLE_WEB_CLIENT_ID>';
@@ -37,34 +41,50 @@ interface AuthModule {
   instance: unknown;
   onAuthStateChanged: (
     auth: unknown,
-    listener: (user: MinimalFirebaseUser | null) => void
+    listener: (user: MinimalFirebaseUser | null) => void,
   ) => () => void;
   signInWithCredential: (
     auth: unknown,
-    credential: AuthCredentialLike
+    credential: AuthCredentialLike,
   ) => Promise<{ user: MinimalFirebaseUser }>;
   signInWithEmailAndPassword: (
     auth: unknown,
     email: string,
-    password: string
+    password: string,
   ) => Promise<{ user: MinimalFirebaseUser }>;
   createUserWithEmailAndPassword: (
     auth: unknown,
     email: string,
-    password: string
+    password: string,
   ) => Promise<{ user: MinimalFirebaseUser }>;
   signOut: (auth: unknown) => Promise<void>;
+  deleteUser: (user: MinimalFirebaseUser) => Promise<void>;
+  reauthenticateWithCredential: (
+    user: MinimalFirebaseUser,
+    credential: AuthCredentialLike,
+  ) => Promise<unknown>;
   GoogleAuthProvider: {
-    credential: (idToken: string | null, accessToken?: string) => AuthCredentialLike;
+    credential: (
+      idToken: string | null,
+      accessToken?: string,
+    ) => AuthCredentialLike;
+  };
+  EmailAuthProvider: {
+    credential: (email: string, password: string) => AuthCredentialLike;
   };
   currentUser: () => MinimalFirebaseUser | null;
 }
 
 interface GoogleSigninModule {
   configure: (options: { webClientId: string }) => void;
-  hasPlayServices: (options: { showPlayServicesUpdateDialog: boolean }) => Promise<boolean>;
+  hasPlayServices: (options: {
+    showPlayServicesUpdateDialog: boolean;
+  }) => Promise<boolean>;
   signIn: () => Promise<
-    | { type: 'success'; data: { idToken: string | null; accessToken?: string } }
+    | {
+        type: 'success';
+        data: { idToken: string | null; accessToken?: string };
+      }
     | { type: 'cancelled'; data: null }
   >;
   signOut: () => Promise<null>;
@@ -94,17 +114,27 @@ function getAuthModule(): AuthModule | null {
       signInWithEmailAndPassword,
       createUserWithEmailAndPassword,
       signOut,
+      deleteUser,
+      reauthenticateWithCredential,
       GoogleAuthProvider,
+      EmailAuthProvider,
     } = require('@react-native-firebase/auth') as {
-      getAuth: (app: unknown) => unknown & { currentUser: MinimalFirebaseUser | null };
+      getAuth: (
+        app: unknown,
+      ) => unknown & { currentUser: MinimalFirebaseUser | null };
       onAuthStateChanged: AuthModule['onAuthStateChanged'];
       signInWithCredential: AuthModule['signInWithCredential'];
       signInWithEmailAndPassword: AuthModule['signInWithEmailAndPassword'];
       createUserWithEmailAndPassword: AuthModule['createUserWithEmailAndPassword'];
       signOut: AuthModule['signOut'];
+      deleteUser: AuthModule['deleteUser'];
+      reauthenticateWithCredential: AuthModule['reauthenticateWithCredential'];
       GoogleAuthProvider: AuthModule['GoogleAuthProvider'];
+      EmailAuthProvider: AuthModule['EmailAuthProvider'];
     };
-    const instance = getAuth(getApp()) as { currentUser: MinimalFirebaseUser | null };
+    const instance = getAuth(getApp()) as {
+      currentUser: MinimalFirebaseUser | null;
+    };
     return {
       instance,
       onAuthStateChanged,
@@ -112,7 +142,10 @@ function getAuthModule(): AuthModule | null {
       signInWithEmailAndPassword,
       createUserWithEmailAndPassword,
       signOut,
+      deleteUser,
+      reauthenticateWithCredential,
       GoogleAuthProvider,
+      EmailAuthProvider,
       currentUser: () => instance.currentUser,
     };
   } catch (e) {
@@ -191,7 +224,7 @@ function ensureGoogleSignInConfigured(): void {
   const webClientId = GOOGLE_WEB_CLIENT_ID.trim();
   if (!webClientId || webClientId === MISSING_GOOGLE_WEB_CLIENT_ID) {
     throw new Error(
-      'Google sign-in is not set up in this build. UNTIL_GOOGLE_WEB_CLIENT_ID is missing.'
+      'Google sign-in is not set up in this build. UNTIL_GOOGLE_WEB_CLIENT_ID is missing.',
     );
   }
   getGoogleSignin().configure({ webClientId });
@@ -224,7 +257,10 @@ export class FirebaseAuthServiceAdapter implements IAuthService {
     }
 
     const credential = auth.GoogleAuthProvider.credential(idToken);
-    const userCredential = await auth.signInWithCredential(auth.instance, credential);
+    const userCredential = await auth.signInWithCredential(
+      auth.instance,
+      credential,
+    );
     const mapped = mapFirebaseUser(userCredential.user);
     if (!mapped) {
       throw new Error('Firebase sign-in did not return a user.');
@@ -242,7 +278,7 @@ export class FirebaseAuthServiceAdapter implements IAuthService {
       const { user } = await auth.signInWithEmailAndPassword(
         auth.instance,
         normalized,
-        password
+        password,
       );
       const mapped = mapFirebaseUser(user);
       if (!mapped) {
@@ -254,7 +290,10 @@ export class FirebaseAuthServiceAdapter implements IAuthService {
     }
   }
 
-  async createAccountWithEmail(email: string, password: string): Promise<AuthUser> {
+  async createAccountWithEmail(
+    email: string,
+    password: string,
+  ): Promise<AuthUser> {
     const auth = requireAuth();
     const normalized = normalizeEmail(email);
     if (!normalized || !password) {
@@ -267,7 +306,7 @@ export class FirebaseAuthServiceAdapter implements IAuthService {
       const { user } = await auth.createUserWithEmailAndPassword(
         auth.instance,
         normalized,
-        password
+        password,
       );
       const mapped = mapFirebaseUser(user);
       if (!mapped) {
@@ -288,6 +327,78 @@ export class FirebaseAuthServiceAdapter implements IAuthService {
     const auth = getAuthModule();
     if (!auth) return;
     await auth.signOut(auth.instance);
+  }
+
+  async deleteAccount(): Promise<void> {
+    const auth = requireAuth();
+    const user = auth.currentUser();
+    if (!user) {
+      throw new Error('Not signed in');
+    }
+    try {
+      await auth.deleteUser(user as MinimalFirebaseUser & object);
+    } catch (e) {
+      const code =
+        e && typeof e === 'object' && 'code' in e
+          ? String((e as { code: unknown }).code)
+          : '';
+      if (code === 'auth/requires-recent-login') {
+        throw new AuthRequiresRecentLoginError();
+      }
+      throw mapAuthError(e, 'Could not delete account.');
+    }
+  }
+
+  async reauthenticateWithGoogle(): Promise<void> {
+    const auth = requireAuth();
+    const user = auth.currentUser();
+    if (!user) {
+      throw new Error('Not signed in');
+    }
+    ensureGoogleSignInConfigured();
+
+    try {
+      const GoogleSignin = getGoogleSignin();
+      await GoogleSignin.hasPlayServices({
+        showPlayServicesUpdateDialog: true,
+      });
+      const response = await GoogleSignin.signIn();
+      if (response.type !== 'success') {
+        throw new AuthCancelledError();
+      }
+      const { idToken } = response.data;
+      if (!idToken) {
+        throw new Error('Google sign-in did not return an ID token.');
+      }
+
+      const credential = auth.GoogleAuthProvider.credential(idToken);
+      await auth.reauthenticateWithCredential(user, credential);
+    } catch (e) {
+      if (isAuthCancelledError(e)) {
+        throw new AuthCancelledError();
+      }
+      throw mapAuthError(e, 'Could not verify your Google account.');
+    }
+  }
+
+  async reauthenticateWithEmail(password: string): Promise<void> {
+    const auth = requireAuth();
+    const user = auth.currentUser();
+    if (!user?.email) {
+      throw new Error('Not signed in with email.');
+    }
+    if (!password) {
+      throw new Error('Enter your password.');
+    }
+    try {
+      const credential = auth.EmailAuthProvider.credential(
+        normalizeEmail(user.email),
+        password,
+      );
+      await auth.reauthenticateWithCredential(user, credential);
+    } catch (e) {
+      throw mapAuthError(e, 'Could not verify password.');
+    }
   }
 
   getCurrentUser(): AuthUser | null {

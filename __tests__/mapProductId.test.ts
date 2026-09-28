@@ -20,6 +20,9 @@ describe('mapProductId Play base plans', () => {
       productIdToPurchaseType('monthly_subscription:monthly-default')
     ).toBe('monthly');
     expect(
+      productIdToPurchaseType('weekly_subscription:weekly-default')
+    ).toBe('weekly');
+    expect(
       productIdToPurchaseType('yearly_subscription_student:yearly-student-default')
     ).toBe('yearly');
     expect(productIdToPurchaseType('lifetime_unlock')).toBe('lifetime');

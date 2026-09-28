@@ -26,7 +26,7 @@ export type CustomerInfoDTO = {
 
 export type CustomerInfoSyncPlan = {
   setIsPremium: boolean;
-  purchaseType: 'monthly' | 'yearly' | 'lifetime' | null;
+  purchaseType: 'weekly' | 'monthly' | 'yearly' | 'lifetime' | null;
   purchaseDateMs: number | null;
   clearStorePurchaseFields: boolean;
 };

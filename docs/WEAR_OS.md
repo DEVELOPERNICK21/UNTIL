@@ -42,6 +42,8 @@ Wear OS app (same applicationId, :wear module)
 - Day / Month / Year work without phone pairing.
 - Life needs a one-way profile sync from the phone (birth date set in UNTIL).
 
+**Hub UI:** Detailed page (title, %, subtitle, bar, passed/left). Bar fill uses progress color with a soft pulsing tip, fill animation, and light tap bounce. Tiles/complications unchanged.
+
 ---
 
 ## Profile sync

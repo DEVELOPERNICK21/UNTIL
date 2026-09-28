@@ -23,11 +23,31 @@ const WIDGET_OPTIONS: {
   title: string;
   description: string;
 }[] = [
-  { type: 'day', title: 'Today', description: '57% done · 42% left. Day progress with hours.' },
-  { type: 'month', title: 'This month', description: 'Feb 17% · 23d left. Month progress.' },
-  { type: 'year', title: 'This year', description: '9% · 329d left. Year progress.' },
-  { type: 'life', title: 'Your life', description: 'Life progress. Set birth date in Settings.' },
-  { type: 'hourCalc', title: 'Hour timer', description: 'Coming in a future update.' },
+  {
+    type: 'day',
+    title: 'Today',
+    description: 'How much of today is left · hours remaining.',
+  },
+  {
+    type: 'month',
+    title: 'This month',
+    description: 'Days left in the month · Premium.',
+  },
+  {
+    type: 'year',
+    title: 'This year',
+    description: 'How much of the year is left.',
+  },
+  {
+    type: 'life',
+    title: 'Your life',
+    description: 'Days left in life · set birth date · Premium.',
+  },
+  {
+    type: 'hourCalc',
+    title: 'Hour timer',
+    description: 'Coming in a future update.',
+  },
 ];
 
 function isComingSoonType(type: OverlayWidgetType): boolean {
@@ -79,16 +99,17 @@ export function useOverlayControl() {
   );
 
   const handleStart = useCallback(() => {
-    if (hasPermission === false) {
-      requestOverlayPermission();
-      return;
-    }
     try {
       startOverlay();
       setOverlayActive(true);
       setError(null);
+      if (hasPermission === false) {
+        // Notification-only mode still runs; offer overlay permission separately.
+      }
     } catch {
-      setError('Could not start overlay. Grant "Display over other apps" permission.');
+      setError(
+        'Could not start Live Island. Check notification permission, then try again.',
+      );
     }
   }, [hasPermission]);
 

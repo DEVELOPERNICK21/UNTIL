@@ -40,6 +40,7 @@ function makeCloud(profile: CloudUserProfile | null) {
     setDeviceActive: async () => {},
     getEntitlement: async () => null,
     setEntitlement: async () => {},
+    deleteUserData: async () => {},
   };
   return { cloud, upserts };
 }

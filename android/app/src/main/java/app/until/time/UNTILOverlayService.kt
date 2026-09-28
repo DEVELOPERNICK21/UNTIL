@@ -1,12 +1,17 @@
 package app.until.time
 
+import android.animation.ObjectAnimator
+import android.animation.PropertyValuesHolder
+import android.animation.ValueAnimator
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.app.Service
 import android.content.Intent
+import android.graphics.Color
 import android.graphics.PixelFormat
+import android.graphics.drawable.Icon
 import android.os.Build
 import android.os.Handler
 import android.os.IBinder
@@ -16,15 +21,17 @@ import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
 import android.view.WindowManager
+import android.view.animation.AccelerateDecelerateInterpolator
 import android.widget.FrameLayout
+import android.widget.ImageView
 import android.widget.ProgressBar
 import android.widget.TextView
 import androidx.core.app.NotificationCompat
+import androidx.core.app.NotificationManagerCompat
 import com.tencent.mmkv.MMKV
 import org.json.JSONObject
-import java.util.Calendar
 
-private const val NOTIFICATION_CHANNEL_ID = "until_overlay"
+private const val NOTIFICATION_CHANNEL_ID = "until_live_progress"
 private const val NOTIFICATION_ID = 9001
 private const val MMKV_ID = "until-storage"
 private const val WIDGET_CACHE_KEY = "widget.cache"
@@ -37,8 +44,9 @@ private const val OVERLAY_ENABLED_KEY = "overlay.enabled"
 private const val UPDATE_INTERVAL_MS = 1000L
 
 /**
- * Floating overlay service – Android equivalent of iOS Dynamic Island.
- * Shows a compact pill that expands on tap. Reads from MMKV (SSOT: same as widgets).
+ * Android Live Island: floating pill (when overlay permission is granted) plus
+ * an ongoing lock-screen / status-bar progress notification (Live Update on Android 16+).
+ * Reads from MMKV (SSOT: same as widgets).
  */
 class UNTILOverlayService : Service() {
 
@@ -46,9 +54,13 @@ class UNTILOverlayService : Service() {
     private var overlayView: FrameLayout? = null
     private var params: WindowManager.LayoutParams? = null
     private var updateHandler: Handler? = null
+    private var stickerPulse: ObjectAnimator? = null
+    private var lastStickerType: String? = null
     private val updateRunnable = object : Runnable {
         override fun run() {
-            overlayView?.let { safeUpdateOverlayContent(it) }
+            val state = loadOverlayState()
+            overlayView?.let { applyOverlayContent(it, state) }
+            publishLiveNotification(state)
             updateHandler?.postDelayed(this, UPDATE_INTERVAL_MS)
         }
     }
@@ -56,21 +68,34 @@ class UNTILOverlayService : Service() {
     override fun onCreate() {
         super.onCreate()
         windowManager = getSystemService(WINDOW_SERVICE) as WindowManager
+        ensureNotificationChannel()
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         when (intent?.action) {
             ACTION_START -> {
+                val state = loadOverlayState()
                 try {
-                    startForeground(NOTIFICATION_ID, createNotification())
+                    startForeground(NOTIFICATION_ID, buildLiveNotification(state))
                 } catch (e: Exception) {
                     stopSelf()
                     return START_STICKY
                 }
-                showOverlay()
+                MMKV.mmkvWithID(MMKV_ID)?.encode(OVERLAY_ENABLED_KEY, true)
+                if (canDrawOverlays()) {
+                    showOverlay()
+                } else {
+                    // Notification-only mode (lock screen / shade / Live Update chip).
+                    removeOverlayView()
+                }
+                startTicker()
             }
             ACTION_STOP -> stopSelf()
-            ACTION_UPDATE -> overlayView?.let { safeUpdateOverlayContent(it) }
+            ACTION_UPDATE -> {
+                val state = loadOverlayState()
+                overlayView?.let { applyOverlayContent(it, state) }
+                publishLiveNotification(state)
+            }
         }
         return START_STICKY
     }
@@ -79,17 +104,26 @@ class UNTILOverlayService : Service() {
 
     override fun onDestroy() {
         updateHandler?.removeCallbacks(updateRunnable)
-        removeOverlay()
+        stopStickerPulse()
+        removeOverlayView()
+        try {
+            stopForeground(STOP_FOREGROUND_REMOVE)
+        } catch (e: Exception) { /* ignore */ }
         MMKV.mmkvWithID(MMKV_ID)?.encode(OVERLAY_ENABLED_KEY, false)
         super.onDestroy()
     }
 
+    private fun startTicker() {
+        if (updateHandler == null) {
+            updateHandler = Handler(Looper.getMainLooper())
+        }
+        updateHandler?.removeCallbacks(updateRunnable)
+        updateHandler?.postDelayed(updateRunnable, UPDATE_INTERVAL_MS)
+    }
+
     private fun showOverlay() {
         if (overlayView != null) return
-        if (!canDrawOverlays()) {
-            stopSelf()
-            return
-        }
+        if (!canDrawOverlays()) return
 
         val inflater = LayoutInflater.from(applicationContext)
         val root = inflater.inflate(R.layout.overlay_root, null) as FrameLayout
@@ -114,22 +148,18 @@ class UNTILOverlayService : Service() {
         setupTouchListeners(root)
         root.findViewById<View>(R.id.overlay_expanded)?.visibility = View.GONE
         root.findViewById<View>(R.id.overlay_compact)?.visibility = View.VISIBLE
-        safeUpdateOverlayContent(root)
+        applyOverlayContent(root, loadOverlayState())
 
         try {
             windowManager?.addView(root, params)
         } catch (e: Exception) {
-            stopSelf()
             return
         }
         overlayView = root
-        MMKV.mmkvWithID(MMKV_ID)?.encode(OVERLAY_ENABLED_KEY, true)
-
-        updateHandler = Handler(Looper.getMainLooper())
-        updateHandler?.postDelayed(updateRunnable, UPDATE_INTERVAL_MS)
     }
 
-    private fun removeOverlay() {
+    private fun removeOverlayView() {
+        stopStickerPulse()
         overlayView?.let {
             try {
                 windowManager?.removeView(it)
@@ -137,18 +167,11 @@ class UNTILOverlayService : Service() {
         }
         overlayView = null
         params = null
-        try {
-            stopForeground(STOP_FOREGROUND_REMOVE)
-        } catch (e: Exception) { /* ignore */ }
+        lastStickerType = null
     }
 
     private fun setupTouchListeners(root: FrameLayout) {
-        val compact = root.findViewById<View>(R.id.overlay_compact)
-        if (compact == null) return
-
-        compact.setOnClickListener {
-            // Keep compact-only behavior (no expand/collapse).
-        }
+        val compact = root.findViewById<View>(R.id.overlay_compact) ?: return
 
         compact.setOnLongClickListener {
             openApp()
@@ -182,44 +205,86 @@ class UNTILOverlayService : Service() {
         }
     }
 
-    private fun safeUpdateOverlayContent(root: FrameLayout) {
+    private fun applyOverlayContent(root: FrameLayout, state: OverlayState) {
         try {
-            val state = loadOverlayState()
             root.findViewById<TextView>(R.id.overlay_compact_leading)?.text = state.leading
             root.findViewById<TextView>(R.id.overlay_compact_trailing)?.text = state.trailing
             root.findViewById<TextView>(R.id.overlay_expanded_title)?.text = state.expandedTitle
             root.findViewById<TextView>(R.id.overlay_expanded_subtitle)?.text = state.expandedSubtitle
             root.findViewById<ProgressBar>(R.id.overlay_expanded_progress)?.progress = state.progress
             root.findViewById<TextView>(R.id.overlay_glance_row)?.text = state.glanceRow
+            val sticker = root.findViewById<ImageView>(R.id.overlay_sticker)
+            sticker?.setImageResource(stickerDrawable(state.widgetType))
+            if (lastStickerType != state.widgetType) {
+                lastStickerType = state.widgetType
+                startStickerPulse(sticker, state.widgetType)
+            } else if (stickerPulse == null) {
+                startStickerPulse(sticker, state.widgetType)
+            }
         } catch (e: Exception) {
             // Ignore update errors (e.g. view detached)
         }
+    }
+
+    private fun stickerDrawable(widgetType: String): Int = when (widgetType) {
+        "month" -> R.drawable.ic_overlay_calendar
+        "year" -> R.drawable.ic_overlay_globe
+        "life" -> R.drawable.ic_overlay_heart
+        else -> R.drawable.ic_overlay_day
+    }
+
+    private fun startStickerPulse(sticker: ImageView?, widgetType: String) {
+        stopStickerPulse()
+        if (sticker == null) return
+        val (minScale, maxScale, duration) = when (widgetType) {
+            "life" -> Triple(1f, 1.22f, 520L)
+            "year" -> Triple(0.96f, 1.1f, 1400L)
+            "month" -> Triple(0.97f, 1.12f, 900L)
+            else -> Triple(0.96f, 1.1f, 1100L)
+        }
+        stickerPulse = ObjectAnimator.ofPropertyValuesHolder(
+            sticker,
+            PropertyValuesHolder.ofFloat(View.SCALE_X, minScale, maxScale),
+            PropertyValuesHolder.ofFloat(View.SCALE_Y, minScale, maxScale),
+            PropertyValuesHolder.ofFloat(View.ALPHA, 0.75f, 1f)
+        ).apply {
+            this.duration = duration
+            repeatCount = ValueAnimator.INFINITE
+            repeatMode = ValueAnimator.REVERSE
+            interpolator = AccelerateDecelerateInterpolator()
+            start()
+        }
+    }
+
+    private fun stopStickerPulse() {
+        stickerPulse?.cancel()
+        stickerPulse = null
     }
 
     private fun loadOverlayState(): OverlayState {
         return try {
             MMKV.initialize(this)
             val mmkv = MMKV.mmkvWithID(MMKV_ID) ?: return OverlayState.default()
-        var widgetType = mmkv.decodeString(OVERLAY_WIDGET_TYPE_KEY, "day") ?: "day"
-        val hasPremium = if (mmkv.containsKey(PREMIUM_EFFECTIVE_KEY)) {
-            mmkv.decodeBool(PREMIUM_EFFECTIVE_KEY, false)
-        } else {
-            mmkv.decodeBool(PREMIUM_IS_ACTIVE_KEY, false)
-        }
-        if (!hasPremium && (widgetType == "month" || widgetType == "life")) {
-            widgetType = "day"
-        }
+            var widgetType = mmkv.decodeString(OVERLAY_WIDGET_TYPE_KEY, "day") ?: "day"
+            val hasPremium = if (mmkv.containsKey(PREMIUM_EFFECTIVE_KEY)) {
+                mmkv.decodeBool(PREMIUM_EFFECTIVE_KEY, false)
+            } else {
+                mmkv.decodeBool(PREMIUM_IS_ACTIVE_KEY, false)
+            }
+            if (!hasPremium && (widgetType == "month" || widgetType == "life")) {
+                widgetType = "day"
+            }
 
-        val cacheJson = mmkv.decodeString(WIDGET_CACHE_KEY)
-        val cache = cacheJson?.let { parseCache(it) }
+            val cacheJson = mmkv.decodeString(WIDGET_CACHE_KEY)
+            val cache = cacheJson?.let { parseCache(it) }
 
-        val dailyTasksJson = mmkv.decodeString(DAILY_TASKS_WIDGET_KEY)
-        val dailyPayload = dailyTasksJson?.let { parseDailyTasks(it) }
+            val dailyTasksJson = mmkv.decodeString(DAILY_TASKS_WIDGET_KEY)
+            val dailyPayload = dailyTasksJson?.let { parseDailyTasks(it) }
 
-        val hourCalcJson = mmkv.decodeString(HOUR_CALCULATION_WIDGET_KEY)
-        val hourState = hourCalcJson?.let { parseHourCalc(it) }
+            val hourCalcJson = mmkv.decodeString(HOUR_CALCULATION_WIDGET_KEY)
+            val hourState = hourCalcJson?.let { parseHourCalc(it) }
 
-        buildOverlayState(widgetType, cache, dailyPayload, hourState)
+            buildOverlayState(widgetType, cache, dailyPayload, hourState)
         } catch (e: Exception) {
             OverlayState.default()
         }
@@ -276,36 +341,48 @@ class UNTILOverlayService : Service() {
         dailyPayload: DailyPayload?,
         hourState: HourState?
     ): OverlayState {
-        val c = cache ?: return OverlayState.default()
+        val c = cache ?: return OverlayState.default().copy(widgetType = widgetType)
         val now = System.currentTimeMillis()
 
         return when (widgetType) {
             "month" -> OverlayState(
+                widgetType = widgetType,
                 leading = "${c.monthPercent}%",
                 trailing = "${c.monthDaysLeft}d left",
                 expandedTitle = "${c.monthDaysPassed}d passed",
                 expandedSubtitle = "${c.monthPercent}% · ${c.monthDaysLeft}d left",
                 progress = (c.monthProgress * 100).toInt().coerceIn(0, 100),
-                glanceRow = "D${c.dayPercentDone}% · M${c.monthPercent}% · Y${c.yearPercent}%"
+                glanceRow = "D${c.dayPercentDone}% · M${c.monthPercent}% · Y${c.yearPercent}%",
+                notifTitle = "Month · ${c.monthDaysLeft}d left",
+                notifText = "${c.monthPercent}% through the month",
+                endAtMs = null
             )
             "year" -> OverlayState(
+                widgetType = widgetType,
                 leading = "${c.yearPercent}%",
                 trailing = "${c.yearDaysLeft}d left",
                 expandedTitle = "${c.yearDaysPassed}d passed",
                 expandedSubtitle = "${c.yearPercent}% · ${c.yearDaysLeft}d left",
                 progress = (c.yearProgress * 100).toInt().coerceIn(0, 100),
-                glanceRow = "D${c.dayPercentDone}% · M${c.monthPercent}% · Y${c.yearPercent}%"
+                glanceRow = "D${c.dayPercentDone}% · M${c.monthPercent}% · Y${c.yearPercent}%",
+                notifTitle = "Year · ${c.yearDaysLeft}d left",
+                notifText = "${c.yearPercent}% through the year",
+                endAtMs = null
             )
             "life" -> {
                 val lifePct = c.lifePercent ?: 0
                 val daysLeft = c.remainingDaysLife ?: 0
                 OverlayState(
+                    widgetType = widgetType,
                     leading = "$lifePct%",
                     trailing = "${daysLeft}d left",
                     expandedTitle = "$lifePct% lived",
                     expandedSubtitle = "${daysLeft}d left",
                     progress = lifePct,
-                    glanceRow = "D${c.dayPercentDone}% · M${c.monthPercent}% · Y${c.yearPercent}%"
+                    glanceRow = "D${c.dayPercentDone}% · M${c.monthPercent}% · Y${c.yearPercent}%",
+                    notifTitle = "Life · ${daysLeft}d left",
+                    notifText = "$lifePct% lived",
+                    endAtMs = null
                 )
             }
             "dailyTasks" -> {
@@ -313,12 +390,16 @@ class UNTILOverlayService : Service() {
                 val done = dailyPayload?.completed ?: 0
                 val pct = if (total > 0) (done * 100 / total).coerceIn(0, 100) else 0
                 OverlayState(
+                    widgetType = widgetType,
                     leading = "$done/$total",
                     trailing = "done",
                     expandedTitle = "$done/$total done",
                     expandedSubtitle = if (total > 0) "$pct%" else "No tasks",
                     progress = pct,
-                    glanceRow = "D${c.dayPercentDone}% · M${c.monthPercent}% · Y${c.yearPercent}%"
+                    glanceRow = "D${c.dayPercentDone}% · M${c.monthPercent}% · Y${c.yearPercent}%",
+                    notifTitle = "Tasks · $done/$total",
+                    notifText = if (total > 0) "$pct% done" else "No tasks yet",
+                    endAtMs = null
                 )
             }
             "hourCalc" -> {
@@ -330,23 +411,31 @@ class UNTILOverlayService : Service() {
                 val secs = totalSec % 60
                 val timeStr = "%d:%02d:%02d".format(hours, mins, secs)
                 OverlayState(
+                    widgetType = widgetType,
                     leading = timeStr,
                     trailing = if (h.isRunning) "Running" else "Stopped",
                     expandedTitle = h.title,
                     expandedSubtitle = if (h.isRunning) "Running" else "Stopped",
                     progress = 0,
-                    glanceRow = "D${c.dayPercentDone}% · M${c.monthPercent}% · Y${c.yearPercent}%"
+                    glanceRow = "D${c.dayPercentDone}% · M${c.monthPercent}% · Y${c.yearPercent}%",
+                    notifTitle = h.title,
+                    notifText = if (h.isRunning) "Running · $timeStr" else "Stopped · $timeStr",
+                    endAtMs = null
                 )
             }
             else -> {
-                val (passed, left) = dayTimeTexts(c)
+                val (_, left) = dayTimeTexts(c)
                 OverlayState(
+                    widgetType = "day",
                     leading = "${c.dayPercentDone}%",
                     trailing = left,
                     expandedTitle = "${c.dayPercentDone}% done",
                     expandedSubtitle = left,
                     progress = c.dayPercentDone,
-                    glanceRow = "D${c.dayPercentDone}% · M${c.monthPercent}% · Y${c.yearPercent}%"
+                    glanceRow = "D${c.dayPercentDone}% · M${c.monthPercent}% · Y${c.yearPercent}%",
+                    notifTitle = "Today · ${c.dayPercentLeft}% left",
+                    notifText = left,
+                    endAtMs = c.endOfDay
                 )
             }
         }
@@ -392,15 +481,32 @@ class UNTILOverlayService : Service() {
         }
     }
 
-    private fun createNotification(): Notification {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channel = NotificationChannel(
-                NOTIFICATION_CHANNEL_ID,
-                "Until overlay",
-                NotificationManager.IMPORTANCE_LOW
-            ).apply { setShowBadge(false) }
-            (getSystemService(NOTIFICATION_SERVICE) as NotificationManager).createNotificationChannel(channel)
+    private fun ensureNotificationChannel() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
+        val channel = NotificationChannel(
+            NOTIFICATION_CHANNEL_ID,
+            "Live time progress",
+            NotificationManager.IMPORTANCE_DEFAULT
+        ).apply {
+            description = "Lock screen and status bar progress while Live Island is on"
+            setShowBadge(false)
+            setSound(null, null)
+            enableVibration(false)
+            lockscreenVisibility = Notification.VISIBILITY_PUBLIC
         }
+        (getSystemService(NOTIFICATION_SERVICE) as NotificationManager).createNotificationChannel(channel)
+    }
+
+    private fun publishLiveNotification(state: OverlayState) {
+        try {
+            NotificationManagerCompat.from(this).notify(NOTIFICATION_ID, buildLiveNotification(state))
+        } catch (e: Exception) {
+            // Ignore if notifications are blocked
+        }
+    }
+
+    private fun buildLiveNotification(state: OverlayState): Notification {
+        ensureNotificationChannel()
 
         val openIntent = packageManager.getLaunchIntentForPackage(packageName)?.apply {
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
@@ -420,15 +526,102 @@ class UNTILOverlayService : Service() {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
-        return NotificationCompat.Builder(this, NOTIFICATION_CHANNEL_ID)
-            .setContentTitle("Until overlay")
-            .setContentText("Floating time progress. Long-press to open Until.")
-            .setSmallIcon(android.R.drawable.ic_menu_recent_history)
+        // Android 16+ Live Update chip (status bar) + lock-screen ProgressStyle.
+        if (Build.VERSION.SDK_INT >= 36) {
+            try {
+                val accent = when (state.widgetType) {
+                    "life" -> Color.parseColor("#FF6B8A")
+                    "year" -> Color.parseColor("#4DA3FF")
+                    "month" -> Color.parseColor("#E87C20")
+                    else -> Color.parseColor("#BB86FC")
+                }
+                val progressStyle = Notification.ProgressStyle()
+                    .setStyledByProgress(true)
+                    .setProgress(state.progress.coerceIn(0, 100))
+                    .setProgressSegments(
+                        listOf(
+                            Notification.ProgressStyle.Segment(100).setColor(accent)
+                        )
+                    )
+                    .setProgressTrackerIcon(
+                        Icon.createWithResource(this, stickerDrawable(state.widgetType))
+                    )
+
+                val platformBuilder = Notification.Builder(this, NOTIFICATION_CHANNEL_ID)
+                    .setSmallIcon(R.drawable.ic_until_notification)
+                    .setContentTitle(state.notifTitle)
+                    .setContentText(state.notifText)
+                    .setContentIntent(pendingOpen)
+                    .setOngoing(true)
+                    .setOnlyAlertOnce(true)
+                    .setCategory(Notification.CATEGORY_PROGRESS)
+                    .setVisibility(Notification.VISIBILITY_PUBLIC)
+                    .setStyle(progressStyle)
+                    .addAction(
+                        Notification.Action.Builder(
+                            Icon.createWithResource(this, android.R.drawable.ic_menu_close_clear_cancel),
+                            "Stop",
+                            pendingStop
+                        ).build()
+                    )
+
+                // Request promoted Live Update (status-bar chip) when the OS allows it.
+                try {
+                    val method = platformBuilder.javaClass.getMethod(
+                        "setRequestPromotedOngoing",
+                        Boolean::class.javaPrimitiveType
+                    )
+                    method.invoke(platformBuilder, true)
+                } catch (_: Exception) {
+                    // Older platform stubs without the method
+                }
+
+                val endAt = state.endAtMs
+                if (endAt != null && endAt > System.currentTimeMillis()) {
+                    platformBuilder.setShowWhen(true).setWhen(endAt)
+                    platformBuilder.setChronometerCountDown(true)
+                    platformBuilder.setUsesChronometer(true)
+                }
+
+                return platformBuilder.build()
+            } catch (_: Exception) {
+                // Fall through to compat builder
+            }
+        }
+
+        val builder = NotificationCompat.Builder(this, NOTIFICATION_CHANNEL_ID)
+            .setContentTitle(state.notifTitle)
+            .setContentText(state.notifText)
+            .setSmallIcon(R.drawable.ic_until_notification)
             .setContentIntent(pendingOpen)
             .addAction(android.R.drawable.ic_menu_close_clear_cancel, "Stop", pendingStop)
             .setOngoing(true)
-            .setPriority(NotificationCompat.PRIORITY_LOW)
-            .build()
+            .setOnlyAlertOnce(true)
+            .setSilent(true)
+            .setCategory(NotificationCompat.CATEGORY_PROGRESS)
+            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+            .setProgress(100, state.progress.coerceIn(0, 100), false)
+
+        // Compat Live Update request when available (androidx.core 1.16+).
+        try {
+            val method = builder.javaClass.getMethod(
+                "setRequestPromotedOngoing",
+                Boolean::class.javaPrimitiveType
+            )
+            method.invoke(builder, true)
+        } catch (_: Exception) {
+            // Older androidx.core
+        }
+
+        val endAt = state.endAtMs
+        if (endAt != null && endAt > System.currentTimeMillis()) {
+            builder.setShowWhen(true).setWhen(endAt)
+            builder.setUsesChronometer(true)
+            builder.setChronometerCountDown(true)
+        }
+
+        return builder.build()
     }
 
     private data class WidgetCache(
@@ -453,21 +646,29 @@ class UNTILOverlayService : Service() {
     private data class HourState(val title: String, val isRunning: Boolean, val startTimeMs: Long, val totalElapsedMs: Long)
 
     private data class OverlayState(
+        val widgetType: String,
         val leading: String,
         val trailing: String,
         val expandedTitle: String,
         val expandedSubtitle: String,
         val progress: Int,
-        val glanceRow: String
+        val glanceRow: String,
+        val notifTitle: String,
+        val notifText: String,
+        val endAtMs: Long?
     ) {
         companion object {
             fun default() = OverlayState(
+                widgetType = "day",
                 leading = "0%",
                 trailing = "Open Until",
                 expandedTitle = "Open Until to sync",
                 expandedSubtitle = "Add widget to home screen",
                 progress = 0,
-                glanceRow = "D0% · M0% · Y0%"
+                glanceRow = "D0% · M0% · Y0%",
+                notifTitle = "Until · time left",
+                notifText = "Open Until to sync progress",
+                endAtMs = null
             )
         }
     }
@@ -481,7 +682,7 @@ class UNTILOverlayService : Service() {
             val intent = Intent(context, UNTILOverlayService::class.java).apply {
                 action = ACTION_START
             }
-            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 context.startForegroundService(intent)
             } else {
                 context.startService(intent)

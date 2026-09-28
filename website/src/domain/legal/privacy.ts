@@ -62,7 +62,7 @@ export const PRIVACY_SECTIONS = [
   {
     id: 'rights',
     title: '10. Your Rights',
-    body: `Depending on your location, you may have rights to access, correct, delete, or port your data, or to object to or restrict processing. To exercise these rights, contact us at ${contactEmail}. You can also delete your data by uninstalling the App and clearing local storage.`,
+    body: `Depending on your location, you may have rights to access, correct, delete, or port your data, or to object to or restrict processing. In the App, signed-in users can delete their account under Settings → Account. You can also contact us at ${contactEmail}, or uninstall the App and clear local storage.`,
   },
   {
     id: 'changes',

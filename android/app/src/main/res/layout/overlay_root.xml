@@ -80,10 +80,26 @@
         android:orientation="horizontal"
         android:gravity="center"
         android:background="@drawable/overlay_pill_bg"
-        android:paddingStart="14dp"
+        android:paddingStart="10dp"
         android:paddingEnd="14dp"
         android:minWidth="80dp"
         android:elevation="6dp">
+
+        <FrameLayout
+            android:id="@+id/overlay_sticker_wrap"
+            android:layout_width="22dp"
+            android:layout_height="22dp"
+            android:layout_marginEnd="8dp"
+            android:background="@drawable/ic_overlay_sticker_bg">
+
+            <ImageView
+                android:id="@+id/overlay_sticker"
+                android:layout_width="14dp"
+                android:layout_height="14dp"
+                android:layout_gravity="center"
+                android:contentDescription="@null"
+                android:src="@drawable/ic_overlay_day" />
+        </FrameLayout>
 
         <TextView
             android:id="@+id/overlay_compact_leading"

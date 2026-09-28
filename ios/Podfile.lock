@@ -4913,7 +4913,7 @@ SPEC CHECKSUMS:
   React-microtasksnativemodule: e225db13806ee562325cff77c16a76849116ed16
   React-mutationobservernativemodule: a90b85dfb7230d6d8f5c16630da2b370a0735735
   react-native-safe-area-context: 0a3b034bb63a5b684dd2f5fffd3c90ef6ed41ee8
-  react-native-skia: 9af978889316cd83a9e4835e2b5e75ae5ceece80
+  react-native-skia: e9d50df684f2d96e35a1f25978908320dc9eee1f
   react-native-view-shot: 5ed55de8892be2746074c2f8066e6abc21dd6fd3
   React-NativeModulesApple: e477c7b5f198235d9de93702ef6b495b87b625bc
   React-networking: b90039a00fd63e75a78358ee5fc2ea4b4cbad736

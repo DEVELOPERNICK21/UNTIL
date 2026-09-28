@@ -23,7 +23,7 @@ export interface AccountDevice {
 export interface CloudEntitlement {
   active: boolean;
   source: 'play' | 'app_store' | 'license' | 'none';
-  purchaseType: 'monthly' | 'yearly' | 'lifetime' | null;
+  purchaseType: 'weekly' | 'monthly' | 'yearly' | 'lifetime' | null;
   lastValidatedAt: number;
 }
 

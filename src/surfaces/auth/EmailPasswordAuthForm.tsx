@@ -2,7 +2,7 @@
  * Shared email + password fields for account sign-in / create.
  */
 
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   StyleSheet,
@@ -43,28 +43,32 @@ export function EmailPasswordAuthForm({
   onSubmit,
 }: EmailPasswordAuthFormProps) {
   const theme = useTheme();
-  const isLight = theme.statusBarStyle === 'dark-content';
-  const submitLabel = mode === 'sign_in' ? 'Sign in with email' : 'Create account';
+  const [showPassword, setShowPassword] = useState(false);
+  const submitLabel = mode === 'sign_in' ? 'Sign in' : 'Create account';
   const switchLabel =
-    mode === 'sign_in'
-      ? 'Need an account? Create one'
-      : 'Already have an account? Sign in';
+    mode === 'sign_in' ? 'New here? Create an account' : 'Have an account? Sign in';
 
   const fieldStyle = [
     styles.field,
     {
       color: theme.textPrimary,
-      backgroundColor: isLight ? 'rgba(0,0,0,0.04)' : 'rgba(255,255,255,0.08)',
-      borderColor: isLight ? 'rgba(26,26,26,0.1)' : 'rgba(255,255,255,0.14)',
+      backgroundColor: theme.glassHighlight,
+      borderColor: theme.glassBorder,
     },
   ];
 
   return (
     <View style={styles.wrap}>
+      <Text
+        variant="caption"
+        style={[styles.label, { color: theme.textSecondary }]}
+      >
+        Email
+      </Text>
       <TextInput
         value={email}
         onChangeText={onEmailChange}
-        placeholder="Email"
+        placeholder="you@email.com"
         placeholderTextColor={theme.textMuted}
         autoCapitalize="none"
         autoCorrect={false}
@@ -75,12 +79,32 @@ export function EmailPasswordAuthForm({
         style={fieldStyle}
         accessibilityLabel="Email"
       />
+
+      <View style={styles.passwordLabelRow}>
+        <Text
+          variant="caption"
+          style={[styles.label, styles.passwordLabel, { color: theme.textSecondary }]}
+        >
+          Password
+        </Text>
+        <TouchableOpacity
+          onPress={() => setShowPassword(v => !v)}
+          disabled={busy}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          accessibilityRole="button"
+          accessibilityLabel={showPassword ? 'Hide password' : 'Show password'}
+        >
+          <Text variant="caption" style={{ color: theme.textMuted }}>
+            {showPassword ? 'Hide' : 'Show'}
+          </Text>
+        </TouchableOpacity>
+      </View>
       <TextInput
         value={password}
         onChangeText={onPasswordChange}
-        placeholder="Password"
+        placeholder="At least 6 characters"
         placeholderTextColor={theme.textMuted}
-        secureTextEntry
+        secureTextEntry={!showPassword}
         textContentType={mode === 'create' ? 'newPassword' : 'password'}
         autoComplete={mode === 'create' ? 'new-password' : 'password'}
         editable={!busy}
@@ -88,6 +112,7 @@ export function EmailPasswordAuthForm({
         accessibilityLabel="Password"
         onSubmitEditing={onSubmit}
       />
+
       <TouchableOpacity
         style={[styles.submit, { backgroundColor: theme.percent }]}
         onPress={onSubmit}
@@ -105,10 +130,9 @@ export function EmailPasswordAuthForm({
           </Text>
         )}
       </TouchableOpacity>
+
       <TouchableOpacity
-        onPress={() =>
-          onModeChange(mode === 'sign_in' ? 'create' : 'sign_in')
-        }
+        onPress={() => onModeChange(mode === 'sign_in' ? 'create' : 'sign_in')}
         disabled={busy}
         style={styles.switchHit}
         accessibilityRole="button"
@@ -125,7 +149,22 @@ export function EmailPasswordAuthForm({
 const styles = StyleSheet.create({
   wrap: {
     gap: Spacing[2],
-    marginTop: Spacing[3],
+    width: '100%',
+  },
+  label: {
+    marginBottom: -Spacing[1],
+    marginLeft: Spacing[1],
+  },
+  passwordLabelRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: Spacing[1],
+    paddingHorizontal: Spacing[1],
+  },
+  passwordLabel: {
+    marginBottom: 0,
+    marginLeft: 0,
   },
   field: {
     borderWidth: StyleSheet.hairlineWidth * 2,
@@ -141,7 +180,7 @@ const styles = StyleSheet.create({
     minHeight: 48,
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: Spacing[1],
+    marginTop: Spacing[2],
   },
   submitLabel: {
     color: '#FFFFFF',

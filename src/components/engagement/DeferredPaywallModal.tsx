@@ -1,8 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { Modal, View, StyleSheet, ActivityIndicator } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ScreenGradient } from '../../ui';
-import { Spacing, useTheme } from '../../theme';
+import { InteractionManager } from 'react-native';
 import { markDeferredPaywallShown } from '../../services/deferredPaywall';
 import { logAnalyticsEvent } from '../../services/analytics';
 import { recordPaywallDismissed } from '../../services/paywallPrompt';
@@ -17,11 +14,12 @@ interface DeferredPaywallModalProps {
 /**
  * First-offer deferred paywall via RevenueCat UI.
  * On purchase success closes. On cancel / error falls through to custom Premium screen.
+ *
+ * Important: do not wrap RevenueCatUI.presentPaywall in a React Native <Modal>.
+ * Native paywall over an RN Modal leaves a touch blocker after dismiss (freeze on Home).
  */
 export function DeferredPaywallModal({ visible, onClose }: DeferredPaywallModalProps) {
-  const theme = useTheme();
-  const insets = useSafeAreaInsets();
-  const { present, presenting } = usePresentRevenueCatPaywall();
+  const { present } = usePresentRevenueCatPaywall();
   const ranForVisible = useRef(false);
 
   useEffect(() => {
@@ -43,43 +41,18 @@ export function DeferredPaywallModal({ visible, onClose }: DeferredPaywallModalP
         onClose();
         return;
       }
+
       void logAnalyticsEvent('deferred_paywall_dismissed');
       recordPaywallDismissed();
       markDeferredPaywallShown();
+      // Clear the engagement trigger before navigating so nothing overlays Home.
       onClose();
-      // After RC first screen, open custom main paywall
-      navigateToPremium();
+
+      InteractionManager.runAfterInteractions(() => {
+        navigateToPremium();
+      });
     })();
   }, [visible, present, onClose]);
 
-  if (!visible) return null;
-
-  return (
-    <Modal visible transparent animationType="fade" statusBarTranslucent>
-      <View
-        style={[
-          styles.backdrop,
-          { paddingTop: insets.top, paddingBottom: insets.bottom },
-        ]}
-      >
-        <ScreenGradient>
-          <View style={styles.center}>
-            {presenting ? (
-              <ActivityIndicator color={theme.textPrimary} />
-            ) : null}
-          </View>
-        </ScreenGradient>
-      </View>
-    </Modal>
-  );
+  return null;
 }
-
-const styles = StyleSheet.create({
-  backdrop: { flex: 1 },
-  center: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: Spacing[4],
-  },
-});

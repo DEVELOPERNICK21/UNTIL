@@ -12,18 +12,25 @@ Store purchases (offerings, buy, restore, entitlement sync) go through RevenueCa
 |------|-------|
 | Entitlement | `premium` |
 | Offering | `default` (current offering) |
-| Product IDs | Unchanged: `yearly_subscription`, `monthly_subscription`, `lifetime_unlock`, optional `yearly_subscription_student` |
+| Product IDs | `weekly_subscription`, `yearly_subscription`, `monthly_subscription`, `lifetime_unlock`, optional `yearly_subscription_student` |
 | First-offer paywall | Dashboard paywall attached to `default` (publish in RC before release) |
-| Main paywall | Custom `PremiumPaywallBody` on Settings → Premium |
+| Main paywall | Custom `PremiumPaywallBody` · 3 cards (yearly · monthly · weekly); lifetime secondary; student behind verify |
 
-Public SDK keys (never secret keys). For Test Store, set both to the same `test_` key. For Play release builds, use the `goog_` key on Android:
+Public SDK keys (never secret keys):
+
+| Build | iOS | Android |
+|-------|-----|---------|
+| Release / TestFlight / store | `appl_…` | `goog_…` |
+| Local `__DEV__` simulated IAP only | `test_…` | `test_…` |
+
+**Never** ship a `test_` key in a release binary. RevenueCat asserts and kills the process (`checkForSimulatedStoreAPIKeyInRelease`).
 
 ```
 REVENUECAT_API_KEY_IOS=
 REVENUECAT_API_KEY_ANDROID=
 ```
 
-Copy from `.env.example` into `.env`. Rebuild after changing keys.
+Copy from `.env.example` into `.env`. Rebuild after changing keys (env is inlined at bundle time).
 
 Dashboard: attach the Play / App Store products above to packages on offering `default`, grant entitlement `premium`, and **publish** the first-offer paywall for that offering.
 
@@ -31,9 +38,10 @@ Dashboard: attach the Play / App Store products above to packages on offering `d
 
 | Product ID | Type | Price (INR) |
 |------------|------|-------------|
+| `weekly_subscription` | Subscription (weekly) | ₹49 |
+| `monthly_subscription` | Subscription (monthly) | ₹149 |
 | `yearly_subscription` | Subscription (yearly) | ₹499 |
-| `monthly_subscription` | Subscription (monthly) | ₹99 |
-| `lifetime_unlock` | One-time | ₹1,499 |
+| `lifetime_unlock` | One-time | ₹1,999 |
 | `yearly_subscription_student` | Subscription (yearly) | ₹249 (optional) |
 
 Regional pricing: set in Play Console → Product → Pricing (e.g. ₹399/year tier-2). The app shows localized prices from Play automatically.
@@ -55,7 +63,7 @@ Keep the API only if you still need it for tooling or a later server check. Env 
 
 ## Implemented app features
 
-- Monthly + yearly + lifetime + student on paywall
+- Paywall cards: weekly + monthly + yearly (lifetime secondary, student behind verify)
 - Onboarding: life weeks → Premium offer screen
 - Trial in-app modals + scheduled local notifications (days 10, 13, 14)
 - Widget picker gate for month/life

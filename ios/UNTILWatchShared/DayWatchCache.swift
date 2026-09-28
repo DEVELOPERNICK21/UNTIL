@@ -7,6 +7,7 @@ import Foundation
 
 enum DayWatchDesign {
   static let background = "#0E0E10"
+  static let track = "#2A2A2E"
   static let passed = "#AA2222"
   static let left = "#22AA22"
   static let percent = "#E9A23A"
@@ -25,7 +26,7 @@ struct DayWatchCache: Equatable {
   var updatedAt: Double
 
   static let userDefaultsKey = "until.watch.day.cache"
-  static let suiteName = "group.com.develoeprnick.UNTIL.watch"
+  static let suiteName = "group.com.developernick.until.watchkit"
 
   var progressClamped: Double {
     min(1, max(0, dayProgress))

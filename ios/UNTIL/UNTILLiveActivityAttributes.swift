@@ -9,7 +9,9 @@ import Foundation
 import ActivityKit
 
 struct UNTILLiveActivityAttributes: ActivityAttributes {
+    /// Mutable state — includes activeWidget so type can change without restarting.
     struct ContentState: Codable, Hashable {
+        let activeWidget: String // "day" | "month" | "year" | "dailyTasks" | "hourCalc" | "life"
         let dayProgress: Double
         let dayPercentDone: Int
         let dayPercentLeft: Int
@@ -35,6 +37,4 @@ struct UNTILLiveActivityAttributes: ActivityAttributes {
         let hourCalcIsRunning: Bool
         let updatedAt: Int64
     }
-
-    var activeWidget: String // "day" | "month" | "year" | "dailyTasks" | "hourCalc" | "life"
 }

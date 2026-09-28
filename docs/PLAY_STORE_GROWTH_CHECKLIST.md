@@ -16,7 +16,7 @@ Use with Play Console **Grow users** dashboard. At low volume (~30–50 installs
 Paste-ready ASO (title, short/full description, keywords, What’s new): [`PLAY_STORE_ASO.md`](PLAY_STORE_ASO.md).
 
 - 5-day **in-app preview** (not a Play billing trial unless you add one in Console).
-- Yearly **₹499**, lifetime **₹1,499** — see [`MONETIZATION_STRATEGY.md`](MONETIZATION_STRATEGY.md).
+- Yearly **₹499**, monthly **₹149**, weekly **₹49**, lifetime **₹1,999** — see [`MONETIZATION_STRATEGY.md`](MONETIZATION_STRATEGY.md).
 - Social proof: set `PAYWALL_SOCIAL_PROOF.verifiedActiveWatchers` only with a verified count.
 
 ## Vitals & quality

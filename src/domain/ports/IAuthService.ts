@@ -10,6 +10,9 @@ export interface IAuthService {
   signInWithEmail(email: string, password: string): Promise<AuthUser>;
   createAccountWithEmail(email: string, password: string): Promise<AuthUser>;
   signOut(): Promise<void>;
+  deleteAccount(): Promise<void>;
+  reauthenticateWithGoogle(): Promise<void>;
+  reauthenticateWithEmail(password: string): Promise<void>;
   getCurrentUser(): AuthUser | null;
   subscribe(callback: (user: AuthUser | null) => void): () => void;
 }
