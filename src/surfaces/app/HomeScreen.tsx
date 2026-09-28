@@ -40,7 +40,7 @@ import {
   homeHeroSupport,
   timeOfDayLabel,
 } from '../../theme';
-import type { RootStackParamList } from '../../navigation/RootNavigator';
+import type { RootStackParamList } from '../../navigation/types';
 import { logAnalyticsEvent } from '../../services/analytics';
 import { setEmberRouteOverride } from '../../services/emberSurface';
 import { TaskReportContent } from './TaskReportContent';

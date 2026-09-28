@@ -23,7 +23,7 @@ import { useObserveTimeState, usePresentRevenueCatPaywall } from '../../hooks';
 import { Spacing, useTheme } from '../../theme';
 import { MONETIZATION_PAYWALL_COPY } from '../../config/monetization';
 import { logAnalyticsEvent } from '../../services/analytics';
-import type { AuthStackParamList } from '../../navigation/AuthNavigator';
+import type { AuthStackParamList } from '../../navigation/types';
 
 export function OnboardingPaywallScreen() {
   const insets = useSafeAreaInsets();

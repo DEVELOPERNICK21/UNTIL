@@ -27,7 +27,7 @@ import {
   Radius,
 } from '../../theme';
 import { useAnalytics, useOnboardingFunnel } from '../../hooks';
-import type { AuthStackParamList } from '../../navigation/AuthNavigator';
+import type { AuthStackParamList } from '../../navigation/types';
 import type {
   OnboardingCadence,
   OnboardingDrain,

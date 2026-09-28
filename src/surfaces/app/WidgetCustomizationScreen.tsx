@@ -19,7 +19,7 @@ import {
   getWidgetAccentColor,
   isPremiumWidgetAccent,
 } from '../../config/widgetAccents';
-import type { RootStackParamList } from '../../navigation/RootNavigator';
+import type { RootStackParamList } from '../../navigation/types';
 
 const PRESET_MESSAGES = [
   'Time is running',

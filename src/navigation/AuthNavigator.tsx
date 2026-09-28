@@ -16,13 +16,8 @@ import { LifeWeeksPreviewScreen } from '../surfaces/auth/LifeWeeksPreviewScreen'
 import { OnboardingPaywallScreen } from '../surfaces/auth/OnboardingPaywallScreen';
 import { AccountPromptScreen } from '../surfaces/auth/AccountPromptScreen';
 
-export type AuthStackParamList = {
-  Onboarding: undefined;
-  IdentitySetup: undefined;
-  LifeWeeksPreview: undefined;
-  OnboardingPaywall: undefined;
-  AccountPrompt: undefined;
-};
+import type { AuthStackParamList } from './types';
+export type { AuthStackParamList };
 
 const Stack = createNativeStackNavigator<AuthStackParamList>();
 

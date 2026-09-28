@@ -11,7 +11,7 @@ import {
   useDailyNothingLimit,
 } from '../../hooks';
 import { Spacing, Radius, useTheme, getFontFamilyForWeight, Weight } from '../../theme';
-import type { RootStackParamList } from '../../navigation/RootNavigator';
+import type { RootStackParamList } from '../../navigation/types';
 import { logAnalyticsEvent } from '../../services/analytics';
 
 function formatHours(hours: number): string {

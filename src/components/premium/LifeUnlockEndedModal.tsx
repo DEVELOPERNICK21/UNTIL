@@ -6,7 +6,7 @@ import { Text } from '../../ui';
 import { Spacing, Radius, useTheme } from '../../theme';
 import { MONETIZATION_PAYWALL_COPY } from '../../config/monetization';
 import { recordPaywallDismissed } from '../../services/paywallPrompt';
-import type { RootStackParamList } from '../../navigation/RootNavigator';
+import type { RootStackParamList } from '../../navigation/types';
 
 interface LifeUnlockEndedModalProps {
   visible: boolean;

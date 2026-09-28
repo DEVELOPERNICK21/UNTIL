@@ -14,7 +14,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Text, ScreenGradient, Card } from '../../ui';
 import { useMonthlyGoals } from '../../hooks';
 import { Spacing, Colors, Radius, Typography } from '../../theme';
-import type { RootStackParamList } from '../../navigation/RootNavigator';
+import type { RootStackParamList } from '../../navigation/types';
 import type { MonthlyGoal } from '../../types';
 import { logAnalyticsEvent } from '../../services/analytics';
 

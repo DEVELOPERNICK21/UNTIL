@@ -33,7 +33,7 @@ import {
   Shadows,
 } from '../../theme';
 import { useAnalytics, useUpdateUserProfile, useOnboardingFunnel } from '../../hooks';
-import type { AuthStackParamList } from '../../navigation/AuthNavigator';
+import type { AuthStackParamList } from '../../navigation/types';
 
 const LIFESPAN_MIN = 40;
 const LIFESPAN_MAX = 120;

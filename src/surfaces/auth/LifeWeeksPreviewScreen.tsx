@@ -21,7 +21,7 @@ import {
   useObserveTimeState,
   useOnboardingFunnel,
 } from '../../hooks';
-import type { AuthStackParamList } from '../../navigation/AuthNavigator';
+import type { AuthStackParamList } from '../../navigation/types';
 
 type AuthNav = NativeStackNavigationProp<
   AuthStackParamList,

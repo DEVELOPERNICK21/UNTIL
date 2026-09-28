@@ -21,7 +21,7 @@ import {
   useTodayIso,
   useWidgetSyncActions,
 } from '../../hooks';
-import type { RootStackParamList } from '../../navigation/RootNavigator';
+import type { RootStackParamList } from '../../navigation/types';
 import { Text, ScreenGradient, Card, ProgressLine } from '../../ui';
 import { Spacing, Colors, Radius, Typography, FontFamily } from '../../theme';
 import type { DailyTask, TaskCategory } from '../../types';

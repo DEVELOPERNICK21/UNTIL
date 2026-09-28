@@ -6,7 +6,7 @@ import { Text } from '../../ui';
 import { PeriodDetailScreen } from './PeriodDetailScreen';
 import { useObserveTimeState, useGoalsFeatureEnabled } from '../../hooks';
 import { Spacing } from '../../theme';
-import type { RootStackParamList } from '../../navigation/RootNavigator';
+import type { RootStackParamList } from '../../navigation/types';
 
 function formatTime(date: Date) {
   const startDate = new Date(date);

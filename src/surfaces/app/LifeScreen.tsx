@@ -14,7 +14,7 @@ import {
 } from '../../hooks';
 import { LifeUnlockEndedModal } from '../../components/premium/LifeUnlockEndedModal';
 import { Spacing, useTheme } from '../../theme';
-import type { RootStackParamList } from '../../navigation/RootNavigator';
+import type { RootStackParamList } from '../../navigation/types';
 
 export function LifeScreen() {
   useTrackLifeScreenVisit();

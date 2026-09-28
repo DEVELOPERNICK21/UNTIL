@@ -35,7 +35,7 @@ import {
   FontFamily,
   getProgressColor,
 } from '../../theme';
-import type { RootStackParamList } from '../../navigation/RootNavigator';
+import type { RootStackParamList } from '../../navigation/types';
 
 type FocusKey = 'day' | 'month' | 'year' | 'life';
 

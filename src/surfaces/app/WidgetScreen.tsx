@@ -11,7 +11,7 @@ import { useWidgetSurfaceStatus, useAccessControl } from '../../hooks';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Text, ScreenGradient } from '../../ui';
 import { Colors, Spacing, Radius, Typography } from '../../theme';
-import type { RootStackParamList } from '../../navigation/RootNavigator';
+import type { RootStackParamList } from '../../navigation/types';
 
 function SectionHeader({ label }: { label: string }) {
   return (

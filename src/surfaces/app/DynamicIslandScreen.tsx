@@ -15,7 +15,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Text, ScreenGradient } from '../../ui';
 import { Colors, Spacing, Typography } from '../../theme';
 import { useDynamicIslandControl, useOverlayControl } from '../../hooks';
-import type { RootStackParamList } from '../../navigation/RootNavigator';
+import type { RootStackParamList } from '../../navigation/types';
 
 export function DynamicIslandScreen() {
   if (Platform.OS === 'android') {
