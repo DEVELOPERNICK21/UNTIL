@@ -27,6 +27,8 @@ import {
   useAccessControl,
   useDailyNothingLimit,
   useAuthSession,
+  useAnalyticsConsent,
+  useManageSubscription,
 } from '../../hooks';
 import { useInAppReview } from '../../hooks/useInAppReview';
 import {
@@ -95,7 +97,10 @@ export function SettingsScreen() {
     enabled: retentionRemindersEnabled,
     setEnabled: setRetentionRemindersEnabled,
   } = useRetentionNotifications();
+  const { analyticsEnabled, analyticsLocked, setAnalyticsEnabled } =
+    useAnalyticsConsent();
   const { hasPremiumBundle } = useAccessControl();
+  const { openManageSubscription } = useManageSubscription();
   const { signedIn, email } = useAuthSession();
   const { limitHours, setLimitHours } = useDailyNothingLimit();
   const { rateApp } = useInAppReview();
@@ -254,8 +259,35 @@ export function SettingsScreen() {
                       ]}
                     >
                       {isPremium
-                        ? 'Active · manage in your app store account'
+                        ? 'Active'
                         : 'Yearly subscription or lifetime'}
+                    </Text>
+                  </View>
+                  <Text
+                    style={[styles.chevron, { color: theme.textSecondary }]}
+                  >
+                    ›
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.row, { borderBottomColor: theme.glassBorder }]}
+                  onPress={() => openManageSubscription('settings')}
+                  activeOpacity={0.7}
+                  accessibilityRole="button"
+                  accessibilityLabel="Manage or cancel subscription"
+                >
+                  <View style={styles.rowContent}>
+                    <Text variant="body" style={{ color: theme.textPrimary }}>
+                      Manage subscription
+                    </Text>
+                    <Text
+                      variant="caption"
+                      style={[
+                        styles.rowSubtitle,
+                        { color: theme.textSecondary },
+                      ]}
+                    >
+                      Cancel or change your plan
                     </Text>
                   </View>
                   <Text
@@ -509,7 +541,7 @@ export function SettingsScreen() {
                     </TouchableOpacity>
                   ) : null}
                 </View>
-                <View style={[styles.row, styles.rowLast]}>
+                <View style={styles.row}>
                   <View style={styles.rowContent}>
                     <Text variant="body" style={{ color: theme.textPrimary }}>
                       Daily Time Reminders
@@ -536,6 +568,37 @@ export function SettingsScreen() {
                       retentionRemindersEnabled
                         ? theme.percent
                         : theme.textSecondary
+                    }
+                  />
+                </View>
+                <View style={[styles.row, styles.rowLast]}>
+                  <View style={styles.rowContent}>
+                    <Text variant="body" style={{ color: theme.textPrimary }}>
+                      Share usage stats
+                    </Text>
+                    <Text
+                      variant="caption"
+                      style={[
+                        styles.rowSubtitle,
+                        { color: theme.textSecondary },
+                      ]}
+                    >
+                      {analyticsLocked
+                        ? 'Off for users under 13.'
+                        : 'App events like screens opened. No screen recording. Turn off anytime.'}
+                    </Text>
+                  </View>
+                  <Switch
+                    value={analyticsEnabled}
+                    onValueChange={setAnalyticsEnabled}
+                    disabled={analyticsLocked}
+                    accessibilityLabel="Share usage stats"
+                    trackColor={{
+                      false: theme.divider,
+                      true: 'rgba(232, 124, 32, 0.45)',
+                    }}
+                    thumbColor={
+                      analyticsEnabled ? theme.percent : theme.textSecondary
                     }
                   />
                 </View>

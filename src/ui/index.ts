@@ -6,6 +6,8 @@ export { CircularProgress } from './CircularProgress';
 export { TimeStatement } from './TimeStatement';
 export { Card } from './Card';
 export { GlassCard } from './GlassCard';
+export { AgeConfirmationCheck } from './AgeConfirmationCheck';
+export { LegalAgreementLine } from './LegalAgreementLine';
 export { PeriodGlyph } from './PeriodGlyph';
 export type { PeriodGlyphKind } from './PeriodGlyph';
 export { PeriodCardBackdrop } from './PeriodCardBackdrop';

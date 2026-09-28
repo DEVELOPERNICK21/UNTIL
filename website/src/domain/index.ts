@@ -16,6 +16,12 @@ export {
   PRIVACY_SECTIONS,
 } from './legal/privacy';
 export {
+  COPYRIGHT_TITLE,
+  COPYRIGHT_LAST_UPDATED,
+  COPYRIGHT_SECTIONS,
+  COPYRIGHT_REPORT_MAILTO,
+} from './legal/copyright';
+export {
   WEBSITE_PRICING,
   PRICING_DISPLAY,
   PRICING_PLAN_CARDS,

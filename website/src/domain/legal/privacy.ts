@@ -9,7 +9,7 @@ const { appName, baseUrl, contactEmail } = SITE_CONFIG;
 
 export const PRIVACY_TITLE = `Privacy Policy · ${appName}`;
 
-export const PRIVACY_LAST_UPDATED = '2026-06-12';
+export const PRIVACY_LAST_UPDATED = '2026-09-28';
 
 export const PRIVACY_SECTIONS = [
   {
@@ -20,58 +20,77 @@ export const PRIVACY_SECTIONS = [
   {
     id: 'data-we-collect',
     title: '2. Data We Collect',
-    body: `**Data you provide (including health-related information):** Information you enter in the App (e.g., birth date, expected lifespan, countdown titles and dates, custom counter names and values, and any goals or countdowns related to your health, habits, or well‑being) is stored locally on your device. This information may be considered "Health Data" because it relates to your physical or mental well‑being, even though it is manually entered by you. We do not access Health Data from external services (such as Google Fit, Apple Health, or your medical provider), and we do not transmit your in‑app Health Data to our servers unless you use a feature that explicitly syncs data (e.g., cloud backup or trial preview sync), in which case we will describe that feature and its data use in the App.
+    body: `**Data you enter:** Your birth date, expected lifespan, countdowns, counters, tasks, goals and settings. This may count as health-related data because it relates to your well‑being, even though you type it in yourself. We do not read data from Google Fit, Apple Health or any medical provider.
 
-**Analytics:** We use PostHog (PostHog, Inc.) and Google Firebase Analytics to collect anonymous usage data (e.g., screens viewed, feature usage, purchase funnel steps). This does not include the health or personal content you enter in the App. We use a stable anonymous device identifier (not your name or email) to understand how the App is used and to improve it.`,
+**If you create an account (optional):** We use Google Firebase Authentication to sign you in with Google or with email and password. We store your email address and a Firebase user ID. In Google Cloud Firestore we store your birth date, expected lifespan, theme, a record that you confirmed you are 13 or older, the devices signed in to your account (device ID, platform, device name, last seen date), and your Premium status (active or not, plan type, store). Without an account, this data stays on your device.
+
+**Purchases:** Payments are handled by Google Play or the Apple App Store. We never see your card details. We use RevenueCat (RevenueCat, Inc.) to check your subscription. RevenueCat receives an anonymous app user ID (or your account user ID if you sign in) and your purchase receipts.
+
+**Free preview:** To stop the free preview restarting after a reinstall, the App sends a device ID to our server. We store only a salted hash of that ID and the preview start date, in a database run by Vercel KV (Upstash, Inc.).
+
+**Usage stats:** We use PostHog (PostHog, Inc.) and Google Firebase Analytics to see which screens and features are used and where the purchase flow fails. Events are tied to an anonymous device ID, not your name or email. They never include the text you type, your email or your birth date. You can turn this off in Settings → Share usage stats.
+
+**Crash reports:** We use Google Firebase Crashlytics to receive crash reports (device model, OS version, app version and an anonymous ID) so we can fix bugs.
+
+**No session recording:** We do not record your screen, taps or keystrokes, and we do not use heatmaps.`,
   },
   {
     id: 'health-data-use',
-    title: '3. How We Use Health Data',
-    body: `We use the Health Data you enter only to provide core App functionality, such as calculating and displaying time‑based progress (for example, day/month/year progress, countdowns, and habit/goal tracking) and showing widgets or overlays on your device. We do not use Health Data for advertising, we do not sell it, and we do not use it to build profiles across different apps or services. If we introduce optional cloud backup or sync, Health Data included in your backup will only be used to restore your account or sync your devices, and we will update this policy with additional details before enabling such a feature.`,
+    title: '3. How We Use Your Data',
+    body: `We use the data you enter only to run the App: calculating day, month, year and life progress, countdowns and goals, and showing widgets and overlays. If you sign in, we use your synced data only to restore it on your devices and to apply Premium on up to 3 devices. We do not use your data for advertising, we do not sell it, and we do not build profiles across other apps or services.`,
   },
   {
     id: 'local-storage',
     title: '4. Local Storage',
-    body: `The App uses local storage (e.g., device storage such as MMKV or similar) to persist your settings and data, including any Health Data you enter. This data stays on your device and is not sent to us by default.`,
+    body: `The App stores your data and settings on your device (MMKV and similar local storage), including any health-related data you enter. Without an account, this data is not sent to us.`,
   },
   {
     id: 'website',
     title: '5. Website',
-    body: `When you visit our website (${baseUrl}), we may collect standard technical information such as IP address, browser type, and pages visited. We may use cookies or similar technologies only as needed for site operation (e.g., security, analytics if we add them). We will update this policy if we introduce significant analytics or third-party services.`,
+    body: `Our website (${baseUrl}) is hosted on Vercel. Like any web host, Vercel receives technical data such as your IP address and browser type when you load a page. The website does not use analytics, advertising cookies or third-party scripts, and all fonts and images load from our own domain.`,
   },
   {
     id: 'no-sale',
     title: '6. We Do Not Sell Your Data',
-    body: `We do not sell your personal data to third parties.`,
+    body: `We do not sell or rent your personal data, and we do not share it for targeted advertising.`,
   },
   {
     id: 'sharing',
-    title: '7. Sharing of Data',
-    body: `We do not share your personal data with third parties except: (a) if required by law or legal process; (b) to protect our rights or safety; (c) with your consent; or (d) with service providers who process data on our behalf under strict confidentiality (e.g., hosting, product analytics such as PostHog and Firebase). If we use such providers, we ensure they comply with applicable privacy laws.`,
+    title: '7. Service Providers',
+    body: `We share data only with the providers that run parts of the App for us: Google Firebase (sign-in, account database, analytics, crash reports), PostHog (usage stats), RevenueCat (subscription checks), Google Play and the Apple App Store (payments), Vercel (website and preview server) and Upstash through Vercel KV (stores the hashed preview ID). Each one processes data only to provide its service. We may also share data if the law requires it, to protect our rights or safety, or with your consent.`,
+  },
+  {
+    id: 'retention',
+    title: '8. How Long We Keep Data',
+    body: `Account data is kept until you delete your account. Usage stats and crash reports are kept by PostHog and Firebase for their standard retention periods, then deleted. Local data stays on your device until you delete it or uninstall the App.`,
   },
   {
     id: 'security',
-    title: '8. Security',
-    body: `We take reasonable steps to protect your data. Data stored on your device is subject to your device’s security. If we store any data on our servers, we use industry-standard measures to protect it.`,
+    title: '9. Security',
+    body: `Data stored on your device is protected by your device's security. Account data is stored in Google Cloud and protected by access rules so that only you can read or change your own account data. Data is sent over encrypted connections (HTTPS).`,
   },
   {
     id: 'children',
-    title: '9. Children',
-    body: `The App is not directed at children under 13. We do not knowingly collect personal data from children under 13. If you believe we have collected such data, please contact us at ${contactEmail} and we will delete it.`,
+    title: '10. Children',
+    body: `The App is not directed at children under 13. You must confirm you are 13 or older to create an account or verify a student email. If the birth date you enter shows you are under 13, the App will not create an account, will not store an email, and turns off usage stats and crash reports on that device. If you believe a child under 13 has given us personal data, contact us at ${contactEmail} and we will delete it.`,
   },
   {
     id: 'rights',
-    title: '10. Your Rights',
-    body: `Depending on your location, you may have rights to access, correct, delete, or port your data, or to object to or restrict processing. In the App, signed-in users can delete their account under Settings → Account. You can also contact us at ${contactEmail}, or uninstall the App and clear local storage.`,
+    title: '11. Your Choices and Rights',
+    body: `**Usage stats:** Turn them off anytime in Settings → Share usage stats. The choice is saved and you can change it later.
+
+**Delete your account:** In the App, go to Settings → Account → Delete account. This removes your account and all data stored in Firestore.
+
+**Other requests:** Depending on where you live (for example under GDPR or CCPA), you may have the right to access, correct, delete or export your data, or to object to its processing. Email ${contactEmail} and we will reply within 30 days. You can also uninstall the App to remove all local data.`,
   },
   {
     id: 'changes',
-    title: '11. Changes to This Policy',
-    body: `We may update this Privacy Policy from time to time. The "Last updated" date at the top will change. We will notify you of material changes via the App or by posting the new policy on ${baseUrl}/privacy. Continued use after changes constitutes acceptance.`,
+    title: '12. Changes to This Policy',
+    body: `We may update this Privacy Policy. The "Last updated" date at the top will change. We will tell you about important changes in the App or on ${baseUrl}/privacy.`,
   },
   {
     id: 'contact',
-    title: '12. Contact',
-    body: `For privacy-related questions or requests, contact us at ${contactEmail}.`,
+    title: '13. Contact',
+    body: `For privacy questions or requests, contact us at ${contactEmail}.`,
   },
 ] as const;

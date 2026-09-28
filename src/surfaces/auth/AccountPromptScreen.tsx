@@ -17,7 +17,14 @@ import {
   SafeAreaView,
   useSafeAreaInsets,
 } from 'react-native-safe-area-context';
-import { Text, ScreenGradient, GlassCard } from '../../ui';
+import {
+  Text,
+  ScreenGradient,
+  GlassCard,
+  AgeConfirmationCheck,
+  LegalAgreementLine,
+} from '../../ui';
+import { LEGAL_URLS } from '../../config/monetization';
 import {
   useTheme,
   Spacing,
@@ -26,7 +33,7 @@ import {
   getFontFamilyForWeight,
 } from '../../theme';
 import { appLogoIcon } from '../../assets/images';
-import { useAccountActions } from '../../hooks';
+import { MINIMUM_ACCOUNT_AGE_YEARS, useAccountActions } from '../../hooks';
 import { useOnboardingComplete } from '../onboarding';
 import { useEnter } from '../onboarding/onboardingMotion';
 import { logAnalyticsEvent } from '../../services/analytics';
@@ -60,6 +67,7 @@ export function AccountPromptScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [emailMode, setEmailMode] = useState<EmailAuthMode>('sign_in');
+  const [ageConfirmed, setAgeConfirmed] = useState(false);
   const isLight = theme.statusBarStyle === 'dark-content';
 
   const brandEnter = useEnter(true, 0);
@@ -98,7 +106,7 @@ export function AccountPromptScreen() {
   const handleGoogleSignIn = async () => {
     void logAnalyticsEvent('account_prompt_google_tapped');
     try {
-      const result = await signInWithGoogle();
+      const result = await signInWithGoogle(ageConfirmed);
       if (!result) {
         void logAnalyticsEvent('account_prompt_signin_cancelled');
         return;
@@ -121,8 +129,8 @@ export function AccountPromptScreen() {
     try {
       const result =
         emailMode === 'sign_in'
-          ? await signInWithEmail(email, password)
-          : await createAccountWithEmail(email, password);
+          ? await signInWithEmail(email, password, ageConfirmed)
+          : await createAccountWithEmail(email, password, ageConfirmed);
       void logAnalyticsEvent('account_prompt_signin_succeeded', {
         device_limit_reached: result.deviceLimitReached,
         provider: 'password',
@@ -232,6 +240,16 @@ export function AccountPromptScreen() {
               ) : (
                 <>
                   <GlassCard style={styles.actionsCard}>
+                    <AgeConfirmationCheck
+                      checked={ageConfirmed}
+                      onChange={setAgeConfirmed}
+                      minimumAge={MINIMUM_ACCOUNT_AGE_YEARS}
+                      disabled={busy}
+                    />
+                    <LegalAgreementLine
+                      termsUrl={LEGAL_URLS.terms}
+                      privacyUrl={LEGAL_URLS.privacy}
+                    />
                     {/*
                       Google is the only provider today. App Store guideline 4.8
                       requires an equivalent private login option alongside it, so

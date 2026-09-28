@@ -3,7 +3,8 @@
  * Server-backed in-app preview start (one per device; survives app storage clear).
  *
  * Env:
- * - UNTIL_TRIAL_API_SECRET or UNTIL_VERIFY_API_SECRET — Bearer token the app must send
+ * - UNTIL_TRIAL_API_SECRET or UNTIL_VERIFY_API_SECRET — leave unset for the mobile app.
+ *   The app cannot keep a secret, so it sends none; setting this makes every app call 401.
  * - KV_REST_API_URL + KV_REST_API_TOKEN (Vercel KV) or Upstash Redis REST vars
  * - UNTIL_TRIAL_PREVIEW_DAYS — default 5
  * - UNTIL_TRIAL_SALT — optional hash salt for device IDs

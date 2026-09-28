@@ -131,6 +131,11 @@ import { ResetPurchasesUserUseCase } from './domain/useCases/ResetPurchasesUserU
 import { PresentRevenueCatPaywallUseCase } from './domain/useCases/PresentRevenueCatPaywallUseCase';
 import { configureWidgetSync, syncPremiumStatus } from './infrastructure/WidgetSync';
 import { logAnalyticsEvent, recordCrashError } from './services/analytics';
+import {
+  isKnownUnderMinimumAge,
+  markUnderMinimumAge,
+} from './services/analyticsConsent';
+import { AssertAccountAgeGateUseCase } from './domain/useCases/AssertAccountAgeGateUseCase';
 import { configureRetentionNotifications } from './services/retentionNotifications';
 import { getTrialDurationDays } from './services/analyticsUserProperties';
 
@@ -201,8 +206,13 @@ export const getDailyReflectionUseCase = new GetDailyReflectionUseCase(
   reflectionRepository,
   onboardingRepository
 );
+export const assertAccountAgeGateUseCase = new AssertAccountAgeGateUseCase(
+  timeRepository,
+  { isLockedOut: isKnownUnderMinimumAge, lockOut: markUnderMinimumAge }
+);
 export const verifyStudentEmailUseCase = new VerifyStudentEmailUseCase(
-  studentVerificationRepository
+  studentVerificationRepository,
+  assertAccountAgeGateUseCase
 );
 export const trackAppOpenUseCase = new TrackAppOpenUseCase(
   subscriptionRepository,
@@ -471,23 +481,27 @@ export const completeAccountSignInUseCase = new CompleteAccountSignInUseCase(
   registerDeviceUseCase,
   bindEntitlementToAccountUseCase,
   identifyPurchasesUserUseCase,
+  accountCloudStore,
   recordCrashError,
   syncPremiumBridge
 );
 
 export const signInWithGoogleUseCase = new SignInWithGoogleUseCase(
   authService,
-  completeAccountSignInUseCase
+  completeAccountSignInUseCase,
+  assertAccountAgeGateUseCase
 );
 
 export const signInWithEmailUseCase = new SignInWithEmailUseCase(
   authService,
-  completeAccountSignInUseCase
+  completeAccountSignInUseCase,
+  assertAccountAgeGateUseCase
 );
 
 export const createAccountWithEmailUseCase = new CreateAccountWithEmailUseCase(
   authService,
-  completeAccountSignInUseCase
+  completeAccountSignInUseCase,
+  assertAccountAgeGateUseCase
 );
 
 export const signOutUseCase = new SignOutUseCase(

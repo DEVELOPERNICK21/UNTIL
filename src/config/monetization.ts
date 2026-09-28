@@ -73,7 +73,35 @@ export const LEGAL_URLS = {
 } as const;
 
 export const STORE_SUBSCRIPTION_MANAGE_PATH =
-  'your app store account';
+  'Settings › Manage subscription, or your app store account';
+
+/** Store pages where the user can cancel. Opened by Settings › Manage subscription. */
+export const SUBSCRIPTION_MANAGE_URLS = {
+  ios: 'https://apps.apple.com/account/subscriptions',
+  android:
+    'https://play.google.com/store/account/subscriptions?package=app.until.time',
+} as const;
+
+export type RenewalInterval = 'week' | 'month' | 'year';
+
+const RENEWAL_ADVERB: Record<RenewalInterval, string> = {
+  week: 'weekly',
+  month: 'monthly',
+  year: 'yearly',
+};
+
+/** Button label that states the renewal (affirmative consent to auto-renew). */
+export function formatSubscribeCta(interval: RenewalInterval): string {
+  return `Subscribe · renews ${RENEWAL_ADVERB[interval]}`;
+}
+
+/** Always-visible auto-renewal terms shown directly under the subscribe button. */
+export function formatRenewalTerms(
+  price: string,
+  interval: RenewalInterval
+): string {
+  return `${price} charged today, then ${price} every ${interval}. Renews automatically until you cancel. Cancel anytime in ${STORE_SUBSCRIPTION_MANAGE_PATH}, at least 24 hours before renewal.`;
+}
 
 export const MONETIZATION_PAYWALL_COPY = {
   headline: 'Your life is passing. Start watching it.',

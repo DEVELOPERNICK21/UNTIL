@@ -43,3 +43,14 @@ export const POSTHOG_DEV_ENABLED =
 
 export const POSTHOG_ENABLED =
   POSTHOG_API_KEY.length > 0 && (!__DEV__ || POSTHOG_DEV_ENABLED);
+
+/**
+ * Session replay, touch/heatmap autocapture and screen autocapture stay off.
+ * Replay also requires an explicit, stored opt-in (analyticsConsent.canStartSessionReplay)
+ * and masked text inputs before it may ever be turned on. Guarded by __tests__/privacyDefaults.test.ts.
+ */
+export const SESSION_REPLAY_ENABLED = false;
+export const POSTHOG_AUTOCAPTURE = {
+  captureScreens: false,
+  captureTouches: false,
+} as const;

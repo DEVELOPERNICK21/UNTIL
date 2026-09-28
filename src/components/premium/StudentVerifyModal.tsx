@@ -8,7 +8,7 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
-import { Text } from '../../ui';
+import { AgeConfirmationCheck, Text } from '../../ui';
 import {
   Spacing,
   Radius,
@@ -16,13 +16,28 @@ import {
   Weight,
   getFontFamilyForWeight,
 } from '../../theme';
+import { MINIMUM_ACCOUNT_AGE_YEARS } from '../../hooks';
+
+type StudentVerifyFailure =
+  | 'invalid'
+  | 'confirmation_required'
+  | 'under_minimum_age';
 
 interface StudentVerifyModalProps {
   visible: boolean;
   onClose: () => void;
   onVerified: (email: string) => void;
-  verify: (email: string) => { ok: true } | { ok: false; reason: 'invalid' };
+  verify: (
+    email: string,
+    confirmedMinimumAge: boolean
+  ) => { ok: true } | { ok: false; reason: StudentVerifyFailure };
 }
+
+const FAILURE_COPY: Record<StudentVerifyFailure, string> = {
+  invalid: 'Use a school email (.edu, .ac.in, .edu.in, etc.).',
+  confirmation_required: `Confirm you are ${MINIMUM_ACCOUNT_AGE_YEARS} or older.`,
+  under_minimum_age: `Student pricing needs you to be ${MINIMUM_ACCOUNT_AGE_YEARS} or older.`,
+};
 
 export function StudentVerifyModal({
   visible,
@@ -33,11 +48,13 @@ export function StudentVerifyModal({
   const theme = useTheme();
   const [email, setEmail] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [ageConfirmed, setAgeConfirmed] = useState(false);
 
   const handleSubmit = () => {
-    const result = verify(email);
+    const result = verify(email, ageConfirmed);
     if (!result.ok) {
-      setError('Use a school email (.edu, .ac.in, .edu.in, etc.).');
+      setError(FAILURE_COPY[result.reason]);
+      if (result.reason === 'under_minimum_age') setEmail('');
       return;
     }
     setError(null);
@@ -88,6 +105,14 @@ export function StudentVerifyModal({
                 backgroundColor: theme.glassBg,
               },
             ]}
+          />
+          <AgeConfirmationCheck
+            checked={ageConfirmed}
+            onChange={next => {
+              setAgeConfirmed(next);
+              if (error) setError(null);
+            }}
+            minimumAge={MINIMUM_ACCOUNT_AGE_YEARS}
           />
           {error ? (
             <Text variant="caption" style={{ color: '#E85C5C' }}>

@@ -41,6 +41,8 @@ import {
   formatInr,
   formatPaywallSocialProof,
   formatPreviewActiveBody,
+  formatRenewalTerms,
+  formatSubscribeCta,
 } from '../../config/monetization';
 import {
   logAnalyticsEvent,
@@ -61,6 +63,7 @@ import {
 } from './PaywallPlanCards';
 import { StudentVerifyModal } from './StudentVerifyModal';
 import { useStudentVerification } from '../../hooks/useStudentVerification';
+import { useManageSubscription } from '../../hooks/useManageSubscription';
 
 if (
   Platform.OS === 'android' &&
@@ -115,7 +118,7 @@ export function PremiumPaywallBody({
   const [termsOpen, setTermsOpen] = useState(false);
   const [selectedPlanId, setSelectedPlanId] = useState(productIds.yearly);
   const [studentModalOpen, setStudentModalOpen] = useState(false);
-  const { isVerified, verifiedEmail, verify, checkVerified } =
+  const { isVerified, verify, checkVerified } =
     useStudentVerification();
 
   const lifeProgress =
@@ -171,6 +174,7 @@ export function PremiumPaywallBody({
         subtitle: `Less than ${MONETIZATION_PRICING.yearlyPerDayDisplay}/day`,
         price: yearlyPrice,
         periodLabel: '/year',
+        renewalInterval: 'year',
         comparePrice: `${monthlyAnchorYearly}/year`,
         badge: `Save ${MONETIZATION_PRICING.yearlySavingsVsMonthlyDisplay}`,
       },
@@ -180,6 +184,7 @@ export function PremiumPaywallBody({
         subtitle: 'Flexible month to month',
         price: monthlyPrice,
         periodLabel: '/month',
+        renewalInterval: 'month',
       },
     ];
 
@@ -190,6 +195,7 @@ export function PremiumPaywallBody({
         subtitle: 'Try Premium for a week',
         price: weeklyPrice,
         periodLabel: '/week',
+        renewalInterval: 'week',
       });
     }
 
@@ -229,6 +235,8 @@ export function PremiumPaywallBody({
       access.trialEndsAt,
     ]
   );
+
+  const { openManageSubscription } = useManageSubscription();
 
   const openLegalUrl = useCallback((url: string) => {
     void Linking.openURL(url).catch(() => {
@@ -485,9 +493,7 @@ export function PremiumPaywallBody({
             disabled={continueDisabled}
             activeOpacity={0.85}
             accessibilityRole="button"
-            accessibilityLabel={`Continue with ${selectedPlan.title} for ${selectedPlan.price}${
-              selectedPlan.periodLabel ? ` ${selectedPlan.periodLabel.trim()}` : ''
-            }`}
+            accessibilityLabel={`${formatSubscribeCta(selectedPlan.renewalInterval)}. ${formatRenewalTerms(selectedPlan.price, selectedPlan.renewalInterval)}`}
           >
             <Text
               variant="body"
@@ -496,12 +502,20 @@ export function PremiumPaywallBody({
                 fontFamily: getFontFamilyForWeight(Weight.semibold),
               }}
             >
-              Continue
+              {formatSubscribeCta(selectedPlan.renewalInterval)}
             </Text>
             <Text variant="micro" style={styles.continueSub}>
-              Cancel anytime
+              {selectedPlan.price}
+              {selectedPlan.periodLabel ?? ''} · cancel anytime
             </Text>
           </TouchableOpacity>
+
+          <Text
+            variant="caption"
+            style={[styles.renewalTerms, { color: theme.textSecondary }]}
+          >
+            {formatRenewalTerms(selectedPlan.price, selectedPlan.renewalInterval)}
+          </Text>
 
           <TouchableOpacity
             onPress={() => void onBuy(productIds.lifetime)}
@@ -539,8 +553,8 @@ export function PremiumPaywallBody({
                 style={{ color: theme.textMuted, textAlign: 'center' }}
               >
                 {isVerified
-                  ? `Student yearly · ${studentPrice}`
-                  : `Student discount · ${studentPrice}`}
+                  ? `Student yearly · ${studentPrice}/year, renews yearly`
+                  : `Student discount · ${studentPrice}/year, renews yearly`}
               </Text>
             </TouchableOpacity>
           ) : null}
@@ -667,15 +681,31 @@ export function PremiumPaywallBody({
             Privacy
           </Text>
         </TouchableOpacity>
+        <Text variant="caption" color="secondary">
+          {' · '}
+        </Text>
+        <TouchableOpacity
+          onPress={() => openManageSubscription(source)}
+          activeOpacity={0.7}
+          accessibilityRole="button"
+          accessibilityLabel="Manage or cancel subscription"
+        >
+          <Text variant="caption" color="secondary" style={styles.legalLink}>
+            Manage subscription
+          </Text>
+        </TouchableOpacity>
       </View>
 
       <StudentVerifyModal
         visible={studentModalOpen}
         onClose={() => setStudentModalOpen(false)}
-        verify={email => {
-          const result = verify(email);
+        verify={(email, confirmedMinimumAge) => {
+          const result = verify(email, confirmedMinimumAge);
           if (!result.ok) {
-            void logAnalyticsEvent('student_verify_failed', { source });
+            void logAnalyticsEvent('student_verify_failed', {
+              source,
+              reason: result.reason,
+            });
           }
           return result;
         }}
@@ -732,6 +762,12 @@ const styles = StyleSheet.create({
     marginTop: 2,
     fontSize: 11,
     lineHeight: 14,
+  },
+  renewalTerms: {
+    textAlign: 'center',
+    lineHeight: 18,
+    marginBottom: Spacing[2],
+    paddingHorizontal: Spacing[2],
   },
   secondaryPlanHit: {
     paddingVertical: Spacing[2],

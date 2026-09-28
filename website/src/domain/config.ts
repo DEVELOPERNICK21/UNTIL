@@ -21,6 +21,17 @@ export const SITE_CONFIG = {
   tagline: 'Countdown & time left. Day, month, year, life.',
   /** Contact email for privacy/legal inquiries (required for store listings) */
   contactEmail: 'support@until-app.com',
+  /**
+   * DMCA designated agent. Must match the registration at
+   * https://www.copyright.gov/dmca-directory/ exactly. Fields left null are hidden on /copyright.
+   */
+  copyrightAgent: {
+    name: null as string | null,
+    postalAddress: null as string | null,
+    phone: null as string | null,
+    email: 'support@until-app.com',
+    registrationNumber: null as string | null,
+  },
   /** Placeholder; replace with real store URLs when published */
   playStoreUrl: 'https://play.google.com/store/apps/details?id=app.until.time',
   appStoreUrl: 'https://apps.apple.com/app/until/id000000000',
@@ -44,4 +55,5 @@ export const ROUTES = {
 
   terms: '/terms',
   privacy: '/privacy',
+  copyright: '/copyright',
 } as const;

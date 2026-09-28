@@ -3,7 +3,8 @@
  * Verifies Google Play purchase tokens when service account is configured.
  *
  * Env:
- * - UNTIL_VERIFY_API_SECRET — Bearer token the app must send
+ * - UNTIL_VERIFY_API_SECRET — only for server-to-server callers. The mobile app sends no
+ *   secret (it cannot keep one), so leave unset if the app calls this route.
  * - GOOGLE_PLAY_PACKAGE_NAME — default app.until.time
  * - GOOGLE_PLAY_SERVICE_ACCOUNT_JSON — full JSON key (Vercel env, not committed)
  */

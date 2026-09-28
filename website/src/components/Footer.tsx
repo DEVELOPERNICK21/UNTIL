@@ -88,6 +88,19 @@ export function Footer() {
             >
               {footer.links.privacy}
             </Link>
+            <Link
+              href={ROUTES.copyright}
+              style={{
+                color: 'var(--text-secondary)',
+                fontSize: '0.9rem',
+                padding: '0.65rem 0.75rem',
+                minHeight: 44,
+                display: 'inline-flex',
+                alignItems: 'center',
+              }}
+            >
+              {footer.links.copyright}
+            </Link>
             <a
               href={`mailto:${SITE_CONFIG.contactEmail}`}
               style={{

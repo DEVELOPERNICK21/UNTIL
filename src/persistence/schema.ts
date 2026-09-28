@@ -118,6 +118,12 @@ export const STORAGE_KEYS = {
   // Purchase analytics (pending paywall context for async listener)
   PENDING_PURCHASE_CONTEXT: 'billing.pendingPurchaseContext',
 
+  // Privacy choices (owner: services/analyticsConsent.ts)
+  PRIVACY_ANALYTICS_CONSENT: 'privacy.analyticsConsent',
+  PRIVACY_SESSION_RECORDING_CONSENT: 'privacy.sessionRecordingConsent',
+  /** Set once a birth date under 13 is seen; never cleared by the app. */
+  PRIVACY_UNDER_MINIMUM_AGE: 'privacy.underMinimumAge',
+
   // Countdown completion + share prompt
   COUNTDOWN_COMPLETED_FIRED: 'engagement.countdownCompletedFired',
   SHARE_PROMPT_PENDING: 'engagement.sharePromptPending',

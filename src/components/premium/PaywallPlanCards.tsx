@@ -12,6 +12,7 @@ import {
   Weight,
   getFontFamilyForWeight,
 } from '../../theme';
+import type { RenewalInterval } from '../../config/monetization';
 
 export type PaywallPlanOption = {
   productId: string;
@@ -20,6 +21,7 @@ export type PaywallPlanOption = {
   price: string;
   /** e.g. "/year" or empty for one-time */
   periodLabel?: string;
+  renewalInterval: RenewalInterval;
   /** Strikethrough anchor (e.g. monthly × 12) */
   comparePrice?: string;
   badge?: string;

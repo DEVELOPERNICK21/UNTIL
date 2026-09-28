@@ -1,5 +1,6 @@
 import { CompleteAccountSignInUseCase } from '../src/domain/useCases/CompleteAccountSignInUseCase';
 import { SignInWithGoogleUseCase } from '../src/domain/useCases/SignInWithGoogleUseCase';
+import { AssertAccountAgeGateUseCase } from '../src/domain/useCases/AssertAccountAgeGateUseCase';
 import type { BindEntitlementToAccountUseCase } from '../src/domain/useCases/BindEntitlementToAccountUseCase';
 import type { RegisterDeviceUseCase } from '../src/domain/useCases/RegisterDeviceUseCase';
 import type { SyncAccountProfileUseCase } from '../src/domain/useCases/SyncAccountProfileUseCase';
@@ -76,12 +77,19 @@ function makeUseCase(
     registerDevice,
     bindEntitlement,
     identifyPurchasesUser as never,
+    { upsertProfile: async () => {} },
     undefined,
     onDeviceAccessChanged
   );
+  const ageGate = new AssertAccountAgeGateUseCase(
+    { getUserProfile: () => ({ birthDate: '1990-01-01', deathAge: 80 }) },
+    { isLockedOut: () => false, lockOut: () => {} }
+  );
 
-  return new SignInWithGoogleUseCase(authService, complete);
+  return new SignInWithGoogleUseCase(authService, complete, ageGate);
 }
+
+const ADULT = { confirmedMinimumAge: true };
 
 describe('SignInWithGoogleUseCase device policy', () => {
   it('revokes device premium when the account is at the cap', async () => {
@@ -95,7 +103,7 @@ describe('SignInWithGoogleUseCase device policy', () => {
       }
     );
 
-    const result = await useCase.execute();
+    const result = await useCase.execute(ADULT);
 
     expect(state.devicePremiumAllowed).toBe(false);
     expect(result.deviceLimitReached).toBe(true);
@@ -113,7 +121,7 @@ describe('SignInWithGoogleUseCase device policy', () => {
       }
     );
 
-    const result = await useCase.execute();
+    const result = await useCase.execute(ADULT);
 
     expect(state.devicePremiumAllowed).toBe(true);
     expect(result.deviceRegistered).toBe(false);
@@ -128,7 +136,7 @@ describe('SignInWithGoogleUseCase device policy', () => {
       repo
     );
 
-    await useCase.execute();
+    await useCase.execute(ADULT);
 
     expect(state.devicePremiumAllowed).toBe(false);
   });
@@ -140,7 +148,7 @@ describe('SignInWithGoogleUseCase device policy', () => {
       repo
     );
 
-    const result = await useCase.execute();
+    const result = await useCase.execute(ADULT);
 
     expect(state.devicePremiumAllowed).toBe(true);
     expect(result.deviceRegistered).toBe(true);

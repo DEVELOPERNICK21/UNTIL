@@ -32,6 +32,9 @@ export interface CloudUserProfile {
   deathAge: number | null;
   theme: string | null;
   updatedAt: number;
+  /** Firestore rules refuse device/entitlement writes until this is true. */
+  minimumAgeConfirmed?: boolean;
+  minimumAgeConfirmedAt?: number;
 }
 
 /**

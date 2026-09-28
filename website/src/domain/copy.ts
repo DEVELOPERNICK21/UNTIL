@@ -219,6 +219,7 @@ export const LANDING_COPY = {
     links: {
       terms: 'Terms of Service',
       privacy: 'Privacy Policy',
+      copyright: 'Copyright',
       contact: 'Contact',
     },
     community: {

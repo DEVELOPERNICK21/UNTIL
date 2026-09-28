@@ -1,11 +1,57 @@
 rules_version = '2';
 
 // Owner-only: a signed-in user may only read/write their own subtree.
+// COPPA: no profile, device or entitlement data is stored unless the user has
+// confirmed they are 13+ and any stored birth date is at least 13 years ago.
+// Keep MINIMUM_AGE in sync with src/core/legal/ageGate.ts.
 // Deploy with: firebase deploy --only firestore:rules
 service cloud.firestore {
   match /databases/{database}/documents {
-    match /users/{uid}/{document=**} {
-      allow read, write: if request.auth != null && request.auth.uid == uid;
+
+    function isOwner(uid) {
+      return request.auth != null && request.auth.uid == uid;
+    }
+
+    // 13th birthday of a YYYY-MM-DD string; Feb 29 births roll to Mar 1.
+    function thirteenthBirthday(birthDate) {
+      let parts = birthDate.split('-');
+      let year = int(parts[0]) + 13;
+      let month = int(parts[1]);
+      let day = int(parts[2]);
+      return (month == 2 && day == 29)
+        ? timestamp.date(year, 3, 1)
+        : timestamp.date(year, month, day);
+    }
+
+    function isOldEnough(data) {
+      return !('birthDate' in data)
+        || data.birthDate == null
+        || (data.birthDate is string
+            && data.birthDate.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
+            && thirteenthBirthday(data.birthDate) <= request.time);
+    }
+
+    function hasAgeConfirmation(data) {
+      return data.get('minimumAgeConfirmed', false) == true;
+    }
+
+    function profileAllowsWrites(uid) {
+      let path = /databases/$(database)/documents/users/$(uid);
+      return exists(path) && hasAgeConfirmation(get(path).data);
+    }
+
+    match /users/{uid} {
+      allow read, delete: if isOwner(uid);
+      allow create, update: if isOwner(uid)
+        && hasAgeConfirmation(request.resource.data)
+        && isOldEnough(request.resource.data);
+
+      // Subcollections only (devices, entitlement). Reads and deletes stay open
+      // to the owner so account deletion always works.
+      match /{collection}/{rest=**} {
+        allow read, delete: if isOwner(uid);
+        allow create, update: if isOwner(uid) && profileAllowsWrites(uid);
+      }
     }
   }
 }

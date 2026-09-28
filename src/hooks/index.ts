@@ -44,3 +44,6 @@ export { usePresenceStreak } from './usePresenceStreak';
 export { useLifeWeeks } from './useLifeWeeks';
 export { useAuthSession } from './useAuthSession';
 export { useAccountActions } from './useAccountActions';
+export { useAnalyticsConsent } from './useAnalyticsConsent';
+export { useManageSubscription } from './useManageSubscription';
+export { MINIMUM_ACCOUNT_AGE_YEARS } from '../core/legal/ageGate';

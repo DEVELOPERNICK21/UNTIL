@@ -8,6 +8,7 @@
  */
 
 import type { IAuthSessionRepository } from '../repository/IAuthSessionRepository';
+import type { IAccountCloudStore } from '../ports/IAccountCloudStore';
 import type { AuthUser, RegisterDeviceResult, SignInResult } from '../../types';
 import type { RegisterDeviceUseCase } from './RegisterDeviceUseCase';
 import type { SyncAccountProfileUseCase } from './SyncAccountProfileUseCase';
@@ -25,6 +26,7 @@ export class CompleteAccountSignInUseCase {
     private readonly registerDevice: RegisterDeviceUseCase,
     private readonly bindEntitlement: BindEntitlementToAccountUseCase,
     private readonly identifyPurchasesUser: IdentifyPurchasesUserUseCase,
+    private readonly cloud: Pick<IAccountCloudStore, 'upsertProfile'>,
     private readonly onError?: (error: unknown, context: string) => void,
     private readonly onDeviceAccessChanged?: () => void
   ) {}
@@ -56,6 +58,16 @@ export class CompleteAccountSignInUseCase {
   }
 
   private async finishSync(user: AuthUser): Promise<SignInResult> {
+    // Callers only reach here after AssertAccountAgeGateUseCase passed.
+    try {
+      await this.cloud.upsertProfile(user.uid, {
+        minimumAgeConfirmed: true,
+        minimumAgeConfirmedAt: Date.now(),
+      });
+    } catch (e) {
+      this.onError?.(e, 'CompleteAccountSignInUseCase.recordAgeConfirmation');
+    }
+
     try {
       await this.syncAccountProfile.execute(user.uid);
     } catch (e) {

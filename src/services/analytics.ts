@@ -3,7 +3,16 @@
  * Safe no-op when unavailable (local dev without keys).
  */
 
-import { capturePostHogEvent, getPostHogClient } from './posthogClient';
+import {
+  applyPostHogConsent,
+  capturePostHogEvent,
+  getPostHogClient,
+} from './posthogClient';
+import {
+  isAnalyticsAllowed,
+  isCrashReportingAllowed,
+  subscribeAnalyticsConsent,
+} from './analyticsConsent';
 
 export type AnalyticsPaywallSource =
   | 'premium_screen'
@@ -15,6 +24,7 @@ export type AnalyticsPaywallSource =
 
 export type AnalyticsEventName =
   | 'app_open'
+  | 'manage_subscription_opened'
   | 'onboarding_step'
   | 'onboarding_step_view'
   | 'onboarding_answer'
@@ -127,6 +137,7 @@ function getAnalyticsModule(): {
     name: string,
     params?: Record<string, string | number>,
   ) => Promise<void>;
+  setCollectionEnabled: (enabled: boolean) => Promise<void>;
 } | null {
   try {
     const { getApp, getApps } = require('@react-native-firebase/app') as {
@@ -134,7 +145,7 @@ function getAnalyticsModule(): {
       getApps: () => unknown[];
     };
     if (getApps().length === 0) return null;
-    const { getAnalytics, logEvent } =
+    const { getAnalytics, logEvent, setAnalyticsCollectionEnabled } =
       require('@react-native-firebase/analytics') as {
         getAnalytics: (app: unknown) => unknown;
         logEvent: (
@@ -142,10 +153,16 @@ function getAnalyticsModule(): {
           name: string,
           params?: Record<string, string | number>,
         ) => Promise<void>;
+        setAnalyticsCollectionEnabled: (
+          analytics: unknown,
+          enabled: boolean,
+        ) => Promise<void>;
       };
     const instance = getAnalytics(getApp());
     return {
       logEvent: (name, params) => logEvent(instance, name, params),
+      setCollectionEnabled: enabled =>
+        setAnalyticsCollectionEnabled(instance, enabled),
     };
   } catch {
     return null;
@@ -231,6 +248,7 @@ export async function logAnalyticsEvent(
   if (__DEV__) {
     console.log('[analytics]', name, params ?? payload);
   }
+  if (!isAnalyticsAllowed()) return;
   sendToPostHog(name, params);
   await sendToFirebase(name, payload);
 }
@@ -300,6 +318,23 @@ export function setCrashAttributes(
 export function initCrashlyticsCollection(forceEnabled = false): void {
   const crashlytics = getCrashlyticsModule();
   if (!crashlytics) return;
-  const enabled = forceEnabled || !__DEV__;
+  const enabled = (forceEnabled || !__DEV__) && isCrashReportingAllowed();
   void crashlytics.setCrashlyticsCollectionEnabled(enabled).catch(() => {});
+}
+
+function applyAnalyticsConsent(): void {
+  const allowed = isAnalyticsAllowed();
+  void getAnalyticsModule()?.setCollectionEnabled(allowed).catch(() => {});
+  void applyPostHogConsent(allowed);
+  initCrashlyticsCollection();
+}
+
+let consentUnsubscribe: (() => void) | null = null;
+
+/** Applies stored privacy choices now and whenever they change. Call once at startup. */
+export function initAnalyticsConsent(): void {
+  applyAnalyticsConsent();
+  if (!consentUnsubscribe) {
+    consentUnsubscribe = subscribeAnalyticsConsent(applyAnalyticsConsent);
+  }
 }

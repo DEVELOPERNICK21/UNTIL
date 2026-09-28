@@ -45,10 +45,16 @@ export type PricingPlanCard = {
   priceHint?: string;
   ctaLabel: string;
   ctaVariant: 'primary' | 'secondary';
+  /** Auto-renewal terms shown next to the CTA. Required for paid plans. */
+  renewalTerms?: string;
   includesLabel: string;
   features: readonly string[];
   badge?: string;
 };
+
+function renewalTerms(price: string, interval: 'week' | 'month' | 'year'): string {
+  return `${price} every ${interval}. Renews automatically until you cancel. Cancel anytime in the app (Settings › Manage subscription) or in Google Play › Subscriptions, at least 24 hours before renewal.`;
+}
 
 /** Landing cards: free + weekly · monthly · yearly (lifetime is secondary, not a 5th card). */
 export const PRICING_PLAN_CARDS: readonly PricingPlanCard[] = [
@@ -76,6 +82,7 @@ export const PRICING_PLAN_CARDS: readonly PricingPlanCard[] = [
     priceHint: 'Cancel anytime in your app store',
     ctaLabel: 'Get Weekly',
     ctaVariant: 'secondary',
+    renewalTerms: renewalTerms(formatInr(WEBSITE_PRICING.weeklyInr), 'week'),
     includesLabel: 'Everything in Free, plus:',
     features: [
       'Month & Life widgets',
@@ -92,6 +99,7 @@ export const PRICING_PLAN_CARDS: readonly PricingPlanCard[] = [
     priceHint: 'Cancel anytime in your app store',
     ctaLabel: 'Get Monthly',
     ctaVariant: 'secondary',
+    renewalTerms: renewalTerms(formatInr(WEBSITE_PRICING.monthlyInr), 'month'),
     includesLabel: 'Everything in Free, plus:',
     features: [
       'Month & Life widgets',
@@ -109,6 +117,7 @@ export const PRICING_PLAN_CARDS: readonly PricingPlanCard[] = [
     priceHint: `${PRICING_DISPLAY.yearlyPerDay} · save ${yearlySavePercentVsMonthly}% vs monthly`,
     ctaLabel: 'Get Yearly',
     ctaVariant: 'primary',
+    renewalTerms: renewalTerms(formatInr(WEBSITE_PRICING.yearlyInr), 'year'),
     badge: 'Best value',
     includesLabel: 'Everything in Monthly:',
     features: [

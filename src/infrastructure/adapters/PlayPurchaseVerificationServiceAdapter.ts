@@ -13,8 +13,7 @@ const VERIFY_URL =
   process.env.UNTIL_VERIFY_PURCHASE_URL ??
   'https://developernick1-until.vercel.app/api/verify-purchase';
 
-const API_SECRET = process.env.UNTIL_VERIFY_API_SECRET ?? '';
-
+// No shared secret: anything shipped in the app bundle is public.
 export class PlayPurchaseVerificationServiceAdapter
   implements IPlayPurchaseVerificationService
 {
@@ -26,17 +25,12 @@ export class PlayPurchaseVerificationServiceAdapter
     }
 
     try {
-      const headers: Record<string, string> = {
-        'Content-Type': 'application/json',
-        Accept: 'application/json',
-      };
-      if (API_SECRET) {
-        headers.Authorization = `Bearer ${API_SECRET}`;
-      }
-
       const res = await fetch(VERIFY_URL, {
         method: 'POST',
-        headers,
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+        },
         body: JSON.stringify(request),
       });
 

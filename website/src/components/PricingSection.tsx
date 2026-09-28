@@ -68,6 +68,7 @@ export function PricingSection() {
             priceHint={card.priceHint}
             ctaLabel={card.ctaLabel}
             ctaVariant={card.ctaVariant}
+            renewalTerms={card.renewalTerms}
             includesLabel={card.includesLabel}
             features={card.features}
             badge={card.badge}
@@ -107,6 +108,7 @@ function PricingCard(props: {
   priceHint?: string;
   ctaLabel: string;
   ctaVariant: 'primary' | 'secondary';
+  renewalTerms?: string;
   includesLabel: string;
   features: readonly string[];
   badge?: string;
@@ -120,6 +122,7 @@ function PricingCard(props: {
     priceHint,
     ctaLabel,
     ctaVariant,
+    renewalTerms,
     includesLabel,
     features,
     badge,
@@ -158,6 +161,11 @@ function PricingCard(props: {
       >
         {ctaLabel}
       </a>
+      {renewalTerms ? (
+        <p className="landing-plan-hint" style={{ marginTop: 8 }}>
+          {renewalTerms}
+        </p>
+      ) : null}
 
       <div className="landing-plan-includes">
         <p className="landing-plan-includes-label">{includesLabel}</p>

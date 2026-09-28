@@ -26,10 +26,14 @@ import {
 } from './hooks';
 import { TrialEndingModal } from './components/premium/TrialEndingModal';
 import { AppEngagementLayer } from './components/engagement/AppEngagementLayer';
-import { logAppOpen, initCrashlyticsCollection } from './services/analytics';
+import { logAppOpen, initAnalyticsConsent } from './services/analytics';
 import { CrashErrorBoundary } from './components/CrashErrorBoundary';
 import { initPostHogClient } from './services/posthogClient';
-import { POSTHOG_HOST, POSTHOG_ENABLED } from './config/analytics';
+import {
+  POSTHOG_AUTOCAPTURE,
+  POSTHOG_HOST,
+  POSTHOG_ENABLED,
+} from './config/analytics';
 import {
   recordRetentionAppOpen,
   scheduleRetentionNotifications,
@@ -153,7 +157,7 @@ function App() {
     };
 
     void startPurchases();
-    initCrashlyticsCollection();
+    initAnalyticsConsent();
     verifySubscriptionUseCase.execute().then(() => {
       syncPremiumStatus();
     });
@@ -269,10 +273,7 @@ function App() {
         {posthogClient && POSTHOG_ENABLED ? (
           <PostHogProvider
             client={posthogClient}
-            autocapture={{
-              captureScreens: false,
-              captureTouches: false,
-            }}
+            autocapture={POSTHOG_AUTOCAPTURE}
             options={{ host: POSTHOG_HOST }}
           >
             {appTree}

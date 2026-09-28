@@ -16,8 +16,10 @@ export function useStudentVerification() {
     []
   );
 
-  const verify = useCallback((email: string) => {
-    const result = verifyStudentEmailUseCase.verify(email);
+  const verify = useCallback((email: string, confirmedMinimumAge: boolean) => {
+    const result = verifyStudentEmailUseCase.verify(email, {
+      confirmedMinimumAge,
+    });
     if (result.ok) {
       setVerifiedEmail(verifyStudentEmailUseCase.getVerifiedEmail());
     }

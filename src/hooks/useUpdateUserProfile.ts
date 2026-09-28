@@ -4,13 +4,14 @@
  */
 
 import { useCallback } from 'react';
-import { updateUserProfileUseCase } from '../di';
+import { assertAccountAgeGateUseCase, updateUserProfileUseCase } from '../di';
 import { syncWidgetCache } from '../infrastructure/WidgetSync';
 
 export function useUpdateUserProfile() {
   const updateUserProfile = useCallback(
     (birthDate: string, deathAge: number) => {
       updateUserProfileUseCase.execute(birthDate, deathAge);
+      assertAccountAgeGateUseCase.observeBirthDate(birthDate);
       syncWidgetCache();
     },
     []

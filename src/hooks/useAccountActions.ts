@@ -57,25 +57,43 @@ export function useAccountActions() {
     [],
   );
 
-  const signInWithGoogle =
-    useCallback(async (): Promise<SignInResult | null> => {
+  const signInWithGoogle = useCallback(
+    async (confirmedMinimumAge: boolean): Promise<SignInResult | null> => {
       try {
-        return await runAction(() => signInWithGoogleUseCase.execute());
+        return await runAction(() =>
+          signInWithGoogleUseCase.execute({ confirmedMinimumAge }),
+        );
       } catch (e) {
         if (isAuthCancelledError(e)) return null;
         throw e;
       }
-    }, [runAction]);
+    },
+    [runAction],
+  );
 
   const signInWithEmail = useCallback(
-    (email: string, password: string): Promise<SignInResult> =>
-      runAction(() => signInWithEmailUseCase.execute(email, password)),
+    (
+      email: string,
+      password: string,
+      confirmedMinimumAge: boolean,
+    ): Promise<SignInResult> =>
+      runAction(() =>
+        signInWithEmailUseCase.execute(email, password, { confirmedMinimumAge }),
+      ),
     [runAction],
   );
 
   const createAccountWithEmail = useCallback(
-    (email: string, password: string): Promise<SignInResult> =>
-      runAction(() => createAccountWithEmailUseCase.execute(email, password)),
+    (
+      email: string,
+      password: string,
+      confirmedMinimumAge: boolean,
+    ): Promise<SignInResult> =>
+      runAction(() =>
+        createAccountWithEmailUseCase.execute(email, password, {
+          confirmedMinimumAge,
+        }),
+      ),
     [runAction],
   );
 

@@ -12,11 +12,7 @@ const TRIAL_PREVIEW_URL =
   process.env.UNTIL_TRIAL_PREVIEW_URL ??
   'https://developernick1-until.vercel.app/api/trial-preview';
 
-const API_SECRET =
-  process.env.UNTIL_TRIAL_API_SECRET?.trim() ||
-  process.env.UNTIL_VERIFY_API_SECRET?.trim() ||
-  '';
-
+// No shared secret: anything shipped in the app bundle is public.
 export class TrialPreviewApiAdapter implements ITrialPreviewService {
   async sync(deviceId: string): Promise<TrialPreviewSyncResult> {
     const id = deviceId?.trim();
@@ -25,17 +21,12 @@ export class TrialPreviewApiAdapter implements ITrialPreviewService {
     }
 
     try {
-      const headers: Record<string, string> = {
-        'Content-Type': 'application/json',
-        Accept: 'application/json',
-      };
-      if (API_SECRET) {
-        headers.Authorization = `Bearer ${API_SECRET}`;
-      }
-
       const res = await fetch(TRIAL_PREVIEW_URL, {
         method: 'POST',
-        headers,
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+        },
         body: JSON.stringify({ deviceId: id }),
       });
 

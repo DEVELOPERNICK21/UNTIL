@@ -7,11 +7,16 @@ import type { ILicenseVerificationService } from '../../domain/ports/ILicenseVer
 import type { ActivationResult, VerificationResult } from '../../types/subscription';
 import { recordCrashError } from '../../services/analytics';
 
-// Configure your backend URL. Use env var in production.
-const API_BASE_URL = process.env.UNTIL_LICENSE_API ?? 'https://your-api.example.com/until';
+// Unset means no license backend: never send license keys or device IDs anywhere.
+const API_BASE_URL = process.env.UNTIL_LICENSE_API?.trim() || null;
+
+const NOT_CONFIGURED = 'License activation is not available';
 
 export class LicenseVerificationServiceAdapter implements ILicenseVerificationService {
   async activate(licenseKey: string, deviceId: string): Promise<ActivationResult> {
+    if (!API_BASE_URL) {
+      return { success: false, code: 'network_error', message: NOT_CONFIGURED };
+    }
     try {
       const body = { licenseKey: licenseKey.trim(), deviceId };
       const res = await fetch(`${API_BASE_URL}/activate`, {
@@ -47,6 +52,9 @@ export class LicenseVerificationServiceAdapter implements ILicenseVerificationSe
   }
 
   async verify(licenseKey: string, deviceId: string): Promise<VerificationResult> {
+    if (!API_BASE_URL) {
+      return { valid: false, code: 'network_error', message: NOT_CONFIGURED };
+    }
     try {
       const params = new URLSearchParams({ licenseKey, deviceId });
       const res = await fetch(`${API_BASE_URL}/verify?${params}`, { method: 'GET' });

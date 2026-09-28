@@ -15,8 +15,19 @@ import {
   Platform,
   TextInput,
 } from 'react-native';
-import { Text, ScreenGradient, GlassCard } from '../../ui';
-import { useAuthSession, useAccountActions } from '../../hooks';
+import {
+  Text,
+  ScreenGradient,
+  GlassCard,
+  AgeConfirmationCheck,
+  LegalAgreementLine,
+} from '../../ui';
+import { LEGAL_URLS } from '../../config/monetization';
+import {
+  MINIMUM_ACCOUNT_AGE_YEARS,
+  useAuthSession,
+  useAccountActions,
+} from '../../hooks';
 import { isAuthRequiresPasswordError } from '../../domain/errors/authErrors';
 import {
   useTheme,
@@ -81,6 +92,7 @@ export function AccountScreen() {
   const [authEmail, setAuthEmail] = useState('');
   const [authPassword, setAuthPassword] = useState('');
   const [emailMode, setEmailMode] = useState<EmailAuthMode>('sign_in');
+  const [ageConfirmed, setAgeConfirmed] = useState(false);
   const [passwordForDelete, setPasswordForDelete] = useState('');
   const [passwordForDeleteVisible, setPasswordForDeleteVisible] =
     useState(false);
@@ -122,7 +134,7 @@ export function AccountScreen() {
   const handleGoogleSignIn = async () => {
     void logAnalyticsEvent('account_screen_google_tapped');
     try {
-      const result = await signInWithGoogle();
+      const result = await signInWithGoogle(ageConfirmed);
       if (!result) {
         void logAnalyticsEvent('account_screen_signin_cancelled');
         return;
@@ -142,9 +154,9 @@ export function AccountScreen() {
     void logAnalyticsEvent('account_screen_email_tapped', { mode: emailMode });
     try {
       if (emailMode === 'sign_in') {
-        await signInWithEmail(authEmail, authPassword);
+        await signInWithEmail(authEmail, authPassword, ageConfirmed);
       } else {
-        await createAccountWithEmail(authEmail, authPassword);
+        await createAccountWithEmail(authEmail, authPassword, ageConfirmed);
       }
       void logAnalyticsEvent('account_screen_signin_succeeded', {
         provider: 'password',
@@ -318,6 +330,16 @@ export function AccountScreen() {
               </View>
 
               <GlassCard style={styles.introCard}>
+                <AgeConfirmationCheck
+                  checked={ageConfirmed}
+                  onChange={setAgeConfirmed}
+                  minimumAge={MINIMUM_ACCOUNT_AGE_YEARS}
+                  disabled={busy}
+                />
+                <LegalAgreementLine
+                  termsUrl={LEGAL_URLS.terms}
+                  privacyUrl={LEGAL_URLS.privacy}
+                />
                 {/*
                   Google + email/password. App Store guideline 4.8 still needs
                   Sign in with Apple before iOS submission if Google stays.
