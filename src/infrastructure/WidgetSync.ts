@@ -4,13 +4,11 @@
  */
 
 import { NativeModules, Platform } from 'react-native';
-import {
-  syncWidgetUseCase,
-  getCustomCountersUseCase,
-  getCountdownsUseCase,
-  getDailyTaskStatsUseCase,
-  getAccessStateUseCase,
-} from '../di';
+import type { SyncWidgetUseCase } from '../domain/useCases/SyncWidgetUseCase';
+import type { GetCustomCountersUseCase } from '../domain/useCases/GetCustomCountersUseCase';
+import type { GetCountdownsUseCase } from '../domain/useCases/GetCountdownsUseCase';
+import type { GetDailyTaskStatsUseCase } from '../domain/useCases/GetDailyTaskStatsUseCase';
+import type { GetAccessStateUseCase } from '../domain/useCases/GetAccessStateUseCase';
 import { STORAGE_KEYS } from '../persistence/schema';
 import {
   getString,
@@ -22,6 +20,28 @@ import { hasPremiumBundle } from '../domain/accessControl';
 import { getWidgetAccentColor } from '../config/widgetAccents';
 import { todayIso } from '../core/time/clock';
 
+/** Use cases WidgetSync reads from. Injected by di.ts so this file never imports di. */
+export type WidgetSyncSources = {
+  syncWidgetUseCase: SyncWidgetUseCase;
+  getCustomCountersUseCase: GetCustomCountersUseCase;
+  getCountdownsUseCase: GetCountdownsUseCase;
+  getDailyTaskStatsUseCase: GetDailyTaskStatsUseCase;
+  getAccessStateUseCase: GetAccessStateUseCase;
+};
+
+let sources: WidgetSyncSources | null = null;
+
+export function configureWidgetSync(next: WidgetSyncSources): void {
+  sources = next;
+}
+
+function src(): WidgetSyncSources {
+  if (!sources) {
+    throw new Error('WidgetSync used before di.ts called configureWidgetSync');
+  }
+  return sources;
+}
+
 const DEFAULT_ACCENT_HEX = getWidgetAccentColor('ember');
 
 function readAccentColorForNative(): string {
@@ -32,7 +52,7 @@ function readAccentColorForNative(): string {
 
 export function syncWidgetCache(): void {
   const cache = {
-    ...syncWidgetUseCase.execute(),
+    ...src().syncWidgetUseCase.execute(),
     accentColor: readAccentColorForNative(),
   };
   const json = JSON.stringify(cache);
@@ -53,7 +73,7 @@ export function syncWidgetCache(): void {
  * (devicePremiumAllowed = false) does not keep premium widgets alive.
  */
 function readEffectivePremiumForNativeBridge(): boolean {
-  return hasPremiumBundle(getAccessStateUseCase.execute());
+  return hasPremiumBundle(src().getAccessStateUseCase.execute());
 }
 
 export function syncPremiumStatus(): void {
@@ -69,7 +89,7 @@ export function syncPremiumStatus(): void {
 
 /** Push custom counters to native so counter widgets can reload with latest data. */
 export function syncCustomCounters(): void {
-  const counters = getCustomCountersUseCase.execute();
+  const counters = src().getCustomCountersUseCase.execute();
   const json = JSON.stringify(counters);
   const { WidgetBridge } = NativeModules;
   if (Platform.OS === 'ios') {
@@ -83,7 +103,7 @@ export function syncCustomCounters(): void {
 
 /** Push countdowns to native so countdown widgets can reload. */
 export function syncCountdowns(): void {
-  const countdowns = getCountdownsUseCase.execute();
+  const countdowns = src().getCountdownsUseCase.execute();
   const json = JSON.stringify(countdowns);
   const { WidgetBridge } = NativeModules;
   if (Platform.OS === 'ios') {
@@ -97,7 +117,7 @@ export function syncCountdowns(): void {
 
 /** Push today's task stats to native for the daily tasks widget. */
 export function syncDailyTasksWidget(): void {
-  const payload = getDailyTaskStatsUseCase.getWidgetPayload(todayIso());
+  const payload = src().getDailyTaskStatsUseCase.getWidgetPayload(todayIso());
   const json = JSON.stringify(payload);
   setString(STORAGE_KEYS.DAILY_TASKS_WIDGET, json);
   const { WidgetBridge } = NativeModules;
@@ -184,8 +204,8 @@ export function buildLiveActivityState(
   activeWidget?: LiveActivityWidgetType,
 ): object {
   const widget = activeWidget ?? getLiveActivityWidgetType();
-  const cache = syncWidgetUseCase.execute();
-  const dailyPayload = getDailyTaskStatsUseCase.getWidgetPayload(todayIso());
+  const cache = src().syncWidgetUseCase.execute();
+  const dailyPayload = src().getDailyTaskStatsUseCase.getWidgetPayload(todayIso());
   const hourState = getHourCalculationState();
 
   return {

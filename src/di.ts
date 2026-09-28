@@ -126,17 +126,15 @@ import { PurchasePackageUseCase } from './domain/useCases/PurchasePackageUseCase
 import { IdentifyPurchasesUserUseCase } from './domain/useCases/IdentifyPurchasesUserUseCase';
 import { ResetPurchasesUserUseCase } from './domain/useCases/ResetPurchasesUserUseCase';
 import { PresentRevenueCatPaywallUseCase } from './domain/useCases/PresentRevenueCatPaywallUseCase';
+import { configureWidgetSync, syncPremiumStatus } from './infrastructure/WidgetSync';
 import { logAnalyticsEvent, recordCrashError } from './services/analytics';
 import { getTrialDurationDays } from './services/analyticsUserProperties';
 
 /**
  * Push effective premium to the native widget bridge only. Used when device
  * eligibility changes but the purchase itself did not, so trial reminders stay.
- * Avoids a top-level import of WidgetSync (circular with this file).
  */
 function syncPremiumBridge(): void {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const { syncPremiumStatus } = require('./infrastructure/WidgetSync');
   syncPremiumStatus();
 }
 
@@ -511,3 +509,11 @@ export const removeAccountDeviceUseCase = new RemoveAccountDeviceUseCase(
   bindEntitlementToAccountUseCase,
   syncPremiumBridge
 );
+
+configureWidgetSync({
+  syncWidgetUseCase,
+  getCustomCountersUseCase,
+  getCountdownsUseCase,
+  getDailyTaskStatsUseCase,
+  getAccessStateUseCase,
+});
