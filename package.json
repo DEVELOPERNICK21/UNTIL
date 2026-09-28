@@ -11,6 +11,7 @@
     "ios": "react-native run-ios",
     "ensure-skia-ios-libs": "node scripts/ensure-skia-ios-libs.js",
     "lint": "eslint .",
+    "lint:cycles": "npx --yes madge@8 --circular --extensions ts,tsx --ts-config tsconfig.json src",
     "start": "react-native start",
     "test": "jest"
   },
