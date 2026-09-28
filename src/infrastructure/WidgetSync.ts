@@ -9,6 +9,7 @@ import type { GetCustomCountersUseCase } from '../domain/useCases/GetCustomCount
 import type { GetCountdownsUseCase } from '../domain/useCases/GetCountdownsUseCase';
 import type { GetDailyTaskStatsUseCase } from '../domain/useCases/GetDailyTaskStatsUseCase';
 import type { GetAccessStateUseCase } from '../domain/useCases/GetAccessStateUseCase';
+import type { WidgetAccent } from '../domain/widget/WidgetConfig';
 import { STORAGE_KEYS } from '../persistence/schema';
 import {
   getString,
@@ -48,6 +49,15 @@ function readAccentColorForNative(): string {
   const stored = getString(STORAGE_KEYS.WIDGET_ACCENT_COLOR);
   if (stored && /^#[0-9A-Fa-f]{6}$/.test(stored)) return stored;
   return DEFAULT_ACCENT_HEX;
+}
+
+/** Store the accent native widgets render with (SSOT for WIDGET_ACCENT_COLOR). */
+export function publishWidgetAccent(
+  accent: WidgetAccent,
+  options: { sync: boolean },
+): void {
+  setString(STORAGE_KEYS.WIDGET_ACCENT_COLOR, getWidgetAccentColor(accent));
+  if (options.sync) syncWidgetCache();
 }
 
 export function syncWidgetCache(): void {

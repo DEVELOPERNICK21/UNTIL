@@ -1,10 +1,6 @@
 import { create } from 'zustand';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { DEFAULT_WIDGET_CONFIG, type WidgetConfig } from '../domain/widget/WidgetConfig';
-import { STORAGE_KEYS } from '../persistence/schema';
-import { getWidgetAccentColor } from '../config/widgetAccents';
-import { setString } from '../persistence/mmkv';
-import { syncWidgetCache } from '../infrastructure/WidgetSync';
+import type { IWidgetConfigRepository } from '../domain/repository/IWidgetConfigRepository';
 
 interface WidgetConfigState {
   config: WidgetConfig;
@@ -19,99 +15,35 @@ interface WidgetConfigState {
   reset: () => void;
 }
 
-const STORAGE_KEY = STORAGE_KEYS.WIDGET_CONFIG ?? 'widget.config';
-
-async function persistConfig(config: WidgetConfig) {
-  try {
-    await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(config));
-  } catch {
-    // ignore persistence errors
-  }
-  const accent = config.accent ?? DEFAULT_WIDGET_CONFIG.accent;
-  setString(STORAGE_KEYS.WIDGET_ACCENT_COLOR, getWidgetAccentColor(accent));
-  syncWidgetCache();
-}
-
-export const useWidgetConfigStore = create<WidgetConfigState>((set, get) => ({
-  config: DEFAULT_WIDGET_CONFIG,
-
-  hydrate: async () => {
-    try {
-      const stored = await AsyncStorage.getItem(STORAGE_KEY);
-      if (stored) {
-        const parsed = JSON.parse(stored) as Partial<WidgetConfig>;
-        const merged: WidgetConfig = {
-          ...DEFAULT_WIDGET_CONFIG,
-          ...parsed,
-          accent: parsed.accent ?? DEFAULT_WIDGET_CONFIG.accent,
-        };
-        set({ config: merged });
-        setString(
-          STORAGE_KEYS.WIDGET_ACCENT_COLOR,
-          getWidgetAccentColor(merged.accent)
-        );
-        syncWidgetCache();
-        return;
-      }
-    } catch {
-      // ignore and fall back to default
-    }
-    set({ config: DEFAULT_WIDGET_CONFIG });
-    setString(
-      STORAGE_KEYS.WIDGET_ACCENT_COLOR,
-      getWidgetAccentColor(DEFAULT_WIDGET_CONFIG.accent)
-    );
-  },
-
-  setType: type => {
-    const next = { ...get().config, type };
-    set({ config: next });
-    void persistConfig(next);
-  },
-
-  setTheme: theme => {
-    const next = { ...get().config, theme };
-    set({ config: next });
-    void persistConfig(next);
-  },
-
-  setLayout: layout => {
-    const next = { ...get().config, layout };
-    set({ config: next });
-    void persistConfig(next);
-  },
-
-  setFont: font => {
-    const next = { ...get().config, font };
-    set({ config: next });
-    void persistConfig(next);
-  },
-
-  setAccent: accent => {
-    const next = { ...get().config, accent };
-    set({ config: next });
-    void persistConfig(next);
-  },
-
-  setShowMessage: show => {
-    const next = {
-      ...get().config,
-      showMessage: show,
-      message: show ? get().config.message : '',
+/** UI cache over IWidgetConfigRepository. Created in di.ts. */
+export function createWidgetConfigStore(repository: IWidgetConfigRepository) {
+  return create<WidgetConfigState>((set, get) => {
+    const update = (patch: Partial<WidgetConfig>) => {
+      const next = { ...get().config, ...patch };
+      set({ config: next });
+      void repository.save(next);
     };
-    set({ config: next });
-    void persistConfig(next);
-  },
 
-  setMessage: message => {
-    const next = { ...get().config, message };
-    set({ config: next });
-    void persistConfig(next);
-  },
+    return {
+      config: DEFAULT_WIDGET_CONFIG,
 
-  reset: () => {
-    set({ config: DEFAULT_WIDGET_CONFIG });
-    void persistConfig(DEFAULT_WIDGET_CONFIG);
-  },
-}));
+      hydrate: async () => {
+        set({ config: await repository.load() });
+      },
 
+      setType: type => update({ type }),
+      setTheme: theme => update({ theme }),
+      setLayout: layout => update({ layout }),
+      setFont: font => update({ font }),
+      setAccent: accent => update({ accent }),
+      setShowMessage: show =>
+        update({ showMessage: show, message: show ? get().config.message : '' }),
+      setMessage: message => update({ message }),
+
+      reset: () => {
+        set({ config: DEFAULT_WIDGET_CONFIG });
+        void repository.save(DEFAULT_WIDGET_CONFIG);
+      },
+    };
+  });
+}

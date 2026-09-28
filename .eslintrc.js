@@ -73,7 +73,10 @@ module.exports = {
       [STORAGE, INFRA, REPOSITORIES, USE_CASE_CLASSES, DI, CORE, HOOKS],
     ),
     layer(['src/hooks/**'], [STORAGE, REPOSITORIES, USE_CASE_CLASSES]),
-    layer(['src/services/**', 'src/stores/**'], [STORAGE, DI]),
+    // Services may own private storage keys; __tests__/storageKeyOwnership.test.ts
+    // guarantees no key is shared with another module.
+    layer(['src/services/**'], [DI]),
+    layer(['src/stores/**'], [STORAGE, DI]),
     layer(['src/infrastructure/**'], [DI]),
     layer(['src/core/**', 'src/domain/**'], [OUTER_LAYERS]),
     layer(

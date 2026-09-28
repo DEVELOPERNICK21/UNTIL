@@ -22,6 +22,23 @@ const MIN_RESCHEDULE_INTERVAL_MS = 6 * 60 * 60 * 1000;
 
 let scheduleInFlight = false;
 
+/** Profile data owned by other repositories. Injected by di.ts. */
+export type RetentionProfileSource = {
+  getBirthDate: () => string | null;
+  getTrialStartDate: () => number | null;
+};
+
+let profileSource: RetentionProfileSource = {
+  getBirthDate: () => null,
+  getTrialStartDate: () => null,
+};
+
+export function configureRetentionNotifications(
+  source: RetentionProfileSource
+): void {
+  profileSource = source;
+}
+
 function parseIds(raw: string | undefined): string[] {
   if (!raw) return [];
   try {
@@ -52,7 +69,7 @@ function parseBirthDate(raw: string): Date | null {
 }
 
 function getLifeWeeksLived(now: Date = new Date()): number | undefined {
-  const birthDateRaw = getString(STORAGE_KEYS.USER_BIRTH_DATE);
+  const birthDateRaw = profileSource.getBirthDate();
   if (!birthDateRaw) {
     return undefined;
   }
@@ -66,7 +83,7 @@ function getLifeWeeksLived(now: Date = new Date()): number | undefined {
 }
 
 function isPreviewReminderDate(date: Date): boolean {
-  const trialStart = getNumber(STORAGE_KEYS.TRIAL_START_DATE);
+  const trialStart = profileSource.getTrialStartDate();
   if (trialStart == null || trialStart <= 0) return false;
   if (date.getTime() > trialStart + TRIAL_DURATION_MS) return false;
   const day = getTrialDayIndex(trialStart, date.getTime());

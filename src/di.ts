@@ -97,6 +97,8 @@ import { RemoveAccountDeviceUseCase } from './domain/useCases/RemoveAccountDevic
 import { BindEntitlementToAccountUseCase } from './domain/useCases/BindEntitlementToAccountUseCase';
 import { ObserveAuthSessionUseCase } from './domain/useCases/ObserveAuthSessionUseCase';
 import { useThemeStore } from './stores/themeStore';
+import { createWidgetConfigStore } from './stores/widgetConfigStore';
+import { AsyncStorageWidgetConfigRepository } from './infrastructure/repositories/AsyncStorageWidgetConfigRepository';
 import { LicenseVerificationServiceAdapter } from './infrastructure/adapters/LicenseVerificationServiceAdapter';
 import { GetAccessStateUseCase } from './domain/useCases/GetAccessStateUseCase';
 import { GetDailyReflectionUseCase } from './domain/useCases/GetDailyReflectionUseCase';
@@ -128,6 +130,7 @@ import { ResetPurchasesUserUseCase } from './domain/useCases/ResetPurchasesUserU
 import { PresentRevenueCatPaywallUseCase } from './domain/useCases/PresentRevenueCatPaywallUseCase';
 import { configureWidgetSync, syncPremiumStatus } from './infrastructure/WidgetSync';
 import { logAnalyticsEvent, recordCrashError } from './services/analytics';
+import { configureRetentionNotifications } from './services/retentionNotifications';
 import { getTrialDurationDays } from './services/analyticsUserProperties';
 
 /**
@@ -155,6 +158,7 @@ const taskRepository = new MmkvTaskRepository();
 const monthlyGoalRepository = new MmkvMonthlyGoalRepository();
 const onboardingRepository = new MmkvOnboardingRepository();
 const engagementRepository = new MmkvEngagementRepository();
+const widgetConfigRepository = new AsyncStorageWidgetConfigRepository();
 const reflectionRepository = new MmkvReflectionRepository();
 const studentVerificationRepository = new MmkvStudentVerificationRepository();
 export const authSessionRepository = new MmkvAuthSessionRepository();
@@ -517,3 +521,10 @@ configureWidgetSync({
   getDailyTaskStatsUseCase,
   getAccessStateUseCase,
 });
+
+configureRetentionNotifications({
+  getBirthDate: () => timeRepository.getUserProfile().birthDate,
+  getTrialStartDate: () => subscriptionRepository.getTrialStartDate(),
+});
+
+export const useWidgetConfigStore = createWidgetConfigStore(widgetConfigRepository);

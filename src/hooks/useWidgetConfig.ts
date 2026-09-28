@@ -1,4 +1,4 @@
-import { useWidgetConfigStore } from '../stores/widgetConfigStore';
+import { useWidgetConfigStore } from '../di';
 
 export function useWidgetConfig() {
   return useWidgetConfigStore();

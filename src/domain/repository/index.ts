@@ -18,3 +18,4 @@ export type {
   IPaywallPresenter,
   PaywallPresentResult,
 } from './IPaywallPresenter';
+export type { IWidgetConfigRepository } from './IWidgetConfigRepository';
