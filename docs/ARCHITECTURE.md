@@ -20,7 +20,7 @@ A **clean architecture** with **Single Source of Truth (SSOT)** for a time-progr
 
 ## One-Line Summary
 
-**"UI reads from use cases, use cases read from repositories, TimeRepository is SSOT for time/profile and widget cache, repositories use core + MMKV. Widgets read the same MMKV. No one else touches storage."**
+**"UI reads from use cases, use cases read from repositories, TimeRepository is SSOT for time/profile and widget cache, repositories use core + MMKV. Widgets read the same MMKV. Every storage key has exactly one owning module."**
 
 ---
 
@@ -163,12 +163,24 @@ src/
 
 | Layer                 | Responsibility                   | Rule                                        |
 | --------------------- | -------------------------------- | ------------------------------------------- |
-| **UI** (surfaces, ui) | Display data, capture user input | No business logic, no direct storage access |
-| **Use cases**         | Orchestrate reads/writes         | Call repository, no storage details         |
+| **UI** (surfaces, components, ui) | Display data, capture user input | No business logic, no direct storage access, no `di` (use hooks) |
+| **Hooks**             | React bindings to use cases      | Only UI-facing code that imports `di`       |
+| **Use cases**         | Orchestrate reads/writes         | Call repository/ports; may use pure `core`; no storage details |
+| **Services / stores** | Notifications, analytics, UI caches | May own private storage keys; never import `di` |
 | **TimeRepository**    | Single source of truth           | Only place that writes user/time to MMKV; only place that builds WidgetCache from core/time |
 | **Core**              | Pure time calculations           | No React, no storage, no side effects       |
 | **Persistence**       | MMKV access, schema, migrations  | No business logic                           |
 | **Platform**          | Native modules, widget bridges   | Platform-specific code only                 |
+
+### Enforcement
+
+Rules are checked, not just documented:
+
+- `npm run lint`: layer boundaries (`.eslintrc.js`, `@typescript-eslint/no-restricted-imports` at `error`). The full table is in `.cursor/rules/architecture.mdc`.
+- `npm run lint:cycles`: madge, must report no circular dependencies.
+- `npm test`: `__tests__/storageKeyOwnership.test.ts` fails if two modules use the same `STORAGE_KEYS` entry.
+
+When infrastructure needs data owned by a repository, `di.ts` injects it (`configureWidgetSync`, `configureRetentionNotifications`). Infrastructure and services never import `di`.
 
 ---
 

@@ -7,19 +7,30 @@ alwaysApply: true
 
 ## Layer Boundaries
 
+Enforced by `npm run lint` (`.eslintrc.js`, level `error`), `npm run lint:cycles` (madge) and `__tests__/storageKeyOwnership.test.ts`.
+
 | Layer | Can Import | Must NOT Import |
 |-------|------------|-----------------|
-| **Surfaces (UI)** | `hooks`, `di`, `ui`, `theme`, `types`, `navigation` | `core`, `persistence`, `domain/repository`, `infrastructure` |
-| **Hooks** | `di`, `infrastructure` (WidgetSync only for sync calls) | `core` directly for business logic |
-| **Use Cases** | `domain/repository` (interfaces), `types` | `persistence`, `core` (repos call core) |
-| **Repositories** | `core`, `persistence`, `types` | React, UI |
-| **Core** | Nothing (pure TS) | React, storage, I/O |
+| **Surfaces / components** | `hooks`, `ui`, `theme`, `types`, `navigation`, `services` (analytics etc.), `core/time/clock` (display formatting, ADR-7) | `di`, `persistence`, `infrastructure`, other `core`, repository/use-case *runtime* imports |
+| **ui/** (presentational) | `theme`, `types`, own `ui/` hooks (e.g. `useReduceMotion`) | `hooks`, `di`, `persistence`, `infrastructure`, `core` |
+| **Hooks** | `di`, `core`, `services`, `infrastructure` (WidgetSync), domain *types* | `persistence`, repository/use-case classes at runtime |
+| **Services / stores** | `persistence` for keys they own, `config`, `types` | `di` (take state as parameters or injected sources) |
+| **Use Cases** | `domain/repository` + `domain/ports` (interfaces), `core` (pure), `types`, `config` constants | `persistence`, SDKs, React |
+| **Repositories / adapters** | `core`, `persistence`, `types`, SDKs | `di`, React UI |
+| **Core / domain** | `types`, `config` constants | React, RN, SDKs, storage, any outer layer |
+
+Domain *types* (DTOs, result types) may be imported anywhere with `import type`; only runtime access must go through `di`.
+
+## Storage key ownership
+
+Every `STORAGE_KEYS` entry is used by exactly one module (repository, service or store). Other code reads the value through that owner, either via a use case or an injected source (see `configureWidgetSync`, `configureRetentionNotifications` in `di.ts`). The ownership test fails if two modules touch the same key.
 
 ## SSOT (Single Source of Truth)
 
 - **Time/profile data**: `TimeRepository` (via `MmkvTimeRepository`) — only place that reads/writes user/time to MMKV
 - **Widget cache**: `TimeRepository.getWidgetCache()` — same time logic as `getTimeState()`
 - **Progress colors**: `theme/progressColor.ts` — `getProgressColor(progress)`; UI consumes, no duplicate logic
+- **Widget config**: `IWidgetConfigRepository` (AsyncStorage) → `widgetConfigStore` (UI cache, created in `di.ts`); accent for native widgets via `WidgetSync.publishWidgetAccent`
 - **Theme**: `theme/palettes.ts` + `stores/themeStore.ts` — design tokens (light/dark); UI consumes via `useTheme()` only; persistence via AsyncStorage
 - **Types/DTOs**: `types/index.ts` — `WidgetCache`, `UserProfile`, `TimeProgress`, etc.
 - **Storage keys**: `persistence/schema.ts` — shared with native widgets

@@ -110,6 +110,30 @@ Single Source of Truth for each concern:
 
 ---
 
+## ADR-9: One Owner per Storage Key (Pragmatic SSOT)
+
+**Status:** Accepted (2026-09-28)
+
+**Context:** Small local flags (paywall cooldown, Ember tip cursor, notification bookkeeping) live in `services/`. Wrapping each flag in port + repository + use case + hook adds ~35 files of ceremony without improving correctness.
+
+**Decision:** Services and stores may read/write storage keys they own. A key may be used by only one module; data owned elsewhere is read through that owner (use case or injected source). Enforced by `__tests__/storageKeyOwnership.test.ts`.
+
+**Consequences:** SSOT holds per key with little boilerplate. Cross-module data (profile, trial start, presence, widget accent) goes through repositories.
+
+---
+
+## ADR-10: Layer Boundaries Are Linted
+
+**Status:** Accepted (2026-09-28)
+
+**Context:** Rules lived only in docs and drifted (41 violations found in audit).
+
+**Decision:** `.eslintrc.js` encodes the layer table as `@typescript-eslint/no-restricted-imports` errors (type-only imports of domain DTOs allowed). `lint:cycles` (madge) guards against import cycles.
+
+**Consequences:** New violations fail lint. Exceptions (ADR-7 `core/time/clock`) are explicit in config.
+
+---
+
 ## Adding New ADRs
 
 When making a significant architectural decision:
