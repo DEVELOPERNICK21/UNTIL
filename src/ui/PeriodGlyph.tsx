@@ -10,7 +10,7 @@ import Svg, {
   Stop,
   G,
 } from 'react-native-svg';
-import { useReduceMotion } from '../hooks';
+import { useReduceMotion } from './useReduceMotion';
 
 export type PeriodGlyphKind = 'day' | 'month' | 'year' | 'life';
 

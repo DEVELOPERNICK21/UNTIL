@@ -45,7 +45,7 @@ import {
   planEmberExit,
   type EmberFlightPlan,
 } from './emberFlight';
-import { mergedEmberTipPool, pickMergedEmberTip } from './emberPersonalization';
+import { mergedEmberTipPool, pickMergedEmberTip } from '../../hooks/emberTips';
 
 type EmberCompanionProps = {
   suppressed?: boolean;

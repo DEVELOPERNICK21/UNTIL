@@ -17,7 +17,7 @@ import Svg, {
   Stop,
 } from 'react-native-svg';
 import { progressBand, type ProgressBand } from '../theme/emotionalCopy';
-import { useReduceMotion } from '../hooks';
+import { useReduceMotion } from './useReduceMotion';
 
 export type EmberMood = ProgressBand;
 

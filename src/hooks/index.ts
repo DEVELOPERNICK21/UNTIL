@@ -39,7 +39,7 @@ export { useAnalytics } from './useAnalytics';
 export { useAnalyticsBootstrap } from './useAnalyticsBootstrap';
 export { useAuthBootstrap } from './useAuthBootstrap';
 export { useEngagementModals } from './useEngagementModals';
-export { useReduceMotion } from './useReduceMotion';
+export { useReduceMotion } from '../ui/useReduceMotion';
 export { usePresenceStreak } from './usePresenceStreak';
 export { useLifeWeeks } from './useLifeWeeks';
 export { useAuthSession } from './useAuthSession';

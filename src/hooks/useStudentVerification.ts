@@ -10,6 +10,12 @@ export function useStudentVerification() {
     setVerifiedEmail(verifyStudentEmailUseCase.getVerifiedEmail());
   }, []);
 
+  /** Fresh read for use inside callbacks, where `isVerified` may be stale. */
+  const checkVerified = useCallback(
+    () => verifyStudentEmailUseCase.isVerified(),
+    []
+  );
+
   const verify = useCallback((email: string) => {
     const result = verifyStudentEmailUseCase.verify(email);
     if (result.ok) {
@@ -23,5 +29,6 @@ export function useStudentVerification() {
     verifiedEmail,
     verify,
     refresh,
+    checkVerified,
   };
 }

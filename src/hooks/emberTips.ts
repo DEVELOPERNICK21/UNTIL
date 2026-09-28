@@ -1,6 +1,6 @@
-import { personalizedEmberTipsForRoute } from '../../core/onboarding/personalizedInsights';
-import { emberTipPoolForRoute, type EmberInsight } from '../../theme';
-import type { OnboardingQuizAnswers } from '../../types';
+import { personalizedEmberTipsForRoute } from '../core/onboarding/personalizedInsights';
+import { emberTipPoolForRoute, type EmberInsight } from '../theme';
+import type { OnboardingQuizAnswers } from '../types';
 
 type EmberContext = {
   dayProgress: number;

@@ -11,7 +11,6 @@ const SRC = path.join(__dirname, '..', 'src');
 const EXEMPT = new Set([
   'persistence/schema.ts', // defines the keys
   'persistence/migration.ts', // rewrites old keys on upgrade
-  'types/widgetDataContract.ts', // key names shared with native widgets
 ]);
 
 function sourceFiles(dir: string): string[] {

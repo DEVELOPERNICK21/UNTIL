@@ -61,7 +61,6 @@ import {
 } from './PaywallPlanCards';
 import { StudentVerifyModal } from './StudentVerifyModal';
 import { useStudentVerification } from '../../hooks/useStudentVerification';
-import { verifyStudentEmailUseCase } from '../../di';
 
 if (
   Platform.OS === 'android' &&
@@ -116,7 +115,8 @@ export function PremiumPaywallBody({
   const [termsOpen, setTermsOpen] = useState(false);
   const [selectedPlanId, setSelectedPlanId] = useState(productIds.yearly);
   const [studentModalOpen, setStudentModalOpen] = useState(false);
-  const { isVerified, verifiedEmail, verify } = useStudentVerification();
+  const { isVerified, verifiedEmail, verify, checkVerified } =
+    useStudentVerification();
 
   const lifeProgress =
     lifeProgressProp ??
@@ -254,7 +254,7 @@ export function PremiumPaywallBody({
       }
       if (
         productId === productIds.yearlyStudent &&
-        !verifyStudentEmailUseCase.isVerified()
+        !checkVerified()
       ) {
         setStudentModalOpen(true);
         void logAnalyticsEvent('student_verify_shown', { source });
@@ -350,6 +350,7 @@ export function PremiumPaywallBody({
       requestPurchase,
       source,
       productIds.yearlyStudent,
+      checkVerified,
       access.trialActive,
       onPurchaseSuccess,
     ]

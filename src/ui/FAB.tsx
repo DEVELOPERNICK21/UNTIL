@@ -9,7 +9,7 @@ import {
 } from 'react-native';
 import { Text } from './Text';
 import { useTheme, Shadows, FontFamily } from '../theme';
-import { useReduceMotion } from '../hooks';
+import { useReduceMotion } from './useReduceMotion';
 
 const SIZE = 56;
 const EXPANDED_WIDTH = 132;
