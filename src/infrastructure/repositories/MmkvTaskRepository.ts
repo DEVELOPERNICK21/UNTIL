@@ -93,6 +93,14 @@ export class MmkvTaskRepository implements ITaskRepository {
     this.notifySubscribers();
   }
 
+  getCarryoverDismissedDate(): string | null {
+    return getString(STORAGE_KEYS.TASK_CARRYOVER_DISMISSED_DATE) ?? null;
+  }
+
+  setCarryoverDismissedDate(date: string): void {
+    setString(STORAGE_KEYS.TASK_CARRYOVER_DISMISSED_DATE, date);
+  }
+
   subscribe(callback: Subscriber): () => void {
     this.subscribers.add(callback);
     return () => this.subscribers.delete(callback);

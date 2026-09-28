@@ -21,6 +21,10 @@ class FakeTaskRepo implements ITaskRepository {
   moveTask(id: string, date: string) {
     this.tasks = applyMoveTask(this.tasks, id, date);
   }
+  getCarryoverDismissedDate() {
+    return null;
+  }
+  setCarryoverDismissedDate() {}
   subscribe() {
     return () => {};
   }

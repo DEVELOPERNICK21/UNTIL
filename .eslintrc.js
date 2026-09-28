@@ -2,7 +2,13 @@
 // Set to 'warn' while existing violations are paid down; promote to 'error' once clean.
 const LAYER_RULE_LEVEL = 'warn';
 
-const forbid = (groups, message) => ({group: groups, message});
+const forbid = (groups, message, extra = {}) => ({
+  group: groups,
+  message,
+  ...extra,
+});
+// Outer layers may use domain *types* (DTOs, results); only runtime access must go via di.
+const TYPES_OK = {allowTypeImports: true};
 
 const STORAGE = forbid(
   ['**/persistence', '**/persistence/*'],
@@ -15,10 +21,12 @@ const INFRA = forbid(
 const REPOSITORIES = forbid(
   ['**/domain/repository', '**/domain/repository/*'],
   'Repositories are reached through use cases, not directly.',
+  TYPES_OK,
 );
 const USE_CASE_CLASSES = forbid(
   ['**/domain/useCases/*'],
   'Import use case instances from di, not the classes.',
+  TYPES_OK,
 );
 const DI = forbid(['**/di'], 'Only hooks and app.tsx may import di.');
 const CORE = forbid(
@@ -57,7 +65,9 @@ const OUTER_LAYERS = forbid(
 
 const layer = (files, patterns) => ({
   files,
-  rules: {'no-restricted-imports': [LAYER_RULE_LEVEL, {patterns}]},
+  rules: {
+    '@typescript-eslint/no-restricted-imports': [LAYER_RULE_LEVEL, {patterns}],
+  },
 });
 
 module.exports = {

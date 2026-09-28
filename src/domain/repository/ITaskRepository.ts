@@ -13,5 +13,8 @@ export interface ITaskRepository {
   toggleTask(id: string): void;
   removeTask(id: string): void;
   moveTask(id: string, date: string): void;
+  /** Day whose unfinished-task carryover prompt the user dismissed. */
+  getCarryoverDismissedDate(): string | null;
+  setCarryoverDismissedDate(date: string): void;
   subscribe(callback: Subscriber): () => void;
 }
