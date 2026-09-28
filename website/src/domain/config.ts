@@ -56,4 +56,5 @@ export const ROUTES = {
   terms: '/terms',
   privacy: '/privacy',
   copyright: '/copyright',
+  play: '/play',
 } as const;

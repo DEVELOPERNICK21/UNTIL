@@ -1,5 +1,6 @@
 'use client';
 
+import { HeroClockToy } from '@/components/play/HeroClockToy';
 import { CinematicHero } from '@/components/ui/cinematic-hero';
 import { LANDING_COPY, SITE_CONFIG } from '@/domain';
 
@@ -20,6 +21,7 @@ export function CinematicHeroSection() {
       playStoreUrl={SITE_CONFIG.playStoreUrl}
       appStoreUrl={SITE_CONFIG.appStoreUrl}
       iosComingSoon={pricingCta.iosComingSoon}
+      heroExtra={<HeroClockToy />}
     />
   );
 }

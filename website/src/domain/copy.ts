@@ -15,6 +15,15 @@ export const LANDING_COPY = {
     subtitle:
       'Ember, home widgets, Wear OS Day %, deadlines, tasks, and shareable snapshots. Check them without opening the app.',
     cta: 'Get the app',
+    playLink: 'or play the full game',
+    toyHint: 'Tap the clock. Tap fast to spin it harder.',
+    toyWarmup: 'Keep tapping.',
+    toySpinning: '{n} spins',
+    toyResult: '{n} spins. Still {time}.',
+    toyBest: 'Best {n}.',
+    toyNewBest: 'New best.',
+    toyMilestones: ['Faster.', 'Keep going.', 'Time still wins.', 'Okay, that is a lot.'],
+    toyAria: 'Knock the clock',
   },
 
   /** Cinematic scroll-pinned hero (GSAP) */

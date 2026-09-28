@@ -205,6 +205,8 @@ export interface CinematicHeroProps extends React.HTMLAttributes<HTMLDivElement>
   playStoreUrl?: string;
   appStoreUrl?: string;
   iosComingSoon?: string;
+  /** Rendered above the taglines on the first screen. */
+  heroExtra?: React.ReactNode;
 }
 
 export function CinematicHero({
@@ -226,6 +228,7 @@ export function CinematicHero({
   playStoreUrl = '#',
   appStoreUrl = '#',
   iosComingSoon = 'Coming soon',
+  heroExtra,
   className,
   ...props
 }: CinematicHeroProps) {
@@ -506,6 +509,7 @@ export function CinematicHero({
       />
 
       <div className="hero-text-wrapper absolute z-10 flex flex-col items-center justify-center text-center w-full px-4 will-change-transform transform-style-3d">
+        {heroExtra}
         <p className="text-track gsap-reveal text-3d-matte text-5xl md:text-7xl lg:text-[6rem] font-bold tracking-tight mb-2">
           {tagline1}
         </p>
