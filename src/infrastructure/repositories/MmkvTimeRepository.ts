@@ -5,6 +5,8 @@
  */
 
 import type { ITimeRepository } from '../../domain/repository/ITimeRepository';
+import type { IPresenceRepository } from '../../domain/repository/IPresenceRepository';
+import { MmkvPresenceRepository } from './MmkvPresenceRepository';
 import type { TimeProgress, WidgetCache } from '../../types';
 import { getDayProgress } from '../../core/time/day';
 import { getMonthProgress } from '../../core/time/month';
@@ -51,7 +53,7 @@ function computeTimeState(birthDate: string | null, deathAge: number): TimeProgr
   };
 }
 
-function computeWidgetCache(): WidgetCache {
+function computeWidgetCache(presence: IPresenceRepository): WidgetCache {
   const date = now();
   const profile = { birthDate: getString(STORAGE_KEYS.USER_BIRTH_DATE) ?? null, deathAge: getNumber(STORAGE_KEYS.USER_DEATH_AGE) ?? DEFAULTS.USER_DEATH_AGE };
   const day = getDayProgress(date);
@@ -65,11 +67,8 @@ function computeWidgetCache(): WidgetCache {
   const lifeProgress = life?.progress;
   const remainingDaysLife = life ? Math.round(life.yearsRemaining * 365.25) : undefined;
   const lifePercent = life ? Math.round(life.progress * 100) : undefined;
-  // Read the shared presence keys directly so the time repository remains independently
-  // constructible; MmkvPresenceRepository uses these same STORAGE_KEYS as its SSOT.
-  const presenceStreakCount = getNumber(STORAGE_KEYS.PRESENCE_STREAK_COUNT) ?? 0;
-  const presenceLastDateKey =
-    getString(STORAGE_KEYS.PRESENCE_STREAK_LAST_DATE) || null;
+  const { count: presenceStreakCount, lastDateKey: presenceLastDateKey } =
+    presence.getState();
   const todayKey = localDateKey(date);
 
   return {
@@ -111,6 +110,10 @@ function computeWidgetCache(): WidgetCache {
 export class MmkvTimeRepository implements ITimeRepository {
   private subscribers: Set<Subscriber> = new Set();
 
+  constructor(
+    private readonly presenceRepository: IPresenceRepository = new MmkvPresenceRepository(),
+  ) {}
+
   getUserProfile(): { birthDate: string | null; deathAge: number } {
     const birthDate = getString(STORAGE_KEYS.USER_BIRTH_DATE) ?? null;
     const deathAge = getNumber(STORAGE_KEYS.USER_DEATH_AGE) ?? DEFAULTS.USER_DEATH_AGE;
@@ -126,7 +129,7 @@ export class MmkvTimeRepository implements ITimeRepository {
   }
 
   getWidgetCache(): WidgetCache {
-    return computeWidgetCache();
+    return computeWidgetCache(this.presenceRepository);
   }
 
   setUserProfile(birthDate: string, deathAge: number): void {

@@ -6,6 +6,7 @@ import { useState, useCallback } from 'react';
 import {
   getOnboardingCompletedUseCase,
   setOnboardingCompletedUseCase,
+  setWidgetCoachPendingUseCase,
 } from '../di';
 import { runOnboardingCompletionSideEffects } from '../services/onboardingCompletion';
 import type { OnboardingExitParams } from '../services/onboardingCompletion';
@@ -17,6 +18,7 @@ export function useOnboardingState() {
 
   const completeOnboarding = useCallback((params?: OnboardingExitParams) => {
     setOnboardingCompletedUseCase.execute();
+    setWidgetCoachPendingUseCase.execute();
     runOnboardingCompletionSideEffects(params);
     setHasCompleted(true);
   }, []);

@@ -4,13 +4,12 @@
 
 import { getString, setString } from '../persistence/mmkv';
 import { STORAGE_KEYS } from '../persistence/schema';
-import { getAccessStateUseCase } from '../di';
+import type { AccessState } from '../types';
 
 const MIN_APP_OPENS = 2;
 
-export function shouldShowDeferredPaywall(): boolean {
+export function shouldShowDeferredPaywall(access: AccessState): boolean {
   if (getString(STORAGE_KEYS.DEFERRED_PAYWALL_SHOWN) === '1') return false;
-  const access = getAccessStateUseCase.execute();
   if (access.isPremium) return false;
   return access.appOpenCount >= MIN_APP_OPENS;
 }

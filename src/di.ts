@@ -145,7 +145,8 @@ function syncPremiumAfterEntitlementChange(): void {
   void cancelTrialLocalNotifications();
 }
 
-const timeRepository = new MmkvTimeRepository();
+const presenceRepository = new MmkvPresenceRepository();
+const timeRepository = new MmkvTimeRepository(presenceRepository);
 const subscriptionRepository = new MmkvSubscriptionRepository();
 const activityRepository = new MmkvActivityRepository();
 const customCounterRepository = new MmkvCustomCounterRepository();
@@ -154,7 +155,6 @@ const taskRepository = new MmkvTaskRepository();
 const monthlyGoalRepository = new MmkvMonthlyGoalRepository();
 const onboardingRepository = new MmkvOnboardingRepository();
 const engagementRepository = new MmkvEngagementRepository();
-const presenceRepository = new MmkvPresenceRepository();
 const reflectionRepository = new MmkvReflectionRepository();
 const studentVerificationRepository = new MmkvStudentVerificationRepository();
 export const authSessionRepository = new MmkvAuthSessionRepository();

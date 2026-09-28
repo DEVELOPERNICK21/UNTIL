@@ -35,10 +35,6 @@ jest.mock('../src/components/engagement/EmberCompanion', () => ({
   EmberCompanion: () => null,
 }));
 
-jest.mock('../src/services/deferredPaywall', () => ({
-  shouldShowDeferredPaywall: () => false,
-}));
-
 describe('AppEngagementLayer review attempts', () => {
   it('does not try opens when countdown requests a review', async () => {
     const tryCountdownReview = jest.fn().mockResolvedValue(true);
@@ -50,6 +46,7 @@ describe('AppEngagementLayer review attempts', () => {
         featureCoachPending: false,
         sharePromptPending: false,
       }),
+      readDeferredPaywallDue: () => false,
       dismissWidgetCoach: jest.fn(),
       dismissFeatureCoach: jest.fn(),
       dismissSharePrompt: jest.fn(),

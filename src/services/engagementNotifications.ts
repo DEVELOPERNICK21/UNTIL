@@ -3,19 +3,19 @@
  */
 
 import { Platform } from 'react-native';
-import { getNumber, getString, setString } from '../persistence/mmkv';
+import { getString, setString } from '../persistence/mmkv';
 import { STORAGE_KEYS } from '../persistence/schema';
 import { requestNotificationPermission } from './notificationPermission';
 
 const ONE_DAY_MS = 24 * 60 * 60 * 1000;
 
 /** Schedule a single day-2 reminder after onboarding completes. */
-export async function scheduleDay2ReengagementNotification(): Promise<void> {
+export async function scheduleDay2ReengagementNotification(
+  completedAt: number
+): Promise<void> {
   if (Platform.OS !== 'android') return;
   if (getString(STORAGE_KEYS.DAY2_NOTIFICATION_SCHEDULED) === '1') return;
-
-  const completedAt = getNumber(STORAGE_KEYS.ONBOARDING_COMPLETED_AT);
-  if (completedAt == null || completedAt <= 0) return;
+  if (completedAt <= 0) return;
 
   const triggerMs = completedAt + 2 * ONE_DAY_MS + 9 * 60 * 60 * 1000;
   if (triggerMs <= Date.now()) return;

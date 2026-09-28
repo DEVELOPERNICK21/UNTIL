@@ -4,7 +4,6 @@
  */
 
 import { createMMKV } from 'react-native-mmkv';
-import { DEFAULTS, STORAGE_KEYS } from './schema';
 
 // Use default path for main app; extension will use App Group when configured
 export const storage = createMMKV({
@@ -42,17 +41,4 @@ export function remove(key: string): void {
 
 export function clearAll(): void {
   storage.clearAll();
-}
-
-// Convenience getters with defaults
-export function getBirthDate(): string | undefined {
-  return getString(STORAGE_KEYS.USER_BIRTH_DATE);
-}
-
-export function getDeathAge(): number {
-  return getNumber(STORAGE_KEYS.USER_DEATH_AGE) ?? DEFAULTS.USER_DEATH_AGE;
-}
-
-export function getTheme(): string {
-  return getString(STORAGE_KEYS.SETTINGS_THEME) ?? DEFAULTS.SETTINGS_THEME;
 }

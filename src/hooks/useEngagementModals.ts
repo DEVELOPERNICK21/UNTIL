@@ -2,15 +2,18 @@ import { useCallback } from 'react';
 import {
   clearSharePromptPendingUseCase,
   clearWidgetCoachPendingUseCase,
+  getAccessStateUseCase,
   getEngagementModalStateUseCase,
   markFeatureCoachShownUseCase,
   maybeRequestInAppReviewUseCase,
 } from '../di';
 import { getLocalDateKey } from '../domain/notifications/retentionNotificationCopy';
 import type { EngagementModalState } from '../domain/repository/IEngagementRepository';
+import { shouldShowDeferredPaywall } from '../services/deferredPaywall';
 
 export function useEngagementModals(): {
   readModalState: () => EngagementModalState;
+  readDeferredPaywallDue: () => boolean;
   dismissWidgetCoach: () => void;
   dismissFeatureCoach: () => void;
   dismissSharePrompt: () => void;
@@ -20,6 +23,11 @@ export function useEngagementModals(): {
 } {
   const readModalState = useCallback(
     () => getEngagementModalStateUseCase.execute(),
+    []
+  );
+
+  const readDeferredPaywallDue = useCallback(
+    () => shouldShowDeferredPaywall(getAccessStateUseCase.execute()),
     []
   );
 
@@ -58,6 +66,7 @@ export function useEngagementModals(): {
 
   return {
     readModalState,
+    readDeferredPaywallDue,
     dismissWidgetCoach,
     dismissFeatureCoach,
     dismissSharePrompt,

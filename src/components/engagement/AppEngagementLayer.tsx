@@ -6,7 +6,6 @@ import { DeferredPaywallModal } from './DeferredPaywallModal';
 import { FeatureDiscoveryModal } from './FeatureDiscoveryModal';
 import { SharePromptModal } from './SharePromptModal';
 import { EmberCompanion } from './EmberCompanion';
-import { shouldShowDeferredPaywall } from '../../services/deferredPaywall';
 import { useEngagementModals } from '../../hooks/useEngagementModals';
 import { useAnalytics } from '../../hooks/useAnalytics';
 
@@ -16,6 +15,7 @@ import { useAnalytics } from '../../hooks/useAnalytics';
 export function AppEngagementLayer() {
   const {
     readModalState,
+    readDeferredPaywallDue,
     dismissWidgetCoach,
     dismissFeatureCoach,
     dismissSharePrompt,
@@ -64,7 +64,7 @@ export function AppEngagementLayer() {
         !nextFeatureCoachVisible &&
         state.sharePromptPending);
     const nextDeferredPaywallVisible =
-      deferredPaywallVisible || shouldShowDeferredPaywall();
+      deferredPaywallVisible || readDeferredPaywallDue();
     const engagementBlockingVisible =
       widgetCoachVisible ||
       nextFeatureCoachVisible ||
@@ -88,6 +88,7 @@ export function AppEngagementLayer() {
   }, [
     deferredPaywallVisible,
     featureCoachVisible,
+    readDeferredPaywallDue,
     readModalState,
     sharePromptVisible,
     tryAutoReview,
