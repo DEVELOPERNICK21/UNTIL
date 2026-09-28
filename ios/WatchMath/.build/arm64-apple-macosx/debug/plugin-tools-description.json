@@ -1,0 +1,735 @@
+{
+  "builtTestProducts" : [
+    {
+      "binaryPath" : "/Users/nick/Development/Learning/MobileApp/ReactNative/ProjectUNTIL/UNTIL/ios/WatchMath/.build/arm64-apple-macosx/debug/WatchMathPackageTests.xctest/Contents/MacOS/WatchMathPackageTests",
+      "packagePath" : "/Users/nick/Development/Learning/MobileApp/ReactNative/ProjectUNTIL/UNTIL/ios/WatchMath",
+      "productName" : "WatchMathPackageTests"
+    }
+  ],
+  "copyCommands" : {
+
+  },
+  "explicitTargetDependencyImportCheckingMode" : {
+    "none" : {
+
+    }
+  },
+  "generatedSourceTargetSet" : [
+
+  ],
+  "pluginDescriptions" : [
+
+  ],
+  "swiftCommands" : {
+    "C.WatchMath-arm64-apple-macosx-debug.module" : {
+      "executable" : "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc",
+      "fileList" : "/Users/nick/Development/Learning/MobileApp/ReactNative/ProjectUNTIL/UNTIL/ios/WatchMath/.build/arm64-apple-macosx/debug/WatchMath.build/sources",
+      "importPath" : "/Users/nick/Development/Learning/MobileApp/ReactNative/ProjectUNTIL/UNTIL/ios/WatchMath/.build/arm64-apple-macosx/debug/Modules",
+      "inputs" : [
+        {
+          "kind" : "file",
+          "name" : "/Users/nick/Development/Learning/MobileApp/ReactNative/ProjectUNTIL/UNTIL/ios/WatchMath/Sources/WatchMath/DayWatchCache.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/nick/Development/Learning/MobileApp/ReactNative/ProjectUNTIL/UNTIL/ios/WatchMath/Sources/WatchMath/PeriodSnapshot.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/nick/Development/Learning/MobileApp/ReactNative/ProjectUNTIL/UNTIL/ios/WatchMath/Sources/WatchMath/WatchLifeClock.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/nick/Development/Learning/MobileApp/ReactNative/ProjectUNTIL/UNTIL/ios/WatchMath/Sources/WatchMath/WatchProfileStore.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/nick/Development/Learning/MobileApp/ReactNative/ProjectUNTIL/UNTIL/ios/WatchMath/Sources/WatchMath/WatchProgressColor.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/nick/Development/Learning/MobileApp/ReactNative/ProjectUNTIL/UNTIL/ios/WatchMath/Sources/WatchMath/WatchTimeClock.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/nick/Development/Learning/MobileApp/ReactNative/ProjectUNTIL/UNTIL/ios/WatchMath/.build/arm64-apple-macosx/debug/swift-version--58304C5D6DBC2206.txt"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/nick/Development/Learning/MobileApp/ReactNative/ProjectUNTIL/UNTIL/ios/WatchMath/.build/arm64-apple-macosx/debug/WatchMath.build/sources"
+        }
+      ],
+      "isLibrary" : true,
+      "moduleName" : "WatchMath",
+      "moduleOutputPath" : "/Users/nick/Development/Learning/MobileApp/ReactNative/ProjectUNTIL/UNTIL/ios/WatchMath/.build/arm64-apple-macosx/debug/Modules/WatchMath.swiftmodule",
+      "objects" : [
+        "/Users/nick/Development/Learning/MobileApp/ReactNative/ProjectUNTIL/UNTIL/ios/WatchMath/.build/arm64-apple-macosx/debug/WatchMath.build/DayWatchCache.swift.o",
+        "/Users/nick/Development/Learning/MobileApp/ReactNative/ProjectUNTIL/UNTIL/ios/WatchMath/.build/arm64-apple-macosx/debug/WatchMath.build/PeriodSnapshot.swift.o",
+        "/Users/nick/Development/Learning/MobileApp/ReactNative/ProjectUNTIL/UNTIL/ios/WatchMath/.build/arm64-apple-macosx/debug/WatchMath.build/WatchLifeClock.swift.o",
+        "/Users/nick/Development/Learning/MobileApp/ReactNative/ProjectUNTIL/UNTIL/ios/WatchMath/.build/arm64-apple-macosx/debug/WatchMath.build/WatchProfileStore.swift.o",
+        "/Users/nick/Development/Learning/MobileApp/ReactNative/ProjectUNTIL/UNTIL/ios/WatchMath/.build/arm64-apple-macosx/debug/WatchMath.build/WatchProgressColor.swift.o",
+        "/Users/nick/Development/Learning/MobileApp/ReactNative/ProjectUNTIL/UNTIL/ios/WatchMath/.build/arm64-apple-macosx/debug/WatchMath.build/WatchTimeClock.swift.o"
+      ],
+      "otherArguments" : [
+        "-target",
+        "arm64-apple-macosx13.0",
+        "-incremental",
+        "-enable-batch-mode",
+        "-serialize-diagnostics",
+        "-index-store-path",
+        "/Users/nick/Development/Learning/MobileApp/ReactNative/ProjectUNTIL/UNTIL/ios/WatchMath/.build/arm64-apple-macosx/debug/index/store",
+        "-Onone",
+        "-enable-testing",
+        "-j10",
+        "-DSWIFT_PACKAGE",
+        "-DDEBUG",
+        "-DSWIFT_MODULE_RESOURCE_BUNDLE_UNAVAILABLE",
+        "-module-cache-path",
+        "/Users/nick/Development/Learning/MobileApp/ReactNative/ProjectUNTIL/UNTIL/ios/WatchMath/.build/arm64-apple-macosx/debug/ModuleCache",
+        "-parseable-output",
+        "-parse-as-library",
+        "-emit-objc-header",
+        "-emit-objc-header-path",
+        "/Users/nick/Development/Learning/MobileApp/ReactNative/ProjectUNTIL/UNTIL/ios/WatchMath/.build/arm64-apple-macosx/debug/WatchMath.build/include/WatchMath-Swift.h",
+        "-swift-version",
+        "5",
+        "-plugin-path",
+        "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/plugins/testing",
+        "-sdk",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.5.sdk",
+        "-F",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
+        "-I",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
+        "-L",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
+        "-g",
+        "-Xcc",
+        "-isysroot",
+        "-Xcc",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.5.sdk",
+        "-Xcc",
+        "-F",
+        "-Xcc",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
+        "-Xcc",
+        "-fPIC",
+        "-Xcc",
+        "-g",
+        "-package-name",
+        "watchmath"
+      ],
+      "outputFileMapPath" : "/Users/nick/Development/Learning/MobileApp/ReactNative/ProjectUNTIL/UNTIL/ios/WatchMath/.build/arm64-apple-macosx/debug/WatchMath.build/output-file-map.json",
+      "outputs" : [
+        {
+          "kind" : "file",
+          "name" : "/Users/nick/Development/Learning/MobileApp/ReactNative/ProjectUNTIL/UNTIL/ios/WatchMath/.build/arm64-apple-macosx/debug/WatchMath.build/DayWatchCache.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/nick/Development/Learning/MobileApp/ReactNative/ProjectUNTIL/UNTIL/ios/WatchMath/.build/arm64-apple-macosx/debug/WatchMath.build/PeriodSnapshot.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/nick/Development/Learning/MobileApp/ReactNative/ProjectUNTIL/UNTIL/ios/WatchMath/.build/arm64-apple-macosx/debug/WatchMath.build/WatchLifeClock.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/nick/Development/Learning/MobileApp/ReactNative/ProjectUNTIL/UNTIL/ios/WatchMath/.build/arm64-apple-macosx/debug/WatchMath.build/WatchProfileStore.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/nick/Development/Learning/MobileApp/ReactNative/ProjectUNTIL/UNTIL/ios/WatchMath/.build/arm64-apple-macosx/debug/WatchMath.build/WatchProgressColor.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/nick/Development/Learning/MobileApp/ReactNative/ProjectUNTIL/UNTIL/ios/WatchMath/.build/arm64-apple-macosx/debug/WatchMath.build/WatchTimeClock.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/nick/Development/Learning/MobileApp/ReactNative/ProjectUNTIL/UNTIL/ios/WatchMath/.build/arm64-apple-macosx/debug/Modules/WatchMath.swiftmodule"
+        }
+      ],
+      "prepareForIndexing" : false,
+      "sources" : [
+        "/Users/nick/Development/Learning/MobileApp/ReactNative/ProjectUNTIL/UNTIL/ios/WatchMath/Sources/WatchMath/DayWatchCache.swift",
+        "/Users/nick/Development/Learning/MobileApp/ReactNative/ProjectUNTIL/UNTIL/ios/WatchMath/Sources/WatchMath/PeriodSnapshot.swift",
+        "/Users/nick/Development/Learning/MobileApp/ReactNative/ProjectUNTIL/UNTIL/ios/WatchMath/Sources/WatchMath/WatchLifeClock.swift",
+        "/Users/nick/Development/Learning/MobileApp/ReactNative/ProjectUNTIL/UNTIL/ios/WatchMath/Sources/WatchMath/WatchProfileStore.swift",
+        "/Users/nick/Development/Learning/MobileApp/ReactNative/ProjectUNTIL/UNTIL/ios/WatchMath/Sources/WatchMath/WatchProgressColor.swift",
+        "/Users/nick/Development/Learning/MobileApp/ReactNative/ProjectUNTIL/UNTIL/ios/WatchMath/Sources/WatchMath/WatchTimeClock.swift"
+      ],
+      "tempsPath" : "/Users/nick/Development/Learning/MobileApp/ReactNative/ProjectUNTIL/UNTIL/ios/WatchMath/.build/arm64-apple-macosx/debug/WatchMath.build",
+      "wholeModuleOptimization" : false
+    },
+    "C.WatchMathPackageTests-arm64-apple-macosx-debug.module" : {
+      "executable" : "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc",
+      "fileList" : "/Users/nick/Development/Learning/MobileApp/ReactNative/ProjectUNTIL/UNTIL/ios/WatchMath/.build/arm64-apple-macosx/debug/WatchMathPackageTests.build/sources",
+      "importPath" : "/Users/nick/Development/Learning/MobileApp/ReactNative/ProjectUNTIL/UNTIL/ios/WatchMath/.build/arm64-apple-macosx/debug/Modules",
+      "inputs" : [
+        {
+          "kind" : "file",
+          "name" : "/Users/nick/Development/Learning/MobileApp/ReactNative/ProjectUNTIL/UNTIL/ios/WatchMath/.build/arm64-apple-macosx/debug/WatchMathPackageTests.derived/runner.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/nick/Development/Learning/MobileApp/ReactNative/ProjectUNTIL/UNTIL/ios/WatchMath/.build/arm64-apple-macosx/debug/swift-version--58304C5D6DBC2206.txt"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/nick/Development/Learning/MobileApp/ReactNative/ProjectUNTIL/UNTIL/ios/WatchMath/.build/arm64-apple-macosx/debug/Modules/WatchMathTests.swiftmodule"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/nick/Development/Learning/MobileApp/ReactNative/ProjectUNTIL/UNTIL/ios/WatchMath/.build/arm64-apple-macosx/debug/WatchMathPackageTests.build/sources"
+        }
+      ],
+      "isLibrary" : true,
+      "moduleName" : "WatchMathPackageTests",
+      "moduleOutputPath" : "/Users/nick/Development/Learning/MobileApp/ReactNative/ProjectUNTIL/UNTIL/ios/WatchMath/.build/arm64-apple-macosx/debug/Modules/WatchMathPackageTests.swiftmodule",
+      "objects" : [
+        "/Users/nick/Development/Learning/MobileApp/ReactNative/ProjectUNTIL/UNTIL/ios/WatchMath/.build/arm64-apple-macosx/debug/WatchMathPackageTests.build/runner.swift.o"
+      ],
+      "otherArguments" : [
+        "-target",
+        "arm64-apple-macosx13.0",
+        "-incremental",
+        "-enable-batch-mode",
+        "-serialize-diagnostics",
+        "-index-store-path",
+        "/Users/nick/Development/Learning/MobileApp/ReactNative/ProjectUNTIL/UNTIL/ios/WatchMath/.build/arm64-apple-macosx/debug/index/store",
+        "-Onone",
+        "-enable-testing",
+        "-Xfrontend",
+        "-enable-cross-import-overlays",
+        "-j10",
+        "-DSWIFT_PACKAGE",
+        "-DDEBUG",
+        "-DSWIFT_MODULE_RESOURCE_BUNDLE_UNAVAILABLE",
+        "-module-cache-path",
+        "/Users/nick/Development/Learning/MobileApp/ReactNative/ProjectUNTIL/UNTIL/ios/WatchMath/.build/arm64-apple-macosx/debug/ModuleCache",
+        "-parseable-output",
+        "-parse-as-library",
+        "-emit-objc-header",
+        "-emit-objc-header-path",
+        "/Users/nick/Development/Learning/MobileApp/ReactNative/ProjectUNTIL/UNTIL/ios/WatchMath/.build/arm64-apple-macosx/debug/WatchMathPackageTests.build/include/WatchMathPackageTests-Swift.h",
+        "-plugin-path",
+        "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/plugins/testing",
+        "-sdk",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.5.sdk",
+        "-F",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
+        "-I",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
+        "-L",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
+        "-g",
+        "-Xcc",
+        "-isysroot",
+        "-Xcc",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.5.sdk",
+        "-Xcc",
+        "-F",
+        "-Xcc",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
+        "-Xcc",
+        "-fPIC",
+        "-Xcc",
+        "-g",
+        "-package-name",
+        "watchmath"
+      ],
+      "outputFileMapPath" : "/Users/nick/Development/Learning/MobileApp/ReactNative/ProjectUNTIL/UNTIL/ios/WatchMath/.build/arm64-apple-macosx/debug/WatchMathPackageTests.build/output-file-map.json",
+      "outputs" : [
+        {
+          "kind" : "file",
+          "name" : "/Users/nick/Development/Learning/MobileApp/ReactNative/ProjectUNTIL/UNTIL/ios/WatchMath/.build/arm64-apple-macosx/debug/WatchMathPackageTests.build/runner.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/nick/Development/Learning/MobileApp/ReactNative/ProjectUNTIL/UNTIL/ios/WatchMath/.build/arm64-apple-macosx/debug/Modules/WatchMathPackageTests.swiftmodule"
+        }
+      ],
+      "prepareForIndexing" : false,
+      "sources" : [
+        "/Users/nick/Development/Learning/MobileApp/ReactNative/ProjectUNTIL/UNTIL/ios/WatchMath/.build/arm64-apple-macosx/debug/WatchMathPackageTests.derived/runner.swift"
+      ],
+      "tempsPath" : "/Users/nick/Development/Learning/MobileApp/ReactNative/ProjectUNTIL/UNTIL/ios/WatchMath/.build/arm64-apple-macosx/debug/WatchMathPackageTests.build",
+      "wholeModuleOptimization" : false
+    },
+    "C.WatchMathTests-arm64-apple-macosx-debug.module" : {
+      "executable" : "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc",
+      "fileList" : "/Users/nick/Development/Learning/MobileApp/ReactNative/ProjectUNTIL/UNTIL/ios/WatchMath/.build/arm64-apple-macosx/debug/WatchMathTests.build/sources",
+      "importPath" : "/Users/nick/Development/Learning/MobileApp/ReactNative/ProjectUNTIL/UNTIL/ios/WatchMath/.build/arm64-apple-macosx/debug/Modules",
+      "inputs" : [
+        {
+          "kind" : "file",
+          "name" : "/Users/nick/Development/Learning/MobileApp/ReactNative/ProjectUNTIL/UNTIL/ios/WatchMath/Tests/WatchMathTests/WatchLifeClockTests.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/nick/Development/Learning/MobileApp/ReactNative/ProjectUNTIL/UNTIL/ios/WatchMath/Tests/WatchMathTests/WatchProgressColorTests.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/nick/Development/Learning/MobileApp/ReactNative/ProjectUNTIL/UNTIL/ios/WatchMath/Tests/WatchMathTests/WatchTimeClockTests.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/nick/Development/Learning/MobileApp/ReactNative/ProjectUNTIL/UNTIL/ios/WatchMath/.build/arm64-apple-macosx/debug/swift-version--58304C5D6DBC2206.txt"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/nick/Development/Learning/MobileApp/ReactNative/ProjectUNTIL/UNTIL/ios/WatchMath/.build/arm64-apple-macosx/debug/Modules/WatchMath.swiftmodule"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/nick/Development/Learning/MobileApp/ReactNative/ProjectUNTIL/UNTIL/ios/WatchMath/.build/arm64-apple-macosx/debug/WatchMathTests.build/sources"
+        }
+      ],
+      "isLibrary" : true,
+      "moduleName" : "WatchMathTests",
+      "moduleOutputPath" : "/Users/nick/Development/Learning/MobileApp/ReactNative/ProjectUNTIL/UNTIL/ios/WatchMath/.build/arm64-apple-macosx/debug/Modules/WatchMathTests.swiftmodule",
+      "objects" : [
+        "/Users/nick/Development/Learning/MobileApp/ReactNative/ProjectUNTIL/UNTIL/ios/WatchMath/.build/arm64-apple-macosx/debug/WatchMathTests.build/WatchLifeClockTests.swift.o",
+        "/Users/nick/Development/Learning/MobileApp/ReactNative/ProjectUNTIL/UNTIL/ios/WatchMath/.build/arm64-apple-macosx/debug/WatchMathTests.build/WatchProgressColorTests.swift.o",
+        "/Users/nick/Development/Learning/MobileApp/ReactNative/ProjectUNTIL/UNTIL/ios/WatchMath/.build/arm64-apple-macosx/debug/WatchMathTests.build/WatchTimeClockTests.swift.o"
+      ],
+      "otherArguments" : [
+        "-target",
+        "arm64-apple-macosx14.0",
+        "-incremental",
+        "-enable-batch-mode",
+        "-serialize-diagnostics",
+        "-index-store-path",
+        "/Users/nick/Development/Learning/MobileApp/ReactNative/ProjectUNTIL/UNTIL/ios/WatchMath/.build/arm64-apple-macosx/debug/index/store",
+        "-Onone",
+        "-enable-testing",
+        "-Xfrontend",
+        "-enable-cross-import-overlays",
+        "-j10",
+        "-DSWIFT_PACKAGE",
+        "-DDEBUG",
+        "-DSWIFT_MODULE_RESOURCE_BUNDLE_UNAVAILABLE",
+        "-module-cache-path",
+        "/Users/nick/Development/Learning/MobileApp/ReactNative/ProjectUNTIL/UNTIL/ios/WatchMath/.build/arm64-apple-macosx/debug/ModuleCache",
+        "-parseable-output",
+        "-parse-as-library",
+        "-swift-version",
+        "5",
+        "-plugin-path",
+        "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/plugins/testing",
+        "-sdk",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.5.sdk",
+        "-F",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
+        "-I",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
+        "-L",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
+        "-g",
+        "-Xcc",
+        "-isysroot",
+        "-Xcc",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.5.sdk",
+        "-Xcc",
+        "-F",
+        "-Xcc",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
+        "-Xcc",
+        "-fPIC",
+        "-Xcc",
+        "-g",
+        "-package-name",
+        "watchmath"
+      ],
+      "outputFileMapPath" : "/Users/nick/Development/Learning/MobileApp/ReactNative/ProjectUNTIL/UNTIL/ios/WatchMath/.build/arm64-apple-macosx/debug/WatchMathTests.build/output-file-map.json",
+      "outputs" : [
+        {
+          "kind" : "file",
+          "name" : "/Users/nick/Development/Learning/MobileApp/ReactNative/ProjectUNTIL/UNTIL/ios/WatchMath/.build/arm64-apple-macosx/debug/WatchMathTests.build/WatchLifeClockTests.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/nick/Development/Learning/MobileApp/ReactNative/ProjectUNTIL/UNTIL/ios/WatchMath/.build/arm64-apple-macosx/debug/WatchMathTests.build/WatchProgressColorTests.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/nick/Development/Learning/MobileApp/ReactNative/ProjectUNTIL/UNTIL/ios/WatchMath/.build/arm64-apple-macosx/debug/WatchMathTests.build/WatchTimeClockTests.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/nick/Development/Learning/MobileApp/ReactNative/ProjectUNTIL/UNTIL/ios/WatchMath/.build/arm64-apple-macosx/debug/Modules/WatchMathTests.swiftmodule"
+        }
+      ],
+      "prepareForIndexing" : false,
+      "sources" : [
+        "/Users/nick/Development/Learning/MobileApp/ReactNative/ProjectUNTIL/UNTIL/ios/WatchMath/Tests/WatchMathTests/WatchLifeClockTests.swift",
+        "/Users/nick/Development/Learning/MobileApp/ReactNative/ProjectUNTIL/UNTIL/ios/WatchMath/Tests/WatchMathTests/WatchProgressColorTests.swift",
+        "/Users/nick/Development/Learning/MobileApp/ReactNative/ProjectUNTIL/UNTIL/ios/WatchMath/Tests/WatchMathTests/WatchTimeClockTests.swift"
+      ],
+      "tempsPath" : "/Users/nick/Development/Learning/MobileApp/ReactNative/ProjectUNTIL/UNTIL/ios/WatchMath/.build/arm64-apple-macosx/debug/WatchMathTests.build",
+      "wholeModuleOptimization" : false
+    }
+  },
+  "swiftFrontendCommands" : {
+
+  },
+  "swiftTargetScanArgs" : {
+    "WatchMath" : [
+      "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc",
+      "-module-name",
+      "WatchMath",
+      "-package-name",
+      "watchmath",
+      "-c",
+      "/Users/nick/Development/Learning/MobileApp/ReactNative/ProjectUNTIL/UNTIL/ios/WatchMath/Sources/WatchMath/DayWatchCache.swift",
+      "/Users/nick/Development/Learning/MobileApp/ReactNative/ProjectUNTIL/UNTIL/ios/WatchMath/Sources/WatchMath/PeriodSnapshot.swift",
+      "/Users/nick/Development/Learning/MobileApp/ReactNative/ProjectUNTIL/UNTIL/ios/WatchMath/Sources/WatchMath/WatchLifeClock.swift",
+      "/Users/nick/Development/Learning/MobileApp/ReactNative/ProjectUNTIL/UNTIL/ios/WatchMath/Sources/WatchMath/WatchProfileStore.swift",
+      "/Users/nick/Development/Learning/MobileApp/ReactNative/ProjectUNTIL/UNTIL/ios/WatchMath/Sources/WatchMath/WatchProgressColor.swift",
+      "/Users/nick/Development/Learning/MobileApp/ReactNative/ProjectUNTIL/UNTIL/ios/WatchMath/Sources/WatchMath/WatchTimeClock.swift",
+      "-I",
+      "/Users/nick/Development/Learning/MobileApp/ReactNative/ProjectUNTIL/UNTIL/ios/WatchMath/.build/arm64-apple-macosx/debug/Modules",
+      "-target",
+      "arm64-apple-macosx13.0",
+      "-incremental",
+      "-enable-batch-mode",
+      "-serialize-diagnostics",
+      "-index-store-path",
+      "/Users/nick/Development/Learning/MobileApp/ReactNative/ProjectUNTIL/UNTIL/ios/WatchMath/.build/arm64-apple-macosx/debug/index/store",
+      "-Onone",
+      "-enable-testing",
+      "-j10",
+      "-DSWIFT_PACKAGE",
+      "-DDEBUG",
+      "-DSWIFT_MODULE_RESOURCE_BUNDLE_UNAVAILABLE",
+      "-module-cache-path",
+      "/Users/nick/Development/Learning/MobileApp/ReactNative/ProjectUNTIL/UNTIL/ios/WatchMath/.build/arm64-apple-macosx/debug/ModuleCache",
+      "-parseable-output",
+      "-parse-as-library",
+      "-emit-objc-header",
+      "-emit-objc-header-path",
+      "/Users/nick/Development/Learning/MobileApp/ReactNative/ProjectUNTIL/UNTIL/ios/WatchMath/.build/arm64-apple-macosx/debug/WatchMath.build/include/WatchMath-Swift.h",
+      "-swift-version",
+      "5",
+      "-plugin-path",
+      "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/plugins/testing",
+      "-sdk",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.5.sdk",
+      "-F",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
+      "-I",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
+      "-L",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
+      "-g",
+      "-Xcc",
+      "-isysroot",
+      "-Xcc",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.5.sdk",
+      "-Xcc",
+      "-F",
+      "-Xcc",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
+      "-Xcc",
+      "-fPIC",
+      "-Xcc",
+      "-g",
+      "-package-name",
+      "watchmath",
+      "-driver-use-frontend-path",
+      "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc"
+    ],
+    "WatchMathPackageTests" : [
+      "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc",
+      "-module-name",
+      "WatchMathPackageTests",
+      "-package-name",
+      "watchmath",
+      "-c",
+      "/Users/nick/Development/Learning/MobileApp/ReactNative/ProjectUNTIL/UNTIL/ios/WatchMath/.build/arm64-apple-macosx/debug/WatchMathPackageTests.derived/runner.swift",
+      "-I",
+      "/Users/nick/Development/Learning/MobileApp/ReactNative/ProjectUNTIL/UNTIL/ios/WatchMath/.build/arm64-apple-macosx/debug/Modules",
+      "-target",
+      "arm64-apple-macosx13.0",
+      "-incremental",
+      "-enable-batch-mode",
+      "-serialize-diagnostics",
+      "-index-store-path",
+      "/Users/nick/Development/Learning/MobileApp/ReactNative/ProjectUNTIL/UNTIL/ios/WatchMath/.build/arm64-apple-macosx/debug/index/store",
+      "-Onone",
+      "-enable-testing",
+      "-Xfrontend",
+      "-enable-cross-import-overlays",
+      "-j10",
+      "-DSWIFT_PACKAGE",
+      "-DDEBUG",
+      "-DSWIFT_MODULE_RESOURCE_BUNDLE_UNAVAILABLE",
+      "-module-cache-path",
+      "/Users/nick/Development/Learning/MobileApp/ReactNative/ProjectUNTIL/UNTIL/ios/WatchMath/.build/arm64-apple-macosx/debug/ModuleCache",
+      "-parseable-output",
+      "-parse-as-library",
+      "-emit-objc-header",
+      "-emit-objc-header-path",
+      "/Users/nick/Development/Learning/MobileApp/ReactNative/ProjectUNTIL/UNTIL/ios/WatchMath/.build/arm64-apple-macosx/debug/WatchMathPackageTests.build/include/WatchMathPackageTests-Swift.h",
+      "-plugin-path",
+      "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/plugins/testing",
+      "-sdk",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.5.sdk",
+      "-F",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
+      "-I",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
+      "-L",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
+      "-g",
+      "-Xcc",
+      "-isysroot",
+      "-Xcc",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.5.sdk",
+      "-Xcc",
+      "-F",
+      "-Xcc",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
+      "-Xcc",
+      "-fPIC",
+      "-Xcc",
+      "-g",
+      "-package-name",
+      "watchmath",
+      "-driver-use-frontend-path",
+      "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc"
+    ],
+    "WatchMathTests" : [
+      "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc",
+      "-module-name",
+      "WatchMathTests",
+      "-package-name",
+      "watchmath",
+      "-c",
+      "/Users/nick/Development/Learning/MobileApp/ReactNative/ProjectUNTIL/UNTIL/ios/WatchMath/Tests/WatchMathTests/WatchLifeClockTests.swift",
+      "/Users/nick/Development/Learning/MobileApp/ReactNative/ProjectUNTIL/UNTIL/ios/WatchMath/Tests/WatchMathTests/WatchProgressColorTests.swift",
+      "/Users/nick/Development/Learning/MobileApp/ReactNative/ProjectUNTIL/UNTIL/ios/WatchMath/Tests/WatchMathTests/WatchTimeClockTests.swift",
+      "-I",
+      "/Users/nick/Development/Learning/MobileApp/ReactNative/ProjectUNTIL/UNTIL/ios/WatchMath/.build/arm64-apple-macosx/debug/Modules",
+      "-target",
+      "arm64-apple-macosx14.0",
+      "-incremental",
+      "-enable-batch-mode",
+      "-serialize-diagnostics",
+      "-index-store-path",
+      "/Users/nick/Development/Learning/MobileApp/ReactNative/ProjectUNTIL/UNTIL/ios/WatchMath/.build/arm64-apple-macosx/debug/index/store",
+      "-Onone",
+      "-enable-testing",
+      "-Xfrontend",
+      "-enable-cross-import-overlays",
+      "-j10",
+      "-DSWIFT_PACKAGE",
+      "-DDEBUG",
+      "-DSWIFT_MODULE_RESOURCE_BUNDLE_UNAVAILABLE",
+      "-module-cache-path",
+      "/Users/nick/Development/Learning/MobileApp/ReactNative/ProjectUNTIL/UNTIL/ios/WatchMath/.build/arm64-apple-macosx/debug/ModuleCache",
+      "-parseable-output",
+      "-parse-as-library",
+      "-swift-version",
+      "5",
+      "-plugin-path",
+      "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/plugins/testing",
+      "-sdk",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.5.sdk",
+      "-F",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
+      "-I",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
+      "-L",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
+      "-g",
+      "-Xcc",
+      "-isysroot",
+      "-Xcc",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.5.sdk",
+      "-Xcc",
+      "-F",
+      "-Xcc",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
+      "-Xcc",
+      "-fPIC",
+      "-Xcc",
+      "-g",
+      "-package-name",
+      "watchmath",
+      "-driver-use-frontend-path",
+      "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc"
+    ]
+  },
+  "targetDependencyMap" : {
+    "WatchMath" : [
+
+    ],
+    "WatchMathPackageTests" : [
+      "WatchMathTests",
+      "WatchMath"
+    ],
+    "WatchMathTests" : [
+      "WatchMath"
+    ]
+  },
+  "testDiscoveryCommands" : {
+
+  },
+  "testEntryPointCommands" : {
+    "/Users/nick/Development/Learning/MobileApp/ReactNative/ProjectUNTIL/UNTIL/ios/WatchMath/.build/arm64-apple-macosx/debug/WatchMathPackageTests.derived/runner.swift" : {
+      "inputs" : [
+
+      ],
+      "outputs" : [
+        {
+          "kind" : "file",
+          "name" : "/Users/nick/Development/Learning/MobileApp/ReactNative/ProjectUNTIL/UNTIL/ios/WatchMath/.build/arm64-apple-macosx/debug/WatchMathPackageTests.derived/runner.swift"
+        }
+      ]
+    }
+  },
+  "traitConfiguration" : {
+    "default" : {
+
+    }
+  },
+  "writeCommands" : {
+    "/Users/nick/Development/Learning/MobileApp/ReactNative/ProjectUNTIL/UNTIL/ios/WatchMath/.build/arm64-apple-macosx/debug/WatchMath.build/sources" : {
+      "alwaysOutOfDate" : false,
+      "inputs" : [
+        {
+          "kind" : "virtual",
+          "name" : "<sources-file-list>"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/nick/Development/Learning/MobileApp/ReactNative/ProjectUNTIL/UNTIL/ios/WatchMath/Sources/WatchMath/DayWatchCache.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/nick/Development/Learning/MobileApp/ReactNative/ProjectUNTIL/UNTIL/ios/WatchMath/Sources/WatchMath/PeriodSnapshot.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/nick/Development/Learning/MobileApp/ReactNative/ProjectUNTIL/UNTIL/ios/WatchMath/Sources/WatchMath/WatchLifeClock.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/nick/Development/Learning/MobileApp/ReactNative/ProjectUNTIL/UNTIL/ios/WatchMath/Sources/WatchMath/WatchProfileStore.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/nick/Development/Learning/MobileApp/ReactNative/ProjectUNTIL/UNTIL/ios/WatchMath/Sources/WatchMath/WatchProgressColor.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/nick/Development/Learning/MobileApp/ReactNative/ProjectUNTIL/UNTIL/ios/WatchMath/Sources/WatchMath/WatchTimeClock.swift"
+        }
+      ],
+      "outputFilePath" : "/Users/nick/Development/Learning/MobileApp/ReactNative/ProjectUNTIL/UNTIL/ios/WatchMath/.build/arm64-apple-macosx/debug/WatchMath.build/sources"
+    },
+    "/Users/nick/Development/Learning/MobileApp/ReactNative/ProjectUNTIL/UNTIL/ios/WatchMath/.build/arm64-apple-macosx/debug/WatchMathPackageTests.build/sources" : {
+      "alwaysOutOfDate" : false,
+      "inputs" : [
+        {
+          "kind" : "virtual",
+          "name" : "<sources-file-list>"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/nick/Development/Learning/MobileApp/ReactNative/ProjectUNTIL/UNTIL/ios/WatchMath/.build/arm64-apple-macosx/debug/WatchMathPackageTests.derived/runner.swift"
+        }
+      ],
+      "outputFilePath" : "/Users/nick/Development/Learning/MobileApp/ReactNative/ProjectUNTIL/UNTIL/ios/WatchMath/.build/arm64-apple-macosx/debug/WatchMathPackageTests.build/sources"
+    },
+    "/Users/nick/Development/Learning/MobileApp/ReactNative/ProjectUNTIL/UNTIL/ios/WatchMath/.build/arm64-apple-macosx/debug/WatchMathPackageTests.product/Objects.LinkFileList" : {
+      "alwaysOutOfDate" : false,
+      "inputs" : [
+        {
+          "kind" : "virtual",
+          "name" : "<link-file-list>"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/nick/Development/Learning/MobileApp/ReactNative/ProjectUNTIL/UNTIL/ios/WatchMath/.build/arm64-apple-macosx/debug/WatchMath.build/DayWatchCache.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/nick/Development/Learning/MobileApp/ReactNative/ProjectUNTIL/UNTIL/ios/WatchMath/.build/arm64-apple-macosx/debug/WatchMath.build/PeriodSnapshot.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/nick/Development/Learning/MobileApp/ReactNative/ProjectUNTIL/UNTIL/ios/WatchMath/.build/arm64-apple-macosx/debug/WatchMath.build/WatchLifeClock.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/nick/Development/Learning/MobileApp/ReactNative/ProjectUNTIL/UNTIL/ios/WatchMath/.build/arm64-apple-macosx/debug/WatchMath.build/WatchProfileStore.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/nick/Development/Learning/MobileApp/ReactNative/ProjectUNTIL/UNTIL/ios/WatchMath/.build/arm64-apple-macosx/debug/WatchMath.build/WatchProgressColor.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/nick/Development/Learning/MobileApp/ReactNative/ProjectUNTIL/UNTIL/ios/WatchMath/.build/arm64-apple-macosx/debug/WatchMath.build/WatchTimeClock.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/nick/Development/Learning/MobileApp/ReactNative/ProjectUNTIL/UNTIL/ios/WatchMath/.build/arm64-apple-macosx/debug/WatchMathPackageTests.build/runner.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/nick/Development/Learning/MobileApp/ReactNative/ProjectUNTIL/UNTIL/ios/WatchMath/.build/arm64-apple-macosx/debug/WatchMathTests.build/WatchLifeClockTests.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/nick/Development/Learning/MobileApp/ReactNative/ProjectUNTIL/UNTIL/ios/WatchMath/.build/arm64-apple-macosx/debug/WatchMathTests.build/WatchProgressColorTests.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/nick/Development/Learning/MobileApp/ReactNative/ProjectUNTIL/UNTIL/ios/WatchMath/.build/arm64-apple-macosx/debug/WatchMathTests.build/WatchTimeClockTests.swift.o"
+        }
+      ],
+      "outputFilePath" : "/Users/nick/Development/Learning/MobileApp/ReactNative/ProjectUNTIL/UNTIL/ios/WatchMath/.build/arm64-apple-macosx/debug/WatchMathPackageTests.product/Objects.LinkFileList"
+    },
+    "/Users/nick/Development/Learning/MobileApp/ReactNative/ProjectUNTIL/UNTIL/ios/WatchMath/.build/arm64-apple-macosx/debug/WatchMathTests.build/sources" : {
+      "alwaysOutOfDate" : false,
+      "inputs" : [
+        {
+          "kind" : "virtual",
+          "name" : "<sources-file-list>"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/nick/Development/Learning/MobileApp/ReactNative/ProjectUNTIL/UNTIL/ios/WatchMath/Tests/WatchMathTests/WatchLifeClockTests.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/nick/Development/Learning/MobileApp/ReactNative/ProjectUNTIL/UNTIL/ios/WatchMath/Tests/WatchMathTests/WatchProgressColorTests.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/nick/Development/Learning/MobileApp/ReactNative/ProjectUNTIL/UNTIL/ios/WatchMath/Tests/WatchMathTests/WatchTimeClockTests.swift"
+        }
+      ],
+      "outputFilePath" : "/Users/nick/Development/Learning/MobileApp/ReactNative/ProjectUNTIL/UNTIL/ios/WatchMath/.build/arm64-apple-macosx/debug/WatchMathTests.build/sources"
+    },
+    "/Users/nick/Development/Learning/MobileApp/ReactNative/ProjectUNTIL/UNTIL/ios/WatchMath/.build/arm64-apple-macosx/debug/swift-version--58304C5D6DBC2206.txt" : {
+      "alwaysOutOfDate" : true,
+      "inputs" : [
+        {
+          "kind" : "virtual",
+          "name" : "<swift-get-version>"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc"
+        }
+      ],
+      "outputFilePath" : "/Users/nick/Development/Learning/MobileApp/ReactNative/ProjectUNTIL/UNTIL/ios/WatchMath/.build/arm64-apple-macosx/debug/swift-version--58304C5D6DBC2206.txt"
+    }
+  }
+}

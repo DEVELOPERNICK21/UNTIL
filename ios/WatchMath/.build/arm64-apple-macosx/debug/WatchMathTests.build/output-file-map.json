@@ -1,0 +1,26 @@
+{
+  "": {
+    "swift-dependencies": "/Users/nick/Development/Learning/MobileApp/ReactNative/ProjectUNTIL/UNTIL/ios/WatchMath/.build/arm64-apple-macosx/debug/WatchMathTests.build/primary.swiftdeps"
+  },
+  "/Users/nick/Development/Learning/MobileApp/ReactNative/ProjectUNTIL/UNTIL/ios/WatchMath/Tests/WatchMathTests/WatchLifeClockTests.swift": {
+    "dependencies": "/Users/nick/Development/Learning/MobileApp/ReactNative/ProjectUNTIL/UNTIL/ios/WatchMath/.build/arm64-apple-macosx/debug/WatchMathTests.build/WatchLifeClockTests.d",
+    "object": "/Users/nick/Development/Learning/MobileApp/ReactNative/ProjectUNTIL/UNTIL/ios/WatchMath/.build/arm64-apple-macosx/debug/WatchMathTests.build/WatchLifeClockTests.swift.o",
+    "swiftmodule": "/Users/nick/Development/Learning/MobileApp/ReactNative/ProjectUNTIL/UNTIL/ios/WatchMath/.build/arm64-apple-macosx/debug/WatchMathTests.build/WatchLifeClockTests~partial.swiftmodule",
+    "swift-dependencies": "/Users/nick/Development/Learning/MobileApp/ReactNative/ProjectUNTIL/UNTIL/ios/WatchMath/.build/arm64-apple-macosx/debug/WatchMathTests.build/WatchLifeClockTests.swiftdeps",
+    "diagnostics": "/Users/nick/Development/Learning/MobileApp/ReactNative/ProjectUNTIL/UNTIL/ios/WatchMath/.build/arm64-apple-macosx/debug/WatchMathTests.build/WatchLifeClockTests.dia"
+  },
+  "/Users/nick/Development/Learning/MobileApp/ReactNative/ProjectUNTIL/UNTIL/ios/WatchMath/Tests/WatchMathTests/WatchProgressColorTests.swift": {
+    "dependencies": "/Users/nick/Development/Learning/MobileApp/ReactNative/ProjectUNTIL/UNTIL/ios/WatchMath/.build/arm64-apple-macosx/debug/WatchMathTests.build/WatchProgressColorTests.d",
+    "object": "/Users/nick/Development/Learning/MobileApp/ReactNative/ProjectUNTIL/UNTIL/ios/WatchMath/.build/arm64-apple-macosx/debug/WatchMathTests.build/WatchProgressColorTests.swift.o",
+    "swiftmodule": "/Users/nick/Development/Learning/MobileApp/ReactNative/ProjectUNTIL/UNTIL/ios/WatchMath/.build/arm64-apple-macosx/debug/WatchMathTests.build/WatchProgressColorTests~partial.swiftmodule",
+    "swift-dependencies": "/Users/nick/Development/Learning/MobileApp/ReactNative/ProjectUNTIL/UNTIL/ios/WatchMath/.build/arm64-apple-macosx/debug/WatchMathTests.build/WatchProgressColorTests.swiftdeps",
+    "diagnostics": "/Users/nick/Development/Learning/MobileApp/ReactNative/ProjectUNTIL/UNTIL/ios/WatchMath/.build/arm64-apple-macosx/debug/WatchMathTests.build/WatchProgressColorTests.dia"
+  },
+  "/Users/nick/Development/Learning/MobileApp/ReactNative/ProjectUNTIL/UNTIL/ios/WatchMath/Tests/WatchMathTests/WatchTimeClockTests.swift": {
+    "dependencies": "/Users/nick/Development/Learning/MobileApp/ReactNative/ProjectUNTIL/UNTIL/ios/WatchMath/.build/arm64-apple-macosx/debug/WatchMathTests.build/WatchTimeClockTests.d",
+    "object": "/Users/nick/Development/Learning/MobileApp/ReactNative/ProjectUNTIL/UNTIL/ios/WatchMath/.build/arm64-apple-macosx/debug/WatchMathTests.build/WatchTimeClockTests.swift.o",
+    "swiftmodule": "/Users/nick/Development/Learning/MobileApp/ReactNative/ProjectUNTIL/UNTIL/ios/WatchMath/.build/arm64-apple-macosx/debug/WatchMathTests.build/WatchTimeClockTests~partial.swiftmodule",
+    "swift-dependencies": "/Users/nick/Development/Learning/MobileApp/ReactNative/ProjectUNTIL/UNTIL/ios/WatchMath/.build/arm64-apple-macosx/debug/WatchMathTests.build/WatchTimeClockTests.swiftdeps",
+    "diagnostics": "/Users/nick/Development/Learning/MobileApp/ReactNative/ProjectUNTIL/UNTIL/ios/WatchMath/.build/arm64-apple-macosx/debug/WatchMathTests.build/WatchTimeClockTests.dia"
+  }
+}
