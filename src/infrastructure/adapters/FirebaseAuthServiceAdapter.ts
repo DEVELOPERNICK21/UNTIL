@@ -1,13 +1,18 @@
 /**
- * FirebaseAuthServiceAdapter — Google + email/password via Firebase Auth.
+ * FirebaseAuthServiceAdapter — Apple (iOS) + Google + email/password via Firebase Auth.
  *
- * Console: enable Google and Email/Password under Authentication → Sign-in method.
- * Google also needs UNTIL_GOOGLE_WEB_CLIENT_ID and platform OAuth clients
- * (see earlier adapter notes / verification doc).
+ * Console: enable Apple, Google and Email/Password under Authentication → Sign-in method.
+ * Apple needs the "Sign in with Apple" capability on the iOS App ID (entitlement in
+ * UNTIL.entitlements). Google also needs UNTIL_GOOGLE_WEB_CLIENT_ID and platform
+ * OAuth clients (see earlier adapter notes / verification doc).
  */
 
-import type { IAuthService } from '../../domain/ports/IAuthService';
+import type {
+  AppleReauthOptions,
+  IAuthService,
+} from '../../domain/ports/IAuthService';
 import type { AuthProviderId, AuthUser } from '../../types';
+import type { appleAuth as appleAuthType } from '@invertase/react-native-apple-authentication';
 import {
   AuthCancelledError,
   AuthRequiresRecentLoginError,
@@ -37,8 +42,13 @@ interface AuthCredentialLike {
   secret: string;
 }
 
+interface AuthInstance {
+  currentUser: MinimalFirebaseUser | null;
+  revokeToken: (authorizationCode: string) => Promise<void>;
+}
+
 interface AuthModule {
-  instance: unknown;
+  instance: AuthInstance;
   onAuthStateChanged: (
     auth: unknown,
     listener: (user: MinimalFirebaseUser | null) => void,
@@ -72,7 +82,58 @@ interface AuthModule {
   EmailAuthProvider: {
     credential: (email: string, password: string) => AuthCredentialLike;
   };
+  AppleAuthProvider: {
+    credential: (identityToken: string, nonce: string) => AuthCredentialLike;
+  };
   currentUser: () => MinimalFirebaseUser | null;
+}
+
+type AppleAuthModule = typeof appleAuthType;
+
+function getAppleAuth(): AppleAuthModule {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const mod = require('@invertase/react-native-apple-authentication') as {
+    appleAuth: AppleAuthModule;
+  };
+  return mod.appleAuth;
+}
+
+type AppleCredentialResult = {
+  identityToken: string;
+  nonce: string;
+  authorizationCode: string | null;
+};
+
+async function requestAppleCredential(): Promise<AppleCredentialResult> {
+  const appleAuth = getAppleAuth();
+  if (!appleAuth.isSupported) {
+    throw new Error('Sign in with Apple is not available on this device.');
+  }
+  let response: Awaited<ReturnType<AppleAuthModule['performRequest']>>;
+  try {
+    response = await appleAuth.performRequest({
+      requestedOperation: appleAuth.Operation.LOGIN,
+      // FULL_NAME must come first: the native module drops it otherwise.
+      requestedScopes: [appleAuth.Scope.FULL_NAME, appleAuth.Scope.EMAIL],
+    });
+  } catch (e) {
+    const code =
+      e && typeof e === 'object' && 'code' in e
+        ? String((e as { code: unknown }).code)
+        : '';
+    if (code === appleAuth.Error.CANCELED) {
+      throw new AuthCancelledError();
+    }
+    throw e;
+  }
+  if (!response.identityToken) {
+    throw new Error('Apple sign-in did not return an identity token.');
+  }
+  return {
+    identityToken: response.identityToken,
+    nonce: response.nonce,
+    authorizationCode: response.authorizationCode,
+  };
 }
 
 interface GoogleSigninModule {
@@ -118,10 +179,9 @@ function getAuthModule(): AuthModule | null {
       reauthenticateWithCredential,
       GoogleAuthProvider,
       EmailAuthProvider,
+      AppleAuthProvider,
     } = require('@react-native-firebase/auth') as {
-      getAuth: (
-        app: unknown,
-      ) => unknown & { currentUser: MinimalFirebaseUser | null };
+      getAuth: (app: unknown) => AuthInstance;
       onAuthStateChanged: AuthModule['onAuthStateChanged'];
       signInWithCredential: AuthModule['signInWithCredential'];
       signInWithEmailAndPassword: AuthModule['signInWithEmailAndPassword'];
@@ -131,10 +191,9 @@ function getAuthModule(): AuthModule | null {
       reauthenticateWithCredential: AuthModule['reauthenticateWithCredential'];
       GoogleAuthProvider: AuthModule['GoogleAuthProvider'];
       EmailAuthProvider: AuthModule['EmailAuthProvider'];
+      AppleAuthProvider: AuthModule['AppleAuthProvider'];
     };
-    const instance = getAuth(getApp()) as {
-      currentUser: MinimalFirebaseUser | null;
-    };
+    const instance = getAuth(getApp());
     return {
       instance,
       onAuthStateChanged,
@@ -146,6 +205,7 @@ function getAuthModule(): AuthModule | null {
       reauthenticateWithCredential,
       GoogleAuthProvider,
       EmailAuthProvider,
+      AppleAuthProvider,
       currentUser: () => instance.currentUser,
     };
   } catch (e) {
@@ -217,6 +277,21 @@ function mapAuthError(error: unknown, fallback: string): Error {
   }
 }
 
+function mapAppleAuthError(error: unknown, fallback: string): Error {
+  const code =
+    error && typeof error === 'object' && 'code' in error
+      ? String((error as { code: unknown }).code)
+      : '';
+  switch (code) {
+    case 'auth/invalid-credential':
+      return new Error('Apple sign-in failed. Try again.');
+    case 'auth/operation-not-allowed':
+      return new Error('Sign in with Apple is not set up yet.');
+    default:
+      return mapAuthError(error, fallback);
+  }
+}
+
 let googleSignInConfigured = false;
 
 function ensureGoogleSignInConfigured(): void {
@@ -232,6 +307,34 @@ function ensureGoogleSignInConfigured(): void {
 }
 
 export class FirebaseAuthServiceAdapter implements IAuthService {
+  isAppleSignInAvailable(): boolean {
+    try {
+      return getAppleAuth().isSupported;
+    } catch (e) {
+      recordCrashError(e, 'FirebaseAuthServiceAdapter.isAppleSignInAvailable');
+      return false;
+    }
+  }
+
+  async signInWithApple(): Promise<AuthUser> {
+    const auth = requireAuth();
+    const { identityToken, nonce } = await requestAppleCredential();
+    try {
+      const credential = auth.AppleAuthProvider.credential(identityToken, nonce);
+      const userCredential = await auth.signInWithCredential(
+        auth.instance,
+        credential,
+      );
+      const mapped = mapFirebaseUser(userCredential.user);
+      if (!mapped) {
+        throw new Error('Firebase sign-in did not return a user.');
+      }
+      return mapped;
+    } catch (e) {
+      throw mapAppleAuthError(e, 'Could not sign in with Apple.');
+    }
+  }
+
   async signInWithGoogle(): Promise<AuthUser> {
     const auth = requireAuth();
     ensureGoogleSignInConfigured();
@@ -346,6 +449,36 @@ export class FirebaseAuthServiceAdapter implements IAuthService {
         throw new AuthRequiresRecentLoginError();
       }
       throw mapAuthError(e, 'Could not delete account.');
+    }
+  }
+
+  async reauthenticateWithApple(options: AppleReauthOptions = {}): Promise<void> {
+    const auth = requireAuth();
+    const user = auth.currentUser();
+    if (!user) {
+      throw new Error('Not signed in');
+    }
+    const { identityToken, nonce, authorizationCode } =
+      await requestAppleCredential();
+    try {
+      const credential = auth.AppleAuthProvider.credential(identityToken, nonce);
+      await auth.reauthenticateWithCredential(user, credential);
+    } catch (e) {
+      throw mapAppleAuthError(e, 'Could not verify your Apple account.');
+    }
+    if (!options.revokeToken) return;
+    // A failed revoke (e.g. Apple key not configured in Firebase) must not block account deletion.
+    if (!authorizationCode) {
+      recordCrashError(
+        new Error('Apple reauth returned no authorization code'),
+        'FirebaseAuthServiceAdapter.reauthenticateWithApple.revoke',
+      );
+      return;
+    }
+    try {
+      await auth.instance.revokeToken(authorizationCode);
+    } catch (e) {
+      recordCrashError(e, 'FirebaseAuthServiceAdapter.reauthenticateWithApple.revoke');
     }
   }
 

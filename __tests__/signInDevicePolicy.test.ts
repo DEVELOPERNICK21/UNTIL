@@ -16,6 +16,9 @@ const USER: AuthUser = {
 };
 
 const authService: IAuthService = {
+  isAppleSignInAvailable: () => false,
+  signInWithApple: async () => USER,
+  reauthenticateWithApple: async () => {},
   signInWithGoogle: async () => USER,
   signInWithEmail: async () => USER,
   createAccountWithEmail: async () => USER,

@@ -12,6 +12,7 @@ RCT_EXTERN_METHOD(setCustomCounters:(NSString *)json)
 RCT_EXTERN_METHOD(setCountdowns:(NSString *)json)
 RCT_EXTERN_METHOD(setDailyTasksStats:(NSString *)json)
 RCT_EXTERN_METHOD(setHourCalculationState:(NSString *)json)
+RCT_EXTERN_METHOD(getHourCalculationFromAppGroup:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject)
 RCT_EXTERN_METHOD(getCustomCountersFromAppGroup:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject)
 RCT_EXTERN_METHOD(getWidgetStatus:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject)
 @end

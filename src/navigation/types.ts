@@ -30,6 +30,7 @@ export type RootStackParamList = {
   DynamicIsland: undefined;
   Overlay: undefined;
   ShareSnapshot: undefined;
+  Badges: undefined;
   Premium: undefined;
   TasksComingSoon: undefined;
   Account: undefined;

@@ -42,14 +42,19 @@ const WIDGET_OPTIONS: {
     description: 'Days left in life · set birth date · Premium.',
   },
   {
+    type: 'dailyTasks',
+    title: 'Tasks',
+    description: 'Tasks left today.',
+  },
+  {
     type: 'hourCalc',
     title: 'Hour timer',
-    description: 'Coming in a future update.',
+    description: 'A stopwatch you can start and stop from the island.',
   },
 ];
 
-function isComingSoonType(type: LiveActivityWidgetType): boolean {
-  return type === 'hourCalc';
+function isComingSoonType(_type: LiveActivityWidgetType): boolean {
+  return false;
 }
 
 export function useDynamicIslandControl() {

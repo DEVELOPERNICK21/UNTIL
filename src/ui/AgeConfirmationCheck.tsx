@@ -1,5 +1,6 @@
 import React from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
+import Svg, { Path } from 'react-native-svg';
 import { Radius, Spacing, useTheme } from '../theme';
 import { Text } from './Text';
 
@@ -8,6 +9,8 @@ interface AgeConfirmationCheckProps {
   onChange: (next: boolean) => void;
   minimumAge: number;
   disabled?: boolean;
+  /** Highlights the box when the user tried to continue without ticking it. */
+  attention?: boolean;
 }
 
 export function AgeConfirmationCheck({
@@ -15,9 +18,11 @@ export function AgeConfirmationCheck({
   onChange,
   minimumAge,
   disabled = false,
+  attention = false,
 }: AgeConfirmationCheckProps) {
   const theme = useTheme();
   const label = `I'm ${minimumAge} or older`;
+  const borderColor = checked || attention ? theme.percent : theme.divider;
   return (
     <Pressable
       onPress={() => onChange(!checked)}
@@ -32,14 +37,26 @@ export function AgeConfirmationCheck({
         style={[
           styles.box,
           {
-            borderColor: checked ? theme.percent : theme.divider,
+            borderColor,
+            borderWidth: attention && !checked ? 2 : 1.5,
             backgroundColor: checked ? theme.percent : 'transparent',
           },
         ]}
       >
-        {checked ? <View style={styles.tick} /> : null}
+        {checked ? (
+          <Svg width={14} height={14} viewBox="0 0 24 24">
+            <Path
+              d="M5 12.5l4.5 4.5L19 7.5"
+              stroke="#FFFFFF"
+              strokeWidth={3}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              fill="none"
+            />
+          </Svg>
+        ) : null}
       </View>
-      <Text variant="body" color="secondary">
+      <Text variant="body" color={attention && !checked ? 'primary' : 'secondary'}>
         {label}
       </Text>
     </Pressable>
@@ -57,14 +74,7 @@ const styles = StyleSheet.create({
     width: 22,
     height: 22,
     borderRadius: Radius.sm,
-    borderWidth: 1.5,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  tick: {
-    width: 10,
-    height: 10,
-    borderRadius: 2,
-    backgroundColor: '#0E0E10',
   },
 });

@@ -35,6 +35,10 @@ jest.mock('../src/components/engagement/EmberCompanion', () => ({
   EmberCompanion: () => null,
 }));
 
+jest.mock('../src/components/gamification', () => ({
+  BadgeUnlockHost: () => null,
+}));
+
 describe('AppEngagementLayer review attempts', () => {
   it('does not try opens when countdown requests a review', async () => {
     const tryCountdownReview = jest.fn().mockResolvedValue(true);

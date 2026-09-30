@@ -10,6 +10,9 @@ class FakeTaskRepo implements ITaskRepository {
   getTasksForDay(date: string) {
     return this.tasks.filter(t => t.date === date);
   }
+  getAllTasks() {
+    return this.tasks;
+  }
   addTask(_task: Omit<DailyTask, 'id' | 'completed'>): DailyTask {
     throw new Error('unused');
   }

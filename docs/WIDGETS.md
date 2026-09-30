@@ -2,7 +2,7 @@
 
 How to add or modify widgets for iOS and Android. Use this doc when creating a new widget.
 
-**Related:** [Dynamic Island Live Activity](DynamicIslandLiveActivity.md) – design for iOS Live Activity / Dynamic Island (day, month, year, daily tasks, hour calc, life).  
+**Related:** [Dynamic Island Live Activity](DYNAMIC_ISLAND.md) – iOS Live Activity / Dynamic Island (day, month, year, life, tasks, hour timer): live countdowns, interactive buttons, deep links.  
 **Apple Watch:** [APPLE_WATCH.md](./APPLE_WATCH.md) – Day % circular complication + watch detail (v1).  
 **Wear OS:** [WEAR_OS.md](./WEAR_OS.md) – Day % tile + complication + detail on Android watches.  
 **Ember Phase 1:** [superpowers/specs/2026-07-14-ember-widgets-phase1-design.md](./superpowers/specs/2026-07-14-ember-widgets-phase1-design.md).

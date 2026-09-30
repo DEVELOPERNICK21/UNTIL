@@ -70,6 +70,15 @@ class WidgetBridge: NSObject {
     WidgetCenter.shared.reloadTimelines(ofKind: kindHourCalculation)
   }
 
+  /// Hour timer as last written by the widget or the Dynamic Island (they work with the app closed).
+  @objc func getHourCalculationFromAppGroup(_ resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
+    guard let defaults = UserDefaults(suiteName: appGroupID) else {
+      resolve(nil)
+      return
+    }
+    resolve(defaults.string(forKey: hourCalculationWidgetKey))
+  }
+
   @objc func getCustomCountersFromAppGroup(_ resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
     guard let defaults = UserDefaults(suiteName: appGroupID) else {
       resolve(nil)

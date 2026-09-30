@@ -15,6 +15,7 @@ workflows:
     environment:
       groups:
         - google_play # Must contain secret GOOGLE_PLAY_SERVICE_ACCOUNT_CREDENTIALS
+        - until_release # REVENUECAT_API_KEY_IOS, REVENUECAT_API_KEY_ANDROID, UNTIL_POSTHOG_API_KEY (secrets)
       android_signing:
         # Must match Codemagic UI → Code signing identities → Android keystores reference name
         - UNTILAPP
@@ -114,6 +115,8 @@ workflows:
           source: true
 
     environment:
+      groups:
+        - until_release # REVENUECAT_API_KEY_IOS, REVENUECAT_API_KEY_ANDROID, UNTIL_POSTHOG_API_KEY (secrets)
       ios_signing:
         distribution_type: app_store # or ad_hoc for TestFlight/internal
         bundle_identifier: com.developernick.until
@@ -121,6 +124,8 @@ workflows:
         BUNDLE_ID: 'com.developernick.until'
         XCODE_WORKSPACE: 'UNTIL.xcworkspace'
         XCODE_SCHEME: 'UNTIL'
+        # Same Firebase Web OAuth client as Android. Without it Google Sign-In fails in release.
+        UNTIL_GOOGLE_WEB_CLIENT_ID: '150745476537-l5sr6mf0ma7le6qqgk88387fmhgc6p3a.apps.googleusercontent.com'
 
     scripts:
       - name: Install npm dependencies
@@ -137,6 +142,10 @@ workflows:
             echo "REVENUECAT_API_KEY_IOS=${REVENUECAT_API_KEY_IOS:-}"
             echo "REVENUECAT_API_KEY_ANDROID=${REVENUECAT_API_KEY_ANDROID:-}"
           } > "$CM_BUILD_DIR/.env"
+          if [ -z "$UNTIL_GOOGLE_WEB_CLIENT_ID" ]; then
+            echo "ERROR: UNTIL_GOOGLE_WEB_CLIENT_ID is empty" >&2
+            exit 1
+          fi
           if [ -z "$REVENUECAT_API_KEY_IOS" ]; then
             echo "ERROR: REVENUECAT_API_KEY_IOS is empty (use appl_ key, never test_)" >&2
             exit 1

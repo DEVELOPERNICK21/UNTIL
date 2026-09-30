@@ -1,5 +1,5 @@
 /**
- * Settings → Account — Google sign-in, device list, sign out.
+ * Settings → Account — Apple (iOS) / Google / email sign-in, device list, sign out.
  * Signed out: CTA + short benefit line. Signed in: email, devices, sign out.
  */
 
@@ -43,6 +43,7 @@ import {
   EmailPasswordAuthForm,
   type EmailAuthMode,
 } from '../auth/EmailPasswordAuthForm';
+import { AppleSignInButton } from '../auth/AppleSignInButton';
 import { GoogleMark } from '../auth/GoogleMark';
 
 const DEVICE_LIMIT_BANNER_COPY =
@@ -73,6 +74,8 @@ export function AccountScreen() {
   const theme = useTheme();
   const { signedIn, email, devicePremiumAllowed } = useAuthSession();
   const {
+    appleSignInAvailable,
+    signInWithApple,
     signInWithGoogle,
     signInWithEmail,
     createAccountWithEmail,
@@ -130,6 +133,25 @@ export function AccountScreen() {
     void logAnalyticsEvent('account_screen_viewed', { signed_in: signedIn });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const handleAppleSignIn = async () => {
+    void logAnalyticsEvent('account_screen_apple_tapped');
+    try {
+      const result = await signInWithApple(ageConfirmed);
+      if (!result) {
+        void logAnalyticsEvent('account_screen_signin_cancelled');
+        return;
+      }
+      void logAnalyticsEvent('account_screen_signin_succeeded', {
+        provider: 'apple',
+      });
+      void loadDevices();
+    } catch {
+      void logAnalyticsEvent('account_screen_signin_failed', {
+        provider: 'apple',
+      });
+    }
+  };
 
   const handleGoogleSignIn = async () => {
     void logAnalyticsEvent('account_screen_google_tapped');
@@ -340,10 +362,15 @@ export function AccountScreen() {
                   termsUrl={LEGAL_URLS.terms}
                   privacyUrl={LEGAL_URLS.privacy}
                 />
-                {/*
-                  Google + email/password. App Store guideline 4.8 still needs
-                  Sign in with Apple before iOS submission if Google stays.
-                */}
+                {/* App Store guideline 4.8: Apple must sit alongside Google on iOS. */}
+                {appleSignInAvailable ? (
+                  <AppleSignInButton
+                    onPress={() => {
+                      void handleAppleSignIn();
+                    }}
+                    busy={busy}
+                  />
+                ) : null}
                 <TouchableOpacity
                   style={[
                     styles.googleButton,
@@ -438,7 +465,7 @@ export function AccountScreen() {
                           { color: theme.textSecondary },
                         ]}
                       >
-                        Google or email account
+                        UNTIL account
                       </Text>
                     </View>
                   </View>

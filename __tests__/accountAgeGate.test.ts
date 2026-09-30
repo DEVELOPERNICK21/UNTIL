@@ -4,6 +4,7 @@ import {
   isUnderMinimumAge,
 } from '../src/core/legal/ageGate';
 import { AssertAccountAgeGateUseCase } from '../src/domain/useCases/AssertAccountAgeGateUseCase';
+import { SignInWithAppleUseCase } from '../src/domain/useCases/SignInWithAppleUseCase';
 import { SignInWithGoogleUseCase } from '../src/domain/useCases/SignInWithGoogleUseCase';
 import { CreateAccountWithEmailUseCase } from '../src/domain/useCases/CreateAccountWithEmailUseCase';
 import { VerifyStudentEmailUseCase } from '../src/domain/useCases/VerifyStudentEmailUseCase';
@@ -64,6 +65,10 @@ function makeAuthSpy() {
   const calls: string[] = [];
   const user = { uid: 'u', email: 'a@b.com', displayName: null, providers: [] };
   const auth = {
+    signInWithApple: async () => {
+      calls.push('apple');
+      return user;
+    },
     signInWithGoogle: async () => {
       calls.push('google');
       return user;
@@ -94,6 +99,27 @@ describe('account creation is refused before any provider call', () => {
     );
     expect(calls).toEqual([]);
     expect(lockout.locked).toBe(true);
+  });
+
+  it('Apple: under 13 never reaches Apple or Firebase', async () => {
+    const { gate, lockout } = makeGate('2016-05-05');
+    const { auth, complete, calls } = makeAuthSpy();
+    const useCase = new SignInWithAppleUseCase(auth, complete, gate);
+
+    await expect(useCase.execute({ confirmedMinimumAge: true })).rejects.toBeInstanceOf(
+      AgeGateError
+    );
+    expect(calls).toEqual([]);
+    expect(lockout.locked).toBe(true);
+  });
+
+  it('Apple: adult with confirmation proceeds', async () => {
+    const { gate } = makeGate('1990-01-01');
+    const { auth, complete, calls } = makeAuthSpy();
+    const useCase = new SignInWithAppleUseCase(auth, complete, gate);
+
+    await useCase.execute({ confirmedMinimumAge: true });
+    expect(calls).toEqual(['apple']);
   });
 
   it('Email: unconfirmed age never reaches Firebase', async () => {

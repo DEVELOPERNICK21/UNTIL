@@ -1,15 +1,17 @@
 /**
- * useAccountActions — sign-in (Google / email), sign-out, devices for account UI.
+ * useAccountActions — sign-in (Apple / Google / email), sign-out, devices for account UI.
  */
 
 import { useCallback, useEffect, useState } from 'react';
 import {
   accountCloudStore,
+  authService,
   authSessionRepository,
   createAccountWithEmailUseCase,
   deleteAccountUseCase,
   deviceIdProvider,
   removeAccountDeviceUseCase,
+  signInWithAppleUseCase,
   signInWithEmailUseCase,
   signInWithGoogleUseCase,
   signOutUseCase,
@@ -28,6 +30,9 @@ export function useAccountActions() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [currentDeviceId, setCurrentDeviceId] = useState<string | null>(null);
+  const [appleSignInAvailable] = useState(() =>
+    authService.isAppleSignInAvailable(),
+  );
 
   useEffect(() => {
     let cancelled = false;
@@ -55,6 +60,20 @@ export function useAccountActions() {
       }
     },
     [],
+  );
+
+  const signInWithApple = useCallback(
+    async (confirmedMinimumAge: boolean): Promise<SignInResult | null> => {
+      try {
+        return await runAction(() =>
+          signInWithAppleUseCase.execute({ confirmedMinimumAge }),
+        );
+      } catch (e) {
+        if (isAuthCancelledError(e)) return null;
+        throw e;
+      }
+    },
+    [runAction],
   );
 
   const signInWithGoogle = useCallback(
@@ -138,6 +157,8 @@ export function useAccountActions() {
   const clearError = useCallback(() => setError(null), []);
 
   return {
+    appleSignInAvailable,
+    signInWithApple,
     signInWithGoogle,
     signInWithEmail,
     createAccountWithEmail,

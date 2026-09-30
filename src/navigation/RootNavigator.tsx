@@ -31,6 +31,7 @@ import { HourCalculationScreen } from '../surfaces/app/HourCalculationScreen';
 import { DynamicIslandScreen } from '../surfaces/app/DynamicIslandScreen';
 import { OverlayScreen } from '../surfaces/app/OverlayScreen';
 import { ShareSnapshotScreen } from '../surfaces/app/ShareSnapshotScreen';
+import { BadgesScreen } from '../surfaces/app/BadgesScreen';
 import { PremiumScreen } from '../surfaces/app/PremiumScreen';
 import { TasksComingSoonScreen } from '../surfaces/app/TasksComingSoonScreen';
 import { AccountScreen } from '../surfaces/app/AccountScreen';
@@ -350,7 +351,7 @@ export function RootNavigator() {
         <Stack.Screen
           name="Widget"
           component={WidgetScreen}
-          options={{ title: 'Settings', headerBackTitle: 'Back' }}
+          options={{ title: 'Widgets', headerBackTitle: 'Back' }}
         />
         <Stack.Screen
           name="WidgetCustomization"
@@ -424,6 +425,11 @@ export function RootNavigator() {
           name="ShareSnapshot"
           component={ShareSnapshotScreen}
           options={{ title: 'Share snapshot', headerBackTitle: 'Back' }}
+        />
+        <Stack.Screen
+          name="Badges"
+          component={BadgesScreen}
+          options={{ title: 'Badges', headerBackTitle: 'Back' }}
         />
         <Stack.Screen
           name="Premium"

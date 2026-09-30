@@ -14,6 +14,7 @@ import { MmkvMonthlyGoalRepository } from './infrastructure/repositories/MmkvMon
 import { MmkvOnboardingRepository } from './infrastructure/repositories/MmkvOnboardingRepository';
 import { MmkvEngagementRepository } from './infrastructure/repositories/MmkvEngagementRepository';
 import { MmkvPresenceRepository } from './infrastructure/repositories/MmkvPresenceRepository';
+import { MmkvBadgeRepository } from './infrastructure/repositories/MmkvBadgeRepository';
 import { MmkvReflectionRepository } from './infrastructure/repositories/MmkvReflectionRepository';
 import { MmkvStudentVerificationRepository } from './infrastructure/repositories/MmkvStudentVerificationRepository';
 import { MmkvAuthSessionRepository } from './infrastructure/repositories/MmkvAuthSessionRepository';
@@ -87,6 +88,7 @@ import {
 } from './domain/useCases/OnboardingFunnelNavigationUseCases';
 import { DeviceIdProviderAdapter } from './infrastructure/adapters/DeviceIdProviderAdapter';
 import { CompleteAccountSignInUseCase } from './domain/useCases/CompleteAccountSignInUseCase';
+import { SignInWithAppleUseCase } from './domain/useCases/SignInWithAppleUseCase';
 import { SignInWithGoogleUseCase } from './domain/useCases/SignInWithGoogleUseCase';
 import { SignInWithEmailUseCase } from './domain/useCases/SignInWithEmailUseCase';
 import { CreateAccountWithEmailUseCase } from './domain/useCases/CreateAccountWithEmailUseCase';
@@ -116,6 +118,9 @@ import { ClearSharePromptPendingUseCase } from './domain/useCases/ClearShareProm
 import { CheckCountdownCompletionUseCase } from './domain/useCases/CheckCountdownCompletionUseCase';
 import { RecordPresenceUseCase } from './domain/useCases/RecordPresenceUseCase';
 import { GetPresenceStreakUseCase } from './domain/useCases/GetPresenceStreakUseCase';
+import { EvaluateBadgesUseCase } from './domain/useCases/EvaluateBadgesUseCase';
+import { GetBadgesUseCase } from './domain/useCases/GetBadgesUseCase';
+import { AcknowledgeBadgesUseCase } from './domain/useCases/AcknowledgeBadgesUseCase';
 import { SyncTrialPreviewUseCase } from './domain/useCases/SyncTrialPreviewUseCase';
 import { TrialPreviewApiAdapter } from './infrastructure/adapters/TrialPreviewApiAdapter';
 import { TrackLifeScreenViewedUseCase } from './domain/useCases/TrackLifeScreenViewedUseCase';
@@ -155,6 +160,7 @@ function syncPremiumAfterEntitlementChange(): void {
 }
 
 const presenceRepository = new MmkvPresenceRepository();
+const badgeRepository = new MmkvBadgeRepository();
 const timeRepository = new MmkvTimeRepository(presenceRepository);
 const subscriptionRepository = new MmkvSubscriptionRepository();
 const activityRepository = new MmkvActivityRepository();
@@ -240,6 +246,22 @@ export const requestInAppReviewFromSettingsUseCase =
 export const recordPresenceUseCase = new RecordPresenceUseCase(presenceRepository);
 export const getPresenceStreakUseCase = new GetPresenceStreakUseCase(
   presenceRepository,
+);
+export const evaluateBadgesUseCase = new EvaluateBadgesUseCase(
+  badgeRepository,
+  presenceRepository,
+  taskRepository,
+  countdownRepository,
+  monthlyGoalRepository,
+  timeRepository,
+  subscriptionRepository,
+);
+export const getBadgesUseCase = new GetBadgesUseCase(
+  badgeRepository,
+  evaluateBadgesUseCase,
+);
+export const acknowledgeBadgesUseCase = new AcknowledgeBadgesUseCase(
+  badgeRepository,
 );
 export const runAppOpenSideEffectsUseCase = new RunAppOpenSideEffectsUseCase(
   trackAppOpenUseCase,
@@ -484,6 +506,12 @@ export const completeAccountSignInUseCase = new CompleteAccountSignInUseCase(
   accountCloudStore,
   recordCrashError,
   syncPremiumBridge
+);
+
+export const signInWithAppleUseCase = new SignInWithAppleUseCase(
+  authService,
+  completeAccountSignInUseCase,
+  assertAccountAgeGateUseCase
 );
 
 export const signInWithGoogleUseCase = new SignInWithGoogleUseCase(

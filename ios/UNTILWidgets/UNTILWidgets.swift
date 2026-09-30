@@ -224,6 +224,54 @@ struct WidgetCache: Codable {
     }
 }
 
+// MARK: - Gallery sample data
+/// Believable numbers for the widget picker. Without these the gallery shows the empty
+/// "Open UNTIL" state, which does not sell the widget. Only used when `context.isPreview`
+/// is true (and as the redacted placeholder), never for a widget on the home screen.
+private extension WidgetCache {
+    static func gallerySample(at now: Date = Date()) -> WidgetCache {
+        let cal = Calendar.current
+        let start = cal.startOfDay(for: now)
+        let end = cal.date(byAdding: .day, value: 1, to: start) ?? now
+        let month = cal.component(.month, from: now) - 1
+        return WidgetCache(
+            dayProgress: 0.46,
+            dayPercentDone: 46,
+            dayPercentLeft: 54,
+            dayHoursPassed: 11.0,
+            dayHoursLeft: 13.0,
+            dayPassedMinutes: 660,
+            dayRemainingMinutes: 780,
+            startOfDay: Int64(start.timeIntervalSince1970 * 1000),
+            endOfDay: Int64(end.timeIntervalSince1970 * 1000),
+            monthProgress: 0.48,
+            monthIndex: month,
+            monthDaysPassed: 15,
+            monthDaysLeft: 16,
+            monthPercent: 48,
+            yearProgress: 0.62,
+            yearDaysPassed: 226,
+            yearDaysLeft: 139,
+            yearPercent: 62,
+            lifeProgress: 0.34,
+            remainingDaysLife: 19_300,
+            lifePercent: 34,
+            presenceStreakCount: 6,
+            presenceStreakDots: [true, true, true, true, true, true, false],
+            updatedAt: Int64(now.timeIntervalSince1970 * 1000)
+        )
+    }
+}
+
+/// A date 24 days out (YYYY-MM-DD) for the countdown widget sample.
+private let galleryCountdownDate: String = {
+    let f = DateFormatter()
+    f.calendar = Calendar(identifier: .gregorian)
+    f.locale = Locale(identifier: "en_US_POSIX")
+    f.dateFormat = "yyyy-MM-dd"
+    return f.string(from: Calendar.current.date(byAdding: .day, value: 24, to: Date()) ?? Date())
+}()
+
 // MARK: - Design Tokens
 private enum Design {
     private static let defaultAccent = Color(red: 0xE8/255, green: 0x7C/255, blue: 0x20/255) // #E87C20 Ember
@@ -402,12 +450,12 @@ struct UNTILWidgetProvider: TimelineProvider {
     }
 
     func placeholder(in context: Context) -> UNTILWidgetEntry {
-        UNTILWidgetEntry(date: Date(), cache: nil)
+        UNTILWidgetEntry(date: Date(), cache: .gallerySample())
     }
 
     func getSnapshot(in context: Context, completion: @escaping (UNTILWidgetEntry) -> Void) {
         let cache = loadWidgetCache()
-        completion(UNTILWidgetEntry(date: Date(), cache: cache))
+        completion(UNTILWidgetEntry(date: Date(), cache: context.isPreview && cache == nil ? .gallerySample() : cache))
     }
 
     func getTimeline(in context: Context, completion: @escaping (Timeline<UNTILWidgetEntry>) -> Void) {
@@ -431,12 +479,12 @@ struct MonthYearWidgetProvider: TimelineProvider {
     }
 
     func placeholder(in context: Context) -> UNTILWidgetEntry {
-        UNTILWidgetEntry(date: Date(), cache: nil)
+        UNTILWidgetEntry(date: Date(), cache: .gallerySample())
     }
 
     func getSnapshot(in context: Context, completion: @escaping (UNTILWidgetEntry) -> Void) {
         let cache = loadWidgetCache()
-        completion(UNTILWidgetEntry(date: Date(), cache: cache))
+        completion(UNTILWidgetEntry(date: Date(), cache: context.isPreview && cache == nil ? .gallerySample() : cache))
     }
 
     func getTimeline(in context: Context, completion: @escaping (Timeline<UNTILWidgetEntry>) -> Void) {
@@ -463,12 +511,12 @@ struct DayWidgetProvider: TimelineProvider {
     }
 
     func placeholder(in context: Context) -> UNTILWidgetEntry {
-        UNTILWidgetEntry(date: Date(), cache: nil)
+        UNTILWidgetEntry(date: Date(), cache: .gallerySample())
     }
 
     func getSnapshot(in context: Context, completion: @escaping (UNTILWidgetEntry) -> Void) {
         let cache = loadWidgetCache()
-        completion(UNTILWidgetEntry(date: Date(), cache: cache))
+        completion(UNTILWidgetEntry(date: Date(), cache: context.isPreview && cache == nil ? .gallerySample() : cache))
     }
 
     func getTimeline(in context: Context, completion: @escaping (Timeline<UNTILWidgetEntry>) -> Void) {
@@ -505,6 +553,23 @@ struct DailyTaskWidgetPayload: Codable {
     let byCategory: [String: DailyTaskCategoryStats]?
 }
 
+extension DailyTaskWidgetPayload {
+    /// Gallery sample: a day with work in progress.
+    static var gallerySample: DailyTaskWidgetPayload {
+        DailyTaskWidgetPayload(
+            date: "",
+            completed: 3,
+            total: 5,
+            pending: 2,
+            byCategory: [
+                "work": DailyTaskCategoryStats(completed: 2, total: 3),
+                "health": DailyTaskCategoryStats(completed: 1, total: 1),
+                "learning": DailyTaskCategoryStats(completed: 0, total: 1),
+            ]
+        )
+    }
+}
+
 struct DailyTasksWidgetEntry: TimelineEntry {
     let date: Date
     let payload: DailyTaskWidgetPayload?
@@ -529,10 +594,14 @@ struct DailyTasksWidgetProvider: TimelineProvider {
     }
 
     func placeholder(in context: Context) -> DailyTasksWidgetEntry {
-        DailyTasksWidgetEntry(date: Date(), payload: nil, dayCache: nil)
+        DailyTasksWidgetEntry(date: Date(), payload: .gallerySample, dayCache: .gallerySample())
     }
 
     func getSnapshot(in context: Context, completion: @escaping (DailyTasksWidgetEntry) -> Void) {
+        if context.isPreview {
+            completion(DailyTasksWidgetEntry(date: Date(), payload: .gallerySample, dayCache: .gallerySample()))
+            return
+        }
         completion(DailyTasksWidgetEntry(date: Date(), payload: loadPayload(), dayCache: loadWidgetCache()))
     }
 
@@ -1493,25 +1562,48 @@ struct DayWidgetView: View {
                     .padding(Design.contentPadding)
 
                 default: // .systemMedium
-                    // Hero: ring + Ember; one support row
-                    VStack(spacing: Design.stackSpacing) {
+                    // Wide canvas: ring on the left, the number you care about on the right.
+                    HStack(spacing: 18) {
                         DayDotsView(progress: cache.dayProgress)
-                            .frame(maxWidth: .infinity)
+                            .aspectRatio(1, contentMode: .fit)
                             .layoutPriority(1)
 
-                        Text("\(cache.dayPercentLeft)% left · \(dayTimeLeftText(cache, now: entry.date))")
-                            .font(.system(size: 12, weight: .semibold))
-                            .foregroundColor(Design.lightText)
-                            .multilineTextAlignment(.center)
-                            .lineLimit(1)
-                            .minimumScaleFactor(0.85)
+                        VStack(alignment: .leading, spacing: 6) {
+                            Text("Time left today")
+                                .font(.system(size: Design.labelSize, weight: .medium))
+                                .foregroundColor(Design.grayLabel)
+                            // The label above already says "left", so drop the word from the number.
+                            Text(dayTimeLeftText(cache, now: entry.date).replacingOccurrences(of: " left", with: ""))
+                                .font(.system(size: 32, weight: .bold, design: .rounded))
+                                .foregroundColor(Design.left)
+                                .monospacedDigit()
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.6)
+                            Text("\(cache.dayPercentLeft)% of the day left")
+                                .font(.system(size: 13, weight: .semibold))
+                                .foregroundColor(Design.percent)
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.8)
+                            Capsule()
+                                .fill(Design.progressBg)
+                                .frame(height: Design.barHeight)
+                                .overlay(alignment: .leading) {
+                                    GeometryReader { geo in
+                                        Capsule()
+                                            .fill(Design.passedDot)
+                                            .frame(width: geo.size.width * min(1, max(0, cache.dayProgress)))
+                                    }
+                                }
+                                .padding(.top, 2)
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
                     }
                     .padding(Design.contentPadding)
                 }
             } else {
                 EmberEmptyStateView(
                     progress: 0.32,
-                    message: "Open UNTIL — Ember is waiting with today’s light."
+                    message: "Open UNTIL once to load your time."
                 )
             }
         }
@@ -1522,7 +1614,7 @@ struct DayWidgetView: View {
     private var placeholderView: some View {
         EmberEmptyStateView(
             progress: 0.32,
-            message: "Open UNTIL — Ember is waiting with today’s light."
+            message: "Open UNTIL once to load your time."
         )
     }
 }
@@ -1614,7 +1706,7 @@ struct MonthWidgetView: View {
     private var placeholderView: some View {
         EmberEmptyStateView(
             progress: 0.32,
-            message: "Open UNTIL — Ember is waiting with today’s light."
+            message: "Open UNTIL once to load your time."
         )
     }
 }
@@ -1713,7 +1805,7 @@ struct YearWidgetView: View {
     private var placeholderView: some View {
         EmberEmptyStateView(
             progress: 0.32,
-            message: "Open UNTIL — Ember is waiting with today’s light."
+            message: "Open UNTIL once to load your time."
         )
     }
 }
@@ -1814,7 +1906,7 @@ struct LifeWidgetView: View {
     private var placeholderView: some View {
         EmberEmptyStateView(
             progress: 0.32,
-            message: "Open UNTIL — Ember is waiting with today’s light."
+            message: "Open UNTIL once to load your time."
         )
     }
 }
@@ -1867,16 +1959,23 @@ struct CounterWidgetProvider: TimelineProvider {
     }
 
     func placeholder(in context: Context) -> CounterWidgetEntry {
-        CounterWidgetEntry(date: Date(), counter: nil)
+        CounterWidgetEntry(date: Date(), counter: CustomCounterItem(id: "sample", title: "Water", count: 5))
     }
 
     func getSnapshot(in context: Context, completion: @escaping (CounterWidgetEntry) -> Void) {
-        completion(CounterWidgetEntry(date: Date(), counter: loadFirstCounter()))
+        let counter = loadFirstCounter()
+        completion(CounterWidgetEntry(
+            date: Date(),
+            counter: context.isPreview && counter == nil
+                ? CustomCounterItem(id: "sample", title: "Water", count: 5)
+                : counter
+        ))
     }
 
     func getTimeline(in context: Context, completion: @escaping (Timeline<CounterWidgetEntry>) -> Void) {
         let entry = CounterWidgetEntry(date: Date(), counter: loadFirstCounter())
-        let nextUpdate = Calendar.current.date(byAdding: .minute, value: 1, to: Date()) ?? Date()
+        // A counter only changes when it is tapped, and the tap reloads this timeline itself.
+        let nextUpdate = Calendar.current.date(byAdding: .hour, value: 6, to: Date()) ?? Date()
         completion(Timeline(entries: [entry], policy: .after(nextUpdate)))
     }
 }
@@ -1996,12 +2095,14 @@ struct CountdownWidgetProvider: TimelineProvider {
     }
 
     func placeholder(in context: Context) -> CountdownWidgetEntry {
-        CountdownWidgetEntry(date: Date(), countdown: nil, daysLeft: 0)
+        CountdownWidgetEntry(date: Date(), countdown: CountdownItem(id: "sample", title: "Launch day", date: galleryCountdownDate), daysLeft: 24)
     }
 
     func getSnapshot(in context: Context, completion: @escaping (CountdownWidgetEntry) -> Void) {
         if let (item, days) = loadFirstCountdown() {
             completion(CountdownWidgetEntry(date: Date(), countdown: item, daysLeft: days))
+        } else if context.isPreview {
+            completion(CountdownWidgetEntry(date: Date(), countdown: CountdownItem(id: "sample", title: "Launch day", date: galleryCountdownDate), daysLeft: 24))
         } else {
             completion(CountdownWidgetEntry(date: Date(), countdown: nil, daysLeft: 0))
         }
@@ -2075,47 +2176,54 @@ private func formatHourCalculationElapsed(totalElapsedMs: Int64, startTimeMs: In
     return String(format: "%d:%02d:%02d", h, m, s)
 }
 
+/// Running: a system timer that counts up by itself. Stopped: the banked time.
+@ViewBuilder
+private func hourCalculationElapsedText(state: HourCalculationState, now: Date) -> some View {
+    if state.isRunning && state.startTimeMs > 0 {
+        // Backdate by the time already banked so the timer shows the running total.
+        let origin = Date(timeIntervalSince1970: Double(state.startTimeMs - state.totalElapsedMs) / 1000)
+        Text(origin, style: .timer)
+    } else {
+        Text(formatHourCalculationElapsed(totalElapsedMs: state.totalElapsedMs, startTimeMs: state.startTimeMs, isRunning: false, now: now))
+    }
+}
+
 struct HourCalculationWidgetEntry: TimelineEntry {
     let date: Date
     let state: HourCalculationState?
 }
 
 struct HourCalculationWidgetProvider: TimelineProvider {
-    private static let entriesPerTimeline = 60
-
     private func loadState() -> HourCalculationState? {
         guard let json = WidgetCacheReader.loadHourCalculationJSON(),
               let data = json.data(using: .utf8) else { return nil }
         return try? JSONDecoder().decode(HourCalculationState.self, from: data)
     }
 
+    private static let gallerySample = HourCalculationState(
+        title: "Deep work", isRunning: false, startTimeMs: 0, totalElapsedMs: 4_980_000
+    )
+
     func placeholder(in context: Context) -> HourCalculationWidgetEntry {
-        HourCalculationWidgetEntry(date: Date(), state: nil)
+        HourCalculationWidgetEntry(date: Date(), state: Self.gallerySample)
     }
 
     func getSnapshot(in context: Context, completion: @escaping (HourCalculationWidgetEntry) -> Void) {
-        completion(HourCalculationWidgetEntry(date: Date(), state: loadState()))
+        let state = loadState()
+        completion(HourCalculationWidgetEntry(
+            date: Date(),
+            state: context.isPreview && state == nil ? Self.gallerySample : state
+        ))
     }
 
+    /// One entry is enough: a running timer is drawn with `Text(_, style: .timer)`, which the
+    /// system ticks by itself. (This used to build 60 per-second entries per refresh, which
+    /// spends the widget's refresh budget for nothing.) Start/stop reload the timeline directly.
     func getTimeline(in context: Context, completion: @escaping (Timeline<HourCalculationWidgetEntry>) -> Void) {
-        let state = loadState()
-        let calendar = Calendar.current
         let now = Date()
-
-        if state?.isRunning == true {
-            var entries: [HourCalculationWidgetEntry] = []
-            for offset in 0..<Self.entriesPerTimeline {
-                if let date = calendar.date(byAdding: .second, value: offset, to: now) {
-                    entries.append(HourCalculationWidgetEntry(date: date, state: state))
-                }
-            }
-            let nextRefresh = calendar.date(byAdding: .second, value: Self.entriesPerTimeline, to: now) ?? now
-            completion(Timeline(entries: entries, policy: .after(nextRefresh)))
-        } else {
-            let entry = HourCalculationWidgetEntry(date: now, state: state)
-            let nextUpdate = calendar.date(byAdding: .minute, value: 1, to: now) ?? now
-            completion(Timeline(entries: [entry], policy: .after(nextUpdate)))
-        }
+        let entry = HourCalculationWidgetEntry(date: now, state: loadState())
+        let refresh = Calendar.current.date(byAdding: .hour, value: 1, to: now) ?? now
+        completion(Timeline(entries: [entry], policy: .after(refresh)))
     }
 }
 
@@ -2169,8 +2277,9 @@ private struct HourCalculationWidgetView: View {
                             .font(.system(size: Design.labelSize, weight: .semibold))
                             .foregroundColor(Design.grayLabel)
                             .lineLimit(1)
-                        Text(formatHourCalculationElapsed(totalElapsedMs: state.totalElapsedMs, startTimeMs: state.startTimeMs, isRunning: state.isRunning, now: entry.date))
+                        hourCalculationElapsedText(state: state, now: entry.date)
                             .font(.system(size: 26, weight: .bold))
+                            .monospacedDigit()
                             .foregroundColor(Design.passedDot)
                         Text(state.isRunning ? "Tap to stop" : "Tap to start")
                             .font(.system(size: Design.smallLabelSize))
@@ -2267,12 +2376,69 @@ struct LifeWidget: Widget {
 }
 
 // MARK: - Live Activity (Dynamic Island + Lock Screen)
-// UNTILLiveActivityAttributes is defined in UNTIL/UNTILLiveActivityAttributes.swift (shared target)
+// UNTILLiveActivityAttributes and the island button intents live in
+// UNTIL/UNTILLiveActivityAttributes.swift (shared with the app target).
+//
+// Design rules for this section:
+//  * Anything that changes every second (time left, progress, stopwatch) uses the
+//    system's self-updating views (Text(timerInterval:), ProgressView(timerInterval:),
+//    Text(_, style: .timer)). They tick with the app closed and cost no updates.
+//  * No continuous animation. Live Activities are throttled by the system and a
+//    30 fps timeline only burns battery. Changes animate through content transitions.
+//  * One model feeds every region, so Lock Screen, expanded, compact and minimal
+//    always agree.
 
-private let monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+/// What the island can show. Raw value is the string the app stores.
+private enum IslandMode: String, CaseIterable {
+    case day, month, year, life, dailyTasks, hourCalc
 
-/// Progress color: green → amber → red (mirrors app `getProgressColor`).
-private func liveActivityProgressColor(_ progress: Double) -> Color {
+    init(_ raw: String) {
+        self = IslandMode(rawValue: raw) ?? .day
+    }
+
+    var title: String {
+        switch self {
+        case .day: return "Today"
+        case .month: return "This month"
+        case .year: return "This year"
+        case .life: return "Your life"
+        case .dailyTasks: return "Tasks"
+        case .hourCalc: return "Hour timer"
+        }
+    }
+
+    /// Icon used on the small selector chips.
+    var chipSymbol: String {
+        switch self {
+        case .day: return "sun.max.fill"
+        case .month: return "calendar"
+        case .year: return "globe.americas.fill"
+        case .life: return "heart.fill"
+        case .dailyTasks: return "checklist"
+        case .hourCalc: return "timer"
+        }
+    }
+
+    /// Month and Life are Premium in the app, so the island keeps them behind the paywall too.
+    var requiresPremium: Bool {
+        self == .month || self == .life
+    }
+
+    /// Screen in the app that matches this view (handled by `until://open/<Route>`).
+    var route: String {
+        switch self {
+        case .day: return "DayDetail"
+        case .month: return "MonthDetail"
+        case .year: return "YearDetail"
+        case .life: return "Life"
+        case .dailyTasks: return "DailyTasks"
+        case .hourCalc: return "HourCalculation"
+        }
+    }
+}
+
+/// Green → amber → red, mirrors the app's `getProgressColor`.
+private func islandProgressColor(_ progress: Double) -> Color {
     let p = max(0, min(1, progress))
     let start = (r: 0x22 / 255.0, g: 0xC5 / 255.0, b: 0x5E / 255.0)
     let mid = (r: 0xF5 / 255.0, g: 0x9E / 255.0, b: 0x0B / 255.0)
@@ -2292,958 +2458,500 @@ private func liveActivityProgressColor(_ progress: Double) -> Color {
     )
 }
 
-private func liveActivityActiveWidget(
-    _ context: ActivityViewContext<UNTILLiveActivityAttributes>
-) -> String {
-    context.state.activeWidget
-}
+private struct IslandModel {
+    let state: UNTILLiveActivityAttributes.ContentState
+    let isStale: Bool
+    var isPremium: Bool { state.isPremium }
 
-private func liveActivityPrimaryProgress(
-    _ context: ActivityViewContext<UNTILLiveActivityAttributes>
-) -> Double {
-    switch liveActivityActiveWidget(context) {
-    case "month": return context.state.monthProgress
-    case "year": return context.state.yearProgress
-    case "life": return context.state.lifeProgress ?? Double(context.state.lifePercent ?? 0) / 100.0
-    case "dailyTasks":
-        let total = context.state.dailyTasksTotal
-        return total > 0 ? Double(context.state.dailyTasksCompleted) / Double(total) : 0
-    case "hourCalc": return 0
-    default: return context.state.dayProgress
+    var mode: IslandMode { IslandMode(state.activeWidget) }
+
+    /// Views offered on the selector. Life needs a birth date.
+    var availableModes: [IslandMode] {
+        IslandMode.allCases.filter { $0 != .life || state.lifeProgress != nil || state.lifePercent != nil }
     }
-}
 
-private func liveActivityDayLeftText(_ context: ActivityViewContext<UNTILLiveActivityAttributes>) -> String {
-    guard let end = context.state.endOfDay else {
-        let h = Int(context.state.dayHoursLeft)
-        let m = Int((context.state.dayHoursLeft - Double(h)) * 60)
-        if h > 0 { return m > 0 ? "\(h)h \(m)m" : "\(h)h" }
-        return "\(max(m, 0))m"
+    var progress: Double {
+        switch mode {
+        case .day: return state.dayProgress
+        case .month: return state.monthProgress
+        case .year: return state.yearProgress
+        case .life: return state.lifeProgress ?? Double(state.lifePercent ?? 0) / 100.0
+        case .dailyTasks:
+            return state.dailyTasksTotal > 0
+                ? Double(state.dailyTasksCompleted) / Double(state.dailyTasksTotal)
+                : 0
+        case .hourCalc: return 0
+        }
     }
-    let nowMs = Int64(Date().timeIntervalSince1970 * 1000)
-    let remainingMs = max(0, end - nowMs)
-    let h = remainingMs / 3600000
-    let m = (remainingMs % 3600000) / 60000
-    if h > 0 { return m > 0 ? "\(h)h \(m)m" : "\(h)h" }
-    return "\(m)m"
-}
 
-private func liveActivityHourCalcText(_ context: ActivityViewContext<UNTILLiveActivityAttributes>) -> String {
-    let totalMs = context.state.hourCalcElapsedMs
-    let totalSec = max(0, totalMs / 1000)
-    let h = totalSec / 3600
-    let m = (totalSec % 3600) / 60
-    let s = totalSec % 60
-    if h > 0 { return String(format: "%d:%02d:%02d", h, m, s) }
-    return String(format: "%d:%02d", m, s)
-}
-
-private func liveActivityTypeIcon(_ type: String, progress: Double) -> String {
-    switch type {
-    case "month": return "calendar"
-    case "year": return "globe.americas.fill"
-    case "life": return "heart.fill"
-    case "dailyTasks": return "checklist"
-    case "hourCalc": return "timer"
-    default:
-        if progress < 0.35 { return "sun.max.fill" }
-        if progress < 0.75 { return "sun.horizon.fill" }
-        return "moon.stars.fill"
+    var accent: Color {
+        switch mode {
+        case .day: return islandProgressColor(state.dayProgress)
+        case .month: return Color(red: 0x2E / 255, green: 0xD3 / 255, blue: 0xC6 / 255)
+        case .year: return Color(red: 0x60 / 255, green: 0xA5 / 255, blue: 0xFA / 255)
+        case .life: return Color(red: 0xFF / 255, green: 0x6B / 255, blue: 0x6B / 255)
+        case .dailyTasks: return Color(red: 0x4A / 255, green: 0xDE / 255, blue: 0x80 / 255)
+        case .hourCalc: return Design.passedDot
+        }
     }
-}
 
-/// Distinct brand color per mode (Life pink kept as the favorite).
-private func liveActivityTypeAccent(_ type: String, progress: Double) -> Color {
-    switch type {
-    case "month": return Color(red: 0x2E / 255, green: 0xD3 / 255, blue: 0xC6 / 255) // teal
-    case "year": return Color(red: 0x60 / 255, green: 0xA5 / 255, blue: 0xFA / 255) // sky blue
-    case "life": return Color(red: 0xFF / 255, green: 0x6B / 255, blue: 0x6B / 255) // soft red
-    case "dailyTasks": return Color(red: 0x4A / 255, green: 0xDE / 255, blue: 0x80 / 255)
-    case "hourCalc": return Design.passedDot
-    default: return liveActivityProgressColor(progress)
-    }
-}
-
-private func liveActivityStickerBg(_ type: String) -> Color {
-    liveActivityTypeAccent(type, progress: 0.5).opacity(0.22)
-}
-
-// MARK: Shared visuals
-
-/// Motion profile for stickers (heart beats harder; others breathe / flicker).
-private enum LiveActivityStickerMotion {
-    case heartbeat
-    case breathe
-    case flicker
-    case orbit
-    case soft
-
-    static func forSystemName(_ name: String) -> LiveActivityStickerMotion {
-        switch name {
-        case "heart.fill": return .heartbeat
-        case "calendar", "checklist": return .flicker
-        case "globe.americas.fill": return .orbit
-        case "timer": return .breathe
+    var symbol: String {
+        switch mode {
+        case .day:
+            if state.dayProgress < 0.35 { return "sun.max.fill" }
+            if state.dayProgress < 0.75 { return "sun.horizon.fill" }
+            return "moon.stars.fill"
         default:
-            if name.contains("sun") || name.contains("moon") { return .breathe }
-            return .soft
+            return mode.chipSymbol
+        }
+    }
+
+    var title: String { mode == .hourCalc ? (state.hourCalcTitle.isEmpty ? "Hour timer" : state.hourCalcTitle) : mode.title }
+
+    var subtitle: String {
+        let cal = Calendar.current
+        switch mode {
+        case .day:
+            return "Time left today"
+        case .month:
+            // The counts already include today, so "passed" is today's day number.
+            let name = cal.shortMonthSymbols[max(0, min(11, cal.component(.month, from: Date()) - 1))]
+            return "\(name) · day \(state.monthDaysPassed) of \(state.monthDaysPassed + state.monthDaysLeft)"
+        case .year:
+            let year = cal.component(.year, from: Date())
+            return "\(year) · day \(state.yearDaysPassed) of \(state.yearDaysPassed + state.yearDaysLeft)"
+        case .life:
+            return "Of your expected life"
+        case .dailyTasks:
+            return state.dailyTasksTotal == 0
+                ? "Plan your day in UNTIL"
+                : "\(state.dailyTasksCompleted) of \(state.dailyTasksTotal) done"
+        case .hourCalc:
+            return state.hourCalcIsRunning ? "Running" : "Paused"
+        }
+    }
+
+    /// Share left, shown top right. Nil when a percentage makes no sense.
+    var trailingMetric: String? {
+        switch mode {
+        case .day: return "\(state.dayPercentLeft)%"
+        case .month: return "\(max(0, 100 - state.monthPercent))%"
+        case .year: return "\(max(0, 100 - state.yearPercent))%"
+        case .life: return "\(max(0, 100 - (state.lifePercent ?? Int(progress * 100))))%"
+        case .dailyTasks:
+            return state.dailyTasksTotal == 0 ? nil : "\(state.dailyTasksCompleted)/\(state.dailyTasksTotal)"
+        case .hourCalc: return nil
+        }
+    }
+
+    var deepLink: URL {
+        URL(string: "until://open/\(mode.route)") ?? URL(string: "until://")!
+    }
+
+    /// Span the progress bar fills over; the system advances it on its own.
+    var progressInterval: ClosedRange<Date>? {
+        let cal = Calendar.current
+        let now = Date()
+        switch mode {
+        case .day:
+            let start = state.startOfDay.map { Date(timeIntervalSince1970: Double($0) / 1000) }
+                ?? cal.startOfDay(for: now)
+            let end = dayEnd
+            return start < end ? start...end : nil
+        case .month:
+            guard let i = cal.dateInterval(of: .month, for: now) else { return nil }
+            return i.start...i.end
+        case .year:
+            guard let i = cal.dateInterval(of: .year, for: now) else { return nil }
+            return i.start...i.end
+        default:
+            return nil
+        }
+    }
+
+    var dayEnd: Date {
+        if let end = state.endOfDay { return Date(timeIntervalSince1970: Double(end) / 1000) }
+        let cal = Calendar.current
+        return cal.date(byAdding: .day, value: 1, to: cal.startOfDay(for: Date())) ?? Date()
+    }
+
+    /// Start of the current run, backdated by time already banked, for `Text(_, style: .timer)`.
+    var stopwatchOrigin: Date {
+        let start = state.hourCalcStartMs ?? Int64(Date().timeIntervalSince1970 * 1000)
+        return Date(timeIntervalSince1970: Double(start - state.hourCalcElapsedMs) / 1000)
+    }
+
+    var stoppedStopwatchText: String {
+        let total = max(0, state.hourCalcElapsedMs / 1000)
+        let h = total / 3600, m = (total % 3600) / 60, s = total % 60
+        return h > 0 ? String(format: "%d:%02d:%02d", h, m, s) : String(format: "%d:%02d", m, s)
+    }
+
+    var staticDaysText: String {
+        switch mode {
+        case .month: return "\(state.monthDaysLeft)"
+        case .year: return "\(state.yearDaysLeft)"
+        case .life: return (state.remainingDaysLife ?? 0).formatted()
+        case .dailyTasks:
+            if state.dailyTasksTotal == 0 { return "No tasks yet" }
+            let left = max(0, state.dailyTasksTotal - state.dailyTasksCompleted)
+            return left == 0 ? "All done" : "\(left)"
+        default: return ""
+        }
+    }
+
+    var staticUnit: String {
+        switch mode {
+        case .month, .year, .life: return " days left"
+        case .dailyTasks:
+            let left = max(0, state.dailyTasksTotal - state.dailyTasksCompleted)
+            return state.dailyTasksTotal == 0 || left == 0 ? "" : " to do"
+        default: return ""
         }
     }
 }
 
-/// Circular “sticker” badge with a light live pulse (Dynamic Island / Lock Screen).
-private struct LiveActivitySticker: View {
-    let systemName: String
+// MARK: Pieces
+
+/// Round icon badge. Static on purpose.
+private struct IslandBadge: View {
+    let symbol: String
     let accent: Color
     var size: CGFloat = 28
 
-    private var motion: LiveActivityStickerMotion {
-        LiveActivityStickerMotion.forSystemName(systemName)
-    }
-
     var body: some View {
-        TimelineView(.animation(minimumInterval: 1.0 / 30.0, paused: false)) { context in
-            let phase = pulsePhase(at: context.date)
-            let scale = 1.0 + phase.scaleBoost
-            let glow = 0.28 + phase.glowBoost
-            ZStack {
-                Circle()
-                    .fill(accent.opacity(glow))
-                    .frame(width: size + 6, height: size + 6)
-                    .blur(radius: 5 + phase.blurBoost)
-                    .scaleEffect(1.0 + phase.glowBoost * 0.35)
-                Circle()
-                    .fill(accent.opacity(0.22))
-                    .frame(width: size, height: size)
-                Circle()
-                    .stroke(accent.opacity(0.55 + phase.glowBoost), lineWidth: 1.2)
-                    .frame(width: size, height: size)
-                    .shadow(color: accent.opacity(0.55 + phase.glowBoost), radius: 4 + phase.blurBoost, x: 0, y: 0)
-                Image(systemName: systemName)
-                    .font(.system(size: size * 0.42, weight: .semibold))
-                    .foregroundColor(accent)
-                    .symbolRenderingMode(.hierarchical)
-                    .shadow(color: accent.opacity(0.55), radius: 3, x: 0, y: 0)
-                    .modifier(LiveActivityStickerSymbolEffect(motion: motion))
-                    .scaleEffect(scale)
-                    .rotationEffect(.degrees(phase.rotationDegrees))
-            }
-            .frame(width: size + 6, height: size + 6)
+        ZStack {
+            Circle().fill(accent.opacity(0.20))
+            Circle().strokeBorder(accent.opacity(0.65), lineWidth: 1)
+            Image(systemName: symbol)
+                .font(.system(size: size * 0.46, weight: .semibold))
+                .foregroundColor(accent)
+                .contentTransition(.symbolEffect(.replace))
         }
-    }
-
-    private struct PulsePhase {
-        var scaleBoost: CGFloat
-        var glowBoost: CGFloat
-        var blurBoost: CGFloat
-        var rotationDegrees: Double
-    }
-
-    private func pulsePhase(at date: Date) -> PulsePhase {
-        let t = date.timeIntervalSinceReferenceDate
-        switch motion {
-        case .heartbeat:
-            // Lub-dub: two quick peaks per cycle
-            let cycle = t.truncatingRemainder(dividingBy: 1.05)
-            let beat: Double
-            if cycle < 0.12 {
-                beat = sin((cycle / 0.12) * .pi)
-            } else if cycle < 0.28 {
-                beat = 0.55 * sin(((cycle - 0.14) / 0.14) * .pi)
-            } else {
-                beat = 0
-            }
-            return PulsePhase(
-                scaleBoost: CGFloat(beat * 0.14),
-                glowBoost: CGFloat(0.12 + beat * 0.35),
-                blurBoost: CGFloat(beat * 2.5),
-                rotationDegrees: 0
-            )
-        case .breathe:
-            let s = (sin(t * 1.6) + 1) * 0.5
-            return PulsePhase(
-                scaleBoost: CGFloat(s * 0.07),
-                glowBoost: CGFloat(0.08 + s * 0.22),
-                blurBoost: CGFloat(s * 1.8),
-                rotationDegrees: 0
-            )
-        case .flicker:
-            let s = (sin(t * 2.4) + 1) * 0.5
-            return PulsePhase(
-                scaleBoost: CGFloat(s * 0.04),
-                glowBoost: CGFloat(0.06 + s * 0.28),
-                blurBoost: CGFloat(s * 1.4),
-                rotationDegrees: 0
-            )
-        case .orbit:
-            let s = (sin(t * 1.2) + 1) * 0.5
-            return PulsePhase(
-                scaleBoost: CGFloat(s * 0.05),
-                glowBoost: CGFloat(0.1 + s * 0.2),
-                blurBoost: CGFloat(s * 1.6),
-                rotationDegrees: (t * 18).truncatingRemainder(dividingBy: 360)
-            )
-        case .soft:
-            let s = (sin(t * 1.1) + 1) * 0.5
-            return PulsePhase(
-                scaleBoost: CGFloat(s * 0.035),
-                glowBoost: CGFloat(0.05 + s * 0.15),
-                blurBoost: CGFloat(s * 1.2),
-                rotationDegrees: 0
-            )
-        }
+        .frame(width: size, height: size)
     }
 }
 
-/// SF Symbol continuous effects where the OS supports them (falls back to TimelineView pulse).
-private struct LiveActivityStickerSymbolEffect: ViewModifier {
-    let motion: LiveActivityStickerMotion
-
-    func body(content: Content) -> some View {
-        if #available(iOSApplicationExtension 17.0, *) {
-            switch motion {
-            case .heartbeat:
-                content.symbolEffect(.pulse, options: .repeating.speed(1.35), isActive: true)
-            case .breathe, .soft:
-                content.symbolEffect(.pulse, options: .repeating.speed(0.7), isActive: true)
-            case .flicker:
-                content.symbolEffect(.pulse, options: .repeating.speed(1.05), isActive: true)
-            case .orbit:
-                content.symbolEffect(.pulse, options: .repeating.speed(0.8), isActive: true)
-            }
-        } else {
-            content
-        }
-    }
-}
-
-/// Workout-style colored pills with check / fill / empty (great for month weeks).
-private struct LiveActivitySetPills: View {
-    let progress: Double
-    let accent: Color
-    var count: Int = 12
-
-    private var filledCount: Int {
-        Int(floor(Double(count) * min(max(progress, 0), 1)))
-    }
-
-    private var partialIndex: Int? {
-        let exact = Double(count) * min(max(progress, 0), 1)
-        let floorVal = Int(floor(exact))
-        if exact - Double(floorVal) > 0.08 && floorVal < count { return floorVal }
-        return nil
-    }
-
-    private func pillColor(_ index: Int) -> Color {
-        let third = max(count / 3, 1)
-        if index < third { return Color(red: 0.35, green: 0.55, blue: 1.0) }
-        if index < third * 2 { return accent }
-        return Color(red: 0.75, green: 0.35, blue: 0.35)
-    }
-
-    var body: some View {
-        HStack(spacing: 3) {
-            ForEach(0..<count, id: \.self) { i in
-                let color = pillColor(i)
-                let done = i < filledCount
-                let partial = partialIndex == i
-                ZStack {
-                    if done || partial {
-                        RoundedRectangle(cornerRadius: 4)
-                            .fill(color.opacity(0.45))
-                            .blur(radius: 3)
-                            .padding(-1)
-                    }
-                    RoundedRectangle(cornerRadius: 4)
-                        .fill(done ? color : color.opacity(0.18))
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 4)
-                                .stroke(color.opacity(done || partial ? 0.85 : 0.55), lineWidth: done || partial ? 1.2 : 1)
-                        )
-                        .shadow(color: (done || partial) ? color.opacity(0.7) : .clear, radius: 3, x: 0, y: 0)
-                    if done {
-                        Image(systemName: "checkmark")
-                            .font(.system(size: 7, weight: .bold))
-                            .foregroundColor(.black.opacity(0.75))
-                    } else if partial {
-                        VStack(spacing: 0) {
-                            Spacer(minLength: 0)
-                            color.opacity(0.9)
-                                .frame(height: 8)
-                        }
-                        .clipShape(RoundedRectangle(cornerRadius: 4))
-                    }
-                }
-                .frame(maxWidth: .infinity)
-                .frame(height: 18)
-            }
-        }
-    }
-}
-
-/// Year: four season quarters as large chips (not the same as month milestones).
-private struct LiveActivitySeasonQuarters: View {
-    let progress: Double
-    let accent: Color
-
-    private let seasons = ["Spring", "Summer", "Fall", "Winter"]
-    private let icons = ["leaf.fill", "sun.max.fill", "wind", "snowflake"]
-
-    var body: some View {
-        HStack(spacing: 6) {
-            ForEach(0..<4, id: \.self) { i in
-                let threshold = Double(i) / 4.0
-                let next = Double(i + 1) / 4.0
-                let active = progress >= next
-                let current = progress >= threshold && progress < next
-                VStack(spacing: 3) {
-                    ZStack {
-                        if current {
-                            RoundedRectangle(cornerRadius: 8)
-                                .fill(accent.opacity(0.4))
-                                .blur(radius: 5)
-                                .padding(-2)
-                        }
-                        RoundedRectangle(cornerRadius: 8)
-                            .fill(active || current ? accent.opacity(current ? 0.35 : 0.22) : Design.progressBg)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 8)
-                                    .stroke(current ? accent : Color.clear, lineWidth: 1.5)
-                            )
-                            .shadow(color: current ? accent.opacity(0.8) : .clear, radius: 5, x: 0, y: 0)
-                            .frame(height: 36)
-                        Image(systemName: icons[i])
-                            .font(.system(size: 14, weight: .semibold))
-                            .foregroundColor(active || current ? accent : Design.grayLabel)
-                            .shadow(color: current ? accent.opacity(0.7) : .clear, radius: 3, x: 0, y: 0)
-                    }
-                    Text(seasons[i])
-                        .font(.system(size: 7, weight: .medium))
-                        .foregroundColor(current ? Design.lightText : Design.grayLabel)
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.7)
-                }
-                .frame(maxWidth: .infinity)
-            }
-        }
-    }
-}
-
-private struct LiveActivityTickTrack: View {
-    let progress: Double
-    let accent: Color
-    var tickCount: Int = 24
-
-    var body: some View {
-        GeometryReader { geo in
-            let filled = Int(round(Double(tickCount) * min(max(progress, 0), 1)))
-            HStack(spacing: max(1, geo.size.width / CGFloat(tickCount * 3))) {
-                ForEach(0..<tickCount, id: \.self) { i in
-                    RoundedRectangle(cornerRadius: 1)
-                        .fill(i < filled ? accent : Design.progressBg)
-                        .shadow(color: i < filled ? accent.opacity(0.55) : .clear, radius: 1.5, x: 0, y: 0)
-                        .frame(maxWidth: .infinity)
-                }
-            }
-        }
-        .frame(height: 10)
-    }
-}
-
-private struct LiveActivityMilestoneTrack: View {
-    let progress: Double
-    let accent: Color
-    let labels: [String]
-
-    var body: some View {
-        VStack(spacing: 4) {
-            GeometryReader { geo in
-                let w = geo.size.width
-                ZStack(alignment: .leading) {
-                    Capsule().fill(Design.progressBg).frame(height: 4)
-                    Capsule()
-                        .fill(accent)
-                        .frame(width: max(8, w * CGFloat(min(max(progress, 0), 1))), height: 4)
-                    HStack {
-                        ForEach(0..<labels.count, id: \.self) { i in
-                            Circle()
-                                .fill(Double(i) / Double(max(labels.count - 1, 1)) <= progress + 0.02 ? accent : Design.remainingDot)
-                                .frame(width: 10, height: 10)
-                            if i < labels.count - 1 { Spacer(minLength: 0) }
-                        }
-                    }
-                }
-            }
-            .frame(height: 10)
-            HStack {
-                ForEach(Array(labels.enumerated()), id: \.offset) { _, label in
-                    Text(label)
-                        .font(.system(size: 8, weight: .medium))
-                        .foregroundColor(Design.grayLabel)
-                    if label != labels.last { Spacer(minLength: 0) }
-                }
-            }
-        }
-    }
-}
-
-private struct LiveActivityDayArc: View {
-    let progress: Double
-    let accent: Color
-
-    var body: some View {
-        GeometryReader { geo in
-            let w = geo.size.width
-            let h = geo.size.height
-            ZStack {
-                Path { path in
-                    path.addArc(
-                        center: CGPoint(x: w / 2, y: h * 0.95),
-                        radius: min(w * 0.45, h * 0.95),
-                        startAngle: .degrees(200),
-                        endAngle: .degrees(340),
-                        clockwise: false
-                    )
-                }
-                .stroke(Design.progressBg, style: StrokeStyle(lineWidth: 5, lineCap: .round))
-
-                Path { path in
-                    let end = 200 + (340 - 200) * min(max(progress, 0), 1)
-                    path.addArc(
-                        center: CGPoint(x: w / 2, y: h * 0.95),
-                        radius: min(w * 0.45, h * 0.95),
-                        startAngle: .degrees(200),
-                        endAngle: .degrees(end),
-                        clockwise: false
-                    )
-                }
-                .stroke(
-                    AngularGradient(
-                        colors: [
-                            Color(red: 0.2, green: 0.45, blue: 0.9),
-                            accent,
-                            Color(red: 1.0, green: 0.85, blue: 0.55)
-                        ],
-                        center: .center
-                    ),
-                    style: StrokeStyle(lineWidth: 5, lineCap: .round)
-                )
-                .shadow(color: accent.opacity(0.65), radius: 4, x: 0, y: 0)
-            }
-        }
-        .frame(height: 28)
-    }
-}
-
-// MARK: Lock Screen
-
-private struct LiveActivityLockScreenView: View {
-    let context: ActivityViewContext<UNTILLiveActivityAttributes>
+/// The big number: live countdown, live stopwatch, or day counts.
+private struct IslandPrimary: View {
+    let model: IslandModel
+    var size: CGFloat = 32
+    var alignment: Alignment = .leading
 
     var body: some View {
         Group {
-            switch liveActivityActiveWidget(context) {
-            case "day": dayLock
-            case "month": monthLock
-            case "year": yearLock
-            case "life": lifeLock
-            case "dailyTasks": tasksLock
-            case "hourCalc": hourLock
-            default: dayLock
+            switch model.mode {
+            case .day:
+                let now = Date()
+                if model.dayEnd > now {
+                    Text(timerInterval: now...model.dayEnd, pauseTime: nil, countsDown: true, showsHours: true)
+                } else {
+                    Text("0:00:00")
+                }
+            case .hourCalc:
+                if model.state.hourCalcIsRunning {
+                    Text(model.stopwatchOrigin, style: .timer)
+                } else {
+                    Text(model.stoppedStopwatchText)
+                }
+            default:
+                (Text(model.staticDaysText)
+                    + Text(model.staticUnit)
+                    .font(.system(size: size * 0.45, weight: .semibold, design: .rounded))
+                    .foregroundColor(Design.grayLabel))
+                    .contentTransition(.numericText())
+            }
+        }
+        .font(.system(size: size, weight: .bold, design: .rounded))
+        .monospacedDigit()
+        .foregroundColor(.white)
+        .lineLimit(1)
+        .minimumScaleFactor(0.6)
+        .multilineTextAlignment(alignment == .center ? .center : .leading)
+        .frame(maxWidth: .infinity, alignment: alignment)
+    }
+}
+
+/// Fill bar that advances by itself for time based views.
+private struct IslandProgress: View {
+    let model: IslandModel
+
+    var body: some View {
+        Group {
+            if let interval = model.progressInterval {
+                ProgressView(timerInterval: interval, countsDown: false) {
+                    EmptyView()
+                } currentValueLabel: {
+                    EmptyView()
+                }
+            } else if model.mode == .hourCalc {
+                EmptyView()
+            } else {
+                ProgressView(value: min(1, max(0, model.progress)))
+            }
+        }
+        .progressViewStyle(.linear)
+        .tint(model.accent)
+        .labelsHidden()
+    }
+}
+
+/// Tappable view selector. Real buttons on iOS 17+: they switch the island without opening the app.
+private struct IslandChips: View {
+    let model: IslandModel
+
+    var body: some View {
+        HStack(spacing: 6) {
+            ForEach(model.availableModes, id: \.self) { mode in
+                let selected = mode == model.mode
+                if mode.requiresPremium && !model.isPremium {
+                    // Premium views open the paywall instead of switching.
+                    Link(destination: URL(string: "until://open/Premium") ?? URL(string: "until://")!) {
+                        ZStack(alignment: .topTrailing) {
+                            Image(systemName: mode.chipSymbol)
+                                .font(.system(size: 13, weight: .semibold))
+                                .foregroundColor(Design.grayLabel.opacity(0.6))
+                                .frame(width: 34, height: 28)
+                                .background(Capsule().fill(Color.white.opacity(0.06)))
+                            Image(systemName: "lock.fill")
+                                .font(.system(size: 7, weight: .bold))
+                                .foregroundColor(Design.grayLabel)
+                                .offset(x: -3, y: 3)
+                        }
+                    }
+                    .accessibilityLabel("\(mode.title), Premium")
+                } else {
+                    Button(intent: SwitchIslandModeIntent(mode: mode.rawValue)) {
+                        Image(systemName: mode.chipSymbol)
+                            .font(.system(size: 13, weight: .semibold))
+                            .foregroundColor(selected ? Color.black.opacity(0.85) : Design.grayLabel)
+                            .frame(width: 34, height: 28)
+                            .background(
+                                Capsule().fill(selected ? model.accent : Color.white.opacity(0.10))
+                            )
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel(mode.title)
+                    .accessibilityAddTraits(selected ? .isSelected : [])
+                }
+            }
+        }
+    }
+}
+
+/// Start / stop for the hour timer. Only shown on that view.
+private struct IslandTimerButton: View {
+    let model: IslandModel
+
+    var body: some View {
+        Button(intent: ToggleIslandTimerIntent()) {
+            HStack(spacing: 6) {
+                Image(systemName: model.state.hourCalcIsRunning ? "pause.fill" : "play.fill")
+                    .font(.system(size: 12, weight: .bold))
+                Text(model.state.hourCalcIsRunning ? "Stop" : "Start")
+                    .font(.system(size: 13, weight: .bold, design: .rounded))
+            }
+            .foregroundColor(Color.black.opacity(0.85))
+            .padding(.horizontal, 16)
+            .frame(height: 30)
+            .background(Capsule().fill(model.accent))
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(model.state.hourCalcIsRunning ? "Stop hour timer" : "Start hour timer")
+    }
+}
+
+// MARK: Regions
+
+private struct IslandLockScreenView: View {
+    let model: IslandModel
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(spacing: 10) {
+                IslandBadge(symbol: model.symbol, accent: model.accent, size: 34)
+                VStack(alignment: .leading, spacing: 1) {
+                    Text(model.title)
+                        .font(.system(size: 15, weight: .semibold))
+                        .foregroundColor(Design.lightText)
+                        .lineLimit(1)
+                    Text(model.subtitle)
+                        .font(.system(size: 12))
+                        .foregroundColor(Design.grayLabel)
+                        .lineLimit(1)
+                }
+                Spacer(minLength: 8)
+                if let metric = model.trailingMetric {
+                    Text(metric)
+                        .font(.system(size: 15, weight: .bold, design: .rounded))
+                        .foregroundColor(model.accent)
+                        .monospacedDigit()
+                        .contentTransition(.numericText())
+                }
+            }
+            IslandPrimary(model: model, size: 36)
+            IslandProgress(model: model)
+            HStack(spacing: 10) {
+                IslandChips(model: model)
+                Spacer(minLength: 0)
+                if model.mode == .hourCalc {
+                    IslandTimerButton(model: model)
+                }
+            }
+            if model.isStale {
+                Text("Open UNTIL to refresh")
+                    .font(.system(size: 11))
+                    .foregroundColor(Design.grayLabel)
             }
         }
         .padding(16)
-        .activityBackgroundTint(Design.background.opacity(0.92))
-    }
-
-    private var type: String { liveActivityActiveWidget(context) }
-    private var progress: Double { liveActivityPrimaryProgress(context) }
-    private var accent: Color { liveActivityTypeAccent(type, progress: progress) }
-
-    private var dayLock: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            HStack(spacing: 10) {
-                LiveActivitySticker(
-                    systemName: liveActivityTypeIcon("day", progress: progress),
-                    accent: accent,
-                    size: 32
-                )
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("Today").font(.headline).foregroundColor(Design.lightText)
-                    Text("Time left in your day")
-                        .font(.caption)
-                        .foregroundColor(Design.grayLabel)
-                }
-                Spacer()
-                Text("\(context.state.dayPercentLeft)% left")
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundColor(accent)
-            }
-            Text(liveActivityDayLeftText(context))
-                .font(.system(size: 34, weight: .bold, design: .rounded))
-                .foregroundColor(Design.left)
-                .monospacedDigit()
-            LiveActivityDayArc(progress: progress, accent: accent)
-            HStack {
-                Label("Dawn", systemImage: "sunrise.fill")
-                    .font(.caption2)
-                    .foregroundColor(Design.grayLabel)
-                Spacer()
-                Label("Night", systemImage: "moon.stars.fill")
-                    .font(.caption2)
-                    .foregroundColor(Design.grayLabel)
-            }
-        }
-    }
-
-    private var monthLock: some View {
-        let monthIdx = Calendar.current.component(.month, from: Date()) - 1
-        let monthName = monthNames[monthIdx]
-        let leftPct = max(0, 100 - context.state.monthPercent)
-        return VStack(alignment: .leading, spacing: 10) {
-            HStack(spacing: 10) {
-                LiveActivitySticker(systemName: "calendar", accent: accent, size: 32)
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(monthName).font(.headline).foregroundColor(Design.lightText)
-                    Text("Days left this month")
-                        .font(.caption)
-                        .foregroundColor(Design.grayLabel)
-                }
-                Spacer()
-                Text("\(leftPct)% left")
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundColor(accent)
-            }
-            Text("\(context.state.monthDaysLeft)d")
-                .font(.system(size: 34, weight: .bold, design: .rounded))
-                .foregroundColor(Design.left)
-                .monospacedDigit()
-            LiveActivitySetPills(progress: progress, accent: accent, count: 12)
-            Text("\(context.state.monthDaysPassed)d passed")
-                .font(.caption2)
-                .foregroundColor(Design.grayLabel)
-        }
-    }
-
-    private var yearLock: some View {
-        let year = Calendar.current.component(.year, from: Date())
-        let leftPct = max(0, 100 - context.state.yearPercent)
-        return VStack(alignment: .leading, spacing: 10) {
-            HStack(spacing: 10) {
-                LiveActivitySticker(systemName: "globe.americas.fill", accent: accent, size: 32)
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("\(year)").font(.headline).foregroundColor(Design.lightText)
-                    Text("Season of your year")
-                        .font(.caption)
-                        .foregroundColor(Design.grayLabel)
-                }
-                Spacer()
-                Text("\(leftPct)% left")
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundColor(accent)
-            }
-            Text("\(context.state.yearDaysLeft)d")
-                .font(.system(size: 34, weight: .bold, design: .rounded))
-                .foregroundColor(Design.left)
-                .monospacedDigit()
-            LiveActivitySeasonQuarters(progress: progress, accent: accent)
-        }
-    }
-
-    private var lifeLock: some View {
-        let lifePct = context.state.lifePercent ?? 0
-        let daysLeft = context.state.remainingDaysLife ?? 0
-        let leftPct = max(0, 100 - lifePct)
-        return VStack(alignment: .leading, spacing: 10) {
-            HStack(spacing: 10) {
-                LiveActivitySticker(systemName: "heart.fill", accent: accent, size: 32)
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("Your life").font(.headline).foregroundColor(Design.lightText)
-                    Text("\(lifePct)% lived")
-                        .font(.caption)
-                        .foregroundColor(Design.grayLabel)
-                }
-                Spacer()
-                Text("\(leftPct)% left")
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundColor(accent)
-            }
-            Text("\(daysLeft)")
-                .font(.system(size: 34, weight: .bold, design: .rounded))
-                .foregroundColor(Design.left)
-                .monospacedDigit()
-            Text("Days left")
-                .font(.caption)
-                .foregroundColor(Design.grayLabel)
-            LiveActivityTickTrack(progress: progress, accent: accent, tickCount: 32)
-        }
-    }
-
-    private var tasksLock: some View {
-        let total = context.state.dailyTasksTotal
-        let done = context.state.dailyTasksCompleted
-        let left = max(0, total - done)
-        return VStack(alignment: .leading, spacing: 10) {
-            HStack(spacing: 10) {
-                LiveActivitySticker(systemName: "checklist", accent: accent, size: 32)
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("Tasks").font(.headline).foregroundColor(Design.lightText)
-                    Text(left == 1 ? "1 left today" : "\(left) left today")
-                        .font(.caption)
-                        .foregroundColor(Design.grayLabel)
-                }
-                Spacer()
-                Text("\(done)/\(total)")
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundColor(accent)
-            }
-            if total > 0 {
-                LiveActivitySetPills(progress: progress, accent: accent, count: min(max(total, 4), 12))
-            }
-        }
-    }
-
-    private var hourLock: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            HStack(spacing: 10) {
-                LiveActivitySticker(systemName: "timer", accent: Design.passedDot, size: 32)
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(context.state.hourCalcTitle.isEmpty ? "Timer" : context.state.hourCalcTitle)
-                        .font(.headline)
-                        .foregroundColor(Design.lightText)
-                    Text(context.state.hourCalcIsRunning ? "Running" : "Paused")
-                        .font(.caption)
-                        .foregroundColor(context.state.hourCalcIsRunning ? Design.passedDot : Design.grayLabel)
-                }
-                Spacer()
-            }
-            Text(liveActivityHourCalcText(context))
-                .font(.system(size: 34, weight: .bold, design: .rounded))
-                .foregroundColor(Design.passedDot)
-                .monospacedDigit()
-            LiveActivityTickTrack(progress: 0.35, accent: Design.passedDot, tickCount: 20)
-        }
+        .activityBackgroundTint(Design.background.opacity(0.94))
+        .activitySystemActionForegroundColor(Design.lightText)
     }
 }
 
-// MARK: Compact / Minimal (inspiration: icon + metric pill)
-
-private struct LiveActivityCompactLeadingView: View {
-    let context: ActivityViewContext<UNTILLiveActivityAttributes>
-
-    var body: some View {
-        let type = liveActivityActiveWidget(context)
-        let progress = liveActivityPrimaryProgress(context)
-        let accent = liveActivityTypeAccent(type, progress: progress)
-        LiveActivitySticker(
-            systemName: liveActivityTypeIcon(type, progress: progress),
-            accent: accent,
-            size: 22
-        )
-    }
-}
-
-private struct LiveActivityCompactTrailingView: View {
-    let context: ActivityViewContext<UNTILLiveActivityAttributes>
-
-    var body: some View {
-        let type = liveActivityActiveWidget(context)
-        let progress = liveActivityPrimaryProgress(context)
-        let accent = liveActivityTypeAccent(type, progress: progress)
-        Text(compactMetric)
-            .font(.system(size: 13, weight: .bold, design: .rounded))
-            .foregroundColor(accent)
-            .monospacedDigit()
-            .lineLimit(1)
-            .minimumScaleFactor(0.75)
-    }
-
-    private var compactMetric: String {
-        switch liveActivityActiveWidget(context) {
-        case "month": return "\(context.state.monthDaysLeft)d"
-        case "year": return "\(context.state.yearDaysLeft)d"
-        case "life":
-            let left = max(0, 100 - (context.state.lifePercent ?? 0))
-            return "\(left)%"
-        case "dailyTasks":
-            return "\(max(0, context.state.dailyTasksTotal - context.state.dailyTasksCompleted))"
-        case "hourCalc":
-            return liveActivityHourCalcText(context)
-        default:
-            return liveActivityDayLeftText(context)
-        }
-    }
-}
-
-private struct LiveActivityMinimalView: View {
-    let context: ActivityViewContext<UNTILLiveActivityAttributes>
-
-    var body: some View {
-        let type = liveActivityActiveWidget(context)
-        let progress = liveActivityPrimaryProgress(context)
-        let accent = liveActivityTypeAccent(type, progress: progress)
-        LiveActivitySticker(
-            systemName: liveActivityTypeIcon(type, progress: progress),
-            accent: accent,
-            size: 18
-        )
-    }
-}
-
-// MARK: Expanded (unique layout per type)
-
-private struct LiveActivityExpandedContentView: View {
-    let context: ActivityViewContext<UNTILLiveActivityAttributes>
-
-    var body: some View {
-        switch liveActivityActiveWidget(context) {
-        case "day": expandedDay
-        case "month": expandedMonth
-        case "year": expandedYear
-        case "life": expandedLife
-        case "dailyTasks": expandedTasks
-        case "hourCalc": expandedHour
-        default: expandedDay
-        }
-    }
-
-    private var progress: Double { liveActivityPrimaryProgress(context) }
-
-    private var expandedDay: some View {
-        let accent = liveActivityTypeAccent("day", progress: progress)
-        return VStack(spacing: 5) {
-            HStack(spacing: 8) {
-                LiveActivitySticker(
-                    systemName: liveActivityTypeIcon("day", progress: progress),
-                    accent: accent,
-                    size: 24
-                )
-                VStack(alignment: .leading, spacing: 1) {
-                    Text("Today")
-                        .font(.system(size: 12, weight: .bold))
-                        .foregroundColor(Design.lightText)
-                    Text("Time left today")
-                        .font(.system(size: 9, weight: .medium))
-                        .foregroundColor(Design.grayLabel)
-                }
-                Spacer(minLength: 4)
-                Text("\(context.state.dayPercentLeft)%")
-                    .font(.system(size: 12, weight: .bold))
-                    .foregroundColor(accent)
-            }
-            Text(liveActivityDayLeftText(context))
-                .font(.system(size: 22, weight: .bold, design: .rounded))
-                .foregroundColor(Design.left)
-                .monospacedDigit()
-                .frame(maxWidth: .infinity, alignment: .leading)
-            LiveActivityDayArc(progress: progress, accent: accent)
-        }
-    }
-
-    private var expandedMonth: some View {
-        let monthIdx = Calendar.current.component(.month, from: Date()) - 1
-        let monthName = monthNames[monthIdx]
-        let accent = liveActivityTypeAccent("month", progress: progress)
-        let leftPct = max(0, 100 - context.state.monthPercent)
-        return VStack(spacing: 5) {
-            HStack(spacing: 8) {
-                LiveActivitySticker(systemName: "calendar", accent: accent, size: 24)
-                VStack(alignment: .leading, spacing: 1) {
-                    Text(monthName)
-                        .font(.system(size: 12, weight: .bold))
-                        .foregroundColor(Design.lightText)
-                    Text("Month · \(leftPct)% left")
-                        .font(.system(size: 9, weight: .medium))
-                        .foregroundColor(Design.grayLabel)
-                }
-                Spacer(minLength: 4)
-                Text("\(context.state.monthDaysLeft)d")
-                    .font(.system(size: 14, weight: .bold, design: .rounded))
-                    .foregroundColor(accent)
-                    .monospacedDigit()
-            }
-            LiveActivitySetPills(progress: progress, accent: accent, count: 12)
-            Text("\(context.state.monthDaysPassed)d already passed")
-                .font(.system(size: 8, weight: .medium))
-                .foregroundColor(Design.grayLabel)
-                .frame(maxWidth: .infinity, alignment: .leading)
-        }
-    }
-
-    private var expandedYear: some View {
-        let year = Calendar.current.component(.year, from: Date())
-        let accent = liveActivityTypeAccent("year", progress: progress)
-        let leftPct = max(0, 100 - context.state.yearPercent)
-        return VStack(spacing: 5) {
-            HStack(spacing: 8) {
-                LiveActivitySticker(systemName: "globe.americas.fill", accent: accent, size: 24)
-                VStack(alignment: .leading, spacing: 1) {
-                    Text("\(year)")
-                        .font(.system(size: 12, weight: .bold))
-                        .foregroundColor(Design.lightText)
-                    Text("\(context.state.yearDaysLeft) days left · \(leftPct)%")
-                        .font(.system(size: 9, weight: .medium))
-                        .foregroundColor(Design.grayLabel)
-                }
-                Spacer(minLength: 4)
-            }
-            LiveActivitySeasonQuarters(progress: progress, accent: accent)
-        }
-    }
-
-    private var expandedLife: some View {
-        let lifePct = context.state.lifePercent ?? 0
-        let daysLeft = context.state.remainingDaysLife ?? 0
-        let leftPct = max(0, 100 - lifePct)
-        let accent = liveActivityTypeAccent("life", progress: progress)
-        return VStack(spacing: 5) {
-            HStack(spacing: 8) {
-                LiveActivitySticker(systemName: "heart.fill", accent: accent, size: 24)
-                VStack(alignment: .leading, spacing: 1) {
-                    Text("Life")
-                        .font(.system(size: 12, weight: .bold))
-                        .foregroundColor(Design.lightText)
-                    Text("\(lifePct)% lived")
-                        .font(.system(size: 9, weight: .medium))
-                        .foregroundColor(Design.grayLabel)
-                }
-                Spacer(minLength: 4)
-                Text("\(leftPct)% left")
-                    .font(.system(size: 11, weight: .bold))
-                    .foregroundColor(accent)
-            }
-            HStack(alignment: .firstTextBaseline, spacing: 4) {
-                Text("\(daysLeft)")
-                    .font(.system(size: 22, weight: .bold, design: .rounded))
-                    .foregroundColor(Design.left)
-                    .monospacedDigit()
-                Text("days left")
-                    .font(.system(size: 12, weight: .medium))
-                    .foregroundColor(Design.grayLabel)
-                Spacer()
-            }
-            LiveActivityTickTrack(progress: progress, accent: accent, tickCount: 28)
-        }
-    }
-
-    private var expandedTasks: some View {
-        let total = context.state.dailyTasksTotal
-        let done = context.state.dailyTasksCompleted
-        let left = max(0, total - done)
-        let accent = liveActivityTypeAccent("dailyTasks", progress: progress)
-        return VStack(spacing: 5) {
-            HStack(spacing: 8) {
-                LiveActivitySticker(systemName: "checklist", accent: accent, size: 24)
-                VStack(alignment: .leading, spacing: 1) {
-                    Text("Tasks")
-                        .font(.system(size: 12, weight: .bold))
-                        .foregroundColor(Design.lightText)
-                    Text("\(done)/\(total) done")
-                        .font(.system(size: 9, weight: .medium))
-                        .foregroundColor(Design.grayLabel)
-                }
-                Spacer(minLength: 4)
-                Text("\(left) left")
-                    .font(.system(size: 12, weight: .bold))
-                    .foregroundColor(accent)
-            }
-            if total > 0 {
-                LiveActivitySetPills(progress: progress, accent: accent, count: min(max(total, 4), 12))
-            }
-        }
-    }
-
-    private var expandedHour: some View {
-        VStack(spacing: 5) {
-            HStack(spacing: 8) {
-                LiveActivitySticker(systemName: "timer", accent: Design.passedDot, size: 24)
-                VStack(alignment: .leading, spacing: 1) {
-                    Text(context.state.hourCalcTitle.isEmpty ? "Timer" : context.state.hourCalcTitle)
-                        .font(.system(size: 12, weight: .bold))
-                        .foregroundColor(Design.lightText)
-                    Text(context.state.hourCalcIsRunning ? "Running" : "Paused")
-                        .font(.system(size: 9, weight: .medium))
-                        .foregroundColor(context.state.hourCalcIsRunning ? Design.passedDot : Design.grayLabel)
-                }
-                Spacer(minLength: 4)
-            }
-            Text(liveActivityHourCalcText(context))
-                .font(.system(size: 22, weight: .bold, design: .rounded))
-                .foregroundColor(Design.passedDot)
-                .monospacedDigit()
-                .frame(maxWidth: .infinity, alignment: .leading)
-            LiveActivityTickTrack(progress: 0.4, accent: Design.passedDot, tickCount: 20)
-        }
-    }
-}
-
-private struct LiveActivityExpandedBottomView: View {
-    let context: ActivityViewContext<UNTILLiveActivityAttributes>
+private struct IslandExpandedLeading: View {
+    let model: IslandModel
 
     var body: some View {
         HStack(spacing: 8) {
-            Image(systemName: "arrow.up.forward.app.fill")
-                .font(.system(size: 10, weight: .semibold))
-                .foregroundColor(Design.percent)
-            Text(bottomHint)
-                .font(.system(size: 10, weight: .medium))
-                .foregroundColor(Design.grayLabel)
-                .lineLimit(1)
-            Spacer(minLength: 0)
-            Text("Open")
-                .font(.system(size: 10, weight: .bold))
-                .foregroundColor(Design.lightText)
-                .padding(.horizontal, 8)
-                .padding(.vertical, 4)
-                .background(Capsule().fill(Design.percent.opacity(0.35)))
+            IslandBadge(symbol: model.symbol, accent: model.accent, size: 30)
+            VStack(alignment: .leading, spacing: 1) {
+                Text(model.title)
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundColor(Design.lightText)
+                    .lineLimit(1)
+                Text(model.subtitle)
+                    .font(.system(size: 11))
+                    .foregroundColor(Design.grayLabel)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
+            }
         }
     }
+}
 
-    private var bottomHint: String {
-        switch liveActivityActiveWidget(context) {
-        case "month": return "Month view in UNTIL"
-        case "year": return "Year view in UNTIL"
-        case "life": return "Life view in UNTIL"
-        case "dailyTasks": return "Today's tasks"
-        case "hourCalc": return "Hour timer"
-        default: return "Day view in UNTIL"
+private struct IslandExpandedTrailing: View {
+    let model: IslandModel
+
+    var body: some View {
+        if let metric = model.trailingMetric {
+            VStack(alignment: .trailing, spacing: 0) {
+                Text(metric)
+                    .font(.system(size: 22, weight: .bold, design: .rounded))
+                    .foregroundColor(model.accent)
+                    .monospacedDigit()
+                    .contentTransition(.numericText())
+                Text(model.mode == .dailyTasks ? "done" : "left")
+                    .font(.system(size: 10, weight: .medium))
+                    .foregroundColor(Design.grayLabel)
+            }
+        } else if model.mode == .hourCalc {
+            IslandTimerButton(model: model)
         }
+    }
+}
+
+private struct IslandExpandedBottom: View {
+    let model: IslandModel
+
+    var body: some View {
+        VStack(spacing: 8) {
+            IslandPrimary(model: model, size: 30, alignment: .center)
+            IslandProgress(model: model)
+            HStack {
+                Spacer(minLength: 0)
+                IslandChips(model: model)
+                Spacer(minLength: 0)
+            }
+        }
+        .padding(.top, 2)
+    }
+}
+
+private struct IslandCompactTrailing: View {
+    let model: IslandModel
+
+    var body: some View {
+        Group {
+            switch model.mode {
+            case .day:
+                let now = Date()
+                if model.dayEnd > now {
+                    Text(timerInterval: now...model.dayEnd, pauseTime: nil, countsDown: true, showsHours: true)
+                } else {
+                    Text("0:00")
+                }
+            case .hourCalc:
+                if model.state.hourCalcIsRunning {
+                    Text(model.stopwatchOrigin, style: .timer)
+                } else {
+                    Text(model.stoppedStopwatchText)
+                }
+            case .month: Text("\(model.state.monthDaysLeft)d")
+            case .year: Text("\(model.state.yearDaysLeft)d")
+            case .life: Text(model.trailingMetric ?? "")
+            case .dailyTasks:
+                Text("\(max(0, model.state.dailyTasksTotal - model.state.dailyTasksCompleted))")
+            }
+        }
+        .font(.system(size: 13, weight: .bold, design: .rounded))
+        .monospacedDigit()
+        .foregroundColor(model.accent)
+        .lineLimit(1)
+        .minimumScaleFactor(0.6)
+        .multilineTextAlignment(.trailing)
+        // Text(timerInterval:) is greedy; pin the width so the pill stays compact.
+        .frame(width: 56, alignment: .trailing)
+    }
+}
+
+/// Smallest form: a progress ring with the view's icon inside.
+private struct IslandMinimal: View {
+    let model: IslandModel
+
+    var body: some View {
+        ZStack {
+            Circle().stroke(model.accent.opacity(0.25), lineWidth: 2)
+            Circle()
+                .trim(from: 0, to: max(0.04, min(1, model.progress)))
+                .stroke(model.accent, style: StrokeStyle(lineWidth: 2, lineCap: .round))
+                .rotationEffect(.degrees(-90))
+            Image(systemName: model.symbol)
+                .font(.system(size: 8, weight: .bold))
+                .foregroundColor(model.accent)
+        }
+        .frame(width: 20, height: 20)
     }
 }
 
 struct UNTILLiveActivityWidget: Widget {
-    private static let appURL = URL(string: "until://")!
-
     var body: some WidgetConfiguration {
         ActivityConfiguration(for: UNTILLiveActivityAttributes.self) { context in
-            Link(destination: Self.appURL) {
-                LiveActivityLockScreenView(context: context)
-            }
-            .buttonStyle(.plain)
+            let model = IslandModel(state: context.state, isStale: context.isStale)
+            return IslandLockScreenView(model: model)
+                .widgetURL(model.deepLink)
         } dynamicIsland: { context in
-            DynamicIsland {
-                DynamicIslandExpandedRegion(.center, priority: 1) {
-                    Link(destination: Self.appURL) {
-                        LiveActivityExpandedContentView(context: context)
-                            .padding(.horizontal, 4)
-                    }
-                    .buttonStyle(.plain)
+            let model = IslandModel(state: context.state, isStale: context.isStale)
+            return DynamicIsland {
+                DynamicIslandExpandedRegion(.leading) {
+                    IslandExpandedLeading(model: model)
                 }
-                DynamicIslandExpandedRegion(.bottom, priority: 0.6) {
-                    Link(destination: Self.appURL) {
-                        LiveActivityExpandedBottomView(context: context)
-                            .padding(.horizontal, 6)
-                            .padding(.bottom, 2)
-                    }
-                    .buttonStyle(.plain)
+                DynamicIslandExpandedRegion(.trailing) {
+                    IslandExpandedTrailing(model: model)
+                }
+                DynamicIslandExpandedRegion(.bottom) {
+                    IslandExpandedBottom(model: model)
                 }
             } compactLeading: {
-                LiveActivityCompactLeadingView(context: context)
+                IslandBadge(symbol: model.symbol, accent: model.accent, size: 22)
             } compactTrailing: {
-                LiveActivityCompactTrailingView(context: context)
+                IslandCompactTrailing(model: model)
             } minimal: {
-                LiveActivityMinimalView(context: context)
+                IslandMinimal(model: model)
             }
+            .keylineTint(model.accent)
+            .widgetURL(model.deepLink)
         }
     }
 }

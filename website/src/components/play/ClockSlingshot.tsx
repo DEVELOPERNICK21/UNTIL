@@ -754,7 +754,8 @@ export function ClockSlingshot() {
     let raf = 0;
     let last = performance.now();
 
-    const step = (dt: number) => {
+    /** `dt` drives physics (capped for stability); `clockDt` is wall time for the round timer. */
+    const step = (dt: number, clockDt: number) => {
       const g = gameRef.current;
       if (!g) return;
       const reduced = reducedMotionRef.current;
@@ -797,17 +798,17 @@ export function ClockSlingshot() {
       g.flash = Math.max(0, g.flash - dt * 3);
       g.bandWobble *= Math.exp(-7 * dt);
       if (g.fever > 0) {
-        g.fever -= dt;
+        g.fever -= clockDt;
         if (g.fever <= 0) g.fever = 0;
       }
 
       if (g.phase === 'playing' && g.countdown > 0) {
         const before = Math.floor((COUNTDOWN_SECONDS - g.countdown) / 0.6);
-        g.countdown = Math.max(0, g.countdown - dt);
+        g.countdown = Math.max(0, g.countdown - clockDt);
         const after = Math.floor((COUNTDOWN_SECONDS - g.countdown) / 0.6);
         if (after !== before) play(after >= 3 ? 'launch' : 'hit');
       } else if (g.phase === 'playing') {
-        g.timeLeft -= dt;
+        g.timeLeft -= clockDt;
         if (g.time >= g.nextSpawn) {
           spawnFloater(g);
           g.nextSpawn = g.time + Math.max(0.9, 2.6 - 0.25 * (g.level - 1)) * (0.6 + Math.random() * 0.8);
@@ -1238,15 +1239,16 @@ export function ClockSlingshot() {
     };
 
     const loop = (t: number) => {
-      const real = Math.min(0.033, (t - last) / 1000);
+      // Gaps longer than 0.25s mean the tab was hidden; that time does not count.
+      const wall = Math.min(0.25, (t - last) / 1000);
       last = t;
       const g = gameRef.current;
-      let dt = real;
+      let scale = 1;
       if (g && g.slowmo > 0) {
-        g.slowmo -= real;
-        dt = real * 0.35;
+        g.slowmo -= wall;
+        scale = 0.35;
       }
-      step(dt);
+      step(Math.min(0.033, wall) * scale, wall * scale);
       draw();
       raf = requestAnimationFrame(loop);
     };

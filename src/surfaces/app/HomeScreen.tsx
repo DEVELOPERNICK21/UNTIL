@@ -31,6 +31,9 @@ import {
   useReduceMotion,
   usePresenceStreak,
   useDailyReflection,
+  useBadges,
+  useDailyQuests,
+  useStreakCelebration,
 } from '../../hooks';
 import {
   Spacing,
@@ -46,6 +49,11 @@ import { setEmberRouteOverride } from '../../services/emberSurface';
 import { TaskReportContent } from './TaskReportContent';
 import { InterventionHomeCard } from '../../components/intervention/InterventionHomeCard';
 import { TimeCoachCard } from '../../components/reflections/TimeCoachCard';
+import {
+  BadgeShelf,
+  DailyQuestsCard,
+  StreakChip,
+} from '../../components/gamification';
 
 function getDaysInMonth(): number {
   const d = new Date();
@@ -180,6 +188,20 @@ const TimeBlock = React.memo(function TimeBlock({
   const enterY = useRef(new Animated.Value(reduceMotion ? 0 : 14)).current;
   const reveal = reduceMotion ? undefined : scrollRevealStyle(scrollY, index);
   const [pressed, setPressed] = useState(false);
+  const pressScale = useRef(new Animated.Value(1)).current;
+
+  const springTo = React.useCallback(
+    (toValue: number) => {
+      if (reduceMotion) return;
+      Animated.spring(pressScale, {
+        toValue,
+        friction: 6,
+        tension: 260,
+        useNativeDriver: true,
+      }).start();
+    },
+    [pressScale, reduceMotion],
+  );
 
   useEffect(() => {
     if (reduceMotion) {
@@ -241,12 +263,20 @@ const TimeBlock = React.memo(function TimeBlock({
         {onPress ? (
           <Pressable
             onPress={onPress}
-            onPressIn={() => setPressed(true)}
-            onPressOut={() => setPressed(false)}
+            onPressIn={() => {
+              setPressed(true);
+              springTo(0.96);
+            }}
+            onPressOut={() => {
+              setPressed(false);
+              springTo(1);
+            }}
             accessibilityRole="button"
             accessibilityLabel={`${title}: ${leftLabel} left, ${passedLabel} passed. Tap for details.`}
           >
-            {content}
+            <Animated.View style={{ transform: [{ scale: pressScale }] }}>
+              {content}
+            </Animated.View>
           </Pressable>
         ) : (
           content
@@ -308,6 +338,10 @@ export function HomeScreen() {
   const { canAccessLife } = useAccessControl();
   const reduceMotion = useReduceMotion();
   const { streak } = usePresenceStreak();
+  const { celebrate: celebrateStreak, acknowledge: acknowledgeStreak } =
+    useStreakCelebration();
+  const quests = useDailyQuests();
+  const badgeOverview = useBadges();
   const {
     reflection,
     visible: reflectionVisible,
@@ -370,6 +404,10 @@ export function HomeScreen() {
   }, [navigation]);
   const handleSettingsPress = React.useCallback(
     () => navigation.navigate('Settings'),
+    [navigation],
+  );
+  const handleBadgesPress = React.useCallback(
+    () => navigation.navigate('Badges'),
     [navigation],
   );
   const handleFabPress = React.useCallback(
@@ -460,27 +498,13 @@ export function HomeScreen() {
                     </Text>
                   </View>
                   {streak.count > 0 ? (
-                    <View
-                      style={[
-                        styles.streakChip,
-                        {
-                          backgroundColor: theme.glassBg,
-                          borderColor: theme.glassBorder,
-                        },
-                      ]}
-                      accessibilityLabel={`${streak.count} day presence streak`}
-                    >
-                      <Text
-                        variant="caption"
-                        color="primary"
-                        style={styles.streakNum}
-                      >
-                        {streak.count}
-                      </Text>
-                      <Text variant="micro" color="secondary">
-                        {streak.count === 1 ? 'day' : 'days'}
-                      </Text>
-                    </View>
+                    <StreakChip
+                      count={streak.count}
+                      lit={streak.noticedToday}
+                      celebrate={celebrateStreak}
+                      onCelebrated={acknowledgeStreak}
+                      onPress={handleBadgesPress}
+                    />
                   ) : null}
                 </View>
                 <Text variant="body" color="secondary" style={styles.subhead}>
@@ -490,6 +514,8 @@ export function HomeScreen() {
                   Swipe left for task report →
                 </Text>
               </Animated.View>
+
+              <DailyQuestsCard quests={quests} onQuestPress={handleFabPress} />
 
               <InterventionHomeCard />
 
@@ -617,6 +643,8 @@ export function HomeScreen() {
                   )}
                 </View>
               </View>
+
+              <BadgeShelf overview={badgeOverview} onOpen={handleBadgesPress} />
 
               {!goalsFeatureEnabled ? (
                 <GlassCard style={styles.comingSoonBlock}>
@@ -746,19 +774,6 @@ const styles = StyleSheet.create({
   },
   heroCopy: {
     flex: 1,
-  },
-  streakChip: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: Spacing[2],
-    paddingVertical: Spacing[1],
-    borderRadius: 12,
-    borderWidth: StyleSheet.hairlineWidth,
-    minWidth: 44,
-  },
-  streakNum: {
-    fontFamily: FontFamily.medium,
-    letterSpacing: 0.4,
   },
   greeting: {
     letterSpacing: 0.3,

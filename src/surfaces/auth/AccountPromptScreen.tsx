@@ -1,8 +1,8 @@
 /**
- * Post-paywall soft account prompt — Google sign-in offered, skip allowed.
+ * Post-paywall soft account prompt — Apple (iOS) / Google / email offered, skip allowed.
  */
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   View,
   StyleSheet,
@@ -12,6 +12,11 @@ import {
   Image,
   Animated,
   Pressable,
+  ScrollView,
+  KeyboardAvoidingView,
+  LayoutAnimation,
+  AccessibilityInfo,
+  Platform,
 } from 'react-native';
 import {
   SafeAreaView,
@@ -23,6 +28,7 @@ import {
   GlassCard,
   AgeConfirmationCheck,
   LegalAgreementLine,
+  useReduceMotion,
 } from '../../ui';
 import { LEGAL_URLS } from '../../config/monetization';
 import {
@@ -41,21 +47,28 @@ import {
   EmailPasswordAuthForm,
   type EmailAuthMode,
 } from './EmailPasswordAuthForm';
+import { AppleSignInButton } from './AppleSignInButton';
+import { EmailMark } from './EmailMark';
 import { GoogleMark } from './GoogleMark';
 
 const DEVICE_LIMIT_NOTE_MS = 2200;
 
 const BENEFITS = [
   'DOB and life settings',
-  'Premium on your phones',
+  'Premium on up to 3 phones',
   'Restore after reinstall',
 ] as const;
+
+type PendingProvider = 'apple' | 'google' | 'email' | null;
 
 export function AccountPromptScreen() {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
+  const reduceMotion = useReduceMotion();
   const completeAuth = useOnboardingComplete();
   const {
+    appleSignInAvailable,
+    signInWithApple,
     signInWithGoogle,
     signInWithEmail,
     createAccountWithEmail,
@@ -67,7 +80,11 @@ export function AccountPromptScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [emailMode, setEmailMode] = useState<EmailAuthMode>('sign_in');
+  const [emailOpen, setEmailOpen] = useState(false);
   const [ageConfirmed, setAgeConfirmed] = useState(false);
+  const [ageNudge, setAgeNudge] = useState(false);
+  const [pending, setPending] = useState<PendingProvider>(null);
+  const shakeX = useRef(new Animated.Value(0)).current;
   const isLight = theme.statusBarStyle === 'dark-content';
 
   const brandEnter = useEnter(true, 0);
@@ -103,8 +120,62 @@ export function AccountPromptScreen() {
     });
   };
 
+  const handleAgeChange = (next: boolean) => {
+    setAgeConfirmed(next);
+    if (next) setAgeNudge(false);
+  };
+
+  /** Point at the age box instead of letting the use case reject the tap. */
+  const ensureAgeConfirmed = (): boolean => {
+    if (ageConfirmed) return true;
+    setAgeNudge(true);
+    AccessibilityInfo.announceForAccessibility(
+      `Confirm you're ${MINIMUM_ACCOUNT_AGE_YEARS} or older first.`,
+    );
+    if (!reduceMotion) {
+      shakeX.setValue(0);
+      Animated.sequence(
+        [8, -8, 6, -6, 3, 0].map(toValue =>
+          Animated.timing(shakeX, {
+            toValue,
+            duration: 50,
+            useNativeDriver: true,
+          }),
+        ),
+      ).start();
+    }
+    return false;
+  };
+
+  const handleAppleSignIn = async () => {
+    void logAnalyticsEvent('account_prompt_apple_tapped');
+    if (!ensureAgeConfirmed()) return;
+    setPending('apple');
+    try {
+      const result = await signInWithApple(ageConfirmed);
+      if (!result) {
+        void logAnalyticsEvent('account_prompt_signin_cancelled');
+        return;
+      }
+      void logAnalyticsEvent('account_prompt_signin_succeeded', {
+        device_limit_reached: result.deviceLimitReached,
+        provider: 'apple',
+      });
+      setConfirmVisible(false);
+      finishSignedIn(result.deviceLimitReached);
+    } catch {
+      void logAnalyticsEvent('account_prompt_signin_failed', {
+        provider: 'apple',
+      });
+    } finally {
+      setPending(null);
+    }
+  };
+
   const handleGoogleSignIn = async () => {
     void logAnalyticsEvent('account_prompt_google_tapped');
+    if (!ensureAgeConfirmed()) return;
+    setPending('google');
     try {
       const result = await signInWithGoogle(ageConfirmed);
       if (!result) {
@@ -121,11 +192,15 @@ export function AccountPromptScreen() {
       void logAnalyticsEvent('account_prompt_signin_failed', {
         provider: 'google',
       });
+    } finally {
+      setPending(null);
     }
   };
 
   const handleEmailSubmit = async () => {
     void logAnalyticsEvent('account_prompt_email_tapped', { mode: emailMode });
+    if (!ensureAgeConfirmed()) return;
+    setPending('email');
     try {
       const result =
         emailMode === 'sign_in'
@@ -143,7 +218,16 @@ export function AccountPromptScreen() {
         provider: 'password',
         mode: emailMode,
       });
+    } finally {
+      setPending(null);
     }
+  };
+
+  const openEmailForm = () => {
+    if (!reduceMotion) {
+      LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    }
+    setEmailOpen(true);
   };
 
   const handleSkipTap = () => {
@@ -164,192 +248,253 @@ export function AccountPromptScreen() {
   const handleSheetSignIn = () => {
     void logAnalyticsEvent('account_prompt_skip_cancelled');
     setConfirmVisible(false);
-    void handleGoogleSignIn();
+    void (appleSignInAvailable ? handleAppleSignIn() : handleGoogleSignIn());
   };
 
   const handleSheetDismiss = () => {
     setConfirmVisible(false);
   };
 
+  const secondaryButtonColors = {
+    backgroundColor: isLight ? '#FFFFFF' : '#F8F8F8',
+    borderColor: isLight ? 'rgba(26,26,26,0.12)' : 'transparent',
+  };
+
   return (
     <View style={styles.container}>
       <ScreenGradient>
         <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
-          <View
-            style={[
-              styles.content,
-              { paddingBottom: Math.max(insets.bottom, Spacing[3]) },
-            ]}
+          <KeyboardAvoidingView
+            style={styles.safe}
+            behavior={Platform.OS === 'ios' ? 'padding' : undefined}
           >
-            <Animated.View style={[styles.brandBlock, brandEnter]}>
-              <Image
-                source={appLogoIcon}
-                style={styles.logoIcon}
-                resizeMode="contain"
-                accessibilityIgnoresInvertColors
-              />
-              <Text
-                variant="sectionTitle"
-                color="primary"
-                style={styles.appTitle}
-              >
-                UNTIL
-              </Text>
-            </Animated.View>
+            <ScrollView
+              contentContainerStyle={[
+                styles.content,
+                { paddingBottom: Math.max(insets.bottom, Spacing[3]) },
+              ]}
+              keyboardShouldPersistTaps="handled"
+              showsVerticalScrollIndicator={false}
+            >
+              <View>
+                <Animated.View style={[styles.brandBlock, brandEnter]}>
+                  <Image
+                    source={appLogoIcon}
+                    style={styles.logoIcon}
+                    resizeMode="contain"
+                    accessibilityIgnoresInvertColors
+                  />
+                  <Text
+                    variant="sectionTitle"
+                    color="primary"
+                    style={styles.appTitle}
+                  >
+                    UNTIL
+                  </Text>
+                </Animated.View>
 
-            <Animated.View style={[styles.intro, copyEnter]}>
-              <Text
-                variant="display"
-                color="primary"
-                style={styles.headline}
-              >
-                {deviceLimitNote
-                  ? 'Signed in'
-                  : 'Keep your data with you'}
-              </Text>
-              <Text variant="body" color="secondary" style={styles.benefit}>
-                {deviceLimitNote
-                  ? 'Premium needs a free device slot. Manage devices in Settings → Account.'
-                  : 'Saves DOB, premium, and settings across devices.'}
-              </Text>
-
-              {!deviceLimitNote ? (
-                <View style={styles.benefitList}>
-                  {BENEFITS.map(line => (
-                    <View key={line} style={styles.benefitRow}>
-                      <View
-                        style={[
-                          styles.benefitDot,
-                          { backgroundColor: theme.percent },
-                        ]}
-                      />
-                      <Text variant="body" color="secondary">
-                        {line}
-                      </Text>
+                <Animated.View style={[styles.intro, copyEnter]}>
+                  <Text
+                    variant="display"
+                    color="primary"
+                    style={styles.headline}
+                  >
+                    {deviceLimitNote ? 'Signed in' : 'Keep your data with you'}
+                  </Text>
+                  {deviceLimitNote ? (
+                    <Text
+                      variant="body"
+                      color="secondary"
+                      style={styles.benefit}
+                    >
+                      Premium needs a free device slot. Manage devices in
+                      Settings → Account.
+                    </Text>
+                  ) : (
+                    <View style={styles.benefitList}>
+                      {BENEFITS.map(line => (
+                        <View key={line} style={styles.benefitRow}>
+                          <View
+                            style={[
+                              styles.benefitDot,
+                              { backgroundColor: theme.percent },
+                            ]}
+                          />
+                          <Text variant="body" color="secondary">
+                            {line}
+                          </Text>
+                        </View>
+                      ))}
                     </View>
-                  ))}
-                </View>
-              ) : null}
-            </Animated.View>
+                  )}
+                </Animated.View>
+              </View>
 
-            <Animated.View style={[styles.actions, actionsEnter]}>
-              {deviceLimitNote ? (
-                <View style={styles.deviceLimitSpinnerWrap}>
-                  <ActivityIndicator color={theme.textSecondary} />
-                </View>
-              ) : (
-                <>
-                  <GlassCard style={styles.actionsCard}>
-                    <AgeConfirmationCheck
-                      checked={ageConfirmed}
-                      onChange={setAgeConfirmed}
-                      minimumAge={MINIMUM_ACCOUNT_AGE_YEARS}
-                      disabled={busy}
-                    />
-                    <LegalAgreementLine
-                      termsUrl={LEGAL_URLS.terms}
-                      privacyUrl={LEGAL_URLS.privacy}
-                    />
-                    {/*
-                      Google is the only provider today. App Store guideline 4.8
-                      requires an equivalent private login option alongside it, so
-                      iOS needs Sign in with Apple here before submission.
-                    */}
+              <Animated.View style={[styles.actions, actionsEnter]}>
+                {deviceLimitNote ? (
+                  <View style={styles.deviceLimitSpinnerWrap}>
+                    <ActivityIndicator color={theme.textSecondary} />
+                  </View>
+                ) : (
+                  <>
+                    <GlassCard style={styles.actionsCard}>
+                      <Animated.View
+                        style={{ transform: [{ translateX: shakeX }] }}
+                      >
+                        <AgeConfirmationCheck
+                          checked={ageConfirmed}
+                          onChange={handleAgeChange}
+                          minimumAge={MINIMUM_ACCOUNT_AGE_YEARS}
+                          disabled={busy}
+                          attention={ageNudge}
+                        />
+                      </Animated.View>
+                      {ageNudge && !ageConfirmed ? (
+                        <Text
+                          variant="caption"
+                          style={[styles.ageHint, { color: theme.percent }]}
+                        >
+                          Tick this to continue.
+                        </Text>
+                      ) : null}
+
+                      <View style={styles.providers}>
+                        {/* App Store guideline 4.8: Apple must sit alongside Google on iOS. */}
+                        {appleSignInAvailable ? (
+                          <AppleSignInButton
+                            onPress={() => {
+                              void handleAppleSignIn();
+                            }}
+                            busy={pending === 'apple'}
+                            disabled={busy}
+                          />
+                        ) : null}
+
+                        <TouchableOpacity
+                          style={[styles.providerButton, secondaryButtonColors]}
+                          onPress={() => {
+                            void handleGoogleSignIn();
+                          }}
+                          activeOpacity={0.85}
+                          disabled={busy}
+                          accessibilityRole="button"
+                          accessibilityLabel="Continue with Google"
+                          accessibilityState={{
+                            busy: pending === 'google',
+                            disabled: busy,
+                          }}
+                        >
+                          {pending === 'google' ? (
+                            <ActivityIndicator color="#1A1A1A" />
+                          ) : (
+                            <>
+                              <GoogleMark />
+                              <Text
+                                variant="sectionTitle"
+                                style={styles.providerLabel}
+                              >
+                                Continue with Google
+                              </Text>
+                            </>
+                          )}
+                        </TouchableOpacity>
+
+                        {emailOpen ? (
+                          <View style={styles.emailForm}>
+                            <View style={styles.orRow}>
+                              <View
+                                style={[
+                                  styles.orLine,
+                                  { backgroundColor: theme.divider },
+                                ]}
+                              />
+                              <Text
+                                variant="caption"
+                                style={{ color: theme.textMuted }}
+                              >
+                                email
+                              </Text>
+                              <View
+                                style={[
+                                  styles.orLine,
+                                  { backgroundColor: theme.divider },
+                                ]}
+                              />
+                            </View>
+                            <EmailPasswordAuthForm
+                              email={email}
+                              password={password}
+                              mode={emailMode}
+                              busy={busy}
+                              onEmailChange={setEmail}
+                              onPasswordChange={setPassword}
+                              onModeChange={setEmailMode}
+                              onSubmit={() => {
+                                void handleEmailSubmit();
+                              }}
+                            />
+                          </View>
+                        ) : (
+                          <TouchableOpacity
+                            style={[
+                              styles.providerButton,
+                              styles.emailButton,
+                              { borderColor: theme.glassBorder },
+                            ]}
+                            onPress={openEmailForm}
+                            activeOpacity={0.7}
+                            disabled={busy}
+                            accessibilityRole="button"
+                            accessibilityLabel="Continue with email"
+                          >
+                            <EmailMark color={theme.textPrimary} />
+                            <Text
+                              variant="sectionTitle"
+                              style={[
+                                styles.providerLabel,
+                                { color: theme.textPrimary },
+                              ]}
+                            >
+                              Continue with email
+                            </Text>
+                          </TouchableOpacity>
+                        )}
+                      </View>
+
+                      {error ? (
+                        <Text variant="caption" style={styles.errorText}>
+                          {error}
+                        </Text>
+                      ) : null}
+
+                      <View style={styles.legalWrap}>
+                        <LegalAgreementLine
+                          termsUrl={LEGAL_URLS.terms}
+                          privacyUrl={LEGAL_URLS.privacy}
+                          align="center"
+                        />
+                      </View>
+                    </GlassCard>
+
                     <TouchableOpacity
-                      style={[
-                        styles.primaryButton,
-                        {
-                          backgroundColor: isLight ? '#FFFFFF' : '#F8F8F8',
-                          borderColor: isLight
-                            ? 'rgba(26,26,26,0.12)'
-                            : 'transparent',
-                        },
-                      ]}
-                      onPress={handleGoogleSignIn}
-                      activeOpacity={0.85}
+                      onPress={handleSkipTap}
+                      style={styles.skipHit}
                       disabled={busy}
                       accessibilityRole="button"
-                      accessibilityLabel="Continue with Google"
-                      accessibilityState={{ busy, disabled: busy }}
+                      accessibilityLabel="Continue without account"
                     >
-                      {busy ? (
-                        <ActivityIndicator color="#1A1A1A" />
-                      ) : (
-                        <>
-                          <GoogleMark />
-                          <Text
-                            variant="sectionTitle"
-                            style={styles.primaryButtonLabel}
-                          >
-                            Continue with Google
-                          </Text>
-                        </>
-                      )}
-                    </TouchableOpacity>
-
-                    <View style={styles.orRow}>
-                      <View
-                        style={[
-                          styles.orLine,
-                          { backgroundColor: theme.divider },
-                        ]}
-                      />
                       <Text
                         variant="caption"
                         style={{ color: theme.textMuted }}
                       >
-                        or with email
+                        Continue without account
                       </Text>
-                      <View
-                        style={[
-                          styles.orLine,
-                          { backgroundColor: theme.divider },
-                        ]}
-                      />
-                    </View>
-
-                    <EmailPasswordAuthForm
-                      email={email}
-                      password={password}
-                      mode={emailMode}
-                      busy={busy}
-                      onEmailChange={setEmail}
-                      onPasswordChange={setPassword}
-                      onModeChange={setEmailMode}
-                      onSubmit={() => {
-                        void handleEmailSubmit();
-                      }}
-                    />
-
-                    <Text
-                      variant="caption"
-                      style={[styles.trustLine, { color: theme.textMuted }]}
-                    >
-                      Up to 3 devices per account
-                    </Text>
-                  </GlassCard>
-
-                  {error ? (
-                    <Text variant="caption" style={styles.errorText}>
-                      {error}
-                    </Text>
-                  ) : null}
-
-                  <TouchableOpacity
-                    onPress={handleSkipTap}
-                    style={styles.skipHit}
-                    disabled={busy}
-                    accessibilityRole="button"
-                    accessibilityLabel="Continue without account"
-                  >
-                    <Text variant="caption" style={{ color: theme.textMuted }}>
-                      Continue without account
-                    </Text>
-                  </TouchableOpacity>
-                </>
-              )}
-            </Animated.View>
-          </View>
+                    </TouchableOpacity>
+                  </>
+                )}
+              </Animated.View>
+            </ScrollView>
+          </KeyboardAvoidingView>
         </SafeAreaView>
       </ScreenGradient>
 
@@ -415,10 +560,11 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   safe: { flex: 1 },
   content: {
-    flex: 1,
+    flexGrow: 1,
     paddingHorizontal: Spacing[4],
     paddingTop: Spacing[4],
     justifyContent: 'space-between',
+    gap: Spacing[4],
   },
   brandBlock: {
     alignItems: 'center',
@@ -438,6 +584,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: Spacing[2],
     paddingHorizontal: Spacing[1],
+    marginTop: Spacing[2],
   },
   headline: {
     textAlign: 'center',
@@ -449,10 +596,8 @@ const styles = StyleSheet.create({
     maxWidth: 300,
   },
   benefitList: {
-    marginTop: Spacing[3],
+    marginTop: Spacing[2],
     alignSelf: 'center',
-    width: '100%',
-    maxWidth: 280,
     gap: Spacing[2],
   },
   benefitRow: {
@@ -473,11 +618,19 @@ const styles = StyleSheet.create({
     padding: Spacing[3],
     gap: Spacing[2],
   },
+  ageHint: {
+    marginTop: -Spacing[1],
+    marginLeft: 30,
+  },
+  providers: {
+    gap: Spacing[2],
+    marginTop: Spacing[1],
+  },
   deviceLimitSpinnerWrap: {
     paddingVertical: Spacing[3],
     alignItems: 'center',
   },
-  primaryButton: {
+  providerButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -488,27 +641,32 @@ const styles = StyleSheet.create({
     gap: Spacing[2],
     borderWidth: StyleSheet.hairlineWidth * 2,
   },
-  primaryButtonLabel: {
+  emailButton: {
+    backgroundColor: 'transparent',
+  },
+  providerLabel: {
     fontFamily: getFontFamilyForWeight(Weight.semibold),
     color: '#1A1A1A',
+  },
+  emailForm: {
+    gap: Spacing[2],
   },
   orRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing[2],
-    marginTop: Spacing[3],
+    marginTop: Spacing[2],
   },
   orLine: {
     flex: 1,
     height: StyleSheet.hairlineWidth,
   },
-  trustLine: {
-    textAlign: 'center',
-    marginTop: Spacing[2],
+  legalWrap: {
+    marginTop: Spacing[1],
+    paddingHorizontal: Spacing[2],
   },
   errorText: {
     color: '#E85C5C',
-    marginTop: Spacing[2],
     textAlign: 'center',
   },
   skipHit: {

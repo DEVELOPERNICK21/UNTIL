@@ -12,6 +12,9 @@ export type PresenceStreakState = {
   noticedToday: boolean;
 };
 
+/** A spent freeze comes back after this many days in a row. */
+export const FREEZE_REFILL_EVERY_DAYS = 7;
+
 export function localDateKey(d: Date = new Date()): string {
   const y = d.getFullYear();
   const m = String(d.getMonth() + 1).padStart(2, '0');
@@ -50,13 +53,21 @@ export function recordPresenceDay(
 
   const gap = daysBetween(prev.lastDateKey, todayKey);
 
+  if (gap < 0) {
+    // Local date moved backwards (flew west, changed time zone, clock fix).
+    // Today is already counted, so keep the streak and the stored date.
+    return { ...prev, noticedToday: true };
+  }
+
   if (gap === 1) {
     const count = prev.count + 1;
     return {
       count,
       longest: Math.max(prev.longest, count),
       lastDateKey: todayKey,
-      freezeAvailable: prev.freezeAvailable,
+      // A spent freeze is earned back after a full week in a row.
+      freezeAvailable:
+        prev.freezeAvailable || count % FREEZE_REFILL_EVERY_DAYS === 0,
       noticedToday: true,
     };
   }

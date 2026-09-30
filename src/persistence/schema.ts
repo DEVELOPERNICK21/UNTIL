@@ -144,6 +144,9 @@ export const STORAGE_KEYS = {
   PRESENCE_STREAK_FREEZE: 'engagement.presenceStreakFreeze',
   PRESENCE_STREAK_SAVER_ID: 'engagement.presenceStreakSaverId',
 
+  // Badges (earned ids, celebrations already shown). Owner: MmkvBadgeRepository.
+  BADGES_STATE: 'gamification.badgesState',
+
   // Ember companion tip memory (first-auto + rotation)
   EMBER_TIP_INTRO_SEEN: 'engagement.emberTipIntroSeen',
   EMBER_TIP_CURSOR: 'engagement.emberTipCursor',

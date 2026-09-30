@@ -10,7 +10,8 @@ export class GetPresenceStreakUseCase {
     const today = localDateKey(now);
     return {
       ...state,
-      noticedToday: state.lastDateKey === today,
+      // >= covers a local date that moved backwards (time zone change).
+      noticedToday: state.lastDateKey != null && state.lastDateKey >= today,
     };
   }
 }

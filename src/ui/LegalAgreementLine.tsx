@@ -5,17 +5,23 @@ import { Text } from './Text';
 interface LegalAgreementLineProps {
   termsUrl: string;
   privacyUrl: string;
+  align?: 'left' | 'center';
 }
 
 export function LegalAgreementLine({
   termsUrl,
   privacyUrl,
+  align = 'left',
 }: LegalAgreementLineProps) {
   const open = (url: string) => {
     void Linking.openURL(url).catch(() => undefined);
   };
   return (
-    <Text variant="caption" color="secondary" style={styles.line}>
+    <Text
+      variant="caption"
+      color="secondary"
+      style={[styles.line, { textAlign: align }]}
+    >
       By continuing you agree to the{' '}
       <Text
         variant="caption"

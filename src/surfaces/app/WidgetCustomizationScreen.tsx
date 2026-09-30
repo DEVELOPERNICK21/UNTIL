@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect } from 'react';
+import React, { useCallback, useEffect, useMemo } from 'react';
 import {
   View,
   ScrollView,
@@ -10,13 +10,13 @@ import {
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Text, ScreenGradient } from '../../ui';
-import { Colors, Spacing, Radius, Typography } from '../../theme';
+import { Spacing, Radius, Typography, useTheme } from '../../theme';
+import type { ThemePalette } from '../../theme';
 import { WidgetPreview } from '../widgets/WidgetPreview';
 import { useWidgetConfig, useAccessControl } from '../../hooks';
 import { isPremiumWidgetConfigType } from '../../config/widgetGating';
 import {
   WIDGET_ACCENTS,
-  getWidgetAccentColor,
   isPremiumWidgetAccent,
 } from '../../config/widgetAccents';
 import type { RootStackParamList } from '../../navigation/types';
@@ -28,6 +28,8 @@ const PRESET_MESSAGES = [
 ];
 
 export function WidgetCustomizationScreen() {
+  const theme = useTheme();
+  const styles = useMemo(() => createStyles(theme), [theme]);
   const navigation =
     useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { hasPremiumBundle } = useAccessControl();
@@ -58,10 +60,10 @@ export function WidgetCustomizationScreen() {
             text: 'View Premium',
             onPress: () => navigation.navigate('Premium'),
           },
-        ]
+        ],
       );
     },
-    [navigation]
+    [navigation],
   );
 
   const handleSelectType = useCallback(
@@ -70,9 +72,9 @@ export function WidgetCustomizationScreen() {
         promptPremiumForWidget(value === 'month' ? 'Month' : 'Life');
         return;
       }
-      setType(value as typeof config.type);
+      setType(value as Parameters<typeof setType>[0]);
     },
-    [hasPremiumBundle, promptPremiumForWidget, setType, config.type]
+    [hasPremiumBundle, promptPremiumForWidget, setType],
   );
 
   const handleSelectAccent = useCallback(
@@ -87,13 +89,13 @@ export function WidgetCustomizationScreen() {
               text: 'View Premium',
               onPress: () => navigation.navigate('Premium'),
             },
-          ]
+          ],
         );
         return;
       }
-      setAccent(value as typeof config.accent);
+      setAccent(value as Parameters<typeof setAccent>[0]);
     },
-    [hasPremiumBundle, navigation, setAccent, config.accent]
+    [hasPremiumBundle, navigation, setAccent],
   );
 
   const handleAddWidget = useCallback(() => {
@@ -104,7 +106,7 @@ export function WidgetCustomizationScreen() {
     Alert.alert(
       'Add widget',
       'Long-press your home screen, tap Widgets, then choose Until and your preferred size.',
-      [{ text: 'OK' }]
+      [{ text: 'OK' }],
     );
   }, [config.type, hasPremiumBundle, promptPremiumForWidget]);
 
@@ -176,7 +178,11 @@ export function WidgetCustomizationScreen() {
           <View style={styles.accentHeaderRow}>
             <SectionLabel label="Accent color" />
             {!hasPremiumBundle && (
-              <Text variant="caption" color="secondary" style={styles.premiumTag}>
+              <Text
+                variant="caption"
+                color="secondary"
+                style={styles.premiumTag}
+              >
                 PREMIUM
               </Text>
             )}
@@ -200,9 +206,7 @@ export function WidgetCustomizationScreen() {
                       locked && styles.accentSwatchLocked,
                     ]}
                   >
-                    {locked && (
-                      <Text style={styles.accentLockGlyph}>•</Text>
-                    )}
+                    {locked && <Text style={styles.accentLockGlyph}>•</Text>}
                   </View>
                   <Text
                     variant="caption"
@@ -231,7 +235,11 @@ export function WidgetCustomizationScreen() {
               </Text>
               <HorizontalPills
                 options={PRESET_MESSAGES.map(m => ({ key: m, label: m }))}
-                selected={PRESET_MESSAGES.includes(config.message) ? config.message : undefined}
+                selected={
+                  PRESET_MESSAGES.includes(config.message)
+                    ? config.message
+                    : undefined
+                }
                 onSelect={value => setMessage(value)}
                 wrap
               />
@@ -243,7 +251,7 @@ export function WidgetCustomizationScreen() {
                   value={config.message}
                   onChangeText={setMessage}
                   placeholder="Type a short reminder to your future self"
-                  placeholderTextColor={Colors.textSecondary}
+                  placeholderTextColor={theme.textSecondary}
                   style={styles.input}
                   maxLength={80}
                 />
@@ -269,6 +277,8 @@ export function WidgetCustomizationScreen() {
 }
 
 function SectionLabel({ label }: { label: string }) {
+  const theme = useTheme();
+  const styles = useMemo(() => createStyles(theme), [theme]);
   return (
     <Text variant="caption" color="secondary" style={styles.sectionLabel}>
       {label.toUpperCase()}
@@ -289,12 +299,11 @@ function HorizontalPills({
   onSelect,
   wrap,
 }: HorizontalPillsProps) {
+  const theme = useTheme();
+  const styles = useMemo(() => createStyles(theme), [theme]);
   return (
     <View
-      style={[
-        styles.pillRow,
-        wrap && { flexWrap: 'wrap', rowGap: Spacing.sm },
-      ]}
+      style={[styles.pillRow, wrap && { flexWrap: 'wrap', rowGap: Spacing.sm }]}
     >
       {options.map(option => {
         const isActive = option.key === selected;
@@ -303,10 +312,7 @@ function HorizontalPills({
             key={option.key}
             activeOpacity={0.8}
             onPress={() => onSelect(option.key)}
-            style={[
-              styles.pillOption,
-              isActive && styles.pillOptionActive,
-            ]}
+            style={[styles.pillOption, isActive && styles.pillOptionActive]}
           >
             <Text
               style={[
@@ -330,6 +336,8 @@ interface ToggleRowProps {
 }
 
 function ToggleRow({ label, active, onToggle }: ToggleRowProps) {
+  const theme = useTheme();
+  const styles = useMemo(() => createStyles(theme), [theme]);
   return (
     <TouchableOpacity
       activeOpacity={0.8}
@@ -356,165 +364,166 @@ function ToggleRow({ label, active, onToggle }: ToggleRowProps) {
   );
 }
 
-const styles = StyleSheet.create({
-  scroll: {
-    flex: 1,
-  },
-  content: {
-    paddingHorizontal: Spacing.lg,
-    paddingTop: Spacing.lg,
-    paddingBottom: Spacing.xl * 2,
-  },
-  title: {
-    marginBottom: Spacing.sm,
-  },
-  section: {
-    marginTop: Spacing.lg,
-  },
-  sectionLabel: {
-    marginBottom: Spacing.xs,
-    letterSpacing: 1,
-  },
-  accentHeaderRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  premiumTag: {
-    letterSpacing: 1,
-    marginBottom: Spacing.xs,
-  },
-  accentRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    columnGap: Spacing.md,
-    rowGap: Spacing.sm,
-  },
-  accentItem: {
-    alignItems: 'center',
-    width: 56,
-  },
-  accentSwatch: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    borderWidth: 2,
-    borderColor: 'transparent',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  accentSwatchActive: {
-    borderColor: Colors.textPrimary,
-  },
-  accentSwatchLocked: {
-    opacity: 0.5,
-  },
-  accentLockGlyph: {
-    color: '#FFFFFF',
-    fontSize: 18,
-    fontWeight: '700',
-  },
-  accentLabel: {
-    marginTop: 4,
-  },
-  pillRow: {
-    flexDirection: 'row',
-    columnGap: Spacing.sm,
-  },
-  pillOption: {
-    borderRadius: 999,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: 8,
-    borderWidth: 1,
-    borderColor: Colors.borderSubtle,
-    backgroundColor: Colors.surface,
-  },
-  pillOptionActive: {
-    backgroundColor: Colors.accentSoft,
-    borderColor: Colors.accent,
-  },
-  pillOptionText: {
-    fontSize: Typography.body,
-    color: Colors.textPrimary,
-  },
-  pillOptionTextActive: {
-    color: Colors.textOnAccent,
-  },
-  messageSection: {
-    marginTop: Spacing.sm,
-  },
-  subLabel: {
-    marginTop: Spacing.sm,
-    marginBottom: Spacing.xs,
-  },
-  inputWrapper: {
-    borderRadius: Radius.lg,
-    borderWidth: 1,
-    borderColor: Colors.borderSubtle,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
-    backgroundColor: Colors.surface,
-    marginTop: Spacing.xs,
-  },
-  input: {
-    fontSize: Typography.body,
-    color: Colors.textPrimary,
-  },
-  toggleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginTop: Spacing.sm,
-  },
-  toggleLabel: {
-    color: Colors.textPrimary,
-  },
-  toggleTrack: {
-    width: 44,
-    height: 26,
-    borderRadius: 13,
-    padding: 3,
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  toggleTrackOn: {
-    backgroundColor: Colors.accent,
-    justifyContent: 'flex-end',
-  },
-  toggleTrackOff: {
-    backgroundColor: Colors.borderSubtle,
-    justifyContent: 'flex-start',
-  },
-  toggleThumb: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    backgroundColor: Colors.surface,
-  },
-  toggleThumbOn: {},
-  toggleThumbOff: {},
-  footer: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    bottom: 0,
-    padding: Spacing.lg,
-    backgroundColor: Colors.background,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: Colors.borderSubtle,
-  },
-  footerSpacer: {
-    height: Spacing.xl * 2,
-  },
-  primaryButton: {
-    backgroundColor: Colors.accent,
-    borderRadius: Radius.xl,
-    paddingVertical: Spacing.md,
-    alignItems: 'center',
-  },
-  primaryButtonText: {
-    color: Colors.textOnAccent,
-    fontSize: Typography.body,
-  },
-});
-
+function createStyles(theme: ThemePalette) {
+  return StyleSheet.create({
+    scroll: {
+      flex: 1,
+    },
+    content: {
+      paddingHorizontal: Spacing.lg,
+      paddingTop: Spacing.lg,
+      paddingBottom: Spacing.xl * 2,
+    },
+    title: {
+      marginBottom: Spacing.sm,
+    },
+    section: {
+      marginTop: Spacing.lg,
+    },
+    sectionLabel: {
+      marginBottom: Spacing.xs,
+      letterSpacing: 1,
+    },
+    accentHeaderRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+    },
+    premiumTag: {
+      letterSpacing: 1,
+      marginBottom: Spacing.xs,
+    },
+    accentRow: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      columnGap: Spacing.md,
+      rowGap: Spacing.sm,
+    },
+    accentItem: {
+      alignItems: 'center',
+      width: 56,
+    },
+    accentSwatch: {
+      width: 36,
+      height: 36,
+      borderRadius: 18,
+      borderWidth: 2,
+      borderColor: 'transparent',
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    accentSwatchActive: {
+      borderColor: theme.textPrimary,
+    },
+    accentSwatchLocked: {
+      opacity: 0.5,
+    },
+    accentLockGlyph: {
+      color: '#FFFFFF',
+      fontSize: 18,
+      fontWeight: '700',
+    },
+    accentLabel: {
+      marginTop: 4,
+    },
+    pillRow: {
+      flexDirection: 'row',
+      columnGap: Spacing.sm,
+    },
+    pillOption: {
+      borderRadius: 999,
+      paddingHorizontal: Spacing.md,
+      paddingVertical: 8,
+      borderWidth: 1,
+      borderColor: theme.divider,
+      backgroundColor: theme.cardBase,
+    },
+    pillOptionActive: {
+      backgroundColor: `${theme.percent}26`,
+      borderColor: theme.percent,
+    },
+    pillOptionText: {
+      fontSize: Typography.body,
+      color: theme.textPrimary,
+    },
+    pillOptionTextActive: {
+      color: theme.textPrimary,
+    },
+    messageSection: {
+      marginTop: Spacing.sm,
+    },
+    subLabel: {
+      marginTop: Spacing.sm,
+      marginBottom: Spacing.xs,
+    },
+    inputWrapper: {
+      borderRadius: Radius.lg,
+      borderWidth: 1,
+      borderColor: theme.divider,
+      paddingHorizontal: Spacing.md,
+      paddingVertical: Spacing.sm,
+      backgroundColor: theme.cardBase,
+      marginTop: Spacing.xs,
+    },
+    input: {
+      fontSize: Typography.body,
+      color: theme.textPrimary,
+    },
+    toggleRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      marginTop: Spacing.sm,
+    },
+    toggleLabel: {
+      color: theme.textPrimary,
+    },
+    toggleTrack: {
+      width: 44,
+      height: 26,
+      borderRadius: 13,
+      padding: 3,
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+    toggleTrackOn: {
+      backgroundColor: theme.percent,
+      justifyContent: 'flex-end',
+    },
+    toggleTrackOff: {
+      backgroundColor: theme.divider,
+      justifyContent: 'flex-start',
+    },
+    toggleThumb: {
+      width: 20,
+      height: 20,
+      borderRadius: 10,
+      backgroundColor: theme.cardBase,
+    },
+    toggleThumbOn: {},
+    toggleThumbOff: {},
+    footer: {
+      position: 'absolute',
+      left: 0,
+      right: 0,
+      bottom: 0,
+      padding: Spacing.lg,
+      backgroundColor: theme.background,
+      borderTopWidth: StyleSheet.hairlineWidth,
+      borderTopColor: theme.divider,
+    },
+    footerSpacer: {
+      height: Spacing.xl * 2,
+    },
+    primaryButton: {
+      backgroundColor: theme.percent,
+      borderRadius: Radius.lg,
+      paddingVertical: Spacing.md,
+      alignItems: 'center',
+    },
+    primaryButtonText: {
+      color: '#FFFFFF',
+      fontSize: Typography.body,
+    },
+  });
+}

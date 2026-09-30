@@ -39,6 +39,7 @@ import {
   scheduleRetentionNotifications,
 } from './services/retentionNotifications';
 import { schedulePresenceStreakSaver } from './services/presenceStreakNotifications';
+import { openScreenFromUrl } from './services/deepLinks';
 import { recordOptionalUpdateDismissed } from './services/updateService';
 import { ThemeProvider, useTheme } from './theme';
 import {
@@ -46,7 +47,7 @@ import {
   syncCustomCounters,
   syncCountdowns,
   syncDailyTasksWidget,
-  updateLiveActivity,
+  refreshLiveActivity,
   updateOverlay,
   syncPremiumStatus,
 } from './infrastructure';
@@ -171,7 +172,7 @@ function App() {
     syncCustomCounters();
     syncCountdowns();
     syncDailyTasksWidget();
-    updateLiveActivity();
+    refreshLiveActivity();
     if (Platform.OS === 'android') updateOverlay();
 
     const processInitialUrl = () => {
@@ -179,7 +180,7 @@ function App() {
         if (
           url &&
           !handledInitialUrl.current &&
-          handleIncrementCounterUrl(url)
+          (handleIncrementCounterUrl(url) || openScreenFromUrl(url))
         ) {
           handledInitialUrl.current = true;
         }
@@ -232,14 +233,14 @@ function App() {
         syncCustomCounters();
         syncCountdowns();
         syncDailyTasksWidget();
-        updateLiveActivity();
+        refreshLiveActivity();
         if (Platform.OS === 'android') updateOverlay();
         processInitialUrl();
       }
     });
 
     const subLinking = Linking.addEventListener('url', ({ url }) => {
-      handleIncrementCounterUrl(url);
+      if (!handleIncrementCounterUrl(url)) openScreenFromUrl(url);
     });
 
     return () => {

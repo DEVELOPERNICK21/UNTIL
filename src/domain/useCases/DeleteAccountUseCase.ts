@@ -1,5 +1,5 @@
 /**
- * DeleteAccountUseCase — remove Firebase Auth user + Firestore users/{uid} tree,
+ * DeleteAccountUseCase — revoke Apple token (Apple users), remove Firebase Auth user + Firestore users/{uid} tree,
  * then RC logOut + clearLocalSession (keep local progress / local purchase proof).
  */
 
@@ -33,6 +33,13 @@ export class DeleteAccountUseCase {
     }
     const uid = user.uid;
 
+    // Revoke before any data is removed so a cancelled Apple prompt leaves the account intact.
+    const revokesApple =
+      user.providers.includes('apple') && this.auth.isAppleSignInAvailable();
+    if (revokesApple) {
+      await this.auth.reauthenticateWithApple({ revokeToken: true });
+    }
+
     await this.cloud.deleteUserData(uid);
 
     try {
@@ -59,6 +66,10 @@ export class DeleteAccountUseCase {
     const user = this.auth.getCurrentUser();
     if (!user) {
       throw new AuthRequiresRecentLoginError();
+    }
+    if (user.providers.includes('apple') && this.auth.isAppleSignInAvailable()) {
+      await this.auth.reauthenticateWithApple();
+      return;
     }
     if (user.providers.includes('google')) {
       await this.auth.reauthenticateWithGoogle();

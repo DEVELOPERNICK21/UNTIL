@@ -6,6 +6,7 @@ import { DeferredPaywallModal } from './DeferredPaywallModal';
 import { FeatureDiscoveryModal } from './FeatureDiscoveryModal';
 import { SharePromptModal } from './SharePromptModal';
 import { EmberCompanion } from './EmberCompanion';
+import { BadgeUnlockHost } from '../gamification';
 import { useEngagementModals } from '../../hooks/useEngagementModals';
 import { useAnalytics } from '../../hooks/useAnalytics';
 
@@ -144,6 +145,7 @@ export function AppEngagementLayer() {
     <>
       <RootNavigator />
       <EmberCompanion suppressed={reviewBlocked} />
+      <BadgeUnlockHost suppressed={reviewBlocked} />
       <WidgetCoachModal
         visible={widgetCoachVisible}
         onDismiss={() => {

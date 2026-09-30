@@ -8,6 +8,8 @@ type Subscriber = () => void;
 
 export interface ITaskRepository {
   getTasksForDay(date: string): DailyTask[];
+  /** Every stored task, all days. For lifetime counts (badges). */
+  getAllTasks(): DailyTask[];
   addTask(task: Omit<DailyTask, 'id' | 'completed'>): DailyTask;
   updateTask(id: string, patch: Partial<Pick<DailyTask, 'title' | 'category'>>): void;
   toggleTask(id: string): void;

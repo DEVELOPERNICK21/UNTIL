@@ -2,7 +2,7 @@
  * Live Island screen (iOS Dynamic Island / Live Activity · Android floating pill + live notification)
  */
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
   View,
   StyleSheet,
@@ -13,7 +13,8 @@ import {
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Text, ScreenGradient } from '../../ui';
-import { Colors, Spacing, Typography } from '../../theme';
+import { Spacing, Typography, useTheme } from '../../theme';
+import type { ThemePalette } from '../../theme';
 import { useDynamicIslandControl, useOverlayControl } from '../../hooks';
 import type { RootStackParamList } from '../../navigation/types';
 
@@ -38,10 +39,10 @@ function IosDynamicIslandScreen() {
   return (
     <LiveIslandLayout
       title="Dynamic Island"
-      subtitle="See how much time you have left on Dynamic Island and Lock Screen. Compact shows % left and time left. Long-press for more. iPhone 14 Pro or later for Dynamic Island."
+      subtitle="Time left ticks on the Dynamic Island and Lock Screen by itself. Long-press the island to open it, then tap the icons to switch views. iPhone 14 Pro or later for Dynamic Island."
       sectionTitle="What to show"
-      sectionSubtitle="Pick one. Change anytime while Live Activity is running. Updates when you open the app."
-      hint="Numbers refresh when you open UNTIL. Live Activity can stay up to about 8 hours. Stickers pulse while active."
+      sectionSubtitle="Pick what it opens on. You can also switch from the island itself."
+      hint="Countdowns and the timer keep running with the app closed. Day counts and tasks update when you open UNTIL. iOS ends a Live Activity after about 8 hours, so press Start again after that."
       active={liveActivityActive}
       options={options}
       onSelect={type => {
@@ -153,6 +154,8 @@ function LiveIslandLayout({
     onAction: () => void;
   } | null;
 }) {
+  const theme = useTheme();
+  const styles = useMemo(() => createStyles(theme), [theme]);
   return (
     <View style={styles.container}>
       <ScreenGradient>
@@ -277,8 +280,8 @@ function LiveIslandLayout({
                 {option.comingSoon
                   ? 'Coming in a future update.'
                   : option.lockedPremium
-                    ? 'Upgrade to Premium to use this'
-                    : option.description}
+                  ? 'Upgrade to Premium to use this'
+                  : option.description}
               </Text>
             </TouchableOpacity>
           ))}
@@ -292,114 +295,116 @@ function LiveIslandLayout({
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1 },
-  content: {
-    paddingHorizontal: Spacing[4],
-    paddingTop: Spacing[3],
-    paddingBottom: Spacing[5],
-  },
-  title: { marginBottom: Spacing[2] },
-  subtitle: { marginBottom: Spacing[4] },
-  permissionCard: {
-    backgroundColor: Colors.cardLighter,
-    borderRadius: 12,
-    padding: Spacing[4],
-    marginBottom: Spacing[4],
-    borderWidth: 1,
-    borderColor: Colors.percent,
-  },
-  permissionText: {
-    marginBottom: Spacing[2],
-  },
-  permissionButton: {
-    alignSelf: 'flex-start',
-    paddingVertical: Spacing[2],
-    paddingHorizontal: Spacing[3],
-    backgroundColor: Colors.percent,
-    borderRadius: 8,
-  },
-  statusCard: {
-    backgroundColor: Colors.cardLighter,
-    borderRadius: 12,
-    padding: Spacing[4],
-    marginBottom: Spacing[4],
-  },
-  statusRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: Spacing[3],
-  },
-  badge: {
-    paddingHorizontal: Spacing[2],
-    paddingVertical: Spacing[1],
-    borderRadius: 6,
-  },
-  badgeActive: { backgroundColor: Colors.success },
-  badgeInactive: {
-    backgroundColor: Colors.divider,
-    borderWidth: 1,
-    borderColor: Colors.divider,
-  },
-  badgeText: { color: Colors.textPrimary, fontSize: Typography.badge },
-  actions: {
-    flexDirection: 'row',
-    gap: Spacing[2],
-  },
-  button: {
-    flex: 1,
-    paddingVertical: Spacing[2],
-    paddingHorizontal: Spacing[3],
-    backgroundColor: Colors.divider,
-    borderRadius: 8,
-    alignItems: 'center',
-  },
-  buttonDisabled: { opacity: 0.5 },
-  sectionTitle: { marginBottom: Spacing[1] },
-  sectionSubtitle: { marginBottom: Spacing[3] },
-  optionCard: {
-    backgroundColor: Colors.cardLighter,
-    borderRadius: 12,
-    padding: Spacing[4],
-    marginBottom: Spacing[2],
-    borderWidth: 2,
-    borderColor: 'transparent',
-  },
-  optionCardSelected: {
-    borderColor: Colors.percent,
-  },
-  optionCardLocked: {
-    opacity: 0.5,
-  },
-  premiumBadge: {
-    backgroundColor: Colors.percent,
-    paddingHorizontal: Spacing[2],
-    paddingVertical: 2,
-    borderRadius: 4,
-  },
-  soonBadge: {
-    backgroundColor: 'rgba(160, 160, 160, 0.45)',
-  },
-  premiumBadgeText: {
-    color: Colors.background,
-    fontSize: Typography.micro,
-  },
-  optionHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: Spacing[1],
-  },
-  optionDescription: { marginTop: 0 },
-  selectedDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    backgroundColor: Colors.percent,
-  },
-  hint: {
-    marginTop: Spacing[4],
-    fontStyle: 'italic',
-  },
-});
+function createStyles(theme: ThemePalette) {
+  return StyleSheet.create({
+    container: { flex: 1 },
+    content: {
+      paddingHorizontal: Spacing[4],
+      paddingTop: Spacing[3],
+      paddingBottom: Spacing[5],
+    },
+    title: { marginBottom: Spacing[2] },
+    subtitle: { marginBottom: Spacing[4] },
+    permissionCard: {
+      backgroundColor: theme.cardLighter,
+      borderRadius: 12,
+      padding: Spacing[4],
+      marginBottom: Spacing[4],
+      borderWidth: 1,
+      borderColor: theme.percent,
+    },
+    permissionText: {
+      marginBottom: Spacing[2],
+    },
+    permissionButton: {
+      alignSelf: 'flex-start',
+      paddingVertical: Spacing[2],
+      paddingHorizontal: Spacing[3],
+      backgroundColor: theme.percent,
+      borderRadius: 8,
+    },
+    statusCard: {
+      backgroundColor: theme.cardLighter,
+      borderRadius: 12,
+      padding: Spacing[4],
+      marginBottom: Spacing[4],
+    },
+    statusRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: Spacing[3],
+    },
+    badge: {
+      paddingHorizontal: Spacing[2],
+      paddingVertical: Spacing[1],
+      borderRadius: 6,
+    },
+    badgeActive: { backgroundColor: theme.success },
+    badgeInactive: {
+      backgroundColor: theme.divider,
+      borderWidth: 1,
+      borderColor: theme.divider,
+    },
+    badgeText: { color: theme.textPrimary, fontSize: Typography.badge },
+    actions: {
+      flexDirection: 'row',
+      gap: Spacing[2],
+    },
+    button: {
+      flex: 1,
+      paddingVertical: Spacing[2],
+      paddingHorizontal: Spacing[3],
+      backgroundColor: theme.divider,
+      borderRadius: 8,
+      alignItems: 'center',
+    },
+    buttonDisabled: { opacity: 0.5 },
+    sectionTitle: { marginBottom: Spacing[1] },
+    sectionSubtitle: { marginBottom: Spacing[3] },
+    optionCard: {
+      backgroundColor: theme.cardLighter,
+      borderRadius: 12,
+      padding: Spacing[4],
+      marginBottom: Spacing[2],
+      borderWidth: 2,
+      borderColor: 'transparent',
+    },
+    optionCardSelected: {
+      borderColor: theme.percent,
+    },
+    optionCardLocked: {
+      opacity: 0.5,
+    },
+    premiumBadge: {
+      backgroundColor: theme.percent,
+      paddingHorizontal: Spacing[2],
+      paddingVertical: 2,
+      borderRadius: 4,
+    },
+    soonBadge: {
+      backgroundColor: 'rgba(160, 160, 160, 0.45)',
+    },
+    premiumBadgeText: {
+      color: theme.background,
+      fontSize: Typography.micro,
+    },
+    optionHeader: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: Spacing[1],
+    },
+    optionDescription: { marginTop: 0 },
+    selectedDot: {
+      width: 10,
+      height: 10,
+      borderRadius: 5,
+      backgroundColor: theme.percent,
+    },
+    hint: {
+      marginTop: Spacing[4],
+      fontStyle: 'italic',
+    },
+  });
+}

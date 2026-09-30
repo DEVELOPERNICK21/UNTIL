@@ -9,6 +9,7 @@ export {
   syncHourCalculationWidget,
   syncLiveActivity,
   updateLiveActivity,
+  refreshLiveActivity,
   endLiveActivity,
   getLiveActivityWidgetType,
   setLiveActivityWidgetType,

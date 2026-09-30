@@ -1,5 +1,6 @@
 import { DeleteAccountUseCase } from '../src/domain/useCases/DeleteAccountUseCase';
 import {
+  AuthCancelledError,
   AuthRequiresPasswordError,
   AuthRequiresRecentLoginError,
 } from '../src/domain/errors/authErrors';
@@ -18,6 +19,9 @@ function makeAuth(overrides: Partial<IAuthService> & { user?: AuthUser | null } 
         }
       : overrides.user;
   const auth: IAuthService = {
+    isAppleSignInAvailable: () => true,
+    signInWithApple: async () => user!,
+    reauthenticateWithApple: async () => {},
     signInWithGoogle: async () => user!,
     signInWithEmail: async () => user!,
     createAccountWithEmail: async () => user!,
@@ -99,6 +103,68 @@ describe('DeleteAccountUseCase', () => {
 
     expect(attempts).toBe(12);
     expect(order).toEqual(['cloud', 'auth', 'reauth', 'cloud', 'auth', 'rc', 'local']);
+  });
+
+  it('revokes the Apple token before deleting anything for Apple users', async () => {
+    const order: string[] = [];
+    const { auth } = makeAuth({
+      user: {
+        uid: 'u1',
+        email: 'x@privaterelay.appleid.com',
+        displayName: null,
+        providers: ['apple'],
+      },
+      reauthenticateWithApple: async options => {
+        order.push(options?.revokeToken ? 'apple-revoke' : 'apple-reauth');
+      },
+      deleteAccount: async () => {
+        order.push('auth');
+      },
+    });
+    const cloud = makeCloud(async () => {
+      order.push('cloud');
+    });
+    const resetPurchases = { execute: async () => { order.push('rc'); return null as never; } };
+    const signOut = { clearLocalSession: () => { order.push('local'); return { localPremiumKept: false }; } };
+
+    const useCase = new DeleteAccountUseCase(
+      auth,
+      cloud,
+      resetPurchases as never,
+      signOut as never
+    );
+    await useCase.execute();
+    expect(order).toEqual(['apple-revoke', 'cloud', 'auth', 'rc', 'local']);
+  });
+
+  it('keeps all data when the Apple prompt is cancelled', async () => {
+    const order: string[] = [];
+    const { auth } = makeAuth({
+      user: {
+        uid: 'u1',
+        email: null,
+        displayName: null,
+        providers: ['apple'],
+      },
+      reauthenticateWithApple: async () => {
+        throw new AuthCancelledError();
+      },
+      deleteAccount: async () => {
+        order.push('auth');
+      },
+    });
+    const cloud = makeCloud(async () => {
+      order.push('cloud');
+    });
+
+    const useCase = new DeleteAccountUseCase(
+      auth,
+      cloud,
+      { execute: async () => null as never } as never,
+      { clearLocalSession: () => ({ localPremiumKept: false }) } as never
+    );
+    await expect(useCase.execute()).rejects.toBeInstanceOf(AuthCancelledError);
+    expect(order).toEqual([]);
   });
 
   it('throws AuthRequiresPasswordError when password reauth needed and no password', async () => {

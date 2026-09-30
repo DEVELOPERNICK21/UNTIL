@@ -24,7 +24,7 @@ class LiveActivityBridge: NSObject {
         }
         _ = try Activity.request(
           attributes: UNTILLiveActivityAttributes(),
-          content: .init(state: contentState, staleDate: nil),
+          content: .init(state: contentState, staleDate: staleDate(for: state)),
           pushType: nil
         )
       } catch {
@@ -33,26 +33,16 @@ class LiveActivityBridge: NSObject {
     }
   }
 
+  /// Refresh a running activity. Never starts one: the user has to press Start, so
+  /// "Stop" stays stopped after the app is reopened.
   @objc func updateActivity(_ stateJson: String) {
     guard #available(iOS 16.2, *) else { return }
     guard let state = parseState(stateJson) else { return }
     let contentState = makeContentState(state)
+    let stale = staleDate(for: state)
     Task {
-      let activities = Activity<UNTILLiveActivityAttributes>.activities
-      if activities.isEmpty {
-        do {
-          _ = try Activity.request(
-            attributes: UNTILLiveActivityAttributes(),
-            content: .init(state: contentState, staleDate: nil),
-            pushType: nil
-          )
-        } catch {
-          // Ignore: Live Activities may be disabled in Focus / settings.
-        }
-        return
-      }
-      for activity in activities {
-        await activity.update(ActivityContent(state: contentState, staleDate: nil))
+      for activity in Activity<UNTILLiveActivityAttributes>.activities {
+        await activity.update(ActivityContent(state: contentState, staleDate: stale))
       }
     }
   }
@@ -73,6 +63,26 @@ class LiveActivityBridge: NSObject {
     }
     let active = !Activity<UNTILLiveActivityAttributes>.activities.isEmpty
     resolve(active)
+  }
+
+  /// The view currently on the island. The island buttons can change it while the app is closed.
+  @objc func getActiveWidget(_ resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
+    guard #available(iOS 16.2, *) else {
+      resolve(NSNull())
+      return
+    }
+    if let activity = Activity<UNTILLiveActivityAttributes>.activities.first {
+      resolve(activity.content.state.activeWidget)
+      return
+    }
+    resolve(NSNull())
+  }
+
+  /// Content goes stale at the end of the day, when the numbers roll over.
+  private func staleDate(for state: LiveActivityState) -> Date? {
+    guard let end = state.endOfDay else { return nil }
+    let date = Date(timeIntervalSince1970: Double(end) / 1000)
+    return date > Date() ? date : nil
   }
 
   private func makeContentState(_ state: LiveActivityState) -> UNTILLiveActivityAttributes.ContentState {
@@ -101,6 +111,8 @@ class LiveActivityBridge: NSObject {
       hourCalcTitle: state.hourCalcTitle,
       hourCalcElapsedMs: state.hourCalcElapsedMs,
       hourCalcIsRunning: state.hourCalcIsRunning,
+      hourCalcStartMs: state.hourCalcStartMs,
+      isPremium: state.isPremium,
       updatedAt: state.updatedAt
     )
   }
@@ -154,6 +166,8 @@ class LiveActivityBridge: NSObject {
       hourCalcTitle: obj["hourCalcTitle"] as? String ?? "Hour timer",
       hourCalcElapsedMs: int64("hourCalcElapsedMs") ?? 0,
       hourCalcIsRunning: obj["hourCalcIsRunning"] as? Bool ?? false,
+      hourCalcStartMs: int64("hourCalcStartMs").flatMap { $0 > 0 ? $0 : nil },
+      isPremium: obj["isPremium"] as? Bool ?? false,
       updatedAt: int64("updatedAt") ?? Int64(Date().timeIntervalSince1970 * 1000)
     )
   }
@@ -184,5 +198,7 @@ private struct LiveActivityState {
   let hourCalcTitle: String
   let hourCalcElapsedMs: Int64
   let hourCalcIsRunning: Bool
+  let hourCalcStartMs: Int64?
+  let isPremium: Bool
   let updatedAt: Int64
 }

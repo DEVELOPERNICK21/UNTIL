@@ -40,6 +40,10 @@ export class MmkvTaskRepository implements ITaskRepository {
       .sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
   }
 
+  getAllTasks(): DailyTask[] {
+    return loadAllTasks();
+  }
+
   addTask(task: Omit<DailyTask, 'id' | 'completed'>): DailyTask {
     const all = loadAllTasks();
     const dayTasks = all.filter((t) => t.date === task.date);

@@ -243,6 +243,8 @@ export function buildLiveActivityState(
     hourCalcTitle: hourState.title || 'Hour timer',
     hourCalcElapsedMs: hourState.totalElapsedMs,
     hourCalcIsRunning: hourState.isRunning,
+    hourCalcStartMs: hourState.isRunning ? hourState.startTimeMs : null,
+    isPremium: readEffectivePremiumForNativeBridge(),
     updatedAt: Date.now(),
   };
 }
@@ -269,6 +271,63 @@ export function updateLiveActivity(
   const state = buildLiveActivityState(activeWidget);
   const json = JSON.stringify(state);
   LiveActivityBridge.updateActivity(json);
+}
+
+/**
+ * The Dynamic Island buttons switch the view while the app is closed. Take that
+ * choice back so the next refresh does not snap the island to the old view.
+ */
+export function adoptIslandSelection(): Promise<void> {
+  if (Platform.OS !== 'ios') return Promise.resolve();
+  const bridge = NativeModules.LiveActivityBridge;
+  if (!bridge?.getActiveWidget) return Promise.resolve();
+  return bridge
+    .getActiveWidget()
+    .then((type: unknown) => {
+      if (
+        typeof type === 'string' &&
+        LIVE_ACTIVITY_WIDGET_TYPES.includes(type as LiveActivityWidgetType)
+      ) {
+        setLiveActivityWidgetType(type as LiveActivityWidgetType);
+      }
+    })
+    .catch(() => {
+      /* island not running */
+    });
+}
+
+/**
+ * The home screen widget and the Dynamic Island can start or stop the hour
+ * timer with the app closed. Their state lives in the App Group, so copy it
+ * back before anything overwrites it.
+ */
+export function adoptNativeHourTimer(): Promise<void> {
+  if (Platform.OS !== 'ios') return Promise.resolve();
+  const bridge = NativeModules.WidgetBridge;
+  if (!bridge?.getHourCalculationFromAppGroup) return Promise.resolve();
+  return bridge
+    .getHourCalculationFromAppGroup()
+    .then((json: unknown) => {
+      if (typeof json !== 'string' || !json) return;
+      try {
+        const parsed = JSON.parse(json);
+        if (typeof parsed?.isRunning === 'boolean') {
+          setString(STORAGE_KEYS.HOUR_CALCULATION_WIDGET, json);
+        }
+      } catch {
+        /* keep what the app has */
+      }
+    })
+    .catch(() => {
+      /* bridge unavailable */
+    });
+}
+
+/** App came to the foreground: pull in native changes, then refresh the island. */
+export function refreshLiveActivity(): void {
+  void Promise.all([adoptIslandSelection(), adoptNativeHourTimer()]).then(() =>
+    updateLiveActivity(),
+  );
 }
 
 /** End Live Activity. */

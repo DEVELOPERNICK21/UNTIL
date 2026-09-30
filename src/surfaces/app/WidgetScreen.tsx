@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
   View,
   StyleSheet,
@@ -10,10 +10,13 @@ import { useNavigation } from '@react-navigation/native';
 import { useWidgetSurfaceStatus, useAccessControl } from '../../hooks';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Text, ScreenGradient } from '../../ui';
-import { Colors, Spacing, Radius, Typography } from '../../theme';
+import { Spacing, Radius, Typography, useTheme } from '../../theme';
+import type { ThemePalette } from '../../theme';
 import type { RootStackParamList } from '../../navigation/types';
 
 function SectionHeader({ label }: { label: string }) {
+  const theme = useTheme();
+  const styles = useMemo(() => createStyles(theme), [theme]);
   return (
     <Text variant="caption" color="secondary" style={styles.sectionLabel}>
       {label.toUpperCase()}
@@ -42,6 +45,8 @@ function SettingTile({
   onPress,
   children,
 }: SettingTileProps) {
+  const theme = useTheme();
+  const styles = useMemo(() => createStyles(theme), [theme]);
   const content = (
     <View style={styles.tileInner}>
       <View style={styles.tileMain}>
@@ -121,10 +126,7 @@ function SettingTile({
   }
   return (
     <View
-      style={[
-        styles.glassTile,
-        (locked || comingSoon) && styles.tileLocked,
-      ]}
+      style={[styles.glassTile, (locked || comingSoon) && styles.tileLocked]}
     >
       {content}
     </View>
@@ -140,6 +142,8 @@ function QuickLinkTile({
   subtitle: string;
   onPress: () => void;
 }) {
+  const theme = useTheme();
+  const styles = useMemo(() => createStyles(theme), [theme]);
   return (
     <TouchableOpacity
       activeOpacity={0.7}
@@ -164,6 +168,8 @@ function QuickLinkTile({
 }
 
 export function WidgetScreen() {
+  const theme = useTheme();
+  const styles = useMemo(() => createStyles(theme), [theme]);
   const navigation =
     useNavigation<NativeStackNavigationProp<RootStackParamList, 'Widget'>>();
   const { liveActivityActive, overlayActive } = useWidgetSurfaceStatus();
@@ -177,7 +183,7 @@ export function WidgetScreen() {
           showsVerticalScrollIndicator={false}
         >
           <Text variant="sectionTitle" color="primary" style={styles.title}>
-            Settings
+            Widgets
           </Text>
           <Text variant="body" color="secondary" style={styles.subtitle}>
             Widgets, Dynamic Island, and Live Island. Add home screen widgets
@@ -266,113 +272,115 @@ export function WidgetScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1 },
-  content: {
-    paddingHorizontal: Spacing[4],
-    paddingTop: Spacing[3],
-    paddingBottom: Spacing[5],
-  },
-  title: { marginBottom: Spacing[2] },
-  subtitle: { marginBottom: Spacing[4] },
-  statusText: { marginBottom: Spacing[3] },
+function createStyles(theme: ThemePalette) {
+  return StyleSheet.create({
+    container: { flex: 1 },
+    content: {
+      paddingHorizontal: Spacing[4],
+      paddingTop: Spacing[3],
+      paddingBottom: Spacing[5],
+    },
+    title: { marginBottom: Spacing[2] },
+    subtitle: { marginBottom: Spacing[4] },
+    statusText: { marginBottom: Spacing[3] },
 
-  sectionLabel: {
-    letterSpacing: 1.2,
-    marginBottom: Spacing[2],
-    marginTop: Spacing[2],
-  },
-  sectionGroup: {
-    gap: Spacing[2],
-    marginBottom: Spacing[3],
-  },
-  tileWrapper: {},
-  glassTile: {
-    backgroundColor: Colors.glassBg,
-    borderRadius: Radius.lg,
-    borderWidth: 1,
-    borderColor: Colors.glassBorder,
-    padding: Spacing[3],
-    overflow: 'hidden',
-  },
-  tileLocked: {
-    opacity: 0.75,
-  },
-  tileInner: {},
-  tileMain: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flexWrap: 'wrap',
-    gap: Spacing[2],
-    marginBottom: Spacing[1],
-  },
-  tileTitle: {
-    flex: 1,
-    fontSize: Typography.lead,
-  },
-  tileDescription: {
-    marginTop: 2,
-  },
-  tileChevron: {
-    marginTop: Spacing[2],
-    alignSelf: 'flex-end',
-  },
-  statusPill: {
-    paddingHorizontal: Spacing[2],
-    paddingVertical: 4,
-    borderRadius: Radius.full,
-  },
-  statusPillOn: {
-    backgroundColor: 'rgba(34, 170, 34, 0.25)',
-    borderWidth: 1,
-    borderColor: 'rgba(34, 170, 34, 0.4)',
-  },
-  statusPillOff: {
-    backgroundColor: 'rgba(255, 255, 255, 0.06)',
-    borderWidth: 1,
-    borderColor: Colors.glassBorder,
-  },
-  statusPillText: {
-    color: Colors.textPrimary,
-    fontSize: Typography.badge,
-  },
-  premiumPill: {
-    backgroundColor: Colors.percent,
-    paddingHorizontal: Spacing[2],
-    paddingVertical: 2,
-    borderRadius: 4,
-  },
-  premiumPillText: {
-    color: Colors.background,
-    fontSize: Typography.micro,
-  },
+    sectionLabel: {
+      letterSpacing: 1.2,
+      marginBottom: Spacing[2],
+      marginTop: Spacing[2],
+    },
+    sectionGroup: {
+      gap: Spacing[2],
+      marginBottom: Spacing[3],
+    },
+    tileWrapper: {},
+    glassTile: {
+      backgroundColor: theme.glassBg,
+      borderRadius: Radius.lg,
+      borderWidth: 1,
+      borderColor: theme.glassBorder,
+      padding: Spacing[3],
+      overflow: 'hidden',
+    },
+    tileLocked: {
+      opacity: 0.75,
+    },
+    tileInner: {},
+    tileMain: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      flexWrap: 'wrap',
+      gap: Spacing[2],
+      marginBottom: Spacing[1],
+    },
+    tileTitle: {
+      flex: 1,
+      fontSize: Typography.lead,
+    },
+    tileDescription: {
+      marginTop: 2,
+    },
+    tileChevron: {
+      marginTop: Spacing[2],
+      alignSelf: 'flex-end',
+    },
+    statusPill: {
+      paddingHorizontal: Spacing[2],
+      paddingVertical: 4,
+      borderRadius: Radius.full,
+    },
+    statusPillOn: {
+      backgroundColor: 'rgba(34, 170, 34, 0.25)',
+      borderWidth: 1,
+      borderColor: 'rgba(34, 170, 34, 0.4)',
+    },
+    statusPillOff: {
+      backgroundColor: 'rgba(255, 255, 255, 0.06)',
+      borderWidth: 1,
+      borderColor: theme.glassBorder,
+    },
+    statusPillText: {
+      color: theme.textPrimary,
+      fontSize: Typography.badge,
+    },
+    premiumPill: {
+      backgroundColor: theme.percent,
+      paddingHorizontal: Spacing[2],
+      paddingVertical: 2,
+      borderRadius: 4,
+    },
+    premiumPillText: {
+      color: theme.background,
+      fontSize: Typography.micro,
+    },
 
-  quickLinkTouch: {},
-  quickLinkTile: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: Colors.glassBg,
-    borderRadius: Radius.lg,
-    borderWidth: 1,
-    borderColor: Colors.glassBorder,
-    paddingVertical: Spacing[3],
-    paddingHorizontal: Spacing[3],
-    overflow: 'hidden',
-  },
-  quickLinkTitle: {
-    marginBottom: 2,
-  },
-  quickLinkBody: {
-    flex: 1,
-    paddingRight: Spacing[2],
-  },
-  comingSoonPill: {
-    backgroundColor: 'rgba(160, 160, 160, 0.35)',
-  },
+    quickLinkTouch: {},
+    quickLinkTile: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      backgroundColor: theme.glassBg,
+      borderRadius: Radius.lg,
+      borderWidth: 1,
+      borderColor: theme.glassBorder,
+      paddingVertical: Spacing[3],
+      paddingHorizontal: Spacing[3],
+      overflow: 'hidden',
+    },
+    quickLinkTitle: {
+      marginBottom: 2,
+    },
+    quickLinkBody: {
+      flex: 1,
+      paddingRight: Spacing[2],
+    },
+    comingSoonPill: {
+      backgroundColor: 'rgba(160, 160, 160, 0.35)',
+    },
 
-  hint: {
-    marginTop: Spacing[4],
-    fontStyle: 'italic',
-  },
-});
+    hint: {
+      marginTop: Spacing[4],
+      fontStyle: 'italic',
+    },
+  });
+}
