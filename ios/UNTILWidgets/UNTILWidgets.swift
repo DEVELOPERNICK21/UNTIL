@@ -320,6 +320,129 @@ private extension Color {
     }
 }
 
+// MARK: - Shared widget type styles
+// One visual, one hero number, at most one line of new context per widget.
+// Never show the same fact twice (percent + passed + left + bar).
+
+private struct WidgetOverline: View {
+    let text: String
+
+    var body: some View {
+        Text(text.uppercased())
+            .font(.system(size: 10, weight: .bold))
+            .tracking(1.2)
+            .foregroundColor(Design.grayLabel)
+            .lineLimit(1)
+    }
+}
+
+/// Big number with an optional small unit beside it: "30 days left".
+private struct WidgetHero: View {
+    let value: String
+    var unit: String? = nil
+    var size: CGFloat = 40
+    var color: Color = Design.left
+
+    var body: some View {
+        HStack(alignment: .lastTextBaseline, spacing: 5) {
+            Text(value)
+                .font(.system(size: size, weight: .bold, design: .rounded))
+                .monospacedDigit()
+                .foregroundColor(color)
+                .lineLimit(1)
+                .minimumScaleFactor(0.5)
+            if let unit {
+                Text(unit)
+                    .font(.system(size: max(12, size * 0.34), weight: .semibold, design: .rounded))
+                    .foregroundColor(Design.grayLabel)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
+            }
+        }
+    }
+}
+
+private func widgetCaption(_ text: String) -> some View {
+    Text(text)
+        .font(.system(size: 12, weight: .medium))
+        .foregroundColor(Design.grayLabel)
+        .lineLimit(1)
+}
+
+/// "THU · 1 OCT"
+private func widgetDateOverline(_ now: Date) -> String {
+    let f = DateFormatter()
+    f.locale = Locale.current
+    f.setLocalizedDateFormatFromTemplate("EEE d MMM")
+    return f.string(from: now)
+}
+
+private func widgetMonthName(_ now: Date = Date()) -> String {
+    let cal = Calendar.current
+    let i = max(0, min(11, cal.component(.month, from: now) - 1))
+    return cal.monthSymbols[i]
+}
+
+private func daysText(_ n: Int) -> String {
+    n == 1 ? "1 day left" : "\(n) days left"
+}
+
+/// Days of the month laid out like a calendar (7 columns, weekday aligned).
+/// Past days are muted, today is the accent, days ahead are faint.
+private struct MonthDaysGridView: View {
+    let daysInMonth: Int
+    /// 1-based number of today.
+    let today: Int
+    /// Empty cells before day 1 so the weekdays line up with the locale's first weekday.
+    let leadingBlanks: Int
+
+    var body: some View {
+        GeometryReader { geo in
+            let cols = 7
+            let rows = max(1, Int(ceil(Double(leadingBlanks + daysInMonth) / Double(cols))))
+            let gap: CGFloat = 5
+            let cell = max(
+                3,
+                min(
+                    (geo.size.width - gap * CGFloat(cols - 1)) / CGFloat(cols),
+                    (geo.size.height - gap * CGFloat(rows - 1)) / CGFloat(rows)
+                )
+            )
+            VStack(spacing: gap) {
+                ForEach(0..<rows, id: \.self) { r in
+                    HStack(spacing: gap) {
+                        ForEach(0..<cols, id: \.self) { c in
+                            dot(day: r * cols + c - leadingBlanks + 1, size: cell)
+                        }
+                    }
+                }
+            }
+            .frame(width: geo.size.width, height: geo.size.height)
+        }
+    }
+
+    @ViewBuilder
+    private func dot(day: Int, size: CGFloat) -> some View {
+        if day < 1 || day > daysInMonth {
+            Color.clear.frame(width: size, height: size)
+        } else if day < today {
+            Circle().fill(Design.passedDot.opacity(0.6)).frame(width: size, height: size)
+        } else if day == today {
+            Circle().fill(Design.currentDot).frame(width: size, height: size)
+        } else {
+            Circle().fill(Design.remainingDot).frame(width: size, height: size)
+        }
+    }
+}
+
+/// Number of blank cells before the 1st so a month lines up under weekday headers.
+private func monthLeadingBlanks(for date: Date) -> Int {
+    let cal = Calendar.current
+    guard let first = cal.date(from: cal.dateComponents([.year, .month], from: date)) else { return 0 }
+    let weekday = cal.component(.weekday, from: first) // 1 = Sunday
+    return (weekday - cal.firstWeekday + 7) % 7
+}
+
 // MARK: - Ember glyph (static mood companion for widgets; mirrors src/ui/Ember.tsx bands)
 private enum EmberMood {
     case dawn, open, mid, late, dusk
@@ -644,7 +767,7 @@ private struct DailyTasksPieShape: View {
             if total > 0 {
                 if progress >= 1.0 {
                     Circle()
-                        .fill(Design.left)
+                        .fill(Design.percent)
                     Circle()
                         .fill(Design.background)
                         .scaleEffect(innerRatio)
@@ -652,9 +775,9 @@ private struct DailyTasksPieShape: View {
                     let start = Angle.degrees(-90)
                     let end = start + Angle.degrees(360 * progress)
                     DailyTasksDonutSectorShape(startAngle: start, endAngle: end, innerRatio: innerRatio)
-                        .fill(Design.left)
+                        .fill(Design.percent)
                     DailyTasksDonutSectorShape(startAngle: end, endAngle: start + .degrees(360), innerRatio: innerRatio)
-                        .fill(Design.progressOrange)
+                        .fill(Design.progressBg)
                 }
             } else {
                 Circle()
@@ -692,53 +815,42 @@ private struct DailyTasksDonutSectorShape: Shape {
     }
 }
 
-/// Compact day block for the large Daily Tasks widget (Tasks + Day in one).
+private let dailyTasksCategoryColors: [String: Color] = [
+    "health": Color(red: 0x4A / 255, green: 0xDE / 255, blue: 0x80 / 255),
+    "work": Color(red: 0x60 / 255, green: 0xA5 / 255, blue: 0xFA / 255),
+    "personal_care": Color(red: 0xF4 / 255, green: 0x72 / 255, blue: 0xB6 / 255),
+    "learning": Color(red: 0xBB / 255, green: 0x86 / 255, blue: 0xFC / 255),
+    "other": Color(red: 0x8A / 255, green: 0x8A / 255, blue: 0x8E / 255),
+]
+
+private struct TaskCategoryRow: Identifiable {
+    let key: String
+    let label: String
+    let stats: DailyTaskCategoryStats
+    var id: String { key }
+}
+
+/// Large Tasks widget footer: the one thing the day adds. No percent, no bar.
 private struct DailyTasksDaySection: View {
     let cache: WidgetCache
     var now: Date = Date()
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: 10) {
             Rectangle()
-                .fill(Design.progressBg)
+                .fill(Design.progressBg.opacity(0.7))
                 .frame(height: 1)
-                .padding(.vertical, 4)
-            Text("TODAY")
-                .font(.system(size: 10, weight: .semibold))
-                .foregroundColor(Design.grayLabel)
-                .tracking(1.2)
-            HStack(spacing: 16) {
-                Text("\(cache.dayPercentDone)% done")
-                    .font(.system(size: 16, weight: .bold))
-                    .foregroundColor(Design.passedDot)
-                Text("·")
-                    .foregroundColor(Design.grayLabel)
-                Text(dayTimePassedText(cache, now: now))
-                    .font(.system(size: 13))
-                    .foregroundColor(Design.grayLabel)
-                Text("passed")
-                    .font(.system(size: 11))
-                    .foregroundColor(Design.grayLabel)
+            HStack {
+                WidgetOverline(text: "Today")
+                Spacer(minLength: 0)
                 Text(dayTimeLeftText(cache, now: now))
-                    .font(.system(size: 13, weight: .semibold))
+                    .font(.system(size: 14, weight: .semibold, design: .rounded))
                     .foregroundColor(Design.lightText)
-                Text("left")
-                    .font(.system(size: 11))
-                    .foregroundColor(Design.grayLabel)
+                    .monospacedDigit()
             }
-            GeometryReader { geo in
-                ZStack(alignment: .leading) {
-                    RoundedRectangle(cornerRadius: 4)
-                        .fill(Design.progressBg)
-                    RoundedRectangle(cornerRadius: 4)
-                        .fill(Design.passedDot)
-                        .frame(width: max(0, geo.size.width * CGFloat(cache.dayProgress)), height: 6)
-                }
-            }
-            .frame(height: 6)
         }
-        .padding(.horizontal, 20)
-        .padding(.bottom, 20)
+        .padding(.horizontal, 18)
+        .padding(.bottom, 18)
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
@@ -772,79 +884,80 @@ private struct DailyTasksWidgetView: View {
         .widgetBackground()
     }
 
+    private func categoryRows(_ payload: DailyTaskWidgetPayload) -> [TaskCategoryRow] {
+        (payload.byCategory ?? [:])
+            .filter { $0.value.total > 0 }
+            .sorted { $0.key < $1.key }
+            .map { TaskCategoryRow(key: $0.key, label: dailyTasksCategoryLabels[$0.key] ?? $0.key, stats: $0.value) }
+    }
+
     private func paddedContent(payload: DailyTaskWidgetPayload) -> some View {
         let total = payload.total
         let completed = payload.completed
-        let pending = payload.pending
-        let progress = total > 0 ? Double(completed) / Double(total) : 0.0
-        let pct = total > 0 ? Int(round(progress * 100)) : 0
+        let small = family == .systemSmall
+        let rows = categoryRows(payload)
 
         return VStack(alignment: .leading, spacing: 0) {
-            HStack(alignment: .center, spacing: 8) {
-                Text("TODAY'S TASKS")
-                    .font(.system(size: 10, weight: .semibold))
-                    .foregroundColor(Design.grayLabel)
-                    .tracking(1.2)
+            HStack(alignment: .center) {
+                WidgetOverline(text: small ? "Tasks" : "Today's tasks")
                 Spacer(minLength: 0)
-                EmberGlyph(progress: entry.dayCache?.dayProgress ?? 0.35, size: 26)
+                EmberGlyph(progress: entry.dayCache?.dayProgress ?? 0.35, size: 20)
             }
-            .padding(.bottom, 12)
+            Spacer(minLength: 8)
 
-            HStack(alignment: .center, spacing: 16) {
-                DailyTasksPieShape(completed: completed, total: total, size: family == .systemSmall ? 72 : 88, innerRatio: 0.58)
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("\(completed)/\(total)")
-                        .font(.system(size: family == .systemSmall ? 22 : 26, weight: .bold))
-                        .foregroundColor(Design.lightText)
-                    Text("done")
-                        .font(.system(size: 12))
-                        .foregroundColor(Design.grayLabel)
-                    if total > 0 {
-                        Text("\(pct)% · \(pending) pending")
-                            .font(.system(size: 11))
-                            .foregroundColor(Design.grayLabel)
-                    }
-                }
-                Spacer(minLength: 0)
-            }
-            .padding(.bottom, 12)
-
-            if total > 0 {
-                GeometryReader { geo in
-                    ZStack(alignment: .leading) {
-                        RoundedRectangle(cornerRadius: 4)
-                            .fill(Design.progressBg)
-                        RoundedRectangle(cornerRadius: 4)
-                            .fill(progress >= 1.0 ? Design.left : Design.progressOrange)
-                            .frame(width: max(0, geo.size.width * CGFloat(progress)))
-                    }
-                }
-                .frame(height: 8)
-                .padding(.bottom, 10)
-            }
-
-            if family != .systemSmall, let byCat = payload.byCategory, !byCat.isEmpty {
+            // The donut shows the share done; the number is the count. Nothing else repeats them.
+            HStack(alignment: .center, spacing: small ? 12 : 16) {
+                DailyTasksPieShape(completed: completed, total: total, size: small ? 62 : 84, innerRatio: 0.62)
                 VStack(alignment: .leading, spacing: 2) {
-                    ForEach(Array(byCat.keys.sorted()), id: \.self) { key in
-                        if let stats = byCat[key], stats.total > 0 {
-                            let label = dailyTasksCategoryLabels[key] ?? key
-                            Text("\(label) \(stats.completed)/\(stats.total)")
-                                .font(.system(size: 11))
-                                .foregroundColor(Design.grayLabel)
+                    WidgetHero(value: "\(completed)/\(total)", size: small ? 26 : 34)
+                    widgetCaption(total == 0 ? "add one in UNTIL" : "done")
+                }
+                if family == .systemMedium {
+                    Spacer(minLength: 0)
+                    VStack(alignment: .leading, spacing: 6) {
+                        ForEach(rows.prefix(3)) { row in
+                            categoryLine(row.key, row.label, row.stats)
                         }
                     }
+                    .frame(maxWidth: 120, alignment: .leading)
                 }
+            }
+
+            if family == .systemLarge && !rows.isEmpty {
+                VStack(spacing: 10) {
+                    ForEach(rows.prefix(5)) { row in
+                        categoryLine(row.key, row.label, row.stats)
+                    }
+                }
+                .padding(.top, 18)
             }
             Spacer(minLength: 0)
         }
-        .padding(20)
+        .padding(small ? 14 : 18)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+    }
+
+    private func categoryLine(_ key: String, _ label: String, _ stats: DailyTaskCategoryStats) -> some View {
+        HStack(spacing: 8) {
+            Circle()
+                .fill(dailyTasksCategoryColors[key] ?? Design.grayLabel)
+                .frame(width: 7, height: 7)
+            Text(label)
+                .font(.system(size: 12))
+                .foregroundColor(Design.grayLabel)
+                .lineLimit(1)
+            Spacer(minLength: 4)
+            Text("\(stats.completed)/\(stats.total)")
+                .font(.system(size: 12, weight: .semibold, design: .rounded))
+                .foregroundColor(Design.lightText)
+                .monospacedDigit()
+        }
     }
 
     private var placeholderView: some View {
         EmberEmptyStateView(
             progress: entry.dayCache?.dayProgress ?? 0.35,
-            message: "Nothing listed yet — a quiet day is still a day."
+            message: "No tasks for today. Add one in UNTIL."
         )
         .padding(12)
     }
@@ -858,7 +971,7 @@ struct DailyTasksWidget: Widget {
             DailyTasksWidgetView(entry: entry)
         }
         .configurationDisplayName("Daily tasks")
-        .description("Tasks and day in one. Small/medium: tasks. Large: tasks + day. Add tasks in Until.")
+        .description("Today's tasks, by category. Large also shows time left today. Add tasks in UNTIL.")
         .supportedFamilies([.systemSmall, .systemMedium, .systemLarge])
     }
 }
@@ -936,45 +1049,6 @@ private struct DayDotsView: View {
     }
 }
 
-// MARK: - Month Dots View (12 dots = Jan..Dec; current dot = current month)
-private struct MonthDotsView: View {
-    let progress: Double
-    /// Current month 1–12 from cache (Jan=1, Feb=2). If nil, fallback to progress-based guess.
-    let monthIndex: Int?
-
-    private let totalDots = 12
-    private let cols = 6
-    private let rows = 2
-    private let dotRadius: CGFloat = 8.5
-    private let currentDotRadius: CGFloat = 12
-    private let gap: CGFloat = 10
-
-    var body: some View {
-        let idx = (monthIndex ?? 1).clamped(to: 1...12)
-        let currentMonth = idx - 1
-        let passedMonths = currentMonth
-
-        VStack(spacing: gap) {
-            ForEach(0..<rows, id: \.self) { row in
-                HStack(spacing: gap) {
-                    ForEach(0..<cols, id: \.self) { col in
-                        let i = row * cols + col
-                        let radius = (i == currentMonth) ? currentDotRadius : dotRadius
-                        let color: Color = {
-                            if i < passedMonths { return Design.passedDot }
-                            if i == currentMonth { return Design.currentDot }
-                            return Design.remainingDot
-                        }()
-                        Circle()
-                            .fill(color)
-                            .frame(width: radius * 2, height: radius * 2)
-                    }
-                }
-            }
-        }
-    }
-}
-
 private extension Comparable {
     func clamped(to range: ClosedRange<Self>) -> Self {
         min(max(self, range.lowerBound), range.upperBound)
@@ -1011,11 +1085,12 @@ private struct YearDotsView: View {
     let yearDaysPassed: Int
     var availableWidth: CGFloat = 0
     var availableHeight: CGFloat = 0
+    /// Columns in the grid. The large widget uses fewer, taller rows so the dots fill it.
+    var cols: Int = 30
     /// Horizontal inset so dots don't touch widget edges
     private let horizontalInset: CGFloat = 8
 
     private let totalDots = 365
-    private let cols = 30
     private var rows: Int { (totalDots + cols - 1) / cols }
     private let dotRadius: CGFloat = 3.5
     private let currentDotRadius: CGFloat = 4.5
@@ -1049,15 +1124,18 @@ private struct YearDotsView: View {
     }
 
     var body: some View {
-        let passedDots = min(yearDaysPassed, totalDots)
-        let hasCurrentDay = progress < 1.0 && passedDots < totalDots
-        let currentDay = hasCurrentDay ? passedDots : -1
+        // yearDaysPassed counts today, so today is the last of those days: it gets the accent
+        // dot, the days before it are purple, and the gray dots match "days left".
+        let todayNumber = min(max(yearDaysPassed, 0), totalDots)
+        let passedDots = max(todayNumber - 1, 0)
+        let currentDay = todayNumber >= 1 ? todayNumber - 1 : -1
         let size = cellSize
         let scale = scaleToFit
 
         LazyVGrid(columns: Array(repeating: GridItem(.fixed(size), spacing: gap), count: cols), spacing: gap) {
             ForEach(0..<totalDots, id: \.self) { i in
-                let radius = (i == currentDay && currentDay >= 0) ? min(currentDotRadius, size / 2) : min(dotRadius, size / 2)
+                let base = min(size / 2, max(dotRadius, size * 0.38))
+                let radius = (i == currentDay && currentDay >= 0) ? min(size / 2, base * 1.25) : base
                 let color: Color = {
                     if i < passedDots { return Design.passedDot }
                     if i == currentDay && currentDay >= 0 { return Design.currentDot }
@@ -1126,7 +1204,8 @@ private struct LifeYearsDotsView: View {
 
         LazyVGrid(columns: Array(repeating: GridItem(.fixed(size), spacing: gap), count: cols), spacing: gap) {
             ForEach(0..<dots, id: \.self) { i in
-                let radius = (i == currentDot && currentDot >= 0) ? min(currentDotRadius, size / 2) : min(dotRadius, size / 2)
+                let base = min(size / 2, max(dotRadius, size * 0.38))
+                let radius = (i == currentDot && currentDot >= 0) ? min(size / 2, base * 1.25) : base
                 let color: Color = {
                     if i < passedDots { return Design.passedDot }
                     if i == currentDot && currentDot >= 0 { return Design.currentDot }
@@ -1190,88 +1269,149 @@ private struct DayRingView: View {
 }
 
 // MARK: - Day time strings (hours and minutes only; no seconds)
-private func dayTimePassedText(_ cache: WidgetCache, now: Date = Date()) -> String {
-    if let start = cache.startOfDay, let end = cache.endOfDay {
-        let startSec = Double(start) / 1000
-        let nowSec = now.timeIntervalSince1970
-        let passedSec = max(0, min(Int(nowSec - startSec), Int(Double(end - start) / 1000)))
-        let h = passedSec / 3600
-        let m = (passedSec % 3600) / 60
-        return "\(h)h \(m)m passed"
+/// "21h 6m" (no unit word). Put "left" in the label beside it.
+private func dayTimeLeftValue(_ cache: WidgetCache, now: Date = Date()) -> String {
+    if let end = cache.endOfDay {
+        let remainingSec = max(0, Int(Double(end) / 1000 - now.timeIntervalSince1970))
+        return "\(remainingSec / 3600)h \((remainingSec % 3600) / 60)m"
     }
-    if let pm = cache.dayPassedMinutes {
-        let h = pm / 60, m = pm % 60
-        return "\(h)h \(m)m passed"
+    if let rm = cache.dayRemainingMinutes {
+        return "\(rm / 60)h \(rm % 60)m"
     }
-    return "\(Int(cache.dayHoursPassed))h 0m passed"
+    return "\(Int(cache.dayHoursLeft))h 0m"
 }
 
 private func dayTimeLeftText(_ cache: WidgetCache, now: Date = Date()) -> String {
-    if let start = cache.startOfDay, let end = cache.endOfDay {
-        let endSec = Double(end) / 1000
-        let nowSec = now.timeIntervalSince1970
-        let remainingSec = max(0, Int(endSec - nowSec))
-        let h = remainingSec / 3600
-        let m = (remainingSec % 3600) / 60
-        return "\(h)h \(m)m left"
-    }
-    if let rm = cache.dayRemainingMinutes {
-        let h = rm / 60, m = rm % 60
-        return "\(h)h \(m)m left"
-    }
-    return "\(Int(cache.dayHoursLeft))h 0m left"
+    "\(dayTimeLeftValue(cache, now: now)) left"
 }
 
-// MARK: - Day Metrics View (right side metrics for large layout)
-private struct DayMetricsView: View {
-    let cache: WidgetCache
-    /// Use entry date for live h/m; nil falls back to cache-only.
-    var now: Date = Date()
+// MARK: - Lock Screen Accessory Views (accessoryInline, accessoryCircular, accessoryRectangular)
+// MARK: Lock Screen building blocks (one number and one bar, nothing repeated)
+private struct AccessoryBarRect: View {
+    let title: String
+    let value: String
+    let progress: Double
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            VStack(alignment: .leading, spacing: 4) {
-                Text("PROGRESS")
-                    .font(.system(size: 11, weight: .medium))
-                    .foregroundColor(Design.grayLabel)
-                    .textCase(.uppercase)
-                Text("\(cache.dayPercentDone)%")
-                    .font(.system(size: 28, weight: .bold))
-                    .foregroundColor(Design.passedDot)
+        VStack(alignment: .leading, spacing: 4) {
+            Text(title)
+                .font(.system(size: 12, weight: .semibold))
+                .foregroundColor(Design.grayLabel)
+            Text(value)
+                .font(.system(size: 17, weight: .bold, design: .rounded))
+                .foregroundColor(Design.lightText)
+                .monospacedDigit()
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
+            GeometryReader { geo in
+                ZStack(alignment: .leading) {
+                    RoundedRectangle(cornerRadius: 3).fill(Design.progressBg)
+                    RoundedRectangle(cornerRadius: 3)
+                        .fill(Design.progressOrange)
+                        .frame(width: max(0, geo.size.width * CGFloat(min(1, max(0, progress)))))
+                }
             }
-
-            VStack(alignment: .leading, spacing: 4) {
-                Text("PASSED")
-                    .font(.system(size: 11, weight: .medium))
-                    .foregroundColor(Design.grayLabel)
-                    .textCase(.uppercase)
-                Text(dayTimePassedText(cache, now: now))
-                    .font(.system(size: 18, weight: .semibold))
-                    .foregroundColor(Design.lightText)
-            }
-
-            VStack(alignment: .leading, spacing: 4) {
-                Text("LEFT")
-                    .font(.system(size: 11, weight: .medium))
-                    .foregroundColor(Design.grayLabel)
-                    .textCase(.uppercase)
-                Text(dayTimeLeftText(cache, now: now))
-                    .font(.system(size: 18, weight: .semibold))
-                    .foregroundColor(Design.lightText)
-            }
+            .frame(height: 6)
         }
     }
 }
 
-// MARK: - Lock Screen Accessory Views (accessoryInline, accessoryCircular, accessoryRectangular)
+private struct AccessoryInlineText: View {
+    let text: String
+
+    var body: some View {
+        Text(text)
+            .font(.system(size: 14, weight: .medium))
+            .foregroundColor(Design.lightText)
+    }
+}
+
 private struct DayAccessoryInlineView: View {
     let cache: WidgetCache
     var now: Date = Date()
 
     var body: some View {
-        Text("\(cache.dayPercentDone)% done · \(dayTimeLeftText(cache, now: now)) left")
-            .font(.system(size: 14, weight: .medium))
-            .foregroundColor(Design.lightText)
+        AccessoryInlineText(text: "\(dayTimeLeftText(cache, now: now)) today")
+    }
+}
+
+private struct DayAccessoryRectangularView: View {
+    let cache: WidgetCache
+    var now: Date = Date()
+
+    var body: some View {
+        AccessoryBarRect(title: "Today", value: dayTimeLeftText(cache, now: now), progress: cache.dayProgress)
+    }
+}
+
+private struct MonthAccessoryInlineView: View {
+    let cache: WidgetCache
+
+    var body: some View {
+        AccessoryInlineText(text: "\(cache.monthDaysLeft) days left in \(widgetMonthName())")
+    }
+}
+
+private struct MonthAccessoryRectangularView: View {
+    let cache: WidgetCache
+
+    var body: some View {
+        AccessoryBarRect(title: widgetMonthName(), value: daysText(cache.monthDaysLeft), progress: cache.monthProgress)
+    }
+}
+
+private struct YearAccessoryInlineView: View {
+    let cache: WidgetCache
+
+    var body: some View {
+        AccessoryInlineText(text: "\(cache.yearDaysLeft) days left in \(Calendar.current.component(.year, from: Date()))")
+    }
+}
+
+private struct YearAccessoryRectangularView: View {
+    let cache: WidgetCache
+
+    var body: some View {
+        AccessoryBarRect(
+            title: "\(Calendar.current.component(.year, from: Date()))",
+            value: daysText(cache.yearDaysLeft),
+            progress: cache.yearProgress
+        )
+    }
+}
+
+private struct LifeAccessoryInlineView: View {
+    let cache: WidgetCache
+
+    var body: some View {
+        if let metrics = lifeYearMetrics(from: cache) {
+            AccessoryInlineText(text: "\(formatYears(metrics.leftYears)) years left")
+        } else {
+            AccessoryInlineText(text: "Set birth date in UNTIL")
+        }
+    }
+}
+
+private struct LifeAccessoryRectangularView: View {
+    let cache: WidgetCache
+
+    var body: some View {
+        if let metrics = lifeYearMetrics(from: cache) {
+            AccessoryBarRect(
+                title: "Your life",
+                value: "\(formatYears(metrics.leftYears)) years left",
+                progress: metrics.livedYears / Double(metrics.totalYears)
+            )
+        } else {
+            VStack(alignment: .leading, spacing: 6) {
+                Text("Your life")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundColor(Design.grayLabel)
+                Text("Set birth date in UNTIL")
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundColor(Design.lightText)
+            }
+        }
     }
 }
 
@@ -1293,48 +1433,6 @@ private struct DayAccessoryCircularView: View {
     }
 }
 
-private struct DayAccessoryRectangularView: View {
-    let cache: WidgetCache
-    var now: Date = Date()
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text("Today")
-                .font(.system(size: 12, weight: .semibold))
-                .foregroundColor(Design.grayLabel)
-            HStack {
-                Text("\(cache.dayPercentDone)% done")
-                    .font(.system(size: 16, weight: .bold))
-                    .foregroundColor(Design.passed)
-                Spacer()
-                Text("\(cache.dayPercentLeft)% left")
-                    .font(.system(size: 16, weight: .bold))
-                    .foregroundColor(Design.left)
-            }
-            GeometryReader { geo in
-                ZStack(alignment: .leading) {
-                    RoundedRectangle(cornerRadius: 3)
-                        .fill(Design.progressBg)
-                    RoundedRectangle(cornerRadius: 3)
-                        .fill(Design.progressOrange)
-                        .frame(width: max(0, geo.size.width * CGFloat(cache.dayProgress)))
-                }
-            }
-            .frame(height: 6)
-        }
-    }
-}
-
-private struct MonthAccessoryInlineView: View {
-    let cache: WidgetCache
-
-    var body: some View {
-        Text("Month \(cache.monthPercent)% · \(cache.monthDaysLeft)d left")
-            .font(.system(size: 14, weight: .medium))
-            .foregroundColor(Design.lightText)
-    }
-}
-
 private struct MonthAccessoryCircularView: View {
     let cache: WidgetCache
 
@@ -1353,47 +1451,6 @@ private struct MonthAccessoryCircularView: View {
     }
 }
 
-private struct MonthAccessoryRectangularView: View {
-    let cache: WidgetCache
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text("Month")
-                .font(.system(size: 12, weight: .semibold))
-                .foregroundColor(Design.grayLabel)
-            HStack {
-                Text("\(cache.monthDaysPassed)d passed")
-                    .font(.system(size: 14, weight: .bold))
-                    .foregroundColor(Design.passed)
-                Spacer()
-                Text("\(cache.monthDaysLeft)d left")
-                    .font(.system(size: 14, weight: .bold))
-                    .foregroundColor(Design.left)
-            }
-            GeometryReader { geo in
-                ZStack(alignment: .leading) {
-                    RoundedRectangle(cornerRadius: 3)
-                        .fill(Design.progressBg)
-                    RoundedRectangle(cornerRadius: 3)
-                        .fill(Design.progressOrange)
-                        .frame(width: max(0, geo.size.width * CGFloat(cache.monthProgress)))
-                }
-            }
-            .frame(height: 6)
-        }
-    }
-}
-
-private struct YearAccessoryInlineView: View {
-    let cache: WidgetCache
-
-    var body: some View {
-        Text("Year \(cache.yearPercent)% · \(cache.yearDaysLeft)d left")
-            .font(.system(size: 14, weight: .medium))
-            .foregroundColor(Design.lightText)
-    }
-}
-
 private struct YearAccessoryCircularView: View {
     let cache: WidgetCache
 
@@ -1408,53 +1465,6 @@ private struct YearAccessoryCircularView: View {
                     .font(.system(size: 10, weight: .medium))
                     .foregroundColor(Design.grayLabel)
             }
-        }
-    }
-}
-
-private struct YearAccessoryRectangularView: View {
-    let cache: WidgetCache
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text("Year")
-                .font(.system(size: 12, weight: .semibold))
-                .foregroundColor(Design.grayLabel)
-            HStack {
-                Text("\(cache.yearDaysPassed)d passed")
-                    .font(.system(size: 14, weight: .bold))
-                    .foregroundColor(Design.passed)
-                Spacer()
-                Text("\(cache.yearDaysLeft)d left")
-                    .font(.system(size: 14, weight: .bold))
-                    .foregroundColor(Design.left)
-            }
-            GeometryReader { geo in
-                ZStack(alignment: .leading) {
-                    RoundedRectangle(cornerRadius: 3)
-                        .fill(Design.progressBg)
-                    RoundedRectangle(cornerRadius: 3)
-                        .fill(Design.progressOrange)
-                        .frame(width: max(0, geo.size.width * CGFloat(cache.yearProgress)))
-                }
-            }
-            .frame(height: 6)
-        }
-    }
-}
-
-private struct LifeAccessoryInlineView: View {
-    let cache: WidgetCache
-
-    var body: some View {
-        if let metrics = lifeYearMetrics(from: cache) {
-            Text("Life \(metrics.lifePct)% · \(formatYears(metrics.leftYears))y left")
-                .font(.system(size: 14, weight: .medium))
-                .foregroundColor(Design.lightText)
-        } else {
-            Text("Set birth date in Until")
-                .font(.system(size: 14, weight: .medium))
-                .foregroundColor(Design.grayLabel)
         }
     }
 }
@@ -1477,44 +1487,74 @@ private struct LifeAccessoryCircularView: View {
     }
 }
 
-private struct LifeAccessoryRectangularView: View {
+// MARK: - Day large (ring + time left, then what else is running out)
+private struct DayLargeView: View {
     let cache: WidgetCache
+    var now: Date = Date()
+
+    private let monthColor = Color(red: 0x2E / 255, green: 0xD3 / 255, blue: 0xC6 / 255)
+    private let yearColor = Color(red: 0x60 / 255, green: 0xA5 / 255, blue: 0xFA / 255)
+    private let lifeColor = Color(red: 0xFF / 255, green: 0x6B / 255, blue: 0x6B / 255)
 
     var body: some View {
-        if let metrics = lifeYearMetrics(from: cache) {
-            VStack(alignment: .leading, spacing: 6) {
-                Text("Your life")
-                    .font(.system(size: 12, weight: .semibold))
-                    .foregroundColor(Design.grayLabel)
-                HStack {
-                    Text("\(formatYears(metrics.livedYears))y lived")
-                        .font(.system(size: 14, weight: .bold))
-                        .foregroundColor(Design.passed)
-                    Spacer()
-                    Text("\(formatYears(metrics.leftYears))y left")
-                        .font(.system(size: 14, weight: .bold))
-                        .foregroundColor(Design.left)
+        VStack(alignment: .leading, spacing: 20) {
+            HStack(spacing: 18) {
+                DayRingView(progress: cache.dayProgress, size: 140)
+                VStack(alignment: .leading, spacing: 4) {
+                    WidgetOverline(text: widgetDateOverline(now))
+                    WidgetHero(value: dayTimeLeftValue(cache, now: now), size: 38)
+                    widgetCaption("left today")
                 }
-                GeometryReader { geo in
-                    ZStack(alignment: .leading) {
-                        RoundedRectangle(cornerRadius: 3)
-                            .fill(Design.progressBg)
-                        RoundedRectangle(cornerRadius: 3)
-                            .fill(Design.progressOrange)
-                            .frame(width: max(0, geo.size.width * CGFloat(metrics.livedYears / Double(metrics.totalYears))))
+                Spacer(minLength: 0)
+            }
+
+            Rectangle()
+                .fill(Design.progressBg.opacity(0.7))
+                .frame(height: 1)
+
+            // Other clocks that are running, each shown once. Month and Life are Premium.
+            VStack(spacing: 12) {
+                if WidgetCacheReader.isPremium {
+                    row(color: monthColor, label: "This month", value: daysText(cache.monthDaysLeft))
+                }
+                row(color: yearColor, label: "This year", value: daysText(cache.yearDaysLeft))
+                if WidgetCacheReader.isPremium, let m = lifeYearMetrics(from: cache) {
+                    row(color: lifeColor, label: "Your life", value: "\(formatYears(m.leftYears)) years left")
+                }
+            }
+
+            if cache.presenceStreakCount > 0 {
+                HStack(spacing: 10) {
+                    Text("\(cache.presenceStreakCount)-day streak")
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundColor(Design.lightText)
+                    Spacer(minLength: 0)
+                    HStack(spacing: 5) {
+                        ForEach(0..<cache.presenceStreakDots.count, id: \.self) { i in
+                            Circle()
+                                .fill(cache.presenceStreakDots[i] ? Design.percent : Design.remainingDot)
+                                .frame(width: 8, height: 8)
+                        }
                     }
                 }
-                .frame(height: 6)
             }
-        } else {
-            VStack(alignment: .leading, spacing: 6) {
-                Text("Your life")
-                    .font(.system(size: 12, weight: .semibold))
-                    .foregroundColor(Design.grayLabel)
-                Text("Set birth date in Until")
-                    .font(.system(size: 12, weight: .medium))
-                    .foregroundColor(Design.lightText)
-            }
+            Spacer(minLength: 0)
+        }
+        .padding(20)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+    }
+
+    private func row(color: Color, label: String, value: String) -> some View {
+        HStack(spacing: 10) {
+            Circle().fill(color).frame(width: 8, height: 8)
+            Text(label)
+                .font(.system(size: 13))
+                .foregroundColor(Design.grayLabel)
+            Spacer(minLength: 0)
+            Text(value)
+                .font(.system(size: 15, weight: .semibold, design: .rounded))
+                .foregroundColor(Design.lightText)
+                .monospacedDigit()
         }
     }
 }
@@ -1535,66 +1575,30 @@ struct DayWidgetView: View {
                 case .accessoryRectangular:
                     DayAccessoryRectangularView(cache: cache, now: entry.date)
                 case .systemLarge:
-                    HStack(spacing: 24) {
-                        DayRingView(progress: cache.dayProgress, size: 140)
-                            .padding(.leading, 8)
-
-                        Spacer()
-
-                        DayMetricsView(cache: cache, now: entry.date)
-                            .padding(.trailing, 8)
-                    }
-                    .padding(.vertical, 20)
-                    .padding(.horizontal, 20)
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-
+                    DayLargeView(cache: cache, now: entry.date)
                 case .systemSmall:
-                    // Hero: ring + Ember; support: leftover %
+                    // The ring already shows how far through the day you are.
                     VStack(spacing: Design.stackSpacing) {
                         DayDotsView(progress: cache.dayProgress)
                             .frame(maxWidth: .infinity)
                             .layoutPriority(1)
-
-                        Text("\(cache.dayPercentLeft)% left")
-                            .font(.system(size: 14, weight: .bold))
-                            .foregroundColor(Design.percent)
+                        Text(dayTimeLeftText(cache, now: entry.date))
+                            .font(.system(size: 14, weight: .bold, design: .rounded))
+                            .foregroundColor(Design.left)
+                            .monospacedDigit()
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.8)
                     }
                     .padding(Design.contentPadding)
-
                 default: // .systemMedium
-                    // Wide canvas: ring on the left, the number you care about on the right.
                     HStack(spacing: 18) {
                         DayDotsView(progress: cache.dayProgress)
                             .aspectRatio(1, contentMode: .fit)
                             .layoutPriority(1)
-
-                        VStack(alignment: .leading, spacing: 6) {
-                            Text("Time left today")
-                                .font(.system(size: Design.labelSize, weight: .medium))
-                                .foregroundColor(Design.grayLabel)
-                            // The label above already says "left", so drop the word from the number.
-                            Text(dayTimeLeftText(cache, now: entry.date).replacingOccurrences(of: " left", with: ""))
-                                .font(.system(size: 32, weight: .bold, design: .rounded))
-                                .foregroundColor(Design.left)
-                                .monospacedDigit()
-                                .lineLimit(1)
-                                .minimumScaleFactor(0.6)
-                            Text("\(cache.dayPercentLeft)% of the day left")
-                                .font(.system(size: 13, weight: .semibold))
-                                .foregroundColor(Design.percent)
-                                .lineLimit(1)
-                                .minimumScaleFactor(0.8)
-                            Capsule()
-                                .fill(Design.progressBg)
-                                .frame(height: Design.barHeight)
-                                .overlay(alignment: .leading) {
-                                    GeometryReader { geo in
-                                        Capsule()
-                                            .fill(Design.passedDot)
-                                            .frame(width: geo.size.width * min(1, max(0, cache.dayProgress)))
-                                    }
-                                }
-                                .padding(.top, 2)
+                        VStack(alignment: .leading, spacing: 4) {
+                            WidgetOverline(text: widgetDateOverline(entry.date))
+                            WidgetHero(value: dayTimeLeftValue(cache, now: entry.date), size: 36)
+                            widgetCaption("left today")
                         }
                         .frame(maxWidth: .infinity, alignment: .leading)
                     }
@@ -1610,13 +1614,6 @@ struct DayWidgetView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .widgetBackground()
     }
-
-    private var placeholderView: some View {
-        EmberEmptyStateView(
-            progress: 0.32,
-            message: "Open UNTIL once to load your time."
-        )
-    }
 }
 
 // MARK: - Month Widget View
@@ -1628,7 +1625,7 @@ struct MonthWidgetView: View {
         Group {
             if !WidgetCacheReader.isPremium {
                 PremiumLockedWidgetView(
-                    message: "Month widget is Premium.\nOpen Until to upgrade."
+                    message: "Month widget is Premium.\nOpen UNTIL to upgrade."
                 )
             } else if let cache = entry.cache {
                 switch family {
@@ -1642,72 +1639,35 @@ struct MonthWidgetView: View {
                     monthContent(cache: cache)
                 }
             } else {
-                placeholderView
+                EmberEmptyStateView(progress: 0.32, message: "Open UNTIL once to load your time.")
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .widgetBackground()
     }
 
+    /// Calendar dots on the right show where you are; the number says how long is left.
     private func monthContent(cache: WidgetCache) -> some View {
-        VStack(alignment: .leading, spacing: 0) {
-            Text("MONTH")
-                .font(.system(size: 10, weight: .bold))
-                .tracking(1.2)
-                .foregroundColor(Design.grayLabel)
-
-            MonthDotsView(progress: cache.monthProgress, monthIndex: cache.monthIndex)
-                .frame(maxWidth: .infinity)
-                .padding(.top, 10)
-                .padding(.bottom, 12)
-                .layoutPriority(1)
-
-            VStack(spacing: 2) {
-                Text("\(cache.monthPercent)%")
-                    .font(.system(size: 30, weight: .bold))
-                    .foregroundColor(Design.percent)
-                    .minimumScaleFactor(0.8)
-                Text("of month")
-                    .font(.system(size: 11, weight: .medium))
-                    .foregroundColor(Design.grayLabel)
+        let daysInMonth = max(1, cache.monthDaysPassed + cache.monthDaysLeft)
+        let today = min(daysInMonth, max(1, cache.monthDaysPassed))
+        return HStack(spacing: 16) {
+            VStack(alignment: .leading, spacing: 4) {
+                WidgetOverline(text: "\(widgetMonthName(entry.date)) \(Calendar.current.component(.year, from: entry.date))")
+                Spacer(minLength: 0)
+                WidgetHero(value: "\(cache.monthDaysLeft)", size: 52, color: Design.left)
+                widgetCaption(cache.monthDaysLeft == 1 ? "day left" : "days left")
+                Spacer(minLength: 0)
             }
-            .frame(maxWidth: .infinity)
+            .frame(maxWidth: .infinity, alignment: .leading)
 
-            HStack(spacing: 6) {
-                Text("\(cache.monthDaysPassed)d passed")
-                    .font(.system(size: 12, weight: .semibold))
-                    .foregroundColor(Design.passed)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.8)
-                Spacer(minLength: 4)
-                Text("\(cache.monthDaysLeft)d left")
-                    .font(.system(size: 12, weight: .bold))
-                    .foregroundColor(Design.left)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.8)
-            }
-            .padding(.top, 10)
-
-            GeometryReader { geo in
-                ZStack(alignment: .leading) {
-                    Capsule()
-                        .fill(Design.progressBg)
-                    Capsule()
-                        .fill(Design.percent)
-                        .frame(width: max(0, geo.size.width * cache.monthProgress))
-                }
-            }
-            .frame(height: 4)
-            .padding(.top, 6)
+            MonthDaysGridView(
+                daysInMonth: daysInMonth,
+                today: today,
+                leadingBlanks: monthLeadingBlanks(for: entry.date)
+            )
+            .aspectRatio(7.0 / 5.4, contentMode: .fit)
         }
-        .padding(14)
-    }
-
-    private var placeholderView: some View {
-        EmberEmptyStateView(
-            progress: 0.32,
-            message: "Open UNTIL once to load your time."
-        )
+        .padding(16)
     }
 }
 
@@ -1730,83 +1690,35 @@ struct YearWidgetView: View {
                     yearContent(cache: cache)
                 }
             } else {
-                placeholderView
+                EmberEmptyStateView(progress: 0.32, message: "Open UNTIL once to load your time.")
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .widgetBackground()
     }
 
+    /// 365 dots are the progress; the header says how many days are left.
     private func yearContent(cache: WidgetCache) -> some View {
-        let consumedPct = Int(cache.yearProgress * 100)
-
-        return VStack(alignment: .leading, spacing: 0) {
-            Text("YEAR")
-                .font(.system(size: 10, weight: .bold))
-                .tracking(1.2)
-                .foregroundColor(Design.grayLabel)
+        VStack(alignment: .leading, spacing: 6) {
+            WidgetOverline(text: "\(Calendar.current.component(.year, from: entry.date))")
+            WidgetHero(value: "\(cache.yearDaysLeft)", unit: cache.yearDaysLeft == 1 ? "day left" : "days left", size: 52)
 
             GeometryReader { geo in
                 YearDotsView(
                     progress: cache.yearProgress,
                     yearDaysPassed: cache.yearDaysPassed,
                     availableWidth: geo.size.width,
-                    availableHeight: geo.size.height
+                    availableHeight: geo.size.height,
+                    cols: 20
                 )
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
             .frame(maxWidth: .infinity)
             .frame(minHeight: 96)
-            .padding(.top, 10)
-            .padding(.bottom, 12)
+            .padding(.top, 8)
             .layoutPriority(1)
-
-            VStack(spacing: 2) {
-                Text("\(consumedPct)%")
-                    .font(.system(size: 30, weight: .bold))
-                    .foregroundColor(Design.percent)
-                    .minimumScaleFactor(0.8)
-                Text("of year")
-                    .font(.system(size: 11, weight: .medium))
-                    .foregroundColor(Design.grayLabel)
-            }
-            .frame(maxWidth: .infinity)
-
-            HStack(spacing: 6) {
-                Text("\(cache.yearDaysPassed)d passed")
-                    .font(.system(size: 12, weight: .semibold))
-                    .foregroundColor(Design.passed)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.8)
-                Spacer(minLength: 4)
-                Text("\(cache.yearDaysLeft)d left")
-                    .font(.system(size: 12, weight: .bold))
-                    .foregroundColor(Design.left)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.8)
-            }
-            .padding(.top, 10)
-
-            GeometryReader { geo in
-                ZStack(alignment: .leading) {
-                    Capsule()
-                        .fill(Design.progressBg)
-                    Capsule()
-                        .fill(Design.percent)
-                        .frame(width: max(0, geo.size.width * cache.yearProgress))
-                }
-            }
-            .frame(height: 4)
-            .padding(.top, 6)
         }
-        .padding(14)
-    }
-
-    private var placeholderView: some View {
-        EmberEmptyStateView(
-            progress: 0.32,
-            message: "Open UNTIL once to load your time."
-        )
+        .padding(18)
     }
 }
 
@@ -1819,7 +1731,7 @@ struct LifeWidgetView: View {
         Group {
             if !WidgetCacheReader.isPremium {
                 PremiumLockedWidgetView(
-                    message: "Life widget is Premium.\nOpen Until to upgrade."
+                    message: "Life widget is Premium.\nOpen UNTIL to upgrade."
                 )
             } else if let cache = entry.cache {
                 switch family {
@@ -1833,80 +1745,47 @@ struct LifeWidgetView: View {
                     lifeContent(cache: cache)
                 }
             } else {
-                placeholderView
+                EmberEmptyStateView(progress: 0.32, message: "Open UNTIL once to load your time.")
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .widgetBackground()
     }
 
+    /// One dot per year of life. The number is what is left; the plan length is the only context.
     private func lifeContent(cache: WidgetCache) -> some View {
-        if let metrics = lifeYearMetrics(from: cache) {
+        guard let metrics = lifeYearMetrics(from: cache) else {
             return AnyView(
-                VStack(spacing: Design.stackSpacing) {
-                    GeometryReader { geo in
-                        LifeYearsDotsView(
-                            progress: metrics.livedYears / Double(metrics.totalYears),
-                            totalYears: metrics.totalYears,
-                            availableWidth: geo.size.width,
-                            availableHeight: geo.size.height
-                        )
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    }
-                    .frame(maxWidth: .infinity)
-                    .frame(minHeight: 72, maxHeight: 100)
-                    .layoutPriority(1)
-
-                    HStack(spacing: 6) {
-                        Text("\(formatYears(metrics.livedYears))y lived")
-                            .font(.system(size: Design.labelSize, weight: .semibold))
-                            .foregroundColor(Design.passed)
-                            .lineLimit(1)
-                            .minimumScaleFactor(0.8)
-                        Spacer(minLength: 4)
-                        Text("\(formatYears(metrics.leftYears))y left")
-                            .font(.system(size: Design.labelSize, weight: .semibold))
-                            .foregroundColor(Design.left)
-                            .lineLimit(1)
-                            .minimumScaleFactor(0.8)
-                    }
-
-                    GeometryReader { geo in
-                        ZStack(alignment: .leading) {
-                            Capsule()
-                                .fill(Design.progressBg)
-                            Capsule()
-                                .fill(Design.percent)
-                                .frame(width: max(0, geo.size.width * CGFloat(metrics.livedYears / Double(metrics.totalYears))))
-                        }
-                    }
-                    .frame(height: Design.barHeight)
-
-                    VStack(spacing: 2) {
-                        Text("\(metrics.lifePct)%")
-                            .font(.system(size: Design.bigPercentSize, weight: .bold))
-                            .foregroundColor(Design.percent)
-                        Text("of life lived")
-                            .font(.system(size: Design.smallLabelSize, weight: .medium))
-                            .foregroundColor(Design.grayLabel)
-                    }
-                }
-                .padding(Design.contentPadding)
+                EmberEmptyStateView(
+                    progress: cache.dayProgress,
+                    message: "Set your birth date in UNTIL to see your life."
+                )
             )
         }
-
+        let plan = cache.deathAge ?? metrics.totalYears
         return AnyView(
-            EmberEmptyStateView(
-                progress: cache.dayProgress,
-                message: "Set birth date in UNTIL to see life progress."
-            )
-        )
-    }
+            HStack(spacing: 16) {
+                VStack(alignment: .leading, spacing: 4) {
+                    WidgetOverline(text: "Your life")
+                    Spacer(minLength: 0)
+                    WidgetHero(value: formatYears(metrics.leftYears), size: 44, color: Design.left)
+                    widgetCaption("years left of \(plan)")
+                    Spacer(minLength: 0)
+                }
+                .frame(width: 118, alignment: .leading)
 
-    private var placeholderView: some View {
-        EmberEmptyStateView(
-            progress: 0.32,
-            message: "Open UNTIL once to load your time."
+                GeometryReader { geo in
+                    LifeYearsDotsView(
+                        progress: metrics.livedYears / Double(metrics.totalYears),
+                        totalYears: metrics.totalYears,
+                        availableWidth: geo.size.width,
+                        availableHeight: geo.size.height
+                    )
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                }
+                .frame(maxWidth: .infinity)
+            }
+            .padding(16)
         )
     }
 }
@@ -2013,6 +1892,17 @@ struct IncrementCounterIntent: AppIntent {
     }
 }
 
+private func countdownDateText(_ dateString: String) -> String? {
+    let parts = dateString.split(separator: "-").compactMap { Int($0) }
+    guard parts.count >= 3,
+          let date = Calendar.current.date(from: DateComponents(year: parts[0], month: parts[1], day: parts[2]))
+    else { return nil }
+    let f = DateFormatter()
+    f.locale = Locale.current
+    f.setLocalizedDateFormatFromTemplate("d MMM yyyy")
+    return f.string(from: date)
+}
+
 private struct CounterWidgetView: View {
     let entry: CounterWidgetEntry
 
@@ -2020,27 +1910,36 @@ private struct CounterWidgetView: View {
         Group {
             if let c = entry.counter {
                 Button(intent: IncrementCounterIntent(counterId: c.id)) {
-                    VStack(alignment: .leading, spacing: 8) {
+                    VStack(alignment: .leading, spacing: 0) {
                         Text(c.title)
-                            .font(.system(size: Design.labelSize, weight: .semibold))
+                            .font(.system(size: 13, weight: .semibold))
                             .foregroundColor(Design.lightText)
+                            .lineLimit(1)
+                        Spacer(minLength: 4)
                         Text("\(c.count)")
-                            .font(.system(size: 28, weight: .bold))
-                            .foregroundColor(Design.passedDot)
-                        Spacer(minLength: 0)
+                            .font(.system(size: 54, weight: .bold, design: .rounded))
+                            .monospacedDigit()
+                            .foregroundColor(Design.left)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.5)
+                            .contentTransition(.numericText())
+                        Spacer(minLength: 4)
+                        HStack {
+                            Spacer(minLength: 0)
+                            // The whole widget is the button; this only shows what a tap does.
+                            Image(systemName: "plus")
+                                .font(.system(size: 14, weight: .bold))
+                                .foregroundColor(.black.opacity(0.85))
+                                .frame(width: 32, height: 32)
+                                .background(Circle().fill(Design.percent))
+                        }
                     }
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
                     .padding(16)
                 }
                 .buttonStyle(.plain)
             } else {
-                VStack(spacing: 8) {
-                    Text("Add a counter in Until")
-                        .font(.system(size: Design.labelSize))
-                        .foregroundColor(Design.grayLabel)
-                        .multilineTextAlignment(.center)
-                }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                EmberEmptyStateView(progress: 0.3, message: "Add a counter in UNTIL.")
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -2056,7 +1955,7 @@ struct CounterWidget: Widget {
             CounterWidgetView(entry: entry)
         }
         .configurationDisplayName("Counter")
-        .description("Tap to add +1. Create counters in Until → Widgets → Custom counters.")
+        .description("Tap to add +1. Create counters in UNTIL.")
         .supportedFamilies([.systemSmall])
     }
 }
@@ -2126,25 +2025,30 @@ private struct CountdownWidgetView: View {
     var body: some View {
         Group {
             if let c = entry.countdown {
-                VStack(alignment: .leading, spacing: 8) {
+                VStack(alignment: .leading, spacing: 0) {
                     Text(c.title)
-                        .font(.system(size: Design.labelSize, weight: .semibold))
+                        .font(.system(size: 13, weight: .semibold))
                         .foregroundColor(Design.lightText)
-                    Text(countdownSubtitle(days: entry.daysLeft))
-                        .font(.system(size: 22, weight: .bold))
-                        .foregroundColor(Design.passedDot)
-                    Spacer(minLength: 0)
+                        .lineLimit(2)
+                    Spacer(minLength: 4)
+                    if entry.daysLeft == 0 {
+                        WidgetHero(value: "Today", size: 38, color: Design.percent)
+                    } else {
+                        WidgetHero(value: "\(entry.daysLeft)", size: 54, color: Design.left)
+                        widgetCaption(entry.daysLeft == 1 ? "day left" : "days left")
+                    }
+                    Spacer(minLength: 4)
+                    if let when = countdownDateText(c.date) {
+                        Text(when)
+                            .font(.system(size: 11, weight: .medium))
+                            .foregroundColor(Design.grayLabel)
+                            .lineLimit(1)
+                    }
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
                 .padding(16)
             } else {
-                VStack(spacing: 8) {
-                    Text("Add a countdown in Until")
-                        .font(.system(size: Design.labelSize))
-                        .foregroundColor(Design.grayLabel)
-                        .multilineTextAlignment(.center)
-                }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                EmberEmptyStateView(progress: 0.3, message: "Add a deadline in UNTIL.")
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -2160,7 +2064,7 @@ struct CountdownWidget: Widget {
             CountdownWidgetView(entry: entry)
         }
         .configurationDisplayName("Countdown")
-        .description("Days left until a deadline. Add deadlines in Until → Widgets → Countdowns.")
+        .description("Days left until a deadline. Add one in UNTIL.")
         .supportedFamilies([.systemSmall])
     }
 }
@@ -2272,36 +2176,37 @@ private struct HourCalculationWidgetView: View {
         Group {
             if let state = entry.state {
                 Button(intent: ToggleHourCalculationIntent()) {
-                    VStack(spacing: 8) {
+                    VStack(alignment: .leading, spacing: 0) {
                         Text(state.title.isEmpty ? "Hour timer" : state.title)
-                            .font(.system(size: Design.labelSize, weight: .semibold))
-                            .foregroundColor(Design.grayLabel)
+                            .font(.system(size: 13, weight: .semibold))
+                            .foregroundColor(Design.lightText)
                             .lineLimit(1)
+                        Spacer(minLength: 4)
                         hourCalculationElapsedText(state: state, now: entry.date)
-                            .font(.system(size: 26, weight: .bold))
+                            .font(.system(size: 30, weight: .bold, design: .rounded))
                             .monospacedDigit()
-                            .foregroundColor(Design.passedDot)
-                        Text(state.isRunning ? "Tap to stop" : "Tap to start")
-                            .font(.system(size: Design.smallLabelSize))
-                            .foregroundColor(Design.remainingDot)
+                            .foregroundColor(Design.left)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.6)
+                        Spacer(minLength: 4)
+                        // Says what the tap will do, instead of a hint line.
+                        HStack(spacing: 6) {
+                            Image(systemName: state.isRunning ? "pause.fill" : "play.fill")
+                                .font(.system(size: 11, weight: .bold))
+                            Text(state.isRunning ? "Stop" : "Start")
+                                .font(.system(size: 13, weight: .bold, design: .rounded))
+                        }
+                        .foregroundColor(.black.opacity(0.85))
+                        .padding(.horizontal, 14)
+                        .frame(height: 30)
+                        .background(Capsule().fill(Design.passedDot))
                     }
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
                     .padding(16)
                 }
                 .buttonStyle(.plain)
             } else {
-                VStack(spacing: 8) {
-                    Text("Set title in Until")
-                        .font(.system(size: Design.labelSize))
-                        .foregroundColor(Design.grayLabel)
-                    Text("0:00:00")
-                        .font(.system(size: 26, weight: .bold))
-                        .foregroundColor(Design.passedDot)
-                    Text("Tap to start")
-                        .font(.system(size: Design.smallLabelSize))
-                        .foregroundColor(Design.remainingDot)
-                }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                EmberEmptyStateView(progress: 0.3, message: "Set a title in UNTIL, then tap to start.")
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -2317,7 +2222,7 @@ struct HourCalculationWidget: Widget {
             HourCalculationWidgetView(entry: entry)
         }
         .configurationDisplayName("Hour calculation")
-        .description("Tap to start/stop. One timer. Set title (e.g. Office hour) in Until.")
+        .description("Tap to start or stop one timer. Set its title in UNTIL.")
         .supportedFamilies([.systemSmall])
     }
 }

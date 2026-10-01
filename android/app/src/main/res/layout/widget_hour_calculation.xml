@@ -1,43 +1,45 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Hour timer: a native Chronometer counts up by itself, so nothing has to redraw every second. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/widget_root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@drawable/widget_background"
     android:orientation="vertical"
-    android:padding="16dp"
-    android:gravity="center">
+    android:padding="14dp">
 
     <TextView
         android:id="@+id/widget_hour_calc_title"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:textColor="#AAAAAA"
-        android:textSize="12sp"
+        android:textColor="@color/widget_hero"
+        android:textSize="13sp"
         android:textStyle="bold"
-        android:gravity="center"
         android:maxLines="1"
         android:ellipsize="end"
-        android:text="Office hour" />
+        android:text="Hour timer" />
 
-    <TextView
+    <Chronometer
         android:id="@+id/widget_hour_calc_time"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:textColor="#BB86FC"
-        android:textSize="26sp"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:textColor="@color/widget_hero"
+        android:textSize="30sp"
         android:textStyle="bold"
-        android:gravity="center"
-        android:text="0:00:00" />
+        android:includeFontPadding="false"
+        android:gravity="center_vertical|start"
+        android:maxLines="1" />
 
     <TextView
         android:id="@+id/widget_hour_calc_hint"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="4dp"
-        android:textColor="#666666"
-        android:textSize="11sp"
+        android:layout_width="wrap_content"
+        android:layout_height="30dp"
+        android:background="@drawable/widget_pill_purple"
         android:gravity="center"
-        android:text="Tap to start / stop" />
+        android:paddingHorizontal="16dp"
+        android:text="Start"
+        android:textColor="#D9000000"
+        android:textSize="13sp"
+        android:textStyle="bold" />
 </LinearLayout>

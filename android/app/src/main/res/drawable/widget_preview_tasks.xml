@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Placeholder shown in the widget picker; live widgets replace it with a drawn bitmap. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="100dp" android:height="100dp"
+    android:viewportWidth="100" android:viewportHeight="100">
+<group android:pivotX="50" android:pivotY="50" android:rotation="-90">
+        <path android:strokeColor="#3A342F" android:strokeWidth="15" android:pathData="M17.00,50.00a33.00,33.00 0 1,0 66.00,0a33.00,33.00 0 1,0 -66.00,0z" />
+        <path android:strokeColor="#E87C20" android:strokeWidth="15" android:trimPathEnd="0.4" android:pathData="M17.00,50.00a33.00,33.00 0 1,0 66.00,0a33.00,33.00 0 1,0 -66.00,0z" />
+    </group>
+</vector>

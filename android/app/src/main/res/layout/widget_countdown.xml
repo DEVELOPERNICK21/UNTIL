@@ -1,33 +1,53 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Countdown: what, how many days, and the date. Each once. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/widget_root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@drawable/widget_background"
     android:orientation="vertical"
-    android:padding="16dp"
-    android:gravity="center">
+    android:padding="14dp">
 
     <TextView
         android:id="@+id/widget_countdown_title"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:textColor="#AAAAAA"
-        android:textSize="12sp"
+        android:textColor="@color/widget_hero"
+        android:textSize="13sp"
         android:textStyle="bold"
-        android:gravity="center"
-        android:maxLines="1"
+        android:maxLines="2"
         android:ellipsize="end"
         android:text="Deadline" />
 
     <TextView
         android:id="@+id/widget_countdown_days"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:textColor="#BB86FC"
-        android:textSize="22sp"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:textColor="@color/widget_hero"
+        android:textSize="54sp"
         android:textStyle="bold"
-        android:gravity="center"
-        android:text="7 days left" />
+        android:includeFontPadding="false"
+        android:gravity="center_vertical|start"
+        android:maxLines="1"
+        android:text="7" />
+
+    <TextView
+        android:id="@+id/widget_countdown_unit"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textColor="@color/widget_label"
+        android:textSize="12sp"
+        android:maxLines="1"
+        android:text="days left" />
+
+    <TextView
+        android:id="@+id/widget_countdown_date"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="2dp"
+        android:textColor="@color/widget_label"
+        android:textSize="11sp"
+        android:maxLines="1"
+        android:text="" />
 </LinearLayout>

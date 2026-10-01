@@ -2,11 +2,11 @@
     <string name="app_name">UNTIL</string>
     <string name="widget_day_description">See your day progress.</string>
     <string name="widget_month_description">See your month progress.</string>
-    <string name="widget_year_description">See your year and day progress.</string>
-    <string name="widget_counter_description">Tap to add +1. Create counters in Until.</string>
-    <string name="widget_countdown_description">Days left until a deadline. Add in Until → Countdowns.</string>
-    <string name="widget_daily_tasks_description">Tasks and day in one. Tap to switch views. Add tasks in Until.</string>
-    <string name="widget_hour_calculation_description">Tap to start/stop. One timer per widget. Set title in Until.</string>
+    <string name="widget_year_description">See your year progress.</string>
+    <string name="widget_counter_description">Tap to add +1. Create counters in UNTIL.</string>
+    <string name="widget_countdown_description">Days left until a deadline. Add one in UNTIL.</string>
+    <string name="widget_daily_tasks_description">Today\'s tasks. Tap to switch to the day. Add tasks in UNTIL.</string>
+    <string name="widget_hour_calculation_description">Tap to start or stop one timer. Set its title in UNTIL.</string>
     <!-- Widget content format strings (single source for labels; supports future i18n) -->
     <string name="widget_day_done_format">%1$d%% Done</string>
     <string name="widget_day_left_format">%1$d%% Left</string>
@@ -29,6 +29,11 @@
     <string name="widget_life_passed_years_compact_format">%1$sy lived</string>
     <string name="widget_life_left_years_compact_format">%1$sy left</string>
     <string name="widget_life_percent_format">%d%%</string>
+    <string name="widget_unit_days_left">days left</string>
+    <string name="widget_unit_day_left">day left</string>
+    <string name="widget_unit_years_left">years left</string>
+    <string name="widget_life_plan_format">of %1$d years</string>
+    <string name="widget_premium_title">Premium</string>
     <string name="widget_life_locked">Premium required</string>
     <string name="widget_month_locked">Month · Premium</string>
     <string name="widget_premium_unlock_line">Open Until to upgrade</string>

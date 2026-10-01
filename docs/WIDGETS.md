@@ -15,11 +15,33 @@ How to add or modify widgets for iOS and Android. Use this doc when creating a n
 |-------|-------|-----|
 | Passed / ring | `#BB86FC` | Progress arcs, passed dots |
 | Current / accent | `#E87C20` | Current hour knob, leftover % |
-| Done label | `#FF3B30` | “Done” copy (Android Day) |
-| Left label | `#34C759` | “Left” copy |
+| Hero number | `#F2F2F2` (Android `widget_hero`) | The one big number on a widget |
+| Label | `#8A8A8E` (Android `widget_label`) | Overline, unit and footnote text |
 | Ember moods | dawn/open/mid/late/dusk palettes | Match `src/ui/Ember.tsx` — Day ring center + Tasks corner |
 
 Glass: dark fill + light stroke + ~16dp corners (`widget_background` / `WidgetGlassBackground`). No live blur.
+
+### Content rule: every fact once
+
+Each widget has **one visual, one hero number and at most one line of new context**. A fact is shown once, in the form that suits the widget, and never again as a percent, a "passed" count, a "left" count or a bar.
+
+| Widget | Visual | Hero | Context line |
+|--------|--------|------|--------------|
+| Day | Ring | Time left (`20h 57m left`) | Medium and large: date overline. Large adds month, year, life and streak rows. |
+| Month | Weekday-aligned calendar dots | Days left | `OCTOBER 2026` overline |
+| Year | Dot per day | Days left | Year overline |
+| Life | Dot per year | Years left | `of 80 years` |
+| Tasks | Donut (share done) | `3/5 done` | Category rows (medium/large), time left today (large only) |
+| Counter | none | Count | Title |
+| Deadline | none | Days left | Target date |
+| Hour timer | none | Timer | Start / Stop |
+
+Rules that keep the platforms matching:
+- **Today** is the accent dot. `yearDaysPassed` and `monthDaysPassed` already count today, so the dots before it are "passed" and the gray dots equal the days-left number.
+- **Year and Life grids**: Android picks the column count from the widget's current size (`gridAspectFor` + `bestGridCols`, re-rendered in `onAppWidgetOptionsChanged`) so the dots fill a 3x5 tile at any size. iOS widget sizes are fixed, so `YearDotsView` takes a `cols` value per family (Year large uses 20).
+- **Live numbers tick on their own**: iOS uses `Text(timerInterval:)` / `.timer`; Android uses `Chronometer` via `RemoteViews.setChronometer`. Never rebuild every widget on a one-second timer.
+- **Picker previews**: every bitmap-backed `ImageView` has an `android:src` placeholder (`widget_preview_*.xml`) so the picker does not show an empty tile. Live widgets replace it with `setImageViewBitmap`.
+- **Empty states** hide controls that do nothing (the Counter "+" is hidden until a counter exists).
 
 **Ember placement:** Day = center of ring; Daily Tasks = corner mark; empty/sync = Ember + soft line. Not on Year/Life/Counter/Hour in Phase 1.
 

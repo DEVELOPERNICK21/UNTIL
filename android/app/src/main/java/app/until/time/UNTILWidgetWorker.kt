@@ -203,12 +203,13 @@ class UNTILWidgetWorker(
             ).forEach { (ids, layoutId, cacheForLayout) ->
                 if (ids.isEmpty()) return@forEach
                 for (id in ids) {
+                    val aspect = gridAspectFor(appWidgetManager, id, layoutId)
                     try {
-                        val views = buildRemoteViews(context, layoutId, cacheForLayout)
+                        val views = buildRemoteViews(context, layoutId, cacheForLayout, aspect)
                         appWidgetManager.updateAppWidget(id, views)
                     } catch (e: Exception) {
                         val fallbackCache = cacheFreshForDisplay(defaultCache)
-                        val views = buildRemoteViews(context, layoutId, fallbackCache)
+                        val views = buildRemoteViews(context, layoutId, fallbackCache, aspect)
                         appWidgetManager.updateAppWidget(id, views)
                     }
                 }
@@ -270,9 +271,6 @@ class UNTILWidgetWorker(
                         val views = buildHourCalculationRemoteViews(context, null, id)
                         appWidgetManager.updateAppWidget(id, views)
                     }
-                }
-                if (hourState?.isRunning == true) {
-                    scheduleStopwatchTick(context)
                 }
             }
 
@@ -372,8 +370,10 @@ class UNTILWidgetWorker(
                 views.setTextViewText(R.id.widget_counter_count, counter.count.toString())
                 views.setOnClickPendingIntent(R.id.widget_root, incrementCounterPendingIntent(context, counter.id, appWidgetId))
             } else {
-                views.setTextViewText(R.id.widget_counter_title, "Add a counter in Until")
-                views.setTextViewText(R.id.widget_counter_count, "0")
+                // Nothing to count yet: the prompt is the whole widget, and tapping opens the app.
+                views.setTextViewText(R.id.widget_counter_title, "Add a counter in UNTIL")
+                views.setTextViewText(R.id.widget_counter_count, "")
+                views.setViewVisibility(R.id.widget_counter_plus, android.view.View.GONE)
                 val openApp = PendingIntent.getActivity(
                     context,
                     PENDING_INTENT_COUNTER_BASE + (appWidgetId and 0x7FFF),
@@ -497,33 +497,31 @@ class UNTILWidgetWorker(
                 val canvas = Canvas(bitmap)
                 val center = sizePx / 2f
                 val rOuter = center - 4f
-                val rInner = rOuter * 0.58f
+                val rInner = rOuter * 0.62f
                 val progress = if (total > 0) (completed.toFloat() / total).coerceIn(0f, 1f) else 0f
-                val green = Color.parseColor("#34C759")
-                val orange = Color.parseColor("#E87C20")
-                val gray = Color.parseColor("#444444")
+                val done = Color.parseColor(DEFAULT_ACCENT_HEX)
+                val pending = Color.parseColor("#3A342F")
                 val oval = android.graphics.RectF(center - rOuter, center - rOuter, center + rOuter, center + rOuter)
-                val innerOval = android.graphics.RectF(center - rInner, center - rInner, center + rInner, center + rInner)
                 val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.FILL }
                 if (total > 0) {
+                    paint.color = pending
+                    canvas.drawCircle(center, center, rOuter, paint)
                     if (progress >= 1f) {
-                        paint.color = green
+                        paint.color = done
                         canvas.drawCircle(center, center, rOuter, paint)
-                        paint.color = Color.BLACK
-                        canvas.drawCircle(center, center, rInner, paint)
-                    } else {
-                        paint.color = green
+                    } else if (progress > 0f) {
+                        paint.color = done
                         canvas.drawArc(oval, -90f, progress * 360f, true, paint)
-                        paint.color = orange
-                        canvas.drawArc(oval, -90f + progress * 360f, (1f - progress) * 360f, true, paint)
-                        paint.color = Color.BLACK
-                        canvas.drawCircle(center, center, rInner, paint)
                     }
+                    // Punch a real hole so the widget background shows through.
+                    paint.xfermode = android.graphics.PorterDuffXfermode(android.graphics.PorterDuff.Mode.CLEAR)
+                    canvas.drawCircle(center, center, rInner, paint)
+                    paint.xfermode = null
                 } else {
-                    paint.color = gray
+                    paint.color = pending
                     paint.style = Paint.Style.STROKE
-                    paint.strokeWidth = 4f
-                    canvas.drawCircle(center, center, rOuter - 2f, paint)
+                    paint.strokeWidth = (rOuter - rInner)
+                    canvas.drawCircle(center, center, (rOuter + rInner) / 2f, paint)
                 }
                 bitmap
             } catch (e: Exception) {
@@ -546,14 +544,9 @@ class UNTILWidgetWorker(
 
         private fun buildDailyTasksRemoteViews(context: Context, payload: DailyTasksPayload?, cache: WidgetCache): RemoteViews {
             val views = RemoteViews(context.packageName, R.layout.widget_daily_tasks_flipper)
-            // Page 0: Daily tasks
+            // Page 0: Daily tasks. The donut shows the share done, the number is the count.
             if (payload != null && payload.total > 0) {
                 views.setTextViewText(R.id.widget_daily_tasks_value, "${payload.completed}/${payload.total}")
-                val progress = (payload.completed * 100 / payload.total).coerceIn(0, 100)
-                views.setProgressBar(R.id.widget_daily_tasks_progress, 100, progress, false)
-                val pct = (payload.completed * 100 / payload.total).coerceIn(0, 100)
-                views.setTextViewText(R.id.widget_daily_tasks_sub, "$pct% · ${payload.pending} pending")
-                views.setViewVisibility(R.id.widget_daily_tasks_sub, android.view.View.VISIBLE)
                 views.setTextViewText(R.id.widget_daily_tasks_label, "done")
                 val pieBitmap = createDailyTasksPieBitmap(payload.completed, payload.total)
                 if (pieBitmap != null && !pieBitmap.isRecycled) {
@@ -573,14 +566,8 @@ class UNTILWidgetWorker(
                     }
                 }
             } else {
-                views.setTextViewText(R.id.widget_daily_tasks_value, "—")
-                views.setTextViewText(R.id.widget_daily_tasks_label, "quiet day")
-                views.setProgressBar(R.id.widget_daily_tasks_progress, 100, 0, false)
-                views.setTextViewText(
-                    R.id.widget_daily_tasks_sub,
-                    "Nothing listed yet — a quiet day is still a day.",
-                )
-                views.setViewVisibility(R.id.widget_daily_tasks_sub, android.view.View.VISIBLE)
+                views.setTextViewText(R.id.widget_daily_tasks_value, "0/0")
+                views.setTextViewText(R.id.widget_daily_tasks_label, "add one in UNTIL")
                 val pieBitmap = createDailyTasksPieBitmap(0, 0)
                 if (pieBitmap != null && !pieBitmap.isRecycled) {
                     views.setImageViewBitmap(R.id.widget_daily_tasks_pie, pieBitmap)
@@ -593,15 +580,9 @@ class UNTILWidgetWorker(
                     views.setImageViewBitmap(R.id.widget_daily_tasks_ember, ember)
                 }
             } catch (_: Exception) { }
-            // Page 1: Day progress
-            val dDone = cache.dayPercentDone.coerceIn(0, 100)
-            val dLeft = cache.dayPercentLeft.coerceIn(0, 100)
+            // Page 1: the day, same as the Day widget (ring + one line).
             val dProgress = cache.dayProgress.coerceIn(0.0, 1.0)
-            views.setTextViewText(R.id.widget_day_done, context.getString(R.string.widget_day_done_format, dDone))
-            views.setTextViewText(R.id.widget_day_left, context.getString(R.string.widget_day_left_format, dLeft))
-            val (passedText, leftText) = dayTimeTexts(context, cache, dProgress)
-            views.setTextViewText(R.id.widget_day_hours_passed, passedText)
-            views.setTextViewText(R.id.widget_day_hours_left, leftText)
+            views.setTextViewText(R.id.widget_day_left, dayTimeTexts(context, cache, dProgress).second)
             try {
                 val dotsBitmap = createDayDotsBitmap(context, dProgress)
                 if (dotsBitmap != null && !dotsBitmap.isRecycled) {
@@ -629,26 +610,42 @@ class UNTILWidgetWorker(
             if (countdown != null) {
                 val days = daysLeft(countdown.date)
                 views.setTextViewText(R.id.widget_countdown_title, countdown.title)
-                views.setTextViewText(R.id.widget_countdown_days, countdownDaysText(days))
-                val openApp = PendingIntent.getActivity(
-                    context,
-                    appWidgetId,
-                    context.packageManager.getLaunchIntentForPackage(context.packageName)!!.apply { addFlags(Intent.FLAG_ACTIVITY_NEW_TASK) },
-                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-                )
-                views.setOnClickPendingIntent(R.id.widget_root, openApp)
+                if (days == 0) {
+                    views.setTextViewTextSize(R.id.widget_countdown_days, android.util.TypedValue.COMPLEX_UNIT_SP, 34f)
+                    views.setTextViewText(R.id.widget_countdown_days, "Today")
+                    views.setTextViewText(R.id.widget_countdown_unit, "")
+                } else {
+                    views.setTextViewText(R.id.widget_countdown_days, days.toString())
+                    views.setTextViewText(
+                        R.id.widget_countdown_unit,
+                        context.getString(if (days == 1) R.string.widget_unit_day_left else R.string.widget_unit_days_left),
+                    )
+                }
+                views.setTextViewText(R.id.widget_countdown_date, countdownDateText(countdown.date))
             } else {
-                views.setTextViewText(R.id.widget_countdown_title, "Add a countdown in Until")
-                views.setTextViewText(R.id.widget_countdown_days, "0 days left")
-                val openApp = PendingIntent.getActivity(
-                    context,
-                    appWidgetId,
-                    context.packageManager.getLaunchIntentForPackage(context.packageName)!!.apply { addFlags(Intent.FLAG_ACTIVITY_NEW_TASK) },
-                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-                )
-                views.setOnClickPendingIntent(R.id.widget_root, openApp)
+                views.setTextViewText(R.id.widget_countdown_title, "Add a deadline in UNTIL")
+                views.setTextViewText(R.id.widget_countdown_days, "")
+                views.setTextViewText(R.id.widget_countdown_unit, "")
+                views.setTextViewText(R.id.widget_countdown_date, "")
             }
+            val openApp = PendingIntent.getActivity(
+                context,
+                appWidgetId,
+                context.packageManager.getLaunchIntentForPackage(context.packageName)!!.apply { addFlags(Intent.FLAG_ACTIVITY_NEW_TASK) },
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+            views.setOnClickPendingIntent(R.id.widget_root, openApp)
             return views
+        }
+
+        /** "25 Oct 2026" from a YYYY-MM-DD string, or "" if it does not parse. */
+        private fun countdownDateText(dateStr: String): String {
+            return try {
+                val parsed = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.US).parse(dateStr.take(10)) ?: return ""
+                java.text.SimpleDateFormat("d MMM yyyy", java.util.Locale.getDefault()).format(parsed)
+            } catch (e: Exception) {
+                ""
+            }
         }
 
         internal data class HourCalculationState(
@@ -675,16 +672,6 @@ class UNTILWidgetWorker(
             }
         }
 
-        private fun formatElapsedMs(totalElapsedMs: Long, startTimeMs: Long, isRunning: Boolean): String {
-            val now = System.currentTimeMillis()
-            val totalMs = totalElapsedMs + if (isRunning && startTimeMs > 0) (now - startTimeMs) else 0L
-            val totalSec = (totalMs / 1000).coerceAtLeast(0L)
-            val h = totalSec / 3600
-            val m = (totalSec % 3600) / 60
-            val s = totalSec % 60
-            return "%d:%02d:%02d".format(h, m, s)
-        }
-
         private fun buildHourCalculationRemoteViews(context: Context, state: HourCalculationState?, appWidgetId: Int): RemoteViews {
             val views = RemoteViews(context.packageName, R.layout.widget_hour_calculation)
             val title = state?.title?.takeIf { it.isNotBlank() } ?: "Hour timer"
@@ -692,8 +679,16 @@ class UNTILWidgetWorker(
             val startTimeMs = state?.startTimeMs ?: 0L
             val totalElapsedMs = state?.totalElapsedMs ?: 0L
             views.setTextViewText(R.id.widget_hour_calc_title, title)
-            views.setTextViewText(R.id.widget_hour_calc_time, formatElapsedMs(totalElapsedMs, startTimeMs, isRunning))
-            views.setTextViewText(R.id.widget_hour_calc_hint, if (isRunning) "Tap to stop" else "Tap to start")
+            // A Chronometer counts up inside the launcher by itself. The old version rebuilt every
+            // widget once a second through WorkManager while the timer ran.
+            val elapsedNow = totalElapsedMs + if (isRunning && startTimeMs > 0) (System.currentTimeMillis() - startTimeMs) else 0L
+            views.setChronometer(
+                R.id.widget_hour_calc_time,
+                android.os.SystemClock.elapsedRealtime() - elapsedNow.coerceAtLeast(0L),
+                null,
+                isRunning,
+            )
+            views.setTextViewText(R.id.widget_hour_calc_hint, if (isRunning) "Stop" else "Start")
             val toggleIntent = Intent(context, HourCalculationTapReceiver::class.java).apply {
                 action = HourCalculationTapReceiver.ACTION_TOGGLE
             }
@@ -707,15 +702,12 @@ class UNTILWidgetWorker(
             return views
         }
 
+        /**
+         * The hour timer now counts with a native Chronometer, so nothing has to tick.
+         * Kept so older callers and any work queued by a previous version are harmless.
+         */
         fun scheduleStopwatchTick(context: Context) {
-            val request = OneTimeWorkRequestBuilder<StopwatchTickWorker>()
-                .setInitialDelay(1, TimeUnit.SECONDS)
-                .build()
-            WorkManager.getInstance(context).enqueueUniqueWork(
-                STOPWATCH_TICK_WORK_NAME,
-                ExistingWorkPolicy.REPLACE,
-                request
-            )
+            WorkManager.getInstance(context).cancelUniqueWork(STOPWATCH_TICK_WORK_NAME)
         }
 
         /** Used by StopwatchTickWorker to decide whether to reschedule. */
@@ -849,92 +841,115 @@ class UNTILWidgetWorker(
             }
         }
 
-        private fun buildRemoteViews(context: Context, layoutId: Int, cache: WidgetCache): RemoteViews {
+        /** Width / height of the area the dot grid gets when nothing is known about the widget size. */
+        private const val DEFAULT_GRID_ASPECT = 0.85f
+
+        /**
+         * Width / height of the space left for the Year and Life dot grids, from the widget's
+         * current (portrait) size. The grid picks its column count from this so the dots fill
+         * the tile instead of floating in the middle of it.
+         */
+        private fun gridAspectFor(manager: AppWidgetManager, id: Int, layoutId: Int): Float {
+            if (layoutId != R.layout.widget_year && layoutId != R.layout.widget_life) return DEFAULT_GRID_ASPECT
+            val options = manager.getAppWidgetOptions(id) ?: return DEFAULT_GRID_ASPECT
+            val w = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH, 0)
+            val h = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MAX_HEIGHT, 0)
+            if (w <= 0 || h <= 0) return DEFAULT_GRID_ASPECT
+            // 18dp padding on each side, plus the caption and hero above (and the footnote on Life).
+            val availW = w - 36f
+            val availH = h - 36f - 100f - if (layoutId == R.layout.widget_life) 28f else 0f
+            if (availW <= 0f || availH <= 0f) return DEFAULT_GRID_ASPECT
+            return (availW / availH).coerceIn(0.4f, 3f)
+        }
+
+        /** Column count that gives the biggest dots for [count] dots in a box of [aspect] (w / h). */
+        private fun bestGridCols(count: Int, aspect: Float, minCols: Int, maxCols: Int): Int {
+            var best = minCols
+            var bestCell = 0f
+            for (cols in minCols..maxCols) {
+                val rows = Math.ceil(count / cols.toDouble()).toInt()
+                val cell = minOf(aspect / cols, 1f / rows)
+                if (cell > bestCell + 1e-6f) {
+                    best = cols
+                    bestCell = cell
+                }
+            }
+            return best
+        }
+
+        private fun buildRemoteViews(
+            context: Context,
+            layoutId: Int,
+            cache: WidgetCache,
+            gridAspect: Float = DEFAULT_GRID_ASPECT,
+        ): RemoteViews {
             val views = RemoteViews(context.packageName, layoutId)
             val hasPremium = loadEffectivePremium(context)
             val accent = resolveAccentColor(cache)
             try {
                 when (layoutId) {
                     R.layout.widget_day -> {
-                        val dDone = cache.dayPercentDone.coerceIn(0, 100)
-                        val dLeft = cache.dayPercentLeft.coerceIn(0, 100)
+                        // The ring is the progress. One line says how long is left.
                         val dProgress = cache.dayProgress.coerceIn(0.0, 1.0)
-                        views.setTextViewText(R.id.widget_day_done, context.getString(R.string.widget_day_done_format, dDone))
-                        views.setTextViewText(R.id.widget_day_left, context.getString(R.string.widget_day_left_format, dLeft))
-                        views.setTextColor(R.id.widget_day_done, Color.parseColor("#8E8E93"))
-                        views.setTextColor(R.id.widget_day_left, accent)
-                        // Time passed/left: use SSOT from cache (minutes) when present, else compute from progress
-                        val (passedText, leftText) = dayTimeTexts(context, cache, dProgress)
-                        views.setTextViewText(R.id.widget_day_hours_passed, passedText)
-                        views.setTextViewText(R.id.widget_day_hours_left, leftText)
+                        views.setTextViewText(R.id.widget_day_left, dayTimeTexts(context, cache, dProgress).second)
                         try {
                             val dotsBitmap = createDayDotsBitmap(context, dProgress, accent)
                             if (dotsBitmap != null && !dotsBitmap.isRecycled) {
                                 views.setImageViewBitmap(R.id.widget_day_dots, dotsBitmap)
                             }
                         } catch (e: Exception) {
-                            // Dots optional; text already set so widget still shows data
+                            // Dots optional; the text is already set
                         }
                     }
                     R.layout.widget_month -> {
+                        views.setTextViewText(R.id.widget_month_caption, monthCaption())
                         if (!hasPremium) {
-                            views.setTextViewText(R.id.widget_month_passed, "")
-                            views.setTextViewText(R.id.widget_month_left, "")
-                            views.setTextViewText(
-                                R.id.widget_month_percent,
-                                context.getString(R.string.widget_month_locked),
-                            )
-                            views.setProgressBar(R.id.widget_month_progress, 100, 0, false)
+                            views.setTextViewTextSize(R.id.widget_month_days, android.util.TypedValue.COMPLEX_UNIT_SP, 24f)
+                            views.setTextViewText(R.id.widget_month_days, context.getString(R.string.widget_premium_title))
+                            views.setTextViewText(R.id.widget_month_label, context.getString(R.string.widget_premium_unlock_line))
+                            views.setViewVisibility(R.id.widget_month_grid, android.view.View.GONE)
                         } else {
-                        val mPassed = cache.monthDaysPassed.coerceIn(0, 31)
-                        val mLeft = cache.monthDaysLeft.coerceIn(0, 31)
-                        val mPct = cache.monthPercent.coerceIn(0, 100)
-                        val mProgress = cache.monthProgress.coerceIn(0.0, 1.0)
-                        views.setTextViewText(R.id.widget_month_passed, context.getString(R.string.widget_month_passed_format, mPassed))
-                        views.setTextViewText(R.id.widget_month_left, context.getString(R.string.widget_month_left_format, mLeft))
-                        views.setTextViewText(R.id.widget_month_percent, context.getString(R.string.widget_month_percent_format, mPct))
-                        views.setTextColor(R.id.widget_month_passed, Color.parseColor("#8E8E93"))
-                        views.setTextColor(R.id.widget_month_left, Color.parseColor("#F2F2F2"))
-                        views.setTextColor(R.id.widget_month_percent, accent)
-                        // Month progress bar
-                        views.setProgressBar(R.id.widget_month_progress, 100, (mProgress * 100).toInt().coerceIn(0, 100), false)
-                        applyAccentProgressTint(views, R.id.widget_month_progress, accent)
-                        try {
-                            val dotsBitmap = createMonthDotsBitmap(context, cache.monthIndex, accent)
-                            if (dotsBitmap != null && !dotsBitmap.isRecycled) {
-                                views.setImageViewBitmap(R.id.widget_month_dots, dotsBitmap)
+                            // Days left is the number; the calendar shows where you are in the month.
+                            val mPassed = cache.monthDaysPassed.coerceIn(0, 31)
+                            val mLeft = cache.monthDaysLeft.coerceIn(0, 31)
+                            views.setTextViewText(R.id.widget_month_days, mLeft.toString())
+                            views.setTextViewText(
+                                R.id.widget_month_label,
+                                context.getString(if (mLeft == 1) R.string.widget_unit_day_left else R.string.widget_unit_days_left),
+                            )
+                            try {
+                                val grid = createMonthGridBitmap(
+                                    daysInMonth = (mPassed + mLeft).coerceAtLeast(1),
+                                    today = mPassed.coerceAtLeast(1),
+                                    leadingBlanks = monthLeadingBlanks(),
+                                    accentColor = accent,
+                                )
+                                if (grid != null && !grid.isRecycled) {
+                                    views.setImageViewBitmap(R.id.widget_month_grid, grid)
+                                }
+                            } catch (e: Exception) {
+                                // Calendar optional; the number is already set
                             }
-                        } catch (e: Exception) {
-                            // Dots optional; text already set so widget still shows data
-                        }
                         }
                     }
                     R.layout.widget_year -> {
-                        val yearPassed = cache.yearDaysPassed.coerceIn(0, 365)
-                        val yearLeft = cache.yearDaysLeft.coerceIn(0, 365)
+                        // 365 dots are the progress; the header says how many days are left.
+                        val yearPassed = cache.yearDaysPassed.coerceIn(0, 366)
+                        val yearLeft = cache.yearDaysLeft.coerceIn(0, 366)
                         val yearProgressClamped = cache.yearProgress.coerceIn(0.0, 1.0)
-                        val yearConsumedPct = (yearProgressClamped * 100.0).toInt().coerceIn(0, 100)
+                        views.setTextViewText(R.id.widget_year_caption, Calendar.getInstance().get(Calendar.YEAR).toString())
+                        views.setTextViewText(R.id.widget_year_days, yearLeft.toString())
                         views.setTextViewText(
-                            R.id.widget_year_passed,
-                            context.getString(R.string.widget_year_passed_format, yearPassed)
+                            R.id.widget_year_unit,
+                            context.getString(if (yearLeft == 1) R.string.widget_unit_day_left else R.string.widget_unit_days_left),
                         )
-                        views.setTextViewText(
-                            R.id.widget_year_left,
-                            context.getString(R.string.widget_year_left_format, yearLeft)
-                        )
-                        views.setTextViewText(R.id.widget_year_percent, context.getString(R.string.widget_year_percent_format, yearConsumedPct))
-                        views.setTextColor(R.id.widget_year_passed, Color.parseColor("#8E8E93"))
-                        views.setTextColor(R.id.widget_year_left, Color.parseColor("#F2F2F2"))
-                        views.setTextColor(R.id.widget_year_percent, accent)
-                        views.setProgressBar(R.id.widget_year_progress, 100, yearConsumedPct, false)
-                        applyAccentProgressTint(views, R.id.widget_year_progress, accent)
                         try {
-                            val dotsBitmap = createYearDotsBitmap(context, yearProgressClamped, yearPassed, accent)
+                            val dotsBitmap = createYearDotsBitmap(context, yearProgressClamped, yearPassed, accent, gridAspect)
                             if (dotsBitmap != null && !dotsBitmap.isRecycled) {
                                 views.setImageViewBitmap(R.id.widget_year_dots, dotsBitmap)
                             }
                         } catch (e: Exception) {
-                            // Dots optional; text/progress already set so widget still shows data
+                            // Dots optional; the number is already set
                         }
                     }
                     R.layout.widget_life -> {
@@ -942,30 +957,19 @@ class UNTILWidgetWorker(
                         val lifeProgress = cache.lifeProgress
                         val remainingDaysLife = cache.remainingDaysLife
                         val lifePercent = cache.lifePercent
-                        if (
-                            !hasPremium &&
-                            lifeProgress != null &&
-                            remainingDaysLife != null &&
-                            lifePercent != null
-                        ) {
+                        val hasLife = lifeProgress != null && remainingDaysLife != null && lifePercent != null
+                        if (hasLife && !hasPremium) {
+                            views.setTextViewTextSize(R.id.widget_life_years, android.util.TypedValue.COMPLEX_UNIT_SP, 24f)
+                            views.setTextViewText(R.id.widget_life_years, context.getString(R.string.widget_premium_title))
+                            views.setTextViewText(R.id.widget_life_unit, "")
+                            views.setTextViewText(R.id.widget_life_label, context.getString(R.string.widget_premium_unlock_line))
+                        } else if (!hasLife) {
+                            views.setTextViewText(R.id.widget_life_years, "")
+                            views.setTextViewText(R.id.widget_life_unit, "")
                             views.setTextViewText(
                                 R.id.widget_life_label,
-                                context.getString(R.string.widget_life_locked),
+                                "${context.getString(R.string.widget_life_empty_line1)} ${context.getString(R.string.widget_life_empty_line2)}",
                             )
-                            views.setTextViewText(
-                                R.id.widget_life_passed,
-                                context.getString(R.string.widget_premium_unlock_line),
-                            )
-                            views.setTextViewText(R.id.widget_life_left, "")
-                            views.setTextViewText(R.id.widget_life_percent, "")
-                        } else if (lifeProgress == null || remainingDaysLife == null || lifePercent == null) {
-                            views.setTextViewText(
-                                R.id.widget_life_label,
-                                "${context.getString(R.string.widget_life_empty_line1)}\n${context.getString(R.string.widget_life_empty_line2)}",
-                            )
-                            views.setTextViewText(R.id.widget_life_passed, "")
-                            views.setTextViewText(R.id.widget_life_left, "")
-                            views.setTextViewText(R.id.widget_life_percent, "")
                             try {
                                 val ember = createEmberBitmap(cache.dayProgress.coerceIn(0.0, 1.0), sizePx = 160)
                                 if (ember != null && !ember.isRecycled) {
@@ -973,39 +977,21 @@ class UNTILWidgetWorker(
                                 }
                             } catch (_: Exception) { }
                         } else {
-                            val clamped = lifeProgress.coerceIn(0.0, 1.0)
-                            val consumedPct = lifePercent.coerceIn(0, 100)
-                            val leftYearsRaw = (remainingDaysLife.toDouble() / 365.25).coerceAtLeast(0.0)
-                            val totalYearsRaw = if (clamped >= 0.999999) {
-                                leftYearsRaw
-                            } else {
-                                (leftYearsRaw / (1.0 - clamped)).coerceAtLeast(leftYearsRaw)
-                            }
+                            // Years left is the number; one dot per year is the progress.
+                            val clamped = lifeProgress!!.coerceIn(0.0, 1.0)
+                            val leftYearsRaw = (remainingDaysLife!!.toDouble() / 365.25).coerceAtLeast(0.0)
+                            val totalYearsRaw = if (clamped >= 0.999999) leftYearsRaw else (leftYearsRaw / (1.0 - clamped)).coerceAtLeast(leftYearsRaw)
                             val totalYears = totalYearsRaw.roundToInt().coerceIn(1, 120)
-                            val livedYears = (totalYears * clamped).coerceIn(0.0, totalYears.toDouble())
-                            val leftYears = (totalYears.toDouble() - livedYears).coerceAtLeast(0.0)
-                            val livedYearsText = livedYears.roundToInt().toString()
-                            val leftYearsText = leftYears.roundToInt().toString()
-
-                            views.setTextViewText(
-                                R.id.widget_life_passed,
-                                context.getString(R.string.widget_life_passed_years_compact_format, livedYearsText),
-                            )
-                            views.setTextViewText(
-                                R.id.widget_life_left,
-                                context.getString(R.string.widget_life_left_years_compact_format, leftYearsText),
-                            )
-                            views.setTextViewText(
-                                R.id.widget_life_percent,
-                                context.getString(R.string.widget_life_percent_format, consumedPct),
-                            )
-                            views.setTextColor(R.id.widget_life_percent, accent)
-
+                            val plan = loadUserProfile(context).second
+                            views.setTextViewText(R.id.widget_life_years, String.format(java.util.Locale.US, "%.1f", leftYearsRaw))
+                            views.setTextViewText(R.id.widget_life_unit, context.getString(R.string.widget_unit_years_left))
+                            views.setTextViewText(R.id.widget_life_label, context.getString(R.string.widget_life_plan_format, plan))
                             try {
                                 val dotsBitmap = createLifeYearsDotsBitmap(
                                     progress = clamped,
                                     totalYears = totalYears,
                                     accentColor = accent,
+                                    aspect = gridAspect,
                                 )
                                 if (dotsBitmap != null && !dotsBitmap.isRecycled) {
                                     views.setImageViewBitmap(R.id.widget_life_dots, dotsBitmap)
@@ -1028,6 +1014,54 @@ class UNTILWidgetWorker(
             return views
         }
 
+
+
+        /** "October 2026" */
+        private fun monthCaption(): String =
+            java.text.SimpleDateFormat("LLLL yyyy", java.util.Locale.getDefault()).format(java.util.Date())
+
+        /** Empty cells before the 1st so weekdays line up with the locale's first day of week. */
+        private fun monthLeadingBlanks(): Int {
+            val cal = Calendar.getInstance()
+            cal.set(Calendar.DAY_OF_MONTH, 1)
+            return (cal.get(Calendar.DAY_OF_WEEK) - cal.firstDayOfWeek + 7) % 7
+        }
+
+        /**
+         * The month as a calendar of dots: past days muted purple, today in the accent,
+         * days ahead faint. The number beside it says how many are left; nothing repeats it.
+         */
+        private fun createMonthGridBitmap(
+            daysInMonth: Int,
+            today: Int,
+            leadingBlanks: Int,
+            accentColor: Int = Color.parseColor(DEFAULT_ACCENT_HEX),
+        ): Bitmap? {
+            return try {
+                val cols = 7
+                val rows = Math.ceil((leadingBlanks + daysInMonth) / cols.toDouble()).toInt().coerceAtLeast(1)
+                val dot = 44f
+                val gap = 12f
+                val step = dot + gap
+                val width = (cols * step - gap).toInt().coerceAtLeast(1)
+                val height = (rows * step - gap).toInt().coerceAtLeast(1)
+                val radius = dot / 2f
+                val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+                val canvas = Canvas(bitmap)
+                val past = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.parseColor("#99BB86FC") }
+                val now = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = accentColor }
+                val ahead = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.parseColor("#4A4A4E") }
+                for (day in 1..daysInMonth) {
+                    val index = leadingBlanks + day - 1
+                    val cx = (index % cols) * step + radius
+                    val cy = (index / cols) * step + radius
+                    canvas.drawCircle(cx, cy, radius, if (day < today) past else if (day == today) now else ahead)
+                }
+                bitmap
+            } catch (e: Exception) {
+                null
+            }
+        }
 
         /** Day dots: 24 dots (one per hour). Purple = passed, Accent = current, Gray = remaining */
         private fun createDayDotsBitmap(
@@ -1235,82 +1269,27 @@ class UNTILWidgetWorker(
         }
 
         /** Month dots: 12 dots = Jan..Dec. Accent = current month (monthIndex 1–12). */
-        private fun createMonthDotsBitmap(
-            context: Context,
-            monthIndex: Int,
-            accentColor: Int = Color.parseColor(DEFAULT_ACCENT_HEX),
-        ): Bitmap? {
-            return try {
-                val totalDots = 12
-                val cols = 6
-                val rows = 2
-                val bitmapWidth = 480
-                val bitmapHeight = 160
-                val bitmap = Bitmap.createBitmap(bitmapWidth, bitmapHeight, Bitmap.Config.ARGB_8888)
-                val canvas = Canvas(bitmap)
-
-                val passedPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-                    color = Color.parseColor("#BB86FC")
-                }
-                val currentPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-                    color = accentColor
-                }
-                val remainingPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-                    color = Color.parseColor("#4A4A4E")
-                }
-
-                val idx = monthIndex.coerceIn(1, 12)
-                val currentMonth = idx - 1
-                val passedMonths = currentMonth
-
-                val cellW = bitmapWidth / cols.toFloat()
-                val cellH = bitmapHeight / rows.toFloat()
-                val radius = 13f
-                val currentRadius = radius * 1.4f
-
-                for (i in 0 until totalDots) {
-                    val col = i % cols
-                    val row = i / cols
-                    val cx = col * cellW + cellW / 2f
-                    val cy = row * cellH + cellH / 2f
-                    
-                    when {
-                        i < passedMonths -> {
-                            canvas.drawCircle(cx, cy, radius, passedPaint)
-                        }
-                        i == currentMonth && currentMonth >= 0 -> {
-                            // Draw current dot slightly larger for interactivity
-                            canvas.drawCircle(cx, cy, currentRadius, currentPaint)
-                        }
-                        else -> {
-                            canvas.drawCircle(cx, cy, radius, remainingPaint)
-                        }
-                    }
-                }
-                bitmap
-            } catch (e: Exception) {
-                null
-            }
-        }
-
         /** Year dots: 365 dots. Purple = passed, Accent = current day, Gray = remaining */
         private fun createYearDotsBitmap(
             context: Context,
             yearProgress: Double,
             yearDaysPassed: Int,
             accentColor: Int = Color.parseColor(DEFAULT_ACCENT_HEX),
+            aspect: Float = DEFAULT_GRID_ASPECT,
         ): Bitmap? {
             return try {
-                val cols = 25
                 val totalDots = 365
+                val cols = bestGridCols(totalDots, aspect, minCols = 12, maxCols = 30)
                 val rows = Math.ceil(totalDots / cols.toDouble()).toInt()
-                val dotSize = 11
-                val gap = 5
+                val dotSize = 24
+                val gap = 10
                 val step = (dotSize + gap).toFloat()
-                val width = (cols * step).toInt().coerceAtMost(900).coerceAtLeast(1)
-                val height = (rows * step).toInt().coerceAtMost(900).coerceAtLeast(1)
                 val radius = (dotSize / 2f).coerceAtLeast(1f)
-                val currentRadius = radius * 1.35f
+                val currentRadius = radius * 1.3f
+                // Room for today's larger dot at the edges.
+                val pad = Math.ceil((currentRadius - radius).toDouble()).toFloat()
+                val width = (cols * step - gap + 2 * pad).toInt().coerceAtMost(1200).coerceAtLeast(1)
+                val height = (rows * step - gap + 2 * pad).toInt().coerceAtMost(1400).coerceAtLeast(1)
 
                 val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
                 val canvas = Canvas(bitmap)
@@ -1325,17 +1304,18 @@ class UNTILWidgetWorker(
                     color = Color.parseColor("#4A4A4E")
                 }
 
-                val passedDots = yearDaysPassed.coerceIn(0, totalDots)
-                // Current day is the one we're currently in (only if not all days passed)
-                val hasCurrentDay = passedDots < totalDots && yearProgress < 1.0
-                val currentDay = if (hasCurrentDay) passedDots else -1
+                // yearDaysPassed counts today, so today is the last of those days: it gets the
+                // accent dot, the days before it are purple, and the gray dots match "days left".
+                val todayNumber = yearDaysPassed.coerceIn(0, totalDots)
+                val passedDots = (todayNumber - 1).coerceAtLeast(0)
+                val currentDay = if (todayNumber >= 1) todayNumber - 1 else -1
 
                 for (i in 0 until totalDots) {
                     val col = i % cols
                     val row = i / cols
-                    val cx = col * step + radius
-                    val cy = row * step + radius
-                    if (cy + radius > height) break
+                    val cx = pad + col * step + radius
+                    val cy = pad + row * step + radius
+                    if (cy + radius + pad > height) break
                     
                     when {
                         i < passedDots -> {
@@ -1361,36 +1341,38 @@ class UNTILWidgetWorker(
             progress: Double,
             totalYears: Int,
             accentColor: Int = Color.parseColor(DEFAULT_ACCENT_HEX),
+            aspect: Float = DEFAULT_GRID_ASPECT,
         ): Bitmap? {
             return try {
                 val dots = totalYears.coerceIn(1, 120)
-                val cols = 12
+                val cols = bestGridCols(dots, aspect, minCols = 6, maxCols = 16)
                 val rows = Math.ceil(dots / cols.toDouble()).toInt()
-                // Render life dots at higher pixel density to avoid soft upscaling in RemoteViews.
-                val dotSize = 18
-                val gap = 10
+                // Drawn near the on-screen size so the launcher never has to upscale it.
+                val dotSize = 40
+                val gap = 16
                 val step = (dotSize + gap).toFloat()
-                val width = (cols * step).toInt().coerceAtMost(900).coerceAtLeast(1)
-                val height = (rows * step).toInt().coerceAtMost(900).coerceAtLeast(1)
                 val radius = (dotSize / 2f).coerceAtLeast(1f)
                 val currentRadius = radius * 1.22f
+                val pad = Math.ceil((currentRadius - radius).toDouble()).toFloat()
+                val width = (cols * step - gap + 2 * pad).toInt().coerceAtMost(1000).coerceAtLeast(1)
+                val height = (rows * step - gap + 2 * pad).toInt().coerceAtMost(1300).coerceAtLeast(1)
 
                 val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
                 val canvas = Canvas(bitmap)
 
                 val passedPaint = Paint().apply {
                     color = Color.parseColor("#BB86FC")
-                    isAntiAlias = false
+                    isAntiAlias = true
                     isDither = false
                 }
                 val currentPaint = Paint().apply {
                     color = accentColor
-                    isAntiAlias = false
+                    isAntiAlias = true
                     isDither = false
                 }
                 val remainingPaint = Paint().apply {
                     color = Color.parseColor("#666666")
-                    isAntiAlias = false
+                    isAntiAlias = true
                     isDither = false
                 }
 
@@ -1404,10 +1386,10 @@ class UNTILWidgetWorker(
                     val dotsInRow = (rowEndExclusive - rowStart).coerceAtLeast(0)
                     if (dotsInRow == 0) continue
 
-                    val rowWidth = dotsInRow * dotSize + (dotsInRow - 1) * gap
-                    val rowStartX = ((width - rowWidth) / 2f) + radius
-                    val cy = row * step + radius
-                    if (cy + radius > height) break
+                    // Rows read left to right like the year grid, so a short last row stays left.
+                    val rowStartX = pad + radius
+                    val cy = pad + row * step + radius
+                    if (cy + radius + pad > height) break
 
                     for (indexInRow in 0 until dotsInRow) {
                         val i = rowStart + indexInRow
@@ -1444,23 +1426,13 @@ class DayWidgetTickWorker(
     }
 }
 
+/** Legacy: the hour timer used to redraw every widget each second. It is a Chronometer now. */
 class StopwatchTickWorker(
     context: Context,
     params: WorkerParameters
 ) : CoroutineWorker(context, params) {
 
-    override suspend fun doWork(): Result {
-        UNTILWidgetWorker.updateWidgets(applicationContext)
-        val hourIds = AppWidgetManager.getInstance(applicationContext)
-            .getAppWidgetIds(ComponentName(applicationContext, UNTILHourCalculationWidgetProvider::class.java))
-        if (hourIds.isNotEmpty()) {
-            val state = UNTILWidgetWorker.loadHourCalculationStatePublic(applicationContext)
-            if (state?.isRunning == true) {
-                UNTILWidgetWorker.scheduleStopwatchTick(applicationContext)
-            }
-        }
-        return Result.success()
-    }
+    override suspend fun doWork(): Result = Result.success()
 }
 
 /** Runs at midnight to refresh month/year/countdown widgets (values change daily). Reschedules for next midnight. */
