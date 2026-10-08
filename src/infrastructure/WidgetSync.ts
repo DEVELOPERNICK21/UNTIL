@@ -16,6 +16,8 @@ import {
   setString,
   getBoolean,
   setBoolean,
+  getNumber,
+  setNumber,
 } from '../persistence/mmkv';
 import { hasPremiumBundle } from '../domain/accessControl';
 import { getWidgetAccentColor } from '../config/widgetAccents';
@@ -109,6 +111,38 @@ export function syncCustomCounters(): void {
   } else if (WidgetBridge?.updateWidgets) {
     WidgetBridge.updateWidgets();
   }
+}
+
+type NativeCounter = { id: string; title: string; count: number };
+
+/**
+ * The counter widget and the watch change the counter in the App Group while the app is
+ * closed. Take that value in first, and only then push the app's own. Pushing first (what the
+ * app used to do) overwrote their taps with an older count.
+ */
+export function syncCustomCountersAfterAdopting(
+  adopt: (counters: NativeCounter[]) => void,
+): Promise<void> {
+  const bridge = NativeModules.WidgetBridge;
+  if (Platform.OS !== 'ios' || !bridge?.getCustomCountersFromAppGroup) {
+    syncCustomCounters();
+    return Promise.resolve();
+  }
+  return bridge
+    .getCustomCountersFromAppGroup()
+    .then((json: unknown) => {
+      if (typeof json !== 'string' || !json) return;
+      try {
+        const parsed = JSON.parse(json);
+        if (Array.isArray(parsed)) adopt(parsed as NativeCounter[]);
+      } catch {
+        /* keep what the app has */
+      }
+    })
+    .catch(() => {
+      /* bridge unavailable */
+    })
+    .then(() => syncCustomCounters());
 }
 
 /** Push countdowns to native so countdown widgets can reload. */
@@ -249,15 +283,71 @@ export function buildLiveActivityState(
   };
 }
 
-/** Sync Live Activity (Dynamic Island / Lock Screen). Start or update. iOS only. */
-export function syncLiveActivity(activeWidget?: LiveActivityWidgetType): void {
-  if (Platform.OS !== 'ios') return;
-  const LiveActivityBridge = NativeModules.LiveActivityBridge;
-  if (!LiveActivityBridge?.startActivity) return;
+export type LiveActivityStartResult =
+  | { ok: true }
+  | { ok: false; reason: 'disabled' | 'unsupported' | 'failed' };
 
-  const state = buildLiveActivityState(activeWidget);
-  const json = JSON.stringify(state);
-  LiveActivityBridge.startActivity(json);
+export type LiveActivityStatus = {
+  /** iOS 16.2 or later. */
+  supported: boolean;
+  /** Live Activities are allowed for UNTIL in iOS Settings. */
+  enabled: boolean;
+  /** An activity is running and can still show. */
+  active: boolean;
+  /** `active`, `stale`, `ended`, `dismissed` or `none`. */
+  state: string;
+};
+
+const NO_STATUS: LiveActivityStatus = {
+  supported: false,
+  enabled: false,
+  active: false,
+  state: 'none',
+};
+
+/** iOS ends a Live Activity after about 8 hours. */
+const LIVE_ACTIVITY_MAX_AGE_MS = 7.5 * 60 * 60 * 1000;
+
+/**
+ * Start the Dynamic Island / Lock Screen activity. iOS only, and only works while the app is
+ * in the foreground. Says why it failed so the screen can tell the user.
+ */
+export async function startLiveActivity(
+  activeWidget?: LiveActivityWidgetType,
+): Promise<LiveActivityStartResult> {
+  if (Platform.OS !== 'ios') return { ok: false, reason: 'unsupported' };
+  const bridge = NativeModules.LiveActivityBridge;
+  if (!bridge?.startActivity) return { ok: false, reason: 'unsupported' };
+  try {
+    await bridge.startActivity(JSON.stringify(buildLiveActivityState(activeWidget)));
+    setBoolean(STORAGE_KEYS.LIVE_ACTIVITY_ENABLED, true);
+    setNumber(STORAGE_KEYS.LIVE_ACTIVITY_STARTED_AT, Date.now());
+    return { ok: true };
+  } catch (error) {
+    const code = (error as { code?: string } | null)?.code;
+    if (code === 'disabled' || code === 'unsupported') {
+      return { ok: false, reason: code };
+    }
+    return { ok: false, reason: 'failed' };
+  }
+}
+
+/** Whether Live Activities are allowed and whether one is really showing. iOS only. */
+export async function getLiveActivityStatus(): Promise<LiveActivityStatus> {
+  if (Platform.OS !== 'ios') return NO_STATUS;
+  const bridge = NativeModules.LiveActivityBridge;
+  if (!bridge?.getStatus) return NO_STATUS;
+  try {
+    const status = (await bridge.getStatus()) as Partial<LiveActivityStatus> | null;
+    return {
+      supported: status?.supported ?? false,
+      enabled: status?.enabled ?? false,
+      active: status?.active ?? false,
+      state: status?.state ?? 'none',
+    };
+  } catch {
+    return NO_STATUS;
+  }
 }
 
 /** Update existing Live Activity. Call when app foregrounds. */
@@ -325,14 +415,44 @@ export function adoptNativeHourTimer(): Promise<void> {
 
 /** App came to the foreground: pull in native changes, then refresh the island. */
 export function refreshLiveActivity(): void {
-  void Promise.all([adoptIslandSelection(), adoptNativeHourTimer()]).then(() =>
-    updateLiveActivity(),
-  );
+  void Promise.all([adoptIslandSelection(), adoptNativeHourTimer()])
+    .then(() => restartEndedLiveActivity())
+    .then(restarted => {
+      if (!restarted) updateLiveActivity();
+    })
+    .catch(() => {
+      /* island is optional; never block the app on it */
+    });
+}
+
+/**
+ * The user pressed Start and never Stop, but nothing is running. If iOS ended it after its
+ * time limit, start it again (the app is in the foreground, so iOS allows it). If the user
+ * swiped it away, leave it off.
+ */
+async function restartEndedLiveActivity(): Promise<boolean> {
+  if (Platform.OS !== 'ios') return false;
+  if (!(getBoolean(STORAGE_KEYS.LIVE_ACTIVITY_ENABLED) ?? false)) return false;
+
+  const status = await getLiveActivityStatus();
+  if (!status.supported || status.active) return false;
+  if (!status.enabled) return false;
+
+  const startedAt = getNumber(STORAGE_KEYS.LIVE_ACTIVITY_STARTED_AT) ?? 0;
+  const timedOut =
+    status.state === 'ended' || Date.now() - startedAt >= LIVE_ACTIVITY_MAX_AGE_MS;
+  if (!timedOut) {
+    // Gone well before the time limit: the user dismissed it. Respect that.
+    setBoolean(STORAGE_KEYS.LIVE_ACTIVITY_ENABLED, false);
+    return false;
+  }
+  return (await startLiveActivity()).ok;
 }
 
 /** End Live Activity. */
 export function endLiveActivity(): void {
   if (Platform.OS !== 'ios') return;
+  setBoolean(STORAGE_KEYS.LIVE_ACTIVITY_ENABLED, false);
   const LiveActivityBridge = NativeModules.LiveActivityBridge;
   if (LiveActivityBridge?.endActivity) {
     LiveActivityBridge.endActivity();

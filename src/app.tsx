@@ -8,7 +8,6 @@ import {
   StatusBar,
   AppState,
   Linking,
-  NativeModules,
   Platform,
   BackHandler,
 } from 'react-native';
@@ -45,6 +44,7 @@ import { ThemeProvider, useTheme } from './theme';
 import {
   syncWidgetCache,
   syncCustomCounters,
+  syncCustomCountersAfterAdopting,
   syncCountdowns,
   syncDailyTasksWidget,
   refreshLiveActivity,
@@ -169,7 +169,9 @@ function App() {
     logAppOpen().catch(() => {});
     scheduleRetentionNotifications().catch(() => {});
     syncWidgetCache();
-    syncCustomCounters();
+    void syncCustomCountersAfterAdopting(counters =>
+      replaceCustomCountersFromSyncUseCase.execute(counters),
+    );
     syncCountdowns();
     syncDailyTasksWidget();
     refreshLiveActivity();
@@ -205,32 +207,11 @@ function App() {
         scheduleRetentionNotifications().catch(() => {});
         verifySubscriptionUseCase.execute().then(() => syncPremiumStatus());
         refreshPurchasesCustomerInfo();
-        if (
-          Platform.OS === 'ios' &&
-          NativeModules.WidgetBridge?.getCustomCountersFromAppGroup
-        ) {
-          NativeModules.WidgetBridge.getCustomCountersFromAppGroup().then(
-            (json: string | null) => {
-              if (json && typeof json === 'string') {
-                try {
-                  const counters = JSON.parse(json) as Array<{
-                    id: string;
-                    title: string;
-                    count: number;
-                  }>;
-                  if (Array.isArray(counters)) {
-                    replaceCustomCountersFromSyncUseCase.execute(counters);
-                  }
-                } catch {
-                  /* ignore parse errors */
-                }
-              }
-            },
-          );
-        }
+        void syncCustomCountersAfterAdopting(counters =>
+          replaceCustomCountersFromSyncUseCase.execute(counters),
+        );
         syncPremiumStatus();
         syncWidgetCache();
-        syncCustomCounters();
         syncCountdowns();
         syncDailyTasksWidget();
         refreshLiveActivity();

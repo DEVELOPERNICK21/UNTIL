@@ -1,20 +1,23 @@
 import { useCallback, useMemo, useState } from 'react';
-import { NativeModules, Platform } from 'react-native';
+import { AppState, Linking, Platform } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import {
-  syncLiveActivity,
+  startLiveActivity,
+  updateLiveActivity,
   endLiveActivity,
+  getLiveActivityStatus,
   getLiveActivityWidgetType,
   setLiveActivityWidgetType,
 } from '../infrastructure/WidgetSync';
-import type { LiveActivityWidgetType } from '../infrastructure/WidgetSync';
+import type {
+  LiveActivityStatus,
+  LiveActivityWidgetType,
+} from '../infrastructure/WidgetSync';
 import { useAccessControl } from './useAccessControl';
 
 function isPremiumLiveActivityType(type: LiveActivityWidgetType): boolean {
   return type === 'month' || type === 'life';
 }
-
-const { LiveActivityBridge } = NativeModules;
 
 const WIDGET_OPTIONS: {
   type: LiveActivityWidgetType;
@@ -57,18 +60,41 @@ function isComingSoonType(_type: LiveActivityWidgetType): boolean {
   return false;
 }
 
+type StartFailure = 'disabled' | 'unsupported' | 'failed';
+
+/** What to tell the user when the island is not showing, or null when all is well. */
+function describeProblem(
+  status: LiveActivityStatus | null,
+  failure: StartFailure | null,
+): string | null {
+  if (failure === 'unsupported' || (status && !status.supported)) {
+    return 'The Dynamic Island needs iOS 16.2 or later.';
+  }
+  if (failure === 'disabled' || (status && status.supported && !status.enabled)) {
+    return 'Live Activities are off for UNTIL. Turn them on in Settings, then come back and press Start.';
+  }
+  if (failure === 'failed') {
+    return 'Could not start it. Keep UNTIL open on this screen and press Start again.';
+  }
+  return null;
+}
+
 export function useDynamicIslandControl() {
   const { hasPremiumBundle } = useAccessControl();
   const [activeWidget, setActiveWidget] = useState<LiveActivityWidgetType>(
     getLiveActivityWidgetType(),
   );
   const [liveActivityActive, setLiveActivityActive] = useState(false);
+  const [status, setStatus] = useState<LiveActivityStatus | null>(null);
+  const [failure, setFailure] = useState<StartFailure | null>(null);
 
   const refreshStatus = useCallback(() => {
-    if (Platform.OS === 'ios' && LiveActivityBridge?.isActivityActive) {
-      LiveActivityBridge.isActivityActive()
-        .then((active: boolean) => setLiveActivityActive(active))
-        .catch(() => setLiveActivityActive(false));
+    if (Platform.OS === 'ios') {
+      getLiveActivityStatus().then(next => {
+        setStatus(next);
+        setLiveActivityActive(next.active);
+        if (next.enabled) setFailure(prev => (prev === 'disabled' ? null : prev));
+      });
     }
     setActiveWidget(getLiveActivityWidgetType());
   }, []);
@@ -76,6 +102,11 @@ export function useDynamicIslandControl() {
   useFocusEffect(
     useCallback(() => {
       refreshStatus();
+      // Coming back from iOS Settings after turning Live Activities on.
+      const sub = AppState.addEventListener('change', state => {
+        if (state === 'active') refreshStatus();
+      });
+      return () => sub.remove();
     }, [refreshStatus]),
   );
 
@@ -85,24 +116,30 @@ export function useDynamicIslandControl() {
       if (isPremiumLiveActivityType(type) && !hasPremiumBundle) return;
       setLiveActivityWidgetType(type);
       setActiveWidget(type);
-      if (liveActivityActive) {
-        // Restart so Dynamic Island / Lock Screen switch to the new type now.
-        // ContentState-only updates can no-op if an older activity is still running.
-        syncLiveActivity(type);
-      }
+      // Update in place: the island cross-fades to the new view instead of restarting.
+      if (liveActivityActive) updateLiveActivity(type);
     },
     [liveActivityActive, hasPremiumBundle],
   );
 
-  const handleStart = useCallback(() => {
-    syncLiveActivity(activeWidget);
-    setLiveActivityActive(true);
-  }, [activeWidget]);
+  const handleStart = useCallback(async () => {
+    setFailure(null);
+    const result = await startLiveActivity(activeWidget);
+    if (!result.ok) setFailure(result.reason);
+    refreshStatus();
+  }, [activeWidget, refreshStatus]);
 
   const handleStop = useCallback(() => {
     endLiveActivity();
     setLiveActivityActive(false);
+    setFailure(null);
   }, []);
+
+  const handleOpenSettings = useCallback(() => {
+    Linking.openSettings().catch(() => {});
+  }, []);
+
+  const problem = describeProblem(status, failure);
 
   const options = useMemo(
     () =>
@@ -126,9 +163,12 @@ export function useDynamicIslandControl() {
   return {
     options,
     liveActivityActive,
+    problem,
+    showSettingsAction: failure === 'disabled' || (status?.supported && !status.enabled) || false,
     handleSelectWidget,
     handleStart,
     handleStop,
+    handleOpenSettings,
     isIos: Platform.OS === 'ios',
   };
 }

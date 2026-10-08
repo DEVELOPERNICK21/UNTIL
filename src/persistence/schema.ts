@@ -67,6 +67,10 @@ export const STORAGE_KEYS = {
 
   // Live Activity / Dynamic Island — which widget type to show
   LIVE_ACTIVITY_WIDGET_TYPE: 'liveActivity.widgetType',
+  // The user pressed Start and has not pressed Stop. Lets the app bring the island back
+  // when iOS ends it after about 8 hours.
+  LIVE_ACTIVITY_ENABLED: 'liveActivity.enabled',
+  LIVE_ACTIVITY_STARTED_AT: 'liveActivity.startedAt',
 
   // Android floating overlay — which widget type to show
   OVERLAY_WIDGET_TYPE: 'overlay.widgetType',

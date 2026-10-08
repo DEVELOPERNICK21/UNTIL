@@ -47,6 +47,7 @@ class WidgetBridge: NSObject {
     defaults.set(json, forKey: customCountersKey)
     defaults.synchronize()
     WidgetCenter.shared.reloadTimelines(ofKind: kindCounter)
+    WatchConnectivityBridge.shared.pushCachedIfAvailable()
   }
 
   @objc func setCountdowns(_ json: String) {
@@ -61,6 +62,7 @@ class WidgetBridge: NSObject {
     defaults.set(json, forKey: dailyTasksWidgetKey)
     defaults.synchronize()
     WidgetCenter.shared.reloadTimelines(ofKind: kindDailyTasks)
+    WatchConnectivityBridge.shared.pushCachedIfAvailable()
   }
 
   @objc func setHourCalculationState(_ json: String) {
@@ -68,6 +70,7 @@ class WidgetBridge: NSObject {
     defaults.set(json, forKey: hourCalculationWidgetKey)
     defaults.synchronize()
     WidgetCenter.shared.reloadTimelines(ofKind: kindHourCalculation)
+    WatchConnectivityBridge.shared.pushCachedIfAvailable()
   }
 
   /// Hour timer as last written by the widget or the Dynamic Island (they work with the app closed).

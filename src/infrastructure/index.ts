@@ -3,11 +3,13 @@ export {
   syncWidgetCache,
   syncPremiumStatus,
   syncCustomCounters,
+  syncCustomCountersAfterAdopting,
   syncCountdowns,
   syncDailyTasksWidget,
   getHourCalculationState,
   syncHourCalculationWidget,
-  syncLiveActivity,
+  startLiveActivity,
+  getLiveActivityStatus,
   updateLiveActivity,
   refreshLiveActivity,
   endLiveActivity,
@@ -22,7 +24,12 @@ export {
   canDrawOverlays,
   requestOverlayPermission,
 } from './WidgetSync';
-export type { LiveActivityWidgetType, OverlayWidgetType } from './WidgetSync';
+export type {
+  LiveActivityWidgetType,
+  LiveActivityStartResult,
+  LiveActivityStatus,
+  OverlayWidgetType,
+} from './WidgetSync';
 export type { HourCalculationState } from './WidgetSync';
 export { checkForAppUpdate } from './InAppUpdate';
 export { getAppVersion, getBuildNumber } from './AppVersion';

@@ -2324,6 +2324,18 @@ private enum IslandMode: String, CaseIterable {
         }
     }
 
+    /// Sticker used on the selector chips.
+    var chipEmoji: String {
+        switch self {
+        case .day: return "🌞"
+        case .month: return "🌙"
+        case .year: return "🌍"
+        case .life: return "❤️"
+        case .dailyTasks: return "✅"
+        case .hourCalc: return "⏱️"
+        }
+    }
+
     /// Month and Life are Premium in the app, so the island keeps them behind the paywall too.
     var requiresPremium: Bool {
         self == .month || self == .life
@@ -2363,6 +2375,59 @@ private func islandProgressColor(_ progress: Double) -> Color {
     )
 }
 
+private func islandColor(_ hex: UInt32) -> Color {
+    Color(
+        red: Double((hex >> 16) & 0xFF) / 255,
+        green: Double((hex >> 8) & 0xFF) / 255,
+        blue: Double(hex & 0xFF) / 255
+    )
+}
+
+/// Emoji stickers. Every view has three packs; tapping the sticker moves to the next pack.
+/// The sticker itself follows the state (time of day, season, tasks done, minutes focused).
+private enum IslandStickers {
+    static let packCount = 3
+
+    private static let table: [IslandMode: [[String]]] = [
+        .day: [
+            ["🌙", "🌅", "🌞", "🌤️", "🌇", "🌌"],
+            ["😴", "🐓", "😎", "🧋", "🌆", "🦉"],
+            ["🌌", "🛰️", "🚀", "🪐", "☄️", "🌠"],
+        ],
+        .month: [
+            ["🌑", "🌒", "🌓", "🌔", "🌕"],
+            ["🌱", "🌿", "🪴", "🌳", "🍎"],
+            ["🛸", "🚀", "🪐", "🌍", "☄️"],
+        ],
+        .year: [
+            ["❄️", "🌱", "🌸", "☀️", "🍂"],
+            ["🎆", "🎈", "🎉", "🏖️", "🎄"],
+            ["🐻", "🐣", "🐝", "🦋", "🍁"],
+        ],
+        .life: [
+            ["👶", "🧒", "🧑", "🧔", "👴"],
+            ["🌱", "🌿", "🌲", "🌳", "🍂"],
+            ["💗", "💖", "❤️", "🧡", "💛"],
+        ],
+        .dailyTasks: [
+            ["📝", "🚀", "🔥", "⭐️", "🏆"],
+            ["🥱", "🙂", "😃", "🤩", "🥳"],
+            ["🌑", "🌓", "🌕", "✨", "🎉"],
+        ],
+        .hourCalc: [
+            ["🌱", "🔥", "⚡️", "🚀", "🏆"],
+            ["😌", "😤", "💪", "🦾", "🦸"],
+            ["⏳", "⌛️", "🔥", "💥", "⚡️"],
+        ],
+    ]
+
+    static func emoji(_ mode: IslandMode, pack: Int, stage: Int) -> String {
+        guard let packs = table[mode] else { return "✨" }
+        let list = packs[max(0, min(packs.count - 1, pack))]
+        return list[max(0, min(list.count - 1, stage))]
+    }
+}
+
 private struct IslandModel {
     let state: UNTILLiveActivityAttributes.ContentState
     let isStale: Bool
@@ -2389,47 +2454,95 @@ private struct IslandModel {
         }
     }
 
-    var accent: Color {
+    // MARK: Look
+
+    var pack: Int { max(0, min(IslandStickers.packCount - 1, state.stickerPack ?? 0)) }
+
+    /// Which sticker of the pack fits right now.
+    var stage: Int {
         switch mode {
-        case .day: return islandProgressColor(state.dayProgress)
-        case .month: return Color(red: 0x2E / 255, green: 0xD3 / 255, blue: 0xC6 / 255)
-        case .year: return Color(red: 0x60 / 255, green: 0xA5 / 255, blue: 0xFA / 255)
-        case .life: return Color(red: 0xFF / 255, green: 0x6B / 255, blue: 0x6B / 255)
-        case .dailyTasks: return Color(red: 0x4A / 255, green: 0xDE / 255, blue: 0x80 / 255)
-        case .hourCalc: return Design.passedDot
+        case .day:
+            let p = state.dayProgress
+            if p < 0.23 { return 0 }
+            if p < 0.33 { return 1 }
+            if p < 0.55 { return 2 }
+            if p < 0.72 { return 3 }
+            if p < 0.85 { return 4 }
+            return 5
+        case .month:
+            return min(4, Int(state.monthProgress * 5))
+        case .year:
+            switch Calendar.current.component(.month, from: Date()) {
+            case 12, 1, 2: return 0
+            case 3, 4: return 1
+            case 5: return 2
+            case 6, 7, 8: return 3
+            default: return 4
+            }
+        case .life:
+            let p = progress
+            if p < 0.12 { return 0 }
+            if p < 0.30 { return 1 }
+            if p < 0.55 { return 2 }
+            if p < 0.78 { return 3 }
+            return 4
+        case .dailyTasks:
+            let total = state.dailyTasksTotal
+            let done = state.dailyTasksCompleted
+            if total == 0 { return 0 }
+            if done >= total { return 4 }
+            let ratio = Double(done) / Double(total)
+            if ratio < 0.4 { return 1 }
+            if ratio < 0.8 { return 2 }
+            return 3
+        case .hourCalc:
+            let minutes = elapsedMinutes
+            if minutes < 10 { return 0 }
+            if minutes < 30 { return 1 }
+            if minutes < 60 { return 2 }
+            if minutes < 120 { return 3 }
+            return 4
         }
     }
 
-    var symbol: String {
+    var sticker: String { IslandStickers.emoji(mode, pack: pack, stage: stage) }
+
+    /// Main glow colour and a second one for gradients.
+    private var palette: (Color, Color) {
         switch mode {
         case .day:
-            if state.dayProgress < 0.35 { return "sun.max.fill" }
-            if state.dayProgress < 0.75 { return "sun.horizon.fill" }
-            return "moon.stars.fill"
-        default:
-            return mode.chipSymbol
+            let sky: [UInt32] = [0x818CF8, 0xFB7185, 0xFBBF24, 0xF59E0B, 0xF97316, 0x818CF8]
+            return (islandColor(sky[min(sky.count - 1, stage)]), islandColor(0xA78BFA))
+        case .month: return (islandColor(0x2ED3C6), islandColor(0x60A5FA))
+        case .year: return (islandColor(0x60A5FA), islandColor(0xA78BFA))
+        case .life: return (islandColor(0xFB7185), islandColor(0xF59E0B))
+        case .dailyTasks: return (islandColor(0x4ADE80), islandColor(0x2ED3C6))
+        case .hourCalc: return (islandColor(0xBB86FC), islandColor(0x22D3EE))
         }
     }
+
+    var accent: Color { palette.0 }
+    var accent2: Color { palette.1 }
+
+    // MARK: Text
 
     var title: String { mode == .hourCalc ? (state.hourCalcTitle.isEmpty ? "Hour timer" : state.hourCalcTitle) : mode.title }
 
+    /// Short on purpose: the expanded island gives this line very little room.
     var subtitle: String {
-        let cal = Calendar.current
         switch mode {
         case .day:
-            return "Time left today"
+            return "Left today"
         case .month:
             // The counts already include today, so "passed" is today's day number.
-            let name = cal.shortMonthSymbols[max(0, min(11, cal.component(.month, from: Date()) - 1))]
-            return "\(name) · day \(state.monthDaysPassed) of \(state.monthDaysPassed + state.monthDaysLeft)"
+            return "Day \(state.monthDaysPassed) of \(state.monthDaysPassed + state.monthDaysLeft)"
         case .year:
-            let year = cal.component(.year, from: Date())
-            return "\(year) · day \(state.yearDaysPassed) of \(state.yearDaysPassed + state.yearDaysLeft)"
+            return "Day \(state.yearDaysPassed) of \(state.yearDaysPassed + state.yearDaysLeft)"
         case .life:
-            return "Of your expected life"
+            return "Left in life"
         case .dailyTasks:
             return state.dailyTasksTotal == 0
-                ? "Plan your day in UNTIL"
+                ? "No tasks yet"
                 : "\(state.dailyTasksCompleted) of \(state.dailyTasksTotal) done"
         case .hourCalc:
             return state.hourCalcIsRunning ? "Running" : "Paused"
@@ -2453,25 +2566,11 @@ private struct IslandModel {
         URL(string: "until://open/\(mode.route)") ?? URL(string: "until://")!
     }
 
-    /// Span the progress bar fills over; the system advances it on its own.
-    var progressInterval: ClosedRange<Date>? {
-        let cal = Calendar.current
-        let now = Date()
-        switch mode {
-        case .day:
-            let start = state.startOfDay.map { Date(timeIntervalSince1970: Double($0) / 1000) }
-                ?? cal.startOfDay(for: now)
-            let end = dayEnd
-            return start < end ? start...end : nil
-        case .month:
-            guard let i = cal.dateInterval(of: .month, for: now) else { return nil }
-            return i.start...i.end
-        case .year:
-            guard let i = cal.dateInterval(of: .year, for: now) else { return nil }
-            return i.start...i.end
-        default:
-            return nil
-        }
+    // MARK: Time
+
+    var dayStart: Date {
+        if let start = state.startOfDay { return Date(timeIntervalSince1970: Double(start) / 1000) }
+        return Calendar.current.startOfDay(for: Date())
     }
 
     var dayEnd: Date {
@@ -2480,189 +2579,576 @@ private struct IslandModel {
         return cal.date(byAdding: .day, value: 1, to: cal.startOfDay(for: Date())) ?? Date()
     }
 
-    /// Start of the current run, backdated by time already banked, for `Text(_, style: .timer)`.
+    /// Start of the current run, backdated by time already banked.
     var stopwatchOrigin: Date {
         let start = state.hourCalcStartMs ?? Int64(Date().timeIntervalSince1970 * 1000)
         return Date(timeIntervalSince1970: Double(start - state.hourCalcElapsedMs) / 1000)
     }
 
+    /// Same shape as the running timer (m:ss, then h:mm:ss from one hour), so the width does not
+    /// jump on pause.
     var stoppedStopwatchText: String {
         let total = max(0, state.hourCalcElapsedMs / 1000)
-        let h = total / 3600, m = (total % 3600) / 60, s = total % 60
-        return h > 0 ? String(format: "%d:%02d:%02d", h, m, s) : String(format: "%d:%02d", m, s)
+        let h = total / 3600, m = (total % 3600) / 60, sec = total % 60
+        return h > 0 ? String(format: "%d:%02d:%02d", h, m, sec) : String(format: "%d:%02d", m, sec)
     }
+
+    var elapsedMinutes: Double {
+        var ms = Double(state.hourCalcElapsedMs)
+        if state.hourCalcIsRunning, let start = state.hourCalcStartMs {
+            ms = Double(Int64(Date().timeIntervalSince1970 * 1000) - start + state.hourCalcElapsedMs)
+        }
+        return max(0, ms) / 60000
+    }
+
+    /// Share of the current hour, as of the last update.
+    var hourFractionNow: Double {
+        let hourMs = 3_600_000.0
+        var ms = Double(state.hourCalcElapsedMs)
+        if state.hourCalcIsRunning, let start = state.hourCalcStartMs {
+            ms += max(0, Double(Int64(Date().timeIntervalSince1970 * 1000) - start))
+        }
+        return ms.truncatingRemainder(dividingBy: hourMs) / hourMs
+    }
+
+    /// Timer text asks for all the width it can get, so the compact island has to pin it.
+    var compactUsesTimer: Bool {
+        switch mode {
+        case .day: return dayEnd > Date()
+        case .hourCalc: return state.hourCalcIsRunning
+        default: return false
+        }
+    }
+
+    // MARK: Hero number
 
     var staticDaysText: String {
         switch mode {
         case .month: return "\(state.monthDaysLeft)"
         case .year: return "\(state.yearDaysLeft)"
-        case .life: return (state.remainingDaysLife ?? 0).formatted()
+        case .life:
+            // Round half up, like the widgets, so 48.25 reads 48.3 everywhere.
+            let years = (Double(state.remainingDaysLife ?? 0) / 365.25 * 10).rounded() / 10
+            return String(format: "%.1f", years)
         case .dailyTasks:
-            if state.dailyTasksTotal == 0 { return "No tasks yet" }
-            let left = max(0, state.dailyTasksTotal - state.dailyTasksCompleted)
-            return left == 0 ? "All done" : "\(left)"
+            if state.dailyTasksTotal == 0 { return "No tasks" }
+            if state.dailyTasksCompleted >= state.dailyTasksTotal { return "All done" }
+            return "\(state.dailyTasksCompleted) of \(state.dailyTasksTotal)"
         default: return ""
         }
     }
 
     var staticUnit: String {
         switch mode {
-        case .month, .year, .life: return " days left"
+        case .month, .year: return " days left"
+        case .life: return " years left"
         case .dailyTasks:
-            let left = max(0, state.dailyTasksTotal - state.dailyTasksCompleted)
-            return state.dailyTasksTotal == 0 || left == 0 ? "" : " to do"
+            if state.dailyTasksTotal == 0 { return " yet" }
+            if state.dailyTasksCompleted >= state.dailyTasksTotal { return "" }
+            return " done"
         default: return ""
+        }
+    }
+
+    // MARK: Bars
+
+    /// A bar for one stretch of time: full once it is over, empty before it starts, and filled to
+    /// the share elapsed while it runs. Bars are drawn from the state at each update. A
+    /// self-advancing `ProgressView(timerInterval:)` looks nicer but kept the renderer busy
+    /// (about 7x the CPU of a plain bar), and these bars move less than a pixel a minute.
+    private func bandPiece(id: Int, from: Date, to: Date, color: Color) -> IslandBand.Piece {
+        let now = Date()
+        let share = now.timeIntervalSince(from) / max(1, to.timeIntervalSince(from))
+        return IslandBand.Piece(id: id, fraction: min(1, max(0, share)), color: color)
+    }
+
+    /// Six four-hour stretches of the day, coloured like the sky.
+    var daySegments: [IslandBand.Piece] {
+        let sky: [UInt32] = [0x4F46E5, 0x7C3AED, 0xFB7185, 0xFBBF24, 0xF97316, 0x6366F1]
+        let start = dayStart
+        return (0..<6).map { i in
+            let from = start.addingTimeInterval(Double(i) * 4 * 3600)
+            return bandPiece(id: i, from: from, to: from.addingTimeInterval(4 * 3600), color: islandColor(sky[i]))
+        }
+    }
+
+    /// One block per week of the month. Redrawn whenever the island updates; a week moves slowly.
+    var weekSegments: [IslandBand.Piece] {
+        let cal = Calendar.current
+        let now = Date()
+        guard let month = cal.dateInterval(of: .month, for: now) else { return [] }
+        let days = cal.range(of: .day, in: .month, for: now)?.count ?? 30
+        let weeks = Int(ceil(Double(days) / 7.0))
+        let colors: [UInt32] = [0x2ED3C6, 0x34D399, 0x60A5FA, 0x818CF8, 0xA78BFA]
+        return (0..<weeks).map { i in
+            let from = cal.date(byAdding: .day, value: i * 7, to: month.start) ?? month.start
+            let to = min(month.end, cal.date(byAdding: .day, value: (i + 1) * 7, to: month.start) ?? month.end)
+            return bandPiece(id: i, from: from, to: max(from, to), color: islandColor(colors[min(colors.count - 1, i)]))
+        }
+    }
+
+    /// One block per quarter, winter to autumn. Redrawn whenever the island updates.
+    var quarterSegments: [IslandBand.Piece] {
+        let cal = Calendar.current
+        let now = Date()
+        let year = cal.component(.year, from: now)
+        guard let yearInterval = cal.dateInterval(of: .year, for: now) else { return [] }
+        let colors: [UInt32] = [0x60A5FA, 0x34D399, 0xFBBF24, 0xF97316]
+        return (0..<4).map { q in
+            let from = cal.date(from: DateComponents(year: year, month: 1 + q * 3, day: 1)) ?? yearInterval.start
+            let to = q == 3
+                ? yearInterval.end
+                : (cal.date(from: DateComponents(year: year, month: 1 + (q + 1) * 3, day: 1)) ?? yearInterval.end)
+            return bandPiece(id: q, from: from, to: max(from, to), color: islandColor(colors[q]))
         }
     }
 }
 
 // MARK: Pieces
 
-/// Round icon badge. Static on purpose.
-private struct IslandBadge: View {
-    let symbol: String
+private enum IslandMetrics {
+    /// Every view's artwork gets the same box, so switching views never resizes the island.
+    static let visualHeight: CGFloat = 50
+    static let chipHeight: CGFloat = 26
+    static let chipMaxWidth: CGFloat = 48
+}
+
+/// Emoji sticker on a soft glow. Tappable where it is wrapped in `IslandStickerButton`.
+private struct IslandSticker: View {
+    let emoji: String
     let accent: Color
-    var size: CGFloat = 28
+    var size: CGFloat = 34
+    var glow = true
 
     var body: some View {
         ZStack {
-            Circle().fill(accent.opacity(0.20))
-            Circle().strokeBorder(accent.opacity(0.65), lineWidth: 1)
-            Image(systemName: symbol)
-                .font(.system(size: size * 0.46, weight: .semibold))
-                .foregroundColor(accent)
-                .contentTransition(.symbolEffect(.replace))
+            if glow {
+                Circle()
+                    .fill(
+                        RadialGradient(
+                            colors: [accent.opacity(0.55), accent.opacity(0)],
+                            center: .center,
+                            startRadius: 0,
+                            endRadius: size * 0.9
+                        )
+                    )
+                    .frame(width: size * 1.8, height: size * 1.8)
+            }
+            Circle()
+                .fill(accent.opacity(0.16))
+                .overlay(Circle().strokeBorder(accent.opacity(0.6), lineWidth: 1))
+                .frame(width: size, height: size)
+            Text(emoji)
+                .font(.system(size: size * 0.56))
         }
         .frame(width: size, height: size)
     }
 }
 
-/// The big number: live countdown, live stopwatch, or day counts.
-private struct IslandPrimary: View {
+private struct IslandStickerButton: View {
     let model: IslandModel
-    var size: CGFloat = 32
-    var alignment: Alignment = .leading
+    var size: CGFloat = 34
+
+    var body: some View {
+        Button(intent: CycleIslandStickerIntent()) {
+            IslandSticker(emoji: model.sticker, accent: model.accent, size: size)
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Change sticker")
+    }
+}
+
+/// Sticker, title and one short line. Long titles (a renamed timer) are cut, never pushed out.
+private struct IslandHeading: View {
+    let model: IslandModel
+    var stickerSize: CGFloat = 32
+    var titleSize: CGFloat = 15
+
+    var body: some View {
+        HStack(spacing: 8) {
+            IslandStickerButton(model: model, size: stickerSize)
+            VStack(alignment: .leading, spacing: 1) {
+                Text(model.title)
+                    .font(.system(size: titleSize, weight: .semibold))
+                    .foregroundColor(Design.lightText)
+                    .lineLimit(1)
+                    .truncationMode(.tail)
+                Text(model.subtitle)
+                    .font(.system(size: titleSize - 3))
+                    .foregroundColor(model.accent.opacity(0.9))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.85)
+            }
+        }
+    }
+}
+
+/// Top right of the Lock Screen card and the expanded island: the share left.
+private struct IslandTrailing: View {
+    let model: IslandModel
+    var showCaption = false
+
+    var body: some View {
+        if let metric = model.trailingMetric {
+            VStack(alignment: .trailing, spacing: 0) {
+                Text(metric)
+                    .font(.system(size: showCaption ? 22 : 18, weight: .bold, design: .rounded))
+                    .foregroundColor(model.accent)
+                    .shadow(color: model.accent.opacity(0.7), radius: 6)
+                    .monospacedDigit()
+                    .lineLimit(1)
+                    .contentTransition(.numericText())
+                if showCaption {
+                    Text(model.mode == .dailyTasks ? "done" : "left")
+                        .font(.system(size: 10, weight: .medium))
+                        .foregroundColor(Design.grayLabel)
+                }
+            }
+            .fixedSize()
+        }
+    }
+}
+
+/// The big number: live countdown, live stopwatch, or the day counts. Glows in the view's colour.
+private struct IslandHeroText: View {
+    let model: IslandModel
+    var size: CGFloat = 30
+    var alignment: Alignment = .center
+
+    var body: some View {
+        content
+            .font(.system(size: size, weight: .bold, design: .rounded))
+            .monospacedDigit()
+            .foregroundColor(.white)
+            .lineLimit(1)
+            .minimumScaleFactor(0.5)
+            .multilineTextAlignment(alignment == .center ? .center : .leading)
+            .frame(maxWidth: .infinity, alignment: alignment)
+            .frame(height: size * 1.15)
+            .background(alignment: alignment) { glow }
+    }
+
+    /// A soft pool of light behind the number. It is drawn once; a shadow on the number itself
+    /// would be redrawn every second while the number ticks.
+    private var glow: some View {
+        Circle()
+            .fill(
+                RadialGradient(
+                    colors: [model.accent.opacity(0.38), model.accent.opacity(0)],
+                    center: .center,
+                    startRadius: 0,
+                    endRadius: size * 1.2
+                )
+            )
+            .frame(width: size * 2.4, height: size * 2.4)
+            .scaleEffect(x: 2.4, y: 0.75)
+            .allowsHitTesting(false)
+    }
+
+    @ViewBuilder
+    private var content: some View {
+        switch model.mode {
+        case .day:
+            let now = Date()
+            if model.dayEnd > now {
+                Text(timerInterval: now...model.dayEnd, pauseTime: nil, countsDown: true, showsHours: true)
+            } else {
+                Text("0:00:00")
+            }
+        case .hourCalc:
+            if model.state.hourCalcIsRunning {
+                // The date style ticks by itself without walking a schedule from the start
+                // time, so a timer left running for days stays cheap.
+                Text(model.stopwatchOrigin, style: .timer)
+            } else {
+                Text(model.stoppedStopwatchText)
+            }
+        default:
+            (Text(model.staticDaysText)
+                + Text(model.staticUnit)
+                .font(.system(size: size * 0.45, weight: .semibold, design: .rounded))
+                .foregroundColor(Design.grayLabel))
+                .contentTransition(.numericText())
+        }
+    }
+}
+
+/// A row of glowing bars, each filled to a fixed share.
+private struct IslandBand: View {
+    struct Piece: Identifiable {
+        let id: Int
+        let fraction: Double
+        let color: Color
+    }
+
+    let pieces: [Piece]
+    var height: CGFloat = 8
+    /// Optional sticker at the start of each bar.
+    var badges: [String] = []
+
+    var body: some View {
+        HStack(spacing: 3) {
+            ForEach(pieces) { piece in
+                bar(piece)
+                    .overlay(alignment: .leading) {
+                        if piece.id < badges.count {
+                            Text(badges[piece.id])
+                                .font(.system(size: height * 0.72))
+                                .padding(.leading, 3)
+                        }
+                    }
+            }
+        }
+        .frame(height: height)
+    }
+
+    private func bar(_ piece: Piece) -> some View {
+        let share = CGFloat(min(1, max(0, piece.fraction)))
+        return GeometryReader { geo in
+            ZStack(alignment: .leading) {
+                Capsule().fill(Color.white.opacity(0.10))
+                Capsule()
+                    .fill(piece.color)
+                    .frame(width: share > 0 ? max(height, geo.size.width * share) : 0)
+            }
+        }
+        .frame(height: height)
+        .shadow(color: piece.fraction > 0 ? piece.color.opacity(0.55) : .clear, radius: 4)
+    }
+}
+
+// MARK: Artwork, one per view
+
+/// Today: the sky as six four-hour stretches under a glowing countdown.
+private struct IslandDayArt: View {
+    let model: IslandModel
+
+    var body: some View {
+        VStack(spacing: 6) {
+            IslandHeroText(model: model, size: 28)
+            IslandBand(pieces: model.daySegments, height: 8)
+        }
+    }
+}
+
+/// Month: one block per week.
+private struct IslandMonthArt: View {
+    let model: IslandModel
+
+    var body: some View {
+        VStack(spacing: 6) {
+            IslandHeroText(model: model, size: 28)
+            IslandBand(pieces: model.weekSegments, height: 8)
+        }
+    }
+}
+
+/// Year: four quarters, each wearing its season sticker.
+private struct IslandYearArt: View {
+    let model: IslandModel
+
+    var body: some View {
+        VStack(spacing: 6) {
+            IslandHeroText(model: model, size: 26)
+            IslandBand(
+                pieces: model.quarterSegments,
+                height: 14,
+                badges: ["❄️", "🌱", "☀️", "🍂"]
+            )
+        }
+    }
+}
+
+/// Life: one long track with a glowing heart at the share lived.
+private struct IslandLifeArt: View {
+    let model: IslandModel
+
+    var body: some View {
+        VStack(spacing: 4) {
+            IslandHeroText(model: model, size: 28)
+            GeometryReader { geo in
+                let width = geo.size.width
+                let share = CGFloat(min(1, max(0, model.progress)))
+                let x = min(width - 9, max(9, width * share))
+                ZStack(alignment: .leading) {
+                    Capsule().fill(Color.white.opacity(0.10)).frame(height: 8)
+                    Capsule()
+                        .fill(LinearGradient(colors: [model.accent2, model.accent], startPoint: .leading, endPoint: .trailing))
+                        .frame(width: max(8, width * share), height: 8)
+                        .shadow(color: model.accent.opacity(0.7), radius: 5)
+                    Text("❤️")
+                        .font(.system(size: 14))
+                        .shadow(color: model.accent, radius: 6)
+                        .position(x: x, y: geo.size.height / 2)
+                }
+            }
+            .frame(height: 14)
+        }
+    }
+}
+
+/// Tasks: one cell per task, green and glowing when done.
+private struct IslandTasksArt: View {
+    let model: IslandModel
+
+    var body: some View {
+        let total = model.state.dailyTasksTotal
+        let done = model.state.dailyTasksCompleted
+        let cells = max(1, min(total == 0 ? 6 : total, 10))
+        let filled = total == 0 ? 0 : Int((Double(done) / Double(max(1, total)) * Double(cells)).rounded())
+        VStack(spacing: 6) {
+            IslandHeroText(model: model, size: 28)
+            HStack(spacing: 4) {
+                ForEach(0..<cells, id: \.self) { i in
+                    cell(isDone: i < filled)
+                }
+            }
+            .frame(height: 12)
+        }
+    }
+
+    private func cell(isDone: Bool) -> some View {
+        RoundedRectangle(cornerRadius: 4, style: .continuous)
+            .fill(
+                isDone
+                    ? AnyShapeStyle(LinearGradient(colors: [model.accent, model.accent2], startPoint: .top, endPoint: .bottom))
+                    : AnyShapeStyle(Color.white.opacity(0.10))
+            )
+            .overlay(
+                Image(systemName: "checkmark")
+                    .font(.system(size: 7, weight: .heavy))
+                    .foregroundColor(Color.black.opacity(0.7))
+                    .opacity(isDone ? 1 : 0)
+            )
+            .shadow(color: isDone ? model.accent.opacity(0.6) : .clear, radius: 4)
+    }
+}
+
+/// Hour timer: glowing clock, a bar for the current hour, and round controls.
+private struct IslandTimerArt: View {
+    let model: IslandModel
+
+    var body: some View {
+        HStack(spacing: 12) {
+            VStack(alignment: .leading, spacing: 6) {
+                IslandHeroText(model: model, size: 30, alignment: .leading)
+                hourBar
+            }
+            controls
+        }
+    }
+
+    @ViewBuilder
+    private var hourBar: some View {
+        IslandBand(
+            pieces: [IslandBand.Piece(id: 0, fraction: model.hourFractionNow, color: model.state.hourCalcIsRunning ? model.accent2 : model.accent)],
+            height: 8
+        )
+    }
+
+    private var controls: some View {
+        HStack(spacing: 8) {
+            Button(intent: ToggleIslandTimerIntent()) {
+                ZStack {
+                    Circle().fill(model.accent.opacity(0.18))
+                    Circle().strokeBorder(model.accent, lineWidth: 2.5)
+                    Image(systemName: model.state.hourCalcIsRunning ? "pause.fill" : "play.fill")
+                        .font(.system(size: 16, weight: .bold))
+                        .foregroundColor(.white)
+                }
+                .frame(width: 42, height: 42)
+                .shadow(color: model.accent.opacity(0.7), radius: 6)
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel(model.state.hourCalcIsRunning ? "Pause hour timer" : "Start hour timer")
+
+            Button(intent: ResetIslandTimerIntent()) {
+                ZStack {
+                    Circle().fill(Color.white.opacity(0.10))
+                    Image(systemName: "arrow.counterclockwise")
+                        .font(.system(size: 14, weight: .bold))
+                        .foregroundColor(.white)
+                }
+                .frame(width: 36, height: 36)
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Reset hour timer")
+        }
+        .fixedSize()
+    }
+}
+
+/// Picks the artwork for the current view, inside a box of fixed height.
+private struct IslandArt: View {
+    let model: IslandModel
 
     var body: some View {
         Group {
             switch model.mode {
-            case .day:
-                let now = Date()
-                if model.dayEnd > now {
-                    Text(timerInterval: now...model.dayEnd, pauseTime: nil, countsDown: true, showsHours: true)
-                } else {
-                    Text("0:00:00")
-                }
-            case .hourCalc:
-                if model.state.hourCalcIsRunning {
-                    Text(model.stopwatchOrigin, style: .timer)
-                } else {
-                    Text(model.stoppedStopwatchText)
-                }
-            default:
-                (Text(model.staticDaysText)
-                    + Text(model.staticUnit)
-                    .font(.system(size: size * 0.45, weight: .semibold, design: .rounded))
-                    .foregroundColor(Design.grayLabel))
-                    .contentTransition(.numericText())
+            case .day: IslandDayArt(model: model)
+            case .month: IslandMonthArt(model: model)
+            case .year: IslandYearArt(model: model)
+            case .life: IslandLifeArt(model: model)
+            case .dailyTasks: IslandTasksArt(model: model)
+            case .hourCalc: IslandTimerArt(model: model)
             }
         }
-        .font(.system(size: size, weight: .bold, design: .rounded))
-        .monospacedDigit()
-        .foregroundColor(.white)
-        .lineLimit(1)
-        .minimumScaleFactor(0.6)
-        .multilineTextAlignment(alignment == .center ? .center : .leading)
-        .frame(maxWidth: .infinity, alignment: alignment)
-    }
-}
-
-/// Fill bar that advances by itself for time based views.
-private struct IslandProgress: View {
-    let model: IslandModel
-
-    var body: some View {
-        Group {
-            if let interval = model.progressInterval {
-                ProgressView(timerInterval: interval, countsDown: false) {
-                    EmptyView()
-                } currentValueLabel: {
-                    EmptyView()
-                }
-            } else if model.mode == .hourCalc {
-                EmptyView()
-            } else {
-                ProgressView(value: min(1, max(0, model.progress)))
-            }
-        }
-        .progressViewStyle(.linear)
-        .tint(model.accent)
-        .labelsHidden()
+        .frame(maxWidth: .infinity)
+        .frame(height: IslandMetrics.visualHeight)
     }
 }
 
 /// Tappable view selector. Real buttons on iOS 17+: they switch the island without opening the app.
+/// Chips share the width, so the row fits any phone.
 private struct IslandChips: View {
     let model: IslandModel
 
     var body: some View {
         HStack(spacing: 6) {
             ForEach(model.availableModes, id: \.self) { mode in
-                let selected = mode == model.mode
-                if mode.requiresPremium && !model.isPremium {
-                    // Premium views open the paywall instead of switching.
-                    Link(destination: URL(string: "until://open/Premium") ?? URL(string: "until://")!) {
-                        ZStack(alignment: .topTrailing) {
-                            Image(systemName: mode.chipSymbol)
-                                .font(.system(size: 13, weight: .semibold))
-                                .foregroundColor(Design.grayLabel.opacity(0.6))
-                                .frame(width: 34, height: 28)
-                                .background(Capsule().fill(Color.white.opacity(0.06)))
-                            Image(systemName: "lock.fill")
-                                .font(.system(size: 7, weight: .bold))
-                                .foregroundColor(Design.grayLabel)
-                                .offset(x: -3, y: 3)
-                        }
-                    }
-                    .accessibilityLabel("\(mode.title), Premium")
-                } else {
-                    Button(intent: SwitchIslandModeIntent(mode: mode.rawValue)) {
-                        Image(systemName: mode.chipSymbol)
-                            .font(.system(size: 13, weight: .semibold))
-                            .foregroundColor(selected ? Color.black.opacity(0.85) : Design.grayLabel)
-                            .frame(width: 34, height: 28)
-                            .background(
-                                Capsule().fill(selected ? model.accent : Color.white.opacity(0.10))
-                            )
-                    }
-                    .buttonStyle(.plain)
-                    .accessibilityLabel(mode.title)
-                    .accessibilityAddTraits(selected ? .isSelected : [])
-                }
+                chip(mode)
             }
         }
+        .frame(maxWidth: .infinity)
+        .frame(height: IslandMetrics.chipHeight)
     }
-}
 
-/// Start / stop for the hour timer. Only shown on that view.
-private struct IslandTimerButton: View {
-    let model: IslandModel
-
-    var body: some View {
-        Button(intent: ToggleIslandTimerIntent()) {
-            HStack(spacing: 6) {
-                Image(systemName: model.state.hourCalcIsRunning ? "pause.fill" : "play.fill")
-                    .font(.system(size: 12, weight: .bold))
-                Text(model.state.hourCalcIsRunning ? "Stop" : "Start")
-                    .font(.system(size: 13, weight: .bold, design: .rounded))
+    @ViewBuilder
+    private func chip(_ mode: IslandMode) -> some View {
+        let selected = mode == model.mode
+        if mode.requiresPremium && !model.isPremium {
+            // Premium views open the paywall instead of switching.
+            Link(destination: URL(string: "until://open/Premium") ?? URL(string: "until://")!) {
+                ZStack(alignment: .topTrailing) {
+                    Text(mode.chipEmoji)
+                        .font(.system(size: 14))
+                        .opacity(0.4)
+                        .frame(maxWidth: IslandMetrics.chipMaxWidth)
+                        .frame(height: IslandMetrics.chipHeight)
+                        .background(Capsule().fill(Color.white.opacity(0.06)))
+                    Image(systemName: "lock.fill")
+                        .font(.system(size: 7, weight: .bold))
+                        .foregroundColor(Design.grayLabel)
+                        .padding(.top, 3)
+                        .padding(.trailing, 6)
+                }
+                .frame(maxWidth: IslandMetrics.chipMaxWidth)
             }
-            .foregroundColor(Color.black.opacity(0.85))
-            .padding(.horizontal, 16)
-            .frame(height: 30)
-            .background(Capsule().fill(model.accent))
+            .accessibilityLabel("\(mode.title), Premium")
+        } else {
+            Button(intent: SwitchIslandModeIntent(mode: mode.rawValue)) {
+                Text(mode.chipEmoji)
+                    .font(.system(size: 14))
+                    .frame(maxWidth: IslandMetrics.chipMaxWidth)
+                    .frame(height: IslandMetrics.chipHeight)
+                    .background(Capsule().fill(selected ? model.accent.opacity(0.30) : Color.white.opacity(0.08)))
+                    .overlay(Capsule().strokeBorder(selected ? model.accent : Color.clear, lineWidth: 1.2))
+                    .shadow(color: selected ? model.accent.opacity(0.7) : .clear, radius: 5)
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel(mode.title)
+            .accessibilityAddTraits(selected ? .isSelected : [])
         }
-        .buttonStyle(.plain)
-        .accessibilityLabel(model.state.hourCalcIsRunning ? "Stop hour timer" : "Start hour timer")
     }
 }
 
@@ -2674,35 +3160,13 @@ private struct IslandLockScreenView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(spacing: 10) {
-                IslandBadge(symbol: model.symbol, accent: model.accent, size: 34)
-                VStack(alignment: .leading, spacing: 1) {
-                    Text(model.title)
-                        .font(.system(size: 15, weight: .semibold))
-                        .foregroundColor(Design.lightText)
-                        .lineLimit(1)
-                    Text(model.subtitle)
-                        .font(.system(size: 12))
-                        .foregroundColor(Design.grayLabel)
-                        .lineLimit(1)
-                }
+                IslandHeading(model: model, stickerSize: 38, titleSize: 15)
+                    .layoutPriority(1)
                 Spacer(minLength: 8)
-                if let metric = model.trailingMetric {
-                    Text(metric)
-                        .font(.system(size: 15, weight: .bold, design: .rounded))
-                        .foregroundColor(model.accent)
-                        .monospacedDigit()
-                        .contentTransition(.numericText())
-                }
+                IslandTrailing(model: model)
             }
-            IslandPrimary(model: model, size: 36)
-            IslandProgress(model: model)
-            HStack(spacing: 10) {
-                IslandChips(model: model)
-                Spacer(minLength: 0)
-                if model.mode == .hourCalc {
-                    IslandTimerButton(model: model)
-                }
-            }
+            IslandArt(model: model)
+            IslandChips(model: model)
             if model.isStale {
                 Text("Open UNTIL to refresh")
                     .font(.system(size: 11))
@@ -2710,7 +3174,15 @@ private struct IslandLockScreenView: View {
             }
         }
         .padding(16)
-        .activityBackgroundTint(Design.background.opacity(0.94))
+        .background(alignment: .topLeading) {
+            RadialGradient(
+                colors: [model.accent.opacity(0.30), model.accent.opacity(0)],
+                center: .topLeading,
+                startRadius: 0,
+                endRadius: 240
+            )
+        }
+        .activityBackgroundTint(Color.black.opacity(0.92))
         .activitySystemActionForegroundColor(Design.lightText)
     }
 }
@@ -2719,20 +3191,8 @@ private struct IslandExpandedLeading: View {
     let model: IslandModel
 
     var body: some View {
-        HStack(spacing: 8) {
-            IslandBadge(symbol: model.symbol, accent: model.accent, size: 30)
-            VStack(alignment: .leading, spacing: 1) {
-                Text(model.title)
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundColor(Design.lightText)
-                    .lineLimit(1)
-                Text(model.subtitle)
-                    .font(.system(size: 11))
-                    .foregroundColor(Design.grayLabel)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.8)
-            }
-        }
+        IslandHeading(model: model, stickerSize: 30, titleSize: 14)
+            .frame(maxWidth: 170, alignment: .leading)
     }
 }
 
@@ -2740,20 +3200,7 @@ private struct IslandExpandedTrailing: View {
     let model: IslandModel
 
     var body: some View {
-        if let metric = model.trailingMetric {
-            VStack(alignment: .trailing, spacing: 0) {
-                Text(metric)
-                    .font(.system(size: 22, weight: .bold, design: .rounded))
-                    .foregroundColor(model.accent)
-                    .monospacedDigit()
-                    .contentTransition(.numericText())
-                Text(model.mode == .dailyTasks ? "done" : "left")
-                    .font(.system(size: 10, weight: .medium))
-                    .foregroundColor(Design.grayLabel)
-            }
-        } else if model.mode == .hourCalc {
-            IslandTimerButton(model: model)
-        }
+        IslandTrailing(model: model, showCaption: true)
     }
 }
 
@@ -2761,16 +3208,10 @@ private struct IslandExpandedBottom: View {
     let model: IslandModel
 
     var body: some View {
-        VStack(spacing: 8) {
-            IslandPrimary(model: model, size: 30, alignment: .center)
-            IslandProgress(model: model)
-            HStack {
-                Spacer(minLength: 0)
-                IslandChips(model: model)
-                Spacer(minLength: 0)
-            }
+        VStack(spacing: 6) {
+            IslandArt(model: model)
+            IslandChips(model: model)
         }
-        .padding(.top, 2)
     }
 }
 
@@ -2778,6 +3219,14 @@ private struct IslandCompactTrailing: View {
     let model: IslandModel
 
     var body: some View {
+        if model.compactUsesTimer {
+            label.frame(width: 58, alignment: .trailing)
+        } else {
+            label.fixedSize()
+        }
+    }
+
+    private var label: some View {
         Group {
             switch model.mode {
             case .day:
@@ -2804,14 +3253,13 @@ private struct IslandCompactTrailing: View {
         .monospacedDigit()
         .foregroundColor(model.accent)
         .lineLimit(1)
-        .minimumScaleFactor(0.6)
+        .minimumScaleFactor(0.7)
         .multilineTextAlignment(.trailing)
-        // Text(timerInterval:) is greedy; pin the width so the pill stays compact.
-        .frame(width: 56, alignment: .trailing)
+        .contentTransition(.numericText())
     }
 }
 
-/// Smallest form: a progress ring with the view's icon inside.
+/// Smallest form: the sticker inside a progress ring.
 private struct IslandMinimal: View {
     let model: IslandModel
 
@@ -2822,9 +3270,8 @@ private struct IslandMinimal: View {
                 .trim(from: 0, to: max(0.04, min(1, model.progress)))
                 .stroke(model.accent, style: StrokeStyle(lineWidth: 2, lineCap: .round))
                 .rotationEffect(.degrees(-90))
-            Image(systemName: model.symbol)
-                .font(.system(size: 8, weight: .bold))
-                .foregroundColor(model.accent)
+            Text(model.sticker)
+                .font(.system(size: 9))
         }
         .frame(width: 20, height: 20)
     }
@@ -2849,7 +3296,7 @@ struct UNTILLiveActivityWidget: Widget {
                     IslandExpandedBottom(model: model)
                 }
             } compactLeading: {
-                IslandBadge(symbol: model.symbol, accent: model.accent, size: 22)
+                IslandSticker(emoji: model.sticker, accent: model.accent, size: 22, glow: false)
             } compactTrailing: {
                 IslandCompactTrailing(model: model)
             } minimal: {

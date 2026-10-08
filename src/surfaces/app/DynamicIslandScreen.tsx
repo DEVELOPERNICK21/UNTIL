@@ -31,18 +31,21 @@ function IosDynamicIslandScreen() {
   const {
     options,
     liveActivityActive,
+    problem,
+    showSettingsAction,
     handleSelectWidget,
     handleStart,
     handleStop,
+    handleOpenSettings,
   } = useDynamicIslandControl();
 
   return (
     <LiveIslandLayout
       title="Dynamic Island"
-      subtitle="Time left ticks on the Dynamic Island and Lock Screen by itself. Long-press the island to open it, then tap the icons to switch views. iPhone 14 Pro or later for Dynamic Island."
+      subtitle="Time left ticks on the Dynamic Island and Lock Screen by itself. Long-press the island to open it, tap the icons to switch views, and tap the sticker to change it. iPhone 14 Pro or later for Dynamic Island."
       sectionTitle="What to show"
       sectionSubtitle="Pick what it opens on. You can also switch from the island itself."
-      hint="Countdowns and the timer keep running with the app closed. Day counts and tasks update when you open UNTIL. iOS ends a Live Activity after about 8 hours, so press Start again after that."
+      hint="The first time, iOS asks “Allow Live Activities?” under the card on your Lock Screen. Lock your phone once and tap Allow. Countdowns and the timer keep running with the app closed. Day counts and tasks update when you open UNTIL. iOS ends a Live Activity after about 8 hours, and UNTIL starts it again the next time you open the app."
       active={liveActivityActive}
       options={options}
       onSelect={type => {
@@ -57,6 +60,15 @@ function IosDynamicIslandScreen() {
       onStop={handleStop}
       startDisabled={liveActivityActive}
       stopDisabled={!liveActivityActive}
+      permissionBanner={
+        problem
+          ? {
+              text: problem,
+              actionLabel: showSettingsAction ? 'Open settings' : undefined,
+              onAction: showSettingsAction ? handleOpenSettings : undefined,
+            }
+          : null
+      }
     />
   );
 }
@@ -150,8 +162,8 @@ function LiveIslandLayout({
   stopDisabled: boolean;
   permissionBanner?: {
     text: string;
-    actionLabel: string;
-    onAction: () => void;
+    actionLabel?: string;
+    onAction?: () => void;
   } | null;
 }) {
   const theme = useTheme();
@@ -179,14 +191,16 @@ function LiveIslandLayout({
               >
                 {permissionBanner.text}
               </Text>
-              <TouchableOpacity
-                style={styles.permissionButton}
-                onPress={permissionBanner.onAction}
-              >
-                <Text variant="body" color="primary">
-                  {permissionBanner.actionLabel}
-                </Text>
-              </TouchableOpacity>
+              {permissionBanner.onAction ? (
+                <TouchableOpacity
+                  style={styles.permissionButton}
+                  onPress={permissionBanner.onAction}
+                >
+                  <Text variant="body" color="primary">
+                    {permissionBanner.actionLabel}
+                  </Text>
+                </TouchableOpacity>
+              ) : null}
             </View>
           ) : null}
 

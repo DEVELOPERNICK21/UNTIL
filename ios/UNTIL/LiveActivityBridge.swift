@@ -12,23 +12,42 @@ class LiveActivityBridge: NSObject {
 
   @objc static func requiresMainQueueSetup() -> Bool { false }
 
-  @objc func startActivity(_ stateJson: String) {
-    guard #available(iOS 16.2, *) else { return }
-    guard let state = parseState(stateJson) else { return }
+  /// Start the island. Rejects with a code the app turns into a message:
+  /// `unsupported` (iOS older than 16.2), `disabled` (Live Activities off for UNTIL),
+  /// `invalid_state`, or `failed` (for example the app is not in the foreground).
+  @objc func startActivity(
+    _ stateJson: String,
+    resolve: @escaping RCTPromiseResolveBlock,
+    reject: @escaping RCTPromiseRejectBlock
+  ) {
+    guard #available(iOS 16.2, *) else {
+      reject("unsupported", "Live Activities need iOS 16.2 or later.", nil)
+      return
+    }
+    guard ActivityAuthorizationInfo().areActivitiesEnabled else {
+      reject("disabled", "Live Activities are turned off for UNTIL.", nil)
+      return
+    }
+    guard let state = parseState(stateJson) else {
+      reject("invalid_state", "Could not read the island state.", nil)
+      return
+    }
     let contentState = makeContentState(state)
+    let stale = staleDate(for: state)
     Task {
+      // End everything first, including ended ones that still linger, so a fresh start is clean.
+      for activity in Activity<UNTILLiveActivityAttributes>.activities {
+        await activity.end(nil, dismissalPolicy: .immediate)
+      }
       do {
-        // End any existing activity so a fresh type/layout starts cleanly.
-        for activity in Activity<UNTILLiveActivityAttributes>.activities {
-          await activity.end(nil, dismissalPolicy: .immediate)
-        }
         _ = try Activity.request(
           attributes: UNTILLiveActivityAttributes(),
-          content: .init(state: contentState, staleDate: staleDate(for: state)),
+          content: .init(state: contentState, staleDate: stale),
           pushType: nil
         )
+        resolve(["started": true])
       } catch {
-        await updateActivity(stateJson)
+        reject("failed", error.localizedDescription, error)
       }
     }
   }
@@ -41,7 +60,7 @@ class LiveActivityBridge: NSObject {
     let contentState = makeContentState(state)
     let stale = staleDate(for: state)
     Task {
-      for activity in Activity<UNTILLiveActivityAttributes>.activities {
+      for activity in IslandActions.liveActivities {
         await activity.update(ActivityContent(state: contentState, staleDate: stale))
       }
     }
@@ -56,13 +75,31 @@ class LiveActivityBridge: NSObject {
     }
   }
 
+  /// True only while an activity can still show. An activity iOS already ended (after about
+  /// 8 hours) can linger in `activities`, so it does not count.
   @objc func isActivityActive(_ resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
     guard #available(iOS 16.2, *) else {
       resolve(false)
       return
     }
-    let active = !Activity<UNTILLiveActivityAttributes>.activities.isEmpty
-    resolve(active)
+    resolve(!IslandActions.liveActivities.isEmpty)
+  }
+
+  /// What the screen needs to explain a missing island: is it allowed, and is one really running.
+  @objc func getStatus(_ resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
+    guard #available(iOS 16.2, *) else {
+      resolve(["supported": false, "enabled": false, "active": false, "state": "none"])
+      return
+    }
+    let all = Activity<UNTILLiveActivityAttributes>.activities
+    let live = IslandActions.liveActivities.first
+    let shown = live ?? all.first
+    resolve([
+      "supported": true,
+      "enabled": ActivityAuthorizationInfo().areActivitiesEnabled,
+      "active": live != nil,
+      "state": shown.map { String(describing: $0.activityState) } ?? "none",
+    ])
   }
 
   /// The view currently on the island. The island buttons can change it while the app is closed.
@@ -71,7 +108,7 @@ class LiveActivityBridge: NSObject {
       resolve(NSNull())
       return
     }
-    if let activity = Activity<UNTILLiveActivityAttributes>.activities.first {
+    if let activity = IslandActions.liveActivities.first {
       resolve(activity.content.state.activeWidget)
       return
     }
@@ -85,6 +122,7 @@ class LiveActivityBridge: NSObject {
     return date > Date() ? date : nil
   }
 
+  @available(iOS 16.2, *)
   private func makeContentState(_ state: LiveActivityState) -> UNTILLiveActivityAttributes.ContentState {
     UNTILLiveActivityAttributes.ContentState(
       activeWidget: state.activeWidget,
@@ -113,6 +151,8 @@ class LiveActivityBridge: NSObject {
       hourCalcIsRunning: state.hourCalcIsRunning,
       hourCalcStartMs: state.hourCalcStartMs,
       isPremium: state.isPremium,
+      stickerPack: UserDefaults(suiteName: IslandActions.appGroupID)?
+        .object(forKey: IslandActions.stickerPackKey) as? Int,
       updatedAt: state.updatedAt
     )
   }
