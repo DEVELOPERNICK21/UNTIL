@@ -11,14 +11,18 @@
 
 import type { IAccountCloudStore } from '../ports/IAccountCloudStore';
 import type { IDeviceIdProvider } from '../ports/IDeviceIdProvider';
-import type { AccountDevice, RegisterDeviceResult } from '../../types';
+import type {
+  AccountDevice,
+  DevicePlatform,
+  RegisterDeviceResult,
+} from '../../types';
 import { canRegisterDevice } from '../../core/account/deviceLimit';
 
 export class RegisterDeviceUseCase {
   constructor(
     private readonly cloud: IAccountCloudStore,
     private readonly deviceIdProvider: IDeviceIdProvider,
-    private readonly getPlatform: () => 'ios' | 'android',
+    private readonly getPlatform: () => DevicePlatform,
     private readonly getDeviceLabel?: () => string | null,
     private readonly onError?: (error: unknown, context: string) => void
   ) {}

@@ -45,21 +45,17 @@ import {
 } from '../auth/EmailPasswordAuthForm';
 import { AppleSignInButton } from '../auth/AppleSignInButton';
 import { GoogleMark } from '../auth/GoogleMark';
-
-const DEVICE_LIMIT_BANNER_COPY =
-  'This account is already used on 3 devices. Remove one to unlock premium here.';
+import {
+  DEVICE_LIMIT_BANNER_COPY,
+  PREMIUM_DEVICES_BENEFIT,
+  formatAccountDeviceLabel,
+} from '../../core/account/accountCopy';
 
 const SIGN_IN_BENEFITS = [
   'Birth date and life settings',
-  'Premium on up to 3 phones',
+  PREMIUM_DEVICES_BENEFIT,
   'Restore after reinstall',
 ] as const;
-
-function deviceLabel(device: AccountDevice): string {
-  if (device.label) return device.label;
-  const platform = device.platform === 'ios' ? 'iPhone' : 'Android phone';
-  return `${platform} · ${device.id.slice(-4).toUpperCase()}`;
-}
 
 function formatLastSeen(timestampMs: number): string {
   const diffDays = Math.floor(
@@ -285,7 +281,7 @@ export function AccountScreen() {
   const handleRemoveDevice = (device: AccountDevice) => {
     Alert.alert(
       'Remove device',
-      `Remove ${deviceLabel(
+      `Remove ${formatAccountDeviceLabel(
         device,
       )}? It will need to sign in again to use premium.`,
       [
@@ -520,7 +516,7 @@ export function AccountScreen() {
                             variant="body"
                             style={{ color: theme.textPrimary }}
                           >
-                            {deviceLabel(device)}
+                            {formatAccountDeviceLabel(device)}
                             {device.id === currentDeviceId
                               ? ' · This device'
                               : ''}

@@ -11,9 +11,11 @@ export interface AuthUser {
   providers: AuthProviderId[];
 }
 
+export type DevicePlatform = 'ios' | 'android' | 'macos' | 'windows';
+
 export interface AccountDevice {
   id: string;
-  platform: 'ios' | 'android';
+  platform: DevicePlatform;
   label: string | null;
   lastSeenAt: number;
   createdAt: number;

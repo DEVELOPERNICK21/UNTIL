@@ -50,12 +50,13 @@ import {
 import { AppleSignInButton } from './AppleSignInButton';
 import { EmailMark } from './EmailMark';
 import { GoogleMark } from './GoogleMark';
+import { PREMIUM_DEVICES_BENEFIT } from '../../core/account/accountCopy';
 
 const DEVICE_LIMIT_NOTE_MS = 2200;
 
 const BENEFITS = [
   'DOB and life settings',
-  'Premium on up to 3 phones',
+  PREMIUM_DEVICES_BENEFIT,
   'Restore after reinstall',
 ] as const;
 

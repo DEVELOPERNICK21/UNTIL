@@ -16,6 +16,7 @@ export type {
   AuthProviderId,
   AuthUser,
   AccountDevice,
+  DevicePlatform,
   CloudEntitlement,
   CloudUserProfile,
   RegisterDeviceResult,
