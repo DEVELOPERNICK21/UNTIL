@@ -57,6 +57,7 @@ pub fn oauth_loopback_start(app: AppHandle) -> Result<u16, String> {
             );
             let _ = stream.write_all(response.as_bytes());
             let _ = app.emit(CALLBACK_EVENT, format!("http://127.0.0.1:{port}{path}"));
+            crate::show_panel(&app);
             return;
         }
     });

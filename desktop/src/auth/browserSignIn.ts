@@ -41,6 +41,13 @@ export class SignInError extends Error {
   }
 }
 
+let cancelWaiting: (() => void) | null = null;
+
+/** Stops waiting for the browser; the pending sign-in rejects as cancelled. */
+export function cancelBrowserSignIn(): void {
+  cancelWaiting?.();
+}
+
 /** Resolves with the first value `accept` returns; rejects as cancelled on timeout. */
 function waitForBrowser<T>(
   subscribe: (handle: (value: string) => void) => Promise<() => void>,
@@ -51,8 +58,10 @@ function waitForBrowser<T>(
     const done = (fn: () => void) => {
       clearTimeout(timer);
       unlisten?.();
+      cancelWaiting = null;
       fn();
     };
+    cancelWaiting = () => done(() => reject(new SignInError('cancelled')));
     const timer = setTimeout(
       () => done(() => reject(new SignInError('cancelled', 'browser timed out'))),
       BROWSER_SIGN_IN_TIMEOUT_MS,

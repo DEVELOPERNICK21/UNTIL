@@ -1,11 +1,18 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { invoke } from '@tauri-apps/api/core';
+import { getCurrentWindow, LogicalSize } from '@tauri-apps/api/window';
 import type { UserCredential } from 'firebase/auth';
 import { buildPanelModel } from '@until/core/time/panelModel';
 import { getProgressColor } from '@until/theme/progressColor';
 import { DEVICE_LIMIT_BANNER_COPY } from '@until/core/account/accountCopy';
 import { loadLocalState, panelProfile } from './localState';
 import { pushExtra } from './extra';
-import { SignInError, signInWithApple, signInWithGoogle } from './auth/browserSignIn';
+import {
+  SignInError,
+  cancelBrowserSignIn,
+  signInWithApple,
+  signInWithGoogle,
+} from './auth/browserSignIn';
 import {
   REFRESH_INTERVAL_MS,
   abandonSignIn,
@@ -28,6 +35,8 @@ import {
   WaitingCard,
 } from './AccountViews';
 
+const PANEL_WIDTH = 320;
+
 function useNow(): Date {
   const [now, setNow] = useState(() => new Date());
   useEffect(() => {
@@ -35,6 +44,33 @@ function useNow(): Date {
     return () => clearInterval(id);
   }, []);
   return now;
+}
+
+/** The window follows the content height, so each state fits without scrolling. */
+function useFitWindow() {
+  const ref = useRef<HTMLElement>(null);
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    let last = 0;
+    const fit = () => {
+      const height = Math.ceil(el.getBoundingClientRect().height);
+      if (height === last) return;
+      last = height;
+      try {
+        void getCurrentWindow()
+          .setSize(new LogicalSize(PANEL_WIDTH, height))
+          .catch(() => {});
+      } catch {
+        // Outside Tauri (plain browser preview) there is no window to size.
+      }
+    };
+    const observer = new ResizeObserver(fit);
+    observer.observe(el);
+    fit();
+    return () => observer.disconnect();
+  }, []);
+  return ref;
 }
 
 const SIGN_IN_ERRORS: Record<string, string> = {
@@ -78,54 +114,72 @@ function useSession() {
   return { view, setView, run, signIn };
 }
 
+const DATE_FORMAT: Intl.DateTimeFormatOptions = {
+  weekday: 'short',
+  day: 'numeric',
+  month: 'short',
+};
+
 export function App() {
   const now = useNow();
   const local = loadLocalState();
   const model = buildPanelModel(panelProfile(local), now);
   const { view, setView, run, signIn } = useSession();
+  const panelRef = useFitWindow();
 
   useEffect(() => {
     void pushExtra(model).catch(() => {});
   }, [model.extraText, model.extraProgress]);
 
+  const dayColor = getProgressColor(model.day.progress);
+
   return (
-    <main className="panel">
-      <h1>UNTIL</h1>
-      <Row
-        title="Today"
-        left={model.day.leftStr}
-        passed={model.day.passedStr}
-        leftPct={model.day.leftPct}
-        progress={model.day.progress}
-      />
-      <Row
-        title="Month"
-        left={`${model.month.leftDays} days`}
-        passed={`${model.month.passedDays} days`}
-        leftPct={model.month.leftPct}
-        progress={model.month.passedPct / 100}
-      />
-      <Row
-        title="Year"
-        left={`${model.year.leftDays} days`}
-        passed={`${model.year.passedDays} days`}
-        leftPct={model.year.leftPct}
-        progress={model.year.passedPct / 100}
-      />
-      {model.life ? (
-        <Row
-          title="Life"
-          left={`${model.life.leftDays.toLocaleString()} days`}
-          passed={`${model.life.passedDays.toLocaleString()} days`}
-          leftPct={model.life.leftPct}
-          progress={model.life.passedPct / 100}
-        />
-      ) : (
-        <div className="row">
-          <span className="row-title">Life</span>
-          <span className="row-left muted">—</span>
+    <main className="panel" ref={panelRef}>
+      <header className="head">
+        <span className="mark">UNTIL</span>
+        <span className="date">{now.toLocaleDateString(undefined, DATE_FORMAT)}</span>
+      </header>
+
+      <section className="hero" aria-label="Today">
+        <div className="hero-label">Today</div>
+        <div className="hero-value" style={{ color: dayColor }}>
+          {model.day.leftStr}
         </div>
-      )}
+        <div className="hero-sub">
+          left today · {model.day.passedPct}% passed
+        </div>
+        <Bar progress={model.day.progress} color={dayColor} />
+      </section>
+
+      <section className="rows">
+        <Row
+          title="Month"
+          value={`${model.month.leftDays} days`}
+          meta={`${model.month.leftPct}% left`}
+          progress={model.month.passedPct / 100}
+        />
+        <Row
+          title="Year"
+          value={`${model.year.leftDays} days`}
+          meta={`${model.year.leftPct}% left`}
+          progress={model.year.passedPct / 100}
+        />
+        {model.life ? (
+          <Row
+            title="Life"
+            value={`${model.life.leftDays.toLocaleString()} days`}
+            meta={`${model.life.leftPct}% left`}
+            progress={model.life.passedPct / 100}
+          />
+        ) : (
+          <Row
+            title="Life"
+            value="—"
+            meta={view.kind === 'signed_in' ? 'Needs your birth date' : 'Sign in to see'}
+            progress={null}
+          />
+        )}
+      </section>
 
       {(() => {
         switch (view.kind) {
@@ -135,6 +189,7 @@ export function App() {
                 email={local.email}
                 premium={local.entitlementActive}
                 onSignOut={() => void run(signOutDesktop)}
+                onQuit={() => void invoke('quit_app')}
               />
             );
           case 'signed_out':
@@ -143,10 +198,11 @@ export function App() {
                 message={view.message}
                 onGoogle={() => void signIn(signInWithGoogle)}
                 onApple={() => void signIn(signInWithApple)}
+                onQuit={() => void invoke('quit_app')}
               />
             );
           case 'working':
-            return <WaitingCard />;
+            return <WaitingCard onCancel={cancelBrowserSignIn} />;
           case 'setup':
             return (
               <SetupForm
@@ -191,22 +247,30 @@ export function App() {
   );
 }
 
+function Bar(props: { progress: number | null; color?: string }) {
+  const pct = props.progress == null ? 0 : Math.max(0, Math.min(1, props.progress)) * 100;
+  return (
+    <div className="bar" aria-hidden="true">
+      <div className="bar-fill" style={{ width: `${pct}%`, background: props.color }} />
+    </div>
+  );
+}
+
 function Row(props: {
   title: string;
-  left: string;
-  passed: string;
-  leftPct: number;
-  progress: number;
+  value: string;
+  meta: string;
+  progress: number | null;
 }) {
   return (
     <div className="row">
       <span className="row-title">{props.title}</span>
-      <span className="row-left" style={{ color: getProgressColor(props.progress) }}>
-        {props.left}
-      </span>
-      <span className="row-sub">
-        {props.passed} passed · {props.leftPct}% left
-      </span>
+      <span className="row-value">{props.value}</span>
+      <span className="row-meta">{props.meta}</span>
+      <Bar
+        progress={props.progress}
+        color={props.progress == null ? undefined : getProgressColor(props.progress)}
+      />
     </div>
   );
 }

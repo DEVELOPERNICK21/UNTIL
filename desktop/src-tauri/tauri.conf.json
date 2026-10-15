@@ -10,16 +10,25 @@
     "beforeBuildCommand": "npm run build"
   },
   "app": {
+    "macOSPrivateApi": true,
     "windows": [
       {
         "label": "panel",
         "title": "UNTIL",
-        "width": 380,
-        "height": 520,
+        "width": 320,
+        "height": 420,
         "visible": false,
         "resizable": false,
+        "decorations": false,
+        "transparent": true,
+        "shadow": true,
+        "alwaysOnTop": true,
         "skipTaskbar": true,
-        "center": true
+        "windowEffects": {
+          "effects": ["popover"],
+          "state": "active",
+          "radius": 14
+        }
       }
     ],
     "security": {
