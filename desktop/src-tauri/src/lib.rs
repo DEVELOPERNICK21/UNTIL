@@ -7,6 +7,15 @@ use tauri::{
 const TRAY_ID: &str = "until-extra";
 const PANEL: &str = "panel";
 
+mod oauth;
+
+fn show_panel<R: Runtime>(app: &AppHandle<R>) {
+    if let Some(panel) = app.get_webview_window(PANEL) {
+        let _ = panel.show();
+        let _ = panel.set_focus();
+    }
+}
+
 fn toggle_panel<R: Runtime>(app: &AppHandle<R>) {
     let Some(panel) = app.get_webview_window(PANEL) else {
         return;
@@ -43,10 +52,34 @@ fn set_extra(app: AppHandle, text: String, png: Option<Vec<u8>>) -> Result<(), S
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    tauri::Builder::default()
+    let builder = tauri::Builder::default();
+
+    // Must be the first plugin. A second launch (including an until-desktop://
+    // link on Windows) is forwarded here and the deep-link plugin re-emits it.
+    #[cfg(desktop)]
+    let builder = builder.plugin(tauri_plugin_single_instance::init(|app, _argv, _cwd| {
+        show_panel(app);
+    }));
+
+    builder
+        .plugin(tauri_plugin_deep_link::init())
+        .plugin(tauri_plugin_opener::init())
         .setup(|app| {
             #[cfg(target_os = "macos")]
             app.set_activation_policy(tauri::ActivationPolicy::Accessory);
+
+            // Mac registers the scheme from the bundle's Info.plist; Windows and
+            // Linux dev builds register at runtime.
+            #[cfg(any(windows, target_os = "linux"))]
+            {
+                use tauri_plugin_deep_link::DeepLinkExt;
+                app.deep_link().register_all()?;
+            }
+            {
+                use tauri_plugin_deep_link::DeepLinkExt;
+                let handle = app.handle().clone();
+                app.deep_link().on_open_url(move |_event| show_panel(&handle));
+            }
 
             let quit = MenuItemBuilder::with_id("quit", "Quit UNTIL").build(app)?;
             let menu = MenuBuilder::new(app).item(&quit).build()?;
@@ -89,7 +122,11 @@ pub fn run() {
                 let _ = window.hide();
             }
         })
-        .invoke_handler(tauri::generate_handler![set_extra])
+        .invoke_handler(tauri::generate_handler![
+            set_extra,
+            oauth::oauth_loopback_start,
+            oauth::google_exchange_code
+        ])
         .run(tauri::generate_context!())
         .expect("error while running UNTIL desktop");
 }
