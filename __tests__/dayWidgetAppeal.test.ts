@@ -5,6 +5,7 @@ import {
   presenceStreakDots,
 } from '../src/core/widget/dayWidgetAppeal';
 import { MmkvTimeRepository } from '../src/infrastructure/repositories/MmkvTimeRepository';
+import { MmkvPresenceRepository } from '../src/infrastructure/repositories/MmkvPresenceRepository';
 import { getNumber, getString } from '../src/persistence/mmkv';
 import { STORAGE_KEYS } from '../src/persistence/schema';
 
@@ -59,7 +60,7 @@ describe('dayWidgetAppeal', () => {
       key === STORAGE_KEYS.PRESENCE_STREAK_LAST_DATE ? '2026-07-17' : undefined,
     );
 
-    const cache = new MmkvTimeRepository().getWidgetCache();
+    const cache = new MmkvTimeRepository(new MmkvPresenceRepository()).getWidgetCache();
 
     expect(cache.presenceStreakCount).toBe(4);
     expect(cache.presenceStreakDots).toEqual([
@@ -81,7 +82,7 @@ describe('dayWidgetAppeal', () => {
       key === STORAGE_KEYS.USER_DEATH_AGE ? 80 : undefined,
     );
 
-    const cache = new MmkvTimeRepository().getWidgetCache();
+    const cache = new MmkvTimeRepository(new MmkvPresenceRepository()).getWidgetCache();
 
     expect(cache.birthDate).toBe('1990-01-01');
     expect(cache.deathAge).toBe(80);
@@ -91,7 +92,7 @@ describe('dayWidgetAppeal', () => {
     mockGetString.mockReturnValue(undefined);
     mockGetNumber.mockReturnValue(undefined);
 
-    const cache = new MmkvTimeRepository().getWidgetCache();
+    const cache = new MmkvTimeRepository(new MmkvPresenceRepository()).getWidgetCache();
 
     expect(cache.birthDate).toBeUndefined();
   });

@@ -12,7 +12,7 @@ import { TRIAL_DURATION_MS } from '../config/accessConstants';
 import { getNumber, getString, setNumber, setString } from '../persistence/mmkv';
 import { STORAGE_KEYS } from '../persistence/schema';
 import { logAnalyticsEvent } from './analytics';
-import { getTrialDayIndex } from './trialReminders';
+import { getTrialDayIndex } from '../core/monetization/trialDay';
 import { requestNotificationPermission } from './notificationPermission';
 
 const CHANNEL_ID = 'retention';

@@ -6,7 +6,6 @@
 
 import type { ITimeRepository } from '../../domain/repository/ITimeRepository';
 import type { IPresenceRepository } from '../../domain/repository/IPresenceRepository';
-import { MmkvPresenceRepository } from './MmkvPresenceRepository';
 import type { TimeProgress, WidgetCache } from '../../types';
 import { getDayProgress } from '../../core/time/day';
 import { getMonthProgress } from '../../core/time/month';
@@ -111,7 +110,7 @@ export class MmkvTimeRepository implements ITimeRepository {
   private subscribers: Set<Subscriber> = new Set();
 
   constructor(
-    private readonly presenceRepository: IPresenceRepository = new MmkvPresenceRepository(),
+    private readonly presenceRepository: IPresenceRepository,
   ) {}
 
   getUserProfile(): { birthDate: string | null; deathAge: number } {

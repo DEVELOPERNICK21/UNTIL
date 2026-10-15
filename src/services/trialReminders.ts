@@ -8,6 +8,7 @@ import {
 } from '../config/monetization';
 import { TRIAL_DURATION_MS } from '../config/accessConstants';
 import { requestNotificationPermission } from './notificationPermission';
+import { getTrialDayIndex } from '../core/monetization/trialDay';
 
 const ONE_DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -30,12 +31,6 @@ function markInAppShown(day: number): void {
   const set = getInAppShownDays();
   set.add(day);
   setString(STORAGE_KEYS.TRIAL_REMINDERS_INAPP_SHOWN, [...set].join(','));
-}
-
-/** 1-based day index since trial start (day 1 = first 24h). */
-export function getTrialDayIndex(trialStartMs: number, now: number = Date.now()): number {
-  if (trialStartMs <= 0) return 0;
-  return Math.floor((now - trialStartMs) / ONE_DAY_MS) + 1;
 }
 
 export function getActiveTrialReminderDay(
