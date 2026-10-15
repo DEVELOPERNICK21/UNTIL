@@ -8,6 +8,8 @@ export interface DesktopLocalState {
   deathAge: number | null;
   deviceRegistered: boolean;
   entitlementActive: boolean;
+  /** When this machine last heard from the account (ms since the epoch). Null before the first time. */
+  syncedAt: number | null;
 }
 
 const KEY = 'until.desktop.localState';
@@ -19,6 +21,7 @@ export const EMPTY_LOCAL_STATE: DesktopLocalState = {
   deathAge: null,
   deviceRegistered: false,
   entitlementActive: false,
+  syncedAt: null,
 };
 
 export function loadLocalState(): DesktopLocalState {

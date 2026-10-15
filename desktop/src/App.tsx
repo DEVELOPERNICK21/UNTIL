@@ -24,6 +24,7 @@ import {
   register,
   saveSetup,
   signOutDesktop,
+  watchAccountProfile,
   type SessionView,
 } from './session';
 import { useNow } from './useNow';
@@ -164,6 +165,9 @@ export function App() {
   const [flipped, setFlipped] = useState(false);
   const [pulse, setPulse] = useState(0);
 
+  // Follow the profile on your account, so a change made on the phone shows up here in seconds.
+  useEffect(() => watchAccountProfile(), [local.uid, local.deviceRegistered]);
+
   useEffect(() => {
     void pushExtra(model).catch(() => {});
   }, [model.extraText, model.extraProgress]);
@@ -192,6 +196,11 @@ export function App() {
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
+      // Ctrl+Q (Windows, Linux) or Cmd+Q (Mac) quits, so there is always a way out.
+      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'q') {
+        void invoke('quit_app');
+        return;
+      }
       if (event.target instanceof HTMLInputElement) return;
       if (event.key === 'ArrowRight') step(1);
       else if (event.key === 'ArrowLeft') step(-1);
@@ -281,6 +290,13 @@ export function App() {
               <AccountFooter
                 email={local.email}
                 premium={local.entitlementActive}
+                syncedAt={local.syncedAt}
+                now={now.getTime()}
+                onSync={() =>
+                  refreshSession().then(next => {
+                    if (next) setView(next);
+                  })
+                }
                 onSignOut={() => void run(signOutDesktop)}
               />
             );

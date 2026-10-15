@@ -900,3 +900,153 @@ body,
   margin: 0;
   accent-color: var(--ember);
 }
+
+/* Footer bar: update notice, launch at login, and a clear way to quit. */
+
+.panel-bar {
+  display: grid;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+  animation: rise 420ms var(--ease-out) both;
+}
+
+.update {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  border-radius: var(--radius-card);
+  border: 1px solid color-mix(in srgb, var(--ember) 55%, transparent);
+  background: color-mix(in srgb, var(--ember) 16%, transparent);
+  font-size: 12px;
+}
+
+.link.strong {
+  color: var(--text);
+  font-weight: 700;
+}
+
+.panel-bar-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.switch {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--text-2);
+  cursor: pointer;
+}
+
+.switch input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.switch-track {
+  position: relative;
+  width: 30px;
+  height: 18px;
+  border-radius: 999px;
+  background: var(--track);
+  transition: background-color 180ms var(--ease-out);
+}
+
+.switch-track::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  transition: transform 220ms var(--spring);
+}
+
+.switch input:checked + .switch-track {
+  background: var(--ember);
+}
+
+.switch input:checked + .switch-track::after {
+  transform: translateX(12px);
+}
+
+.switch input:focus-visible + .switch-track {
+  outline: 2px solid var(--ember);
+  outline-offset: 2px;
+}
+
+.btn-quit {
+  margin-left: auto;
+  height: 30px;
+  padding: 0 14px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--card);
+  color: var(--text);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition:
+    background-color 140ms var(--ease-out),
+    transform 160ms var(--spring);
+}
+
+.btn-quit:hover {
+  background: var(--card-strong);
+  transform: translateY(-1px);
+}
+
+.btn-quit:active {
+  transform: scale(0.96);
+}
+
+.btn-quit:focus-visible {
+  outline: 2px solid var(--ember);
+  outline-offset: 2px;
+}
+
+/* Sync status in the signed-in footer. */
+
+.sync-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-2);
+  font-size: 12px;
+  color: var(--text-2);
+}
+
+.sync-dot {
+  flex: none;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #4ade80;
+  box-shadow: 0 0 6px #4ade80;
+}
+
+.sync-dot-off {
+  background: var(--text-3);
+  box-shadow: none;
+}
+
+.sync-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.link:disabled {
+  opacity: 0.5;
+  cursor: default;
+}

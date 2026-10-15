@@ -199,7 +199,11 @@ export const syncTrialPreviewUseCase = new SyncTrialPreviewUseCase(
 );
 
 export const observeTimeStateUseCase = new ObserveTimeStateUseCase(timeRepository);
-export const updateUserProfileUseCase = new UpdateUserProfileUseCase(timeRepository);
+export const updateUserProfileUseCase = new UpdateUserProfileUseCase(
+  timeRepository,
+  accountCloudStore,
+  () => authSessionRepository.getUid()
+);
 export const observeSubscriptionUseCase = new ObserveSubscriptionUseCase(subscriptionRepository);
 export const updateSubscriptionUseCase = new UpdateSubscriptionUseCase(subscriptionRepository);
 export const getAccessStateUseCase = new GetAccessStateUseCase(

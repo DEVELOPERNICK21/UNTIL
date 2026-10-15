@@ -144,6 +144,26 @@ jobs:
           prerelease: false
           includeUpdaterJson: true
 
+      # Runs the app we just built on a real Windows machine. It turns the desktop widgets on from a
+      # background thread, checks the windows exist, writes smoke.txt and quits (see
+      # desktop/src-tauri/src/smoke.rs). Creating a window from the wrong thread hangs on Windows,
+      # which is what a hang here would mean. Test builds only, so a release is not slowed down.
+      - name: Smoke test the Windows app
+        if: matrix.platform == 'windows-latest' && github.event_name == 'workflow_dispatch'
+        timeout-minutes: 3
+        shell: pwsh
+        run: |
+          $env:UNTIL_SMOKE_TEST = '1'
+          $exe = Resolve-Path 'desktop/src-tauri/target/release/until-desktop.exe'
+          $proc = Start-Process -FilePath $exe -PassThru
+          if (-not $proc.WaitForExit(90000)) {
+            $proc.Kill()
+            throw 'The app did not finish the smoke test in 90 seconds. It is probably hung.'
+          }
+          $report = Join-Path $env:APPDATA 'app.until.time.desktop/smoke.txt'
+          if (Test-Path $report) { Get-Content $report } else { Write-Host 'No smoke.txt was written.' }
+          if ($proc.ExitCode -ne 0) { throw "Smoke test failed with exit code $($proc.ExitCode)." }
+
       - name: Attach test build to the run
         if: github.event_name == 'workflow_dispatch'
         uses: actions/upload-artifact@v4

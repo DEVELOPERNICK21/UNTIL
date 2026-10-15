@@ -11,6 +11,7 @@ mod notch;
 mod oauth;
 mod ring;
 mod settings;
+mod smoke;
 mod widgets;
 
 const TRAY_ID: &str = "until-extra";
@@ -190,8 +191,11 @@ fn widgets_state(app: AppHandle) -> WidgetsState {
 
 /// Turn a widget on or off from the panel. Turning one on raises it above your windows for a few
 /// seconds so you can see where it went.
+///
+/// This is `async` on purpose. It can create a window, and on Windows creating a window from a
+/// synchronous command (which runs on the main thread) deadlocks.
 #[tauri::command]
-fn widget_set_open(app: AppHandle, kind: String, on: bool) {
+async fn widget_set_open(app: AppHandle, kind: String, on: bool) {
     widgets::set_open(&app, &kind, on);
 }
 
@@ -350,8 +354,13 @@ pub fn run() {
                         let on = !widgets::is_on_top(app);
                         widgets::set_on_top(app, on);
                     } else if let Some(kind) = id.strip_prefix("widget:") {
-                        let on = !widgets::is_open(app, kind);
-                        widgets::set_open(app, kind, on);
+                        // Menu events arrive on the main thread, and creating a window there
+                        // deadlocks on Windows, so hand it to another thread.
+                        let (app, kind) = (app.clone(), kind.to_string());
+                        std::thread::spawn(move || {
+                            let on = !widgets::is_open(&app, &kind);
+                            widgets::set_open(&app, &kind, on);
+                        });
                     } else if id == "notch" || id == "compact" {
                         #[cfg(target_os = "macos")]
                         if let Some((notch_item, compact_item)) = &notch_items {
@@ -386,6 +395,7 @@ pub fn run() {
 
             widgets::restore(app.handle());
             widgets::start_flush_thread(app.handle().clone());
+            smoke::maybe_run(app.handle().clone());
             Ok(())
         })
         .on_window_event(|window, event| match event {
