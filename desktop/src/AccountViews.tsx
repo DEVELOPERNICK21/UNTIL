@@ -33,7 +33,6 @@ export function SignInCard(props: {
   message?: string;
   onGoogle: () => void;
   onApple: () => void;
-  onQuit: () => void;
 }) {
   return (
     <Card>
@@ -47,11 +46,6 @@ export function SignInCard(props: {
         <button className="btn btn-dark" onClick={props.onApple}>
           <AppleIcon />
           Sign in with Apple
-        </button>
-      </div>
-      <div className="card-foot">
-        <button className="link quiet" onClick={props.onQuit}>
-          Quit
         </button>
       </div>
     </Card>
@@ -195,7 +189,6 @@ export function AccountFooter(props: {
   email: string | null;
   premium: boolean;
   onSignOut: () => void;
-  onQuit: () => void;
 }) {
   const initial = (props.email ?? '?').charAt(0).toUpperCase();
   return (
@@ -209,13 +202,47 @@ export function AccountFooter(props: {
         <button className="link" onClick={props.onSignOut}>
           Sign out
         </button>
-        <span className="dot" aria-hidden="true">
-          ·
-        </span>
+      </div>
+    </footer>
+  );
+}
+
+export function PanelBar(props: {
+  launchAtLogin: boolean | null;
+  onLaunchAtLogin: (on: boolean) => void;
+  updateReady: boolean;
+  onRestart: () => void;
+  onQuit: () => void;
+}) {
+  return (
+    <div className="panel-bar">
+      {props.updateReady ? (
+        <div className="update">
+          <span>Update ready.</span>
+          <button className="link strong" onClick={props.onRestart}>
+            Restart
+          </button>
+        </div>
+      ) : null}
+      <div className="panel-bar-row">
+        {props.launchAtLogin == null ? (
+          <span />
+        ) : (
+          <label className="switch">
+            <input
+              type="checkbox"
+              role="switch"
+              checked={props.launchAtLogin}
+              onChange={e => props.onLaunchAtLogin(e.target.checked)}
+            />
+            <span className="switch-track" aria-hidden="true" />
+            <span>Open at login</span>
+          </label>
+        )}
         <button className="link" onClick={props.onQuit}>
           Quit
         </button>
       </div>
-    </footer>
+    </div>
   );
 }

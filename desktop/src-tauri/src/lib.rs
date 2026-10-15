@@ -2,13 +2,16 @@ use std::sync::Mutex;
 use std::time::{Duration, Instant};
 use tauri::{
     image::Image,
-    menu::{MenuBuilder, MenuItemBuilder},
+    menu::{CheckMenuItemBuilder, MenuBuilder, MenuItemBuilder, SubmenuBuilder},
     tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
     AppHandle, Manager, PhysicalPosition, Rect, Runtime, WebviewWindow, WindowEvent,
 };
 
+mod notch;
 mod oauth;
 mod ring;
+mod settings;
+mod widgets;
 
 const TRAY_ID: &str = "until-extra";
 const PANEL: &str = "panel";
@@ -129,6 +132,104 @@ fn quit_app(app: AppHandle) {
     app.exit(0);
 }
 
+#[derive(serde::Serialize)]
+struct NotchInfo {
+    width: f64,
+    height: f64,
+    compact: bool,
+}
+
+/// Size of this Mac's notch, so the island can be drawn around it. `None` where there is none.
+#[tauri::command]
+fn notch_info(app: AppHandle) -> Option<NotchInfo> {
+    #[cfg(target_os = "macos")]
+    {
+        notch::info(&app).map(|(width, height, compact)| NotchInfo {
+            width,
+            height,
+            compact,
+        })
+    }
+    #[cfg(not(target_os = "macos"))]
+    {
+        let _ = app;
+        None
+    }
+}
+
+/// The island's button: open the full panel, under the notch where there is one.
+#[tauri::command]
+fn notch_open_panel(app: AppHandle) {
+    #[cfg(target_os = "macos")]
+    notch::open_panel_under_notch(&app, PANEL);
+    #[cfg(not(target_os = "macos"))]
+    show_panel(&app);
+}
+
+#[derive(serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+struct WidgetsState {
+    day: bool,
+    month: bool,
+    year: bool,
+    life: bool,
+    on_top: bool,
+}
+
+/// Which desktop widgets are on, for the switches in the panel.
+#[tauri::command]
+fn widgets_state(app: AppHandle) -> WidgetsState {
+    WidgetsState {
+        day: widgets::is_open(&app, "day"),
+        month: widgets::is_open(&app, "month"),
+        year: widgets::is_open(&app, "year"),
+        life: widgets::is_open(&app, "life"),
+        on_top: widgets::is_on_top(&app),
+    }
+}
+
+/// Turn a widget on or off from the panel. Turning one on raises it above your windows for a few
+/// seconds so you can see where it went.
+#[tauri::command]
+fn widget_set_open(app: AppHandle, kind: String, on: bool) {
+    widgets::set_open(&app, &kind, on);
+}
+
+#[tauri::command]
+fn widgets_set_on_top(app: AppHandle, on: bool) {
+    widgets::set_on_top(&app, on);
+}
+
+#[tauri::command]
+fn widgets_peek(app: AppHandle) {
+    widgets::peek(&app);
+}
+
+/// A widget's own buttons: change its size.
+#[tauri::command]
+fn widget_set_size(app: AppHandle, kind: String, size: String) {
+    widgets::set_size(&app, &kind, &size);
+}
+
+/// A widget's own buttons: close it. It stays off until ticked again in the tray menu.
+#[tauri::command]
+fn widget_close(app: AppHandle, kind: String) {
+    widgets::set_open(&app, &kind, false);
+}
+
+/// A widget's own buttons: open the full panel, under the menu bar icon.
+#[tauri::command]
+fn widget_open_panel(app: AppHandle) {
+    let (Some(panel), Some(tray)) = (app.get_webview_window(PANEL), app.tray_by_id(TRAY_ID)) else {
+        return show_panel(&app);
+    };
+    if let Ok(Some(rect)) = tray.rect() {
+        place_panel(&panel, &rect);
+    }
+    let _ = panel.show();
+    let _ = panel.set_focus();
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     let builder = tauri::Builder::default();
@@ -140,10 +241,20 @@ pub fn run() {
         show_panel(app);
     }));
 
+    #[cfg(desktop)]
+    let builder = builder
+        .plugin(tauri_plugin_updater::Builder::new().build())
+        .plugin(tauri_plugin_autostart::init(
+            tauri_plugin_autostart::MacosLauncher::LaunchAgent,
+            None,
+        ));
+
     builder
         .plugin(tauri_plugin_deep_link::init())
         .plugin(tauri_plugin_opener::init())
+        .plugin(tauri_plugin_process::init())
         .manage(PanelState::default())
+        .manage(widgets::TrayWidgets::default())
         .setup(|app| {
             #[cfg(target_os = "macos")]
             app.set_activation_policy(tauri::ActivationPolicy::Accessory);
@@ -161,8 +272,64 @@ pub fn run() {
                 app.deep_link().on_open_url(move |_event| show_panel(&handle));
             }
 
+            app.manage(settings::SettingsStore::load(app.handle()));
+
+            // Macs with a notch get the island. Other Macs and Windows never build it.
+            #[cfg(target_os = "macos")]
+            let has_notch = notch::install(app);
+            #[cfg(not(target_os = "macos"))]
+            let has_notch = false;
+
             let quit = MenuItemBuilder::with_id("quit", "Quit UNTIL").build(app)?;
-            let menu = MenuBuilder::new(app).item(&quit).build()?;
+            let prefs = app.state::<settings::SettingsStore>().get();
+
+            // "Show in the notch" and "Show beside the notch" only exist on a Mac with a notch.
+            let notch_items = if has_notch {
+                Some((
+                    CheckMenuItemBuilder::with_id("notch", "Show in the notch")
+                        .checked(prefs.notch)
+                        .build(app)?,
+                    CheckMenuItemBuilder::with_id("compact", "Show time beside the notch")
+                        .checked(prefs.compact)
+                        .build(app)?,
+                ))
+            } else {
+                None
+            };
+
+            // One tick box per desktop widget. Closing a widget from its own page unticks it.
+            let mut widgets_menu = SubmenuBuilder::new(app, "Widgets");
+            for kind in widgets::KINDS {
+                let on = prefs.widgets.get(kind).is_some_and(|w| w.on);
+                let item = CheckMenuItemBuilder::with_id(format!("widget:{kind}"), widgets::label(kind))
+                    .checked(on)
+                    .build(app)?;
+                widgets_menu = widgets_menu.item(&item);
+                app.state::<widgets::TrayWidgets>()
+                    .0
+                    .lock()
+                    .unwrap()
+                    .insert(kind.to_string(), item);
+            }
+            let widgets_on_top = CheckMenuItemBuilder::with_id("widgets:ontop", "Keep widgets on top")
+                .checked(prefs.widgets_on_top)
+                .build(app)?;
+            app.state::<widgets::TrayWidgets>()
+                .0
+                .lock()
+                .unwrap()
+                .insert(widgets::ON_TOP_ITEM.to_string(), widgets_on_top.clone());
+            let widgets_menu = widgets_menu
+                .separator()
+                .item(&MenuItemBuilder::with_id("widgets:peek", "Show widgets now").build(app)?)
+                .item(&widgets_on_top)
+                .build()?;
+
+            let mut menu = MenuBuilder::new(app);
+            if let Some((notch_item, compact_item)) = &notch_items {
+                menu = menu.item(notch_item).item(compact_item).separator();
+            }
+            let menu = menu.item(&widgets_menu).separator().item(&quit).build()?;
 
             #[cfg(target_os = "macos")]
             let track = ring::draw(RING_PX, None, &ring::TEMPLATE);
@@ -173,9 +340,31 @@ pub fn run() {
                 .tooltip("UNTIL")
                 .menu(&menu)
                 .show_menu_on_left_click(false)
-                .on_menu_event(|app, event| {
-                    if event.id() == "quit" {
+                .on_menu_event(move |app, event| {
+                    let id = event.id().as_ref();
+                    if id == "quit" {
                         app.exit(0);
+                    } else if id == "widgets:peek" {
+                        widgets::peek(app);
+                    } else if id == "widgets:ontop" {
+                        let on = !widgets::is_on_top(app);
+                        widgets::set_on_top(app, on);
+                    } else if let Some(kind) = id.strip_prefix("widget:") {
+                        let on = !widgets::is_open(app, kind);
+                        widgets::set_open(app, kind, on);
+                    } else if id == "notch" || id == "compact" {
+                        #[cfg(target_os = "macos")]
+                        if let Some((notch_item, compact_item)) = &notch_items {
+                            if id == "notch" {
+                                let on = !notch::is_enabled(app);
+                                notch::set_enabled(app, on);
+                                let _ = notch_item.set_checked(on);
+                            } else {
+                                let on = !notch::is_compact(app);
+                                notch::set_compact(app, on);
+                                let _ = compact_item.set_checked(on);
+                            }
+                        }
                     }
                 })
                 .on_tray_icon_event(|tray, event| {
@@ -194,12 +383,21 @@ pub fn run() {
             let builder = builder.icon_as_template(true).title("—");
 
             builder.build(app)?;
+
+            widgets::restore(app.handle());
+            widgets::start_flush_thread(app.handle().clone());
             Ok(())
         })
         .on_window_event(|window, event| match event {
+            // Closing a window only hides it. A widget is switched off by its own close button or
+            // the menu, never here: the app quitting closes every window and must not forget which
+            // widgets were on.
             WindowEvent::CloseRequested { api, .. } => {
                 api.prevent_close();
                 let _ = window.hide();
+            }
+            WindowEvent::Moved(position) if widgets::kind_of(window.label()).is_some() => {
+                widgets::moved(window.app_handle(), window, *position);
             }
             WindowEvent::Focused(false) if window.label() == PANEL => {
                 if let Ok(mut at) = window.state::<PanelState>().blurred_at.lock() {
@@ -212,6 +410,15 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             set_extra,
             quit_app,
+            notch_info,
+            notch_open_panel,
+            widget_set_size,
+            widget_close,
+            widget_open_panel,
+            widgets_state,
+            widget_set_open,
+            widgets_set_on_top,
+            widgets_peek,
             oauth::oauth_loopback_start,
             oauth::google_exchange_code
         ])

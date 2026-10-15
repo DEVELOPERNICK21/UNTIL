@@ -1,0 +1,7 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "island-and-widgets",
+  "description": "The notch island and the desktop widgets listen for events and can be dragged.",
+  "windows": ["notch", "widget-*"],
+  "permissions": ["core:default", "core:window:allow-start-dragging"]
+}

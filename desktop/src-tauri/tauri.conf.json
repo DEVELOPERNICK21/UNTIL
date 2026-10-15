@@ -15,7 +15,7 @@
       {
         "label": "panel",
         "title": "UNTIL",
-        "width": 320,
+        "width": 340,
         "height": 420,
         "visible": false,
         "resizable": false,
@@ -40,11 +40,27 @@
       "desktop": {
         "schemes": ["until-desktop"]
       }
+    },
+    "updater": {
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDExREY0NkNFNTZGMTUyQzYKUldUR1V2Rld6a2JmRVFaUVFNOFJUcHF3MFBWdnc2NlM2amE4bEhEenBubjQ2RTRmdkZ2YW40c0MK",
+      "endpoints": [
+        "https://developernick1-until.vercel.app/api/desktop/update"
+      ],
+      "windows": {
+        "installMode": "passive"
+      }
     }
   },
   "bundle": {
     "active": true,
-    "targets": "all",
+    "targets": ["app", "dmg", "nsis"],
+    "createUpdaterArtifacts": true,
+    "category": "Productivity",
+    "shortDescription": "Day, month, year and life progress in your menu bar.",
+    "copyright": "© 2026 UNTIL",
+    "macOS": {
+      "minimumSystemVersion": "11.0"
+    },
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",

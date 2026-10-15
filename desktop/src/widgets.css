@@ -1,0 +1,368 @@
+/* Desktop widgets. Colours are the phone widgets' (docs/WIDGETS.md): purple for what has passed,
+   Ember orange for now, a dim grey for what is ahead. The window is transparent and the widget
+   draws its own rounded glass. */
+
+html[data-view='widget'],
+html[data-view='widget'] body,
+html[data-view='widget'] #root {
+  background: transparent;
+  height: 100%;
+}
+
+.widget,
+.widget * {
+  box-sizing: border-box;
+}
+
+.widget {
+  --passed: #bb86fc;
+  --now: #e87c20;
+  --ahead: #4a4a4e;
+  --hero: #f2f2f2;
+  --label: #8a8a8e;
+  --ring-bg: #3a342f;
+  position: relative;
+  box-sizing: border-box;
+  height: 100%;
+  overflow: hidden;
+  color: var(--hero);
+  background:
+    linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.07),
+      rgba(255, 255, 255, 0.02) 50%,
+      rgba(0, 0, 0, 0.22)
+    ),
+    #0e0e10;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 22px;
+  cursor: grab;
+  animation: widget-in 520ms var(--ease-out, cubic-bezier(0.22, 1, 0.36, 1)) both;
+}
+
+.widget:active {
+  cursor: grabbing;
+}
+
+@keyframes widget-in {
+  from {
+    opacity: 0;
+    transform: scale(0.94);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Buttons: only there when the pointer is. */
+
+.w-controls {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 3;
+  display: flex;
+  gap: 4px;
+  opacity: 0;
+  transform: translateY(-3px);
+  transition:
+    opacity 160ms ease,
+    transform 200ms var(--spring, cubic-bezier(0.34, 1.56, 0.64, 1));
+}
+
+.widget:hover .w-controls {
+  opacity: 1;
+  transform: none;
+}
+
+.w-controls button {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.12);
+  color: #d4d4d8;
+  cursor: pointer;
+  transition:
+    background-color 120ms ease,
+    transform 160ms var(--spring, cubic-bezier(0.34, 1.56, 0.64, 1));
+}
+
+.w-controls button:hover {
+  background: rgba(255, 255, 255, 0.24);
+  color: #fff;
+  transform: scale(1.1);
+}
+
+.w-controls button:active {
+  transform: scale(0.94);
+}
+
+/* Day */
+
+.day-small {
+  height: 100%;
+  display: grid;
+  grid-template-rows: 1fr auto;
+  justify-items: center;
+  align-items: center;
+  padding: 10px 14px 14px;
+  gap: 4px;
+}
+
+.day-medium {
+  height: 100%;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 18px 14px 14px;
+}
+
+.day-ring {
+  position: relative;
+  flex: none;
+}
+
+.day-ring > svg {
+  position: absolute;
+  left: -16px;
+  top: -16px;
+  overflow: visible;
+}
+
+.ring-track {
+  stroke: var(--ring-bg);
+}
+
+.ring-arc {
+  stroke: var(--passed);
+  transition: stroke-dasharray 1.2s var(--ease-out, cubic-bezier(0.22, 1, 0.36, 1));
+  animation: ring-draw 1.2s var(--ease-out, cubic-bezier(0.22, 1, 0.36, 1)) both;
+}
+
+@keyframes ring-draw {
+  from {
+    stroke-dasharray: 0 999;
+  }
+}
+
+.ring-knob {
+  fill: var(--now);
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.4));
+  animation: knob 2.4s ease-in-out infinite;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+@keyframes knob {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.22);
+  }
+}
+
+.hour-passed {
+  fill: var(--passed);
+}
+
+.hour-current {
+  fill: var(--now);
+  animation: now-pulse 1.8s ease-in-out infinite;
+}
+
+.hour-left {
+  fill: var(--ahead);
+}
+
+@keyframes now-pulse {
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+.day-ember {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+}
+
+.w-left {
+  font-size: 14px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  color: #ededed;
+}
+
+/* Text column (medium) */
+
+.w-text {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  min-width: 0;
+  gap: 4px;
+}
+
+.w-overline {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--label);
+  white-space: nowrap;
+}
+
+.w-hero {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.w-hero-value {
+  display: inline-block;
+  animation: hero-in 420ms var(--ease-out, cubic-bezier(0.22, 1, 0.36, 1)) both;
+}
+
+@keyframes hero-in {
+  from {
+    opacity: 0;
+    transform: translateY(35%);
+  }
+}
+
+.w-hero-unit {
+  font-size: 0.34em;
+  font-weight: 600;
+  color: var(--label);
+}
+
+.w-caption {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--label);
+  white-space: nowrap;
+}
+
+.w-spacer {
+  flex: 1;
+}
+
+/* Month, Year, Life: text on the left, dots on the right */
+
+.split {
+  height: 100%;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: stretch;
+  gap: 16px;
+  padding: 16px;
+}
+
+.split .w-text {
+  min-width: 112px;
+}
+
+.grid-box {
+  display: grid;
+  place-items: center;
+  min-width: 0;
+}
+
+.dots {
+  display: grid;
+  justify-content: center;
+  align-content: center;
+}
+
+.dot {
+  width: var(--dot);
+  height: var(--dot);
+  border-radius: 50%;
+  animation: dot-in 420ms var(--ease-out, cubic-bezier(0.22, 1, 0.36, 1)) both;
+}
+
+.dot-blank {
+  visibility: hidden;
+}
+
+.dot-passed {
+  background: var(--passed);
+}
+
+.month-box .dot-passed {
+  opacity: 0.6;
+}
+
+.dot-current {
+  background: var(--now);
+  box-shadow: 0 0 6px var(--now);
+  animation:
+    dot-in 420ms var(--ease-out, cubic-bezier(0.22, 1, 0.36, 1)) both,
+    now-pulse 1.8s ease-in-out 600ms infinite;
+}
+
+.dot-left {
+  background: var(--ahead);
+}
+
+@keyframes dot-in {
+  from {
+    opacity: 0;
+    transform: scale(0.2);
+  }
+}
+
+/* Signed out, or no birth date */
+
+.w-empty {
+  height: 100%;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 4px;
+  padding: 12px 18px;
+  text-align: center;
+}
+
+.w-empty p {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.35;
+  color: var(--label);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .widget,
+  .ring-arc,
+  .ring-knob,
+  .hour-current,
+  .dot,
+  .dot-current,
+  .w-hero-value {
+    animation: none;
+  }
+  .w-controls,
+  .w-controls button,
+  .ring-arc {
+    transition: none;
+  }
+}

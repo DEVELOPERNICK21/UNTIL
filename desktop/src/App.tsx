@@ -4,6 +4,7 @@ import { getCurrentWindow, LogicalSize } from '@tauri-apps/api/window';
 import type { UserCredential } from 'firebase/auth';
 import { buildPanelModel } from '@until/core/time/panelModel';
 import { getProgressColor } from '@until/theme/progressColor';
+import { timeOfDayLabel } from '@until/theme/emotionalCopy';
 import { DEVICE_LIMIT_BANNER_COPY } from '@until/core/account/accountCopy';
 import { loadLocalState, panelProfile } from './localState';
 import { pushExtra } from './extra';
@@ -25,9 +26,18 @@ import {
   signOutDesktop,
   type SessionView,
 } from './session';
+import { useNow } from './useNow';
+import { useSystem } from './useSystem';
+import { WidgetsRow } from './WidgetsRow';
+import { restartApp } from './system';
+import { Ember } from './ember/Ember';
+import { Dial } from './Dial';
+import { Digits } from './Digits';
+import { PERIOD_KEYS, buildPeriods, type PeriodKey, type PeriodView } from './periods';
 import {
   AccountFooter,
   MessageCard,
+  PanelBar,
   ReplaceDialog,
   RetryCard,
   SetupForm,
@@ -35,16 +45,8 @@ import {
   WaitingCard,
 } from './AccountViews';
 
-const PANEL_WIDTH = 320;
-
-function useNow(): Date {
-  const [now, setNow] = useState(() => new Date());
-  useEffect(() => {
-    const id = setInterval(() => setNow(new Date()), 1000);
-    return () => clearInterval(id);
-  }, []);
-  return now;
-}
+const PANEL_WIDTH = 340;
+const PERIOD_KEY = 'until.desktop.period';
 
 /** The window follows the content height, so each state fits without scrolling. */
 function useFitWindow() {
@@ -120,66 +122,157 @@ const DATE_FORMAT: Intl.DateTimeFormatOptions = {
   month: 'short',
 };
 
+const HERO_LABEL: Record<PeriodKey, string> = {
+  day: 'Today',
+  month: 'This month',
+  year: 'This year',
+  life: 'Your life',
+};
+
+function loadPeriod(): PeriodKey {
+  try {
+    const saved = localStorage.getItem(PERIOD_KEY);
+    return PERIOD_KEYS.includes(saved as PeriodKey) ? (saved as PeriodKey) : 'day';
+  } catch {
+    return 'day';
+  }
+}
+
+/** The panel plays its entrance again every time it is shown. */
+function useOpenCount(): number {
+  const [count, setCount] = useState(0);
+  useEffect(() => {
+    const open = () => setCount(c => c + 1);
+    window.addEventListener('focus', open);
+    return () => window.removeEventListener('focus', open);
+  }, []);
+  return count;
+}
+
 export function App() {
   const now = useNow();
   const local = loadLocalState();
-  const model = buildPanelModel(panelProfile(local), now);
+  const profile = panelProfile(local);
+  const model = buildPanelModel(profile, now);
+  const periods = buildPeriods(model, { signedIn: profile.signedIn });
   const { view, setView, run, signIn } = useSession();
   const panelRef = useFitWindow();
+  const system = useSystem();
+  const openCount = useOpenCount();
+
+  const [period, setPeriod] = useState<PeriodKey>(loadPeriod);
+  const [flipped, setFlipped] = useState(false);
+  const [pulse, setPulse] = useState(0);
 
   useEffect(() => {
     void pushExtra(model).catch(() => {});
   }, [model.extraText, model.extraProgress]);
 
-  const dayColor = getProgressColor(model.day.progress);
+  const choose = useCallback((next: PeriodKey) => {
+    setPeriod(current => {
+      if (current === next) return current;
+      try {
+        localStorage.setItem(PERIOD_KEY, next);
+      } catch {
+        // Not worth failing over.
+      }
+      return next;
+    });
+    setFlipped(false);
+    setPulse(n => n + 1);
+  }, []);
+
+  const step = useCallback(
+    (delta: number) => {
+      const index = PERIOD_KEYS.indexOf(period);
+      choose(PERIOD_KEYS[(index + delta + PERIOD_KEYS.length) % PERIOD_KEYS.length]);
+    },
+    [period, choose],
+  );
+
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      if (event.target instanceof HTMLInputElement) return;
+      if (event.key === 'ArrowRight') step(1);
+      else if (event.key === 'ArrowLeft') step(-1);
+      else if (/^[1-4]$/.test(event.key)) choose(PERIOD_KEYS[Number(event.key) - 1]);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [step, choose]);
+
+  const current = periods[period];
+  const side = flipped ? current.passed : current.left;
+  const color = current.progress == null ? 'var(--text-3)' : getProgressColor(current.progress);
 
   return (
     <main className="panel" ref={panelRef}>
-      <header className="head">
-        <span className="mark">UNTIL</span>
-        <span className="date">{now.toLocaleDateString(undefined, DATE_FORMAT)}</span>
-      </header>
+      <div className="enter" key={openCount}>
+        <header className="top">
+          <Ember progress={model.day.progress} size={54} pulse={pulse} />
+          <div className="greet">
+            <span className="eyebrow">{timeOfDayLabel(now)}</span>
+            <h1>Time reality</h1>
+          </div>
+          <span className="date">{now.toLocaleDateString(undefined, DATE_FORMAT)}</span>
+        </header>
 
-      <section className="hero" aria-label="Today">
-        <div className="hero-label">Today</div>
-        <div className="hero-value" style={{ color: dayColor }}>
-          {model.day.leftStr}
-        </div>
-        <div className="hero-sub">
-          left today · {model.day.passedPct}% passed
-        </div>
-        <Bar progress={model.day.progress} color={dayColor} />
-      </section>
+        <nav className="chips" role="tablist" aria-label="Period">
+          <span
+            className="chip-glide"
+            aria-hidden="true"
+            style={{ transform: `translateX(${PERIOD_KEYS.indexOf(period) * 100}%)` }}
+          />
+          {PERIOD_KEYS.map(key => (
+            <Chip
+              key={key}
+              item={periods[key]}
+              selected={key === period}
+              onSelect={() => choose(key)}
+            />
+          ))}
+        </nav>
 
-      <section className="rows">
-        <Row
-          title="Month"
-          value={`${model.month.leftDays} days`}
-          meta={`${model.month.leftPct}% left`}
-          progress={model.month.passedPct / 100}
-        />
-        <Row
-          title="Year"
-          value={`${model.year.leftDays} days`}
-          meta={`${model.year.leftPct}% left`}
-          progress={model.year.passedPct / 100}
-        />
-        {model.life ? (
-          <Row
-            title="Life"
-            value={`${model.life.leftDays.toLocaleString()} days`}
-            meta={`${model.life.leftPct}% left`}
-            progress={model.life.passedPct / 100}
-          />
-        ) : (
-          <Row
-            title="Life"
-            value="—"
-            meta={view.kind === 'signed_in' ? 'Needs your birth date' : 'Sign in to see'}
-            progress={null}
-          />
-        )}
-      </section>
+        <section className="stage" aria-live="off" style={{ ['--accent' as string]: color }}>
+          <button
+            type="button"
+            className="dial-button"
+            onClick={() => {
+              if (current.locked) return;
+              setFlipped(f => !f);
+              setPulse(n => n + 1);
+            }}
+            title={current.locked ? undefined : 'Click to flip between left and passed'}
+            aria-label={`${HERO_LABEL[period]}: ${side.parts
+              .map(part => `${part.value}${part.unit}`)
+              .join(' ')} ${side.caption}`}
+          >
+            <Dial
+              key={period}
+              progress={current.progress}
+              color={color}
+              ticks={current.ticks}
+              size={184}
+            >
+              <span className="dial-label">{HERO_LABEL[period]}</span>
+              <div className="face" key={`${period}-${flipped}`}>
+                <Digits parts={side.parts} />
+                <span className="dial-caption">{side.caption}</span>
+              </div>
+            </Dial>
+          </button>
+          <div className="stage-foot">
+            {current.passedPct == null ? (
+              <span className="muted">{current.left.caption}</span>
+            ) : (
+              <>
+                <b style={{ color }}>{flipped ? current.leftPct : current.passedPct}%</b>
+                <span className="muted">{flipped ? 'left' : 'passed'}</span>
+              </>
+            )}
+          </div>
+        </section>
+      </div>
 
       {(() => {
         switch (view.kind) {
@@ -189,7 +282,6 @@ export function App() {
                 email={local.email}
                 premium={local.entitlementActive}
                 onSignOut={() => void run(signOutDesktop)}
-                onQuit={() => void invoke('quit_app')}
               />
             );
           case 'signed_out':
@@ -198,7 +290,6 @@ export function App() {
                 message={view.message}
                 onGoogle={() => void signIn(signInWithGoogle)}
                 onApple={() => void signIn(signInWithApple)}
-                onQuit={() => void invoke('quit_app')}
               />
             );
           case 'working':
@@ -243,34 +334,64 @@ export function App() {
             );
         }
       })()}
+
+      <WidgetsRow />
+
+      <PanelBar
+        launchAtLogin={system.launchAtLogin}
+        onLaunchAtLogin={system.toggleLaunchAtLogin}
+        updateReady={system.updateReady}
+        onRestart={() => void restartApp()}
+        onQuit={() => void invoke('quit_app')}
+      />
     </main>
   );
 }
 
-function Bar(props: { progress: number | null; color?: string }) {
-  const pct = props.progress == null ? 0 : Math.max(0, Math.min(1, props.progress)) * 100;
+function MiniRing(props: { progress: number | null }) {
+  const R = 11;
+  const len = 2 * Math.PI * R;
+  const share = props.progress == null ? 0 : Math.min(1, Math.max(0, props.progress));
+  const color = props.progress == null ? 'var(--text-3)' : getProgressColor(share);
   return (
-    <div className="bar" aria-hidden="true">
-      <div className="bar-fill" style={{ width: `${pct}%`, background: props.color }} />
-    </div>
+    <svg className="mini" viewBox="0 0 28 28" width="28" height="28" aria-hidden="true">
+      <circle className="mini-track" cx="14" cy="14" r={R} fill="none" strokeWidth="3.4" />
+      {props.progress == null ? (
+        <g className="mini-lock" fill="none" strokeWidth="1.6" strokeLinecap="round">
+          <rect x="10.5" y="13.5" width="7" height="5.5" rx="1.4" />
+          <path d="M12 13.5v-1.6a2 2 0 0 1 4 0v1.6" />
+        </g>
+      ) : (
+        <circle
+          className="mini-arc"
+          cx="14"
+          cy="14"
+          r={R}
+          fill="none"
+          stroke={color}
+          strokeWidth="3.4"
+          strokeLinecap="round"
+          strokeDasharray={`${len * share} ${len}`}
+          transform="rotate(-90 14 14)"
+        />
+      )}
+    </svg>
   );
 }
 
-function Row(props: {
-  title: string;
-  value: string;
-  meta: string;
-  progress: number | null;
-}) {
+function Chip(props: { item: PeriodView; selected: boolean; onSelect: () => void }) {
+  const { item } = props;
   return (
-    <div className="row">
-      <span className="row-title">{props.title}</span>
-      <span className="row-value">{props.value}</span>
-      <span className="row-meta">{props.meta}</span>
-      <Bar
-        progress={props.progress}
-        color={props.progress == null ? undefined : getProgressColor(props.progress)}
-      />
-    </div>
+    <button
+      type="button"
+      role="tab"
+      aria-selected={props.selected}
+      className={`chip${props.selected ? ' chip-on' : ''}`}
+      onClick={props.onSelect}
+    >
+      <MiniRing progress={item.progress} />
+      <span className="chip-label">{item.label}</span>
+      <span className="chip-value">{item.chip}</span>
+    </button>
   );
 }
