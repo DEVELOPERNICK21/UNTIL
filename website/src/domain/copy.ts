@@ -85,6 +85,17 @@ export const LANDING_COPY = {
   screenshotsBlurb:
     'Day, month, year, and life progress. Widgets with Ember, countdowns, counters, and Wear OS Day % on Android.',
 
+  /** Desktop companion download section */
+  desktop: {
+    title: 'UNTIL on your Mac or PC',
+    subtitle:
+      'Day % in your menu bar or tray. Click it for today, this month, this year and your life. Sign in with the same account as your phone.',
+    mac: 'Download for Mac',
+    windows: 'Download for Windows',
+    requirements: 'macOS 11 or later · Windows 10 or later',
+    comingSoon: 'Desktop downloads are coming soon.',
+  },
+
   /** Value prop bullets */
   valueProps: {
     tagline: "That's why Until exists",

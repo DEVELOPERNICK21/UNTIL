@@ -3,6 +3,7 @@ import { AppScreenshots } from '@/components/AppScreenshots';
 import { CinematicHeroSection } from '@/components/CinematicHeroSection';
 import { EmberCompanion } from '@/components/EmberCompanion';
 import { PricingSection } from '@/components/PricingSection';
+import { DesktopDownloadSection } from '@/components/DesktopDownloadSection';
 import { LANDING_COPY, SITE_CONFIG } from '@/domain';
 
 export default function HomePage() {
@@ -175,6 +176,8 @@ export default function HomePage() {
         </p>
         <AppScreenshots />
       </section>
+
+      <DesktopDownloadSection />
 
       {/* Features — card grid */}
       <section style={{ borderTop: '1px solid var(--divider)' }}>
