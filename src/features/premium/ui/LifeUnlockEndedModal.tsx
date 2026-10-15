@@ -5,7 +5,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Text } from '../../../shared/ui';
 import { Spacing, Radius, useTheme } from '../../../shared/theme';
 import { MONETIZATION_PAYWALL_COPY } from '../../../config/monetization';
-import { recordPaywallDismissed } from '../data/paywallPrompt';
+import { recordPaywallDismissed } from '../services/paywallPrompt';
 import type { RootStackParamList } from '../../../shared/navigation/types';
 
 interface LifeUnlockEndedModalProps {

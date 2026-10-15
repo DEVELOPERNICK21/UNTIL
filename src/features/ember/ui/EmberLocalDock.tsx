@@ -29,7 +29,7 @@ import {
   markEmberIntroShown,
   nextEmberTipIndex,
   setEmberTipIndex,
-} from '../data/emberCompanionMemory';
+} from '../services/emberCompanionMemory';
 
 type EmberLocalDockProps = {
   /** Tip pool key, e.g. DailyTasks */

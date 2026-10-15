@@ -23,7 +23,7 @@ import {
   LegalAgreementLine,
 } from '../../../shared/ui';
 import { LEGAL_URLS } from '../../../config/monetization';
-import { MINIMUM_ACCOUNT_AGE_YEARS } from '../domain/ageGate';
+import { MINIMUM_ACCOUNT_AGE_YEARS } from '../hooks/useAccountActions';
 import { useAuthSession } from '../hooks/useAuthSession';
 import { useAccountActions } from '../hooks/useAccountActions';
 import { isAuthRequiresPasswordError } from '../domain/authErrors';

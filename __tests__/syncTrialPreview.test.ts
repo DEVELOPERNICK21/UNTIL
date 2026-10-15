@@ -1,7 +1,7 @@
 import { SyncTrialPreviewUseCase } from '../src/features/premium/domain/useCases/SyncTrialPreviewUseCase';
 import type { ISubscriptionRepository } from '../src/features/premium/domain/ports/ISubscriptionRepository';
 import type { ITrialPreviewService } from '../src/features/premium/domain/ports/ITrialPreviewService';
-import type { IDeviceIdProvider } from '../src/shared/platform/device/IDeviceIdProvider';
+import type { IDeviceIdProvider } from '../src/shared/ports/IDeviceIdProvider';
 
 function makeRepo(overrides: Partial<ISubscriptionRepository> = {}): ISubscriptionRepository {
   let trialStart: number | null = null;

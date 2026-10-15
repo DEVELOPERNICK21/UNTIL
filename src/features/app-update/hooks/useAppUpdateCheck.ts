@@ -4,7 +4,7 @@ import {
   recordUpdateCheck,
   shouldSkipUpdateCheck,
   UpdateType,
-} from '../data/updateService';
+} from '../services/updateService';
 
 export interface UseAppUpdateCheckState {
   updateType: 'FORCE_UPDATE' | 'OPTIONAL_UPDATE' | 'NONE';

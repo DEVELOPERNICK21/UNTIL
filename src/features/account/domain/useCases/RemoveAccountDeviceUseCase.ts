@@ -5,7 +5,7 @@
  */
 
 import type { IAccountCloudStore } from '../ports/IAccountCloudStore';
-import type { IDeviceIdProvider } from '../../../../shared/platform/device/IDeviceIdProvider';
+import type { IDeviceIdProvider } from '../../../../shared/ports/IDeviceIdProvider';
 import type { IAuthSessionRepository } from '../ports/IAuthSessionRepository';
 import type { RegisterDeviceUseCase } from './RegisterDeviceUseCase';
 import type { BindEntitlementToAccountUseCase } from './BindEntitlementToAccountUseCase';

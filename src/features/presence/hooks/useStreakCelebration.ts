@@ -7,7 +7,7 @@
 import { useCallback, useState } from 'react';
 import { acknowledgeBadgesUseCase } from '../../../app/di';
 import { usePresenceStreak } from './usePresenceStreak';
-import { useTodayIso } from '../../../shared/time/useTodayIso';
+import { useTodayIso } from '../../../shared/hooks/useTodayIso';
 
 export function useStreakCelebration() {
   const today = useTodayIso();

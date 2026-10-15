@@ -3,8 +3,10 @@
  */
 
 import { useState, useEffect, useCallback } from 'react';
-import { getInterventionStateUseCase } from '../../../app/di';
-import { getCategoryTotalsUseCase } from '../../../app/di';
+import {
+  getInterventionStateUseCase,
+  getCategoryTotalsUseCase,
+} from '../../../app/di';
 
 export function useInterventionState() {
   const [state, setState] = useState(() => getInterventionStateUseCase.execute());

@@ -17,6 +17,9 @@ import {
   signOutUseCase,
 } from '../../../app/di';
 import { isAuthCancelledError, isAuthRequiresPasswordError } from '../domain/authErrors';
+
+/** Screens read the minimum age through this hook module rather than reaching into the domain. */
+export { MINIMUM_ACCOUNT_AGE_YEARS } from '../domain/ageGate';
 import type { AccountDevice, SignInResult } from '../../../shared/types';
 
 function toErrorMessage(error: unknown): string {

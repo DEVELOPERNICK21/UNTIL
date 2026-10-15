@@ -10,8 +10,8 @@ import {
   Platform,
   ScrollView,
   Vibration,
+  ActivityIndicator,
 } from 'react-native';
-import { ActivityIndicator } from 'react-native';
 import DateTimePicker, {
   type DateTimePickerEvent,
 } from '@react-native-community/datetimepicker';

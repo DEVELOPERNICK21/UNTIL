@@ -3,8 +3,10 @@
  */
 
 import { useState, useEffect, useCallback } from 'react';
-import { getRegretProjectionUseCase } from '../../../app/di';
-import { getCategoryTotalsUseCase } from '../../../app/di';
+import {
+  getRegretProjectionUseCase,
+  getCategoryTotalsUseCase,
+} from '../../../app/di';
 
 export function useRegretProjection() {
   const [result, setResult] = useState(() => getRegretProjectionUseCase.execute());

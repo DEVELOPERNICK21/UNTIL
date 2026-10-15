@@ -3,8 +3,8 @@
  * everything else in this folder is private. Add an export deliberately when another module needs it.
  */
 
-export { shouldShowDeferredPaywall } from './data/deferredPaywall';
-export { shouldPromptLifeUnlockEnded } from './data/paywallPrompt';
+export { shouldShowDeferredPaywall } from './services/deferredPaywall';
+export { shouldPromptLifeUnlockEnded } from './services/paywallPrompt';
 export { useAccessControl } from './hooks/useAccessControl';
 export { useManageSubscription } from './hooks/useManageSubscription';
 export { useObserveSubscription } from './hooks/useObserveSubscription';

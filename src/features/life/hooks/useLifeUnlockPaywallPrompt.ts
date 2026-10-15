@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useAccessControl } from '../../premium';
-import { shouldPromptLifeUnlockEnded } from '../../premium';
+import { useAccessControl, shouldPromptLifeUnlockEnded } from '../../premium';
 
 /**
  * Shows interstitial when 24h Life preview ended (audit: highest-intent upgrade moment).

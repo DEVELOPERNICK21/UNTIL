@@ -6,7 +6,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { AppState } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
-import { todayIso as clockTodayIso } from './clock';
+import { todayIso as clockTodayIso } from '../time/clock';
 
 export function useTodayIso(): string {
   const [today, setToday] = useState(() => clockTodayIso());

@@ -17,7 +17,7 @@ import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useDailyTasks } from '../hooks/useDailyTasks';
 import { useTaskCarryoverPrompt } from '../hooks/useTaskCarryoverPrompt';
-import { useTodayIso } from '../../../shared/time/useTodayIso';
+import { useTodayIso } from '../../../shared/hooks/useTodayIso';
 import {
   useWidgetSyncActions,
 } from '../../../shared/platform/useWidgetSyncActions';

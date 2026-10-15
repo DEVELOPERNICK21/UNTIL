@@ -4,7 +4,7 @@
  */
 
 import type { ISubscriptionRepository } from '../ports/ISubscriptionRepository';
-import type { IDeviceIdProvider } from '../../../../shared/platform/device/IDeviceIdProvider';
+import type { IDeviceIdProvider } from '../../../../shared/ports/IDeviceIdProvider';
 import type { ILicenseVerificationService } from '../ports/ILicenseVerificationService';
 import type { ActivationResult } from '../../../../shared/types/subscription';
 

@@ -1,6 +1,6 @@
 import { VerifySubscriptionUseCase } from '../src/features/premium/domain/useCases/VerifySubscriptionUseCase';
 import type { ISubscriptionRepository } from '../src/features/premium/domain/ports/ISubscriptionRepository';
-import type { IDeviceIdProvider } from '../src/shared/platform/device/IDeviceIdProvider';
+import type { IDeviceIdProvider } from '../src/shared/ports/IDeviceIdProvider';
 import type { ILicenseVerificationService } from '../src/features/premium/domain/ports/ILicenseVerificationService';
 import type { PurchaseType, SubscriptionState } from '../src/shared/types';
 

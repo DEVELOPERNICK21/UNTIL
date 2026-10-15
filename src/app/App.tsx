@@ -17,11 +17,15 @@ import { runMigrations } from '../shared/persistence/migration';
 import { AuthNavigator } from './navigation/AuthNavigator';
 import { SplashScreen } from './splash/SplashScreen';
 import { useOnboardingState } from '../features/onboarding';
-import { useAppUpdateCheck } from '../features/app-update';
-import { useTrialEndingReminder } from '../features/premium';
+import {
+  useAppUpdateCheck,
+  recordOptionalUpdateDismissed,
+  ForceUpdateModal,
+  OptionalUpdateModal,
+} from '../features/app-update';
+import { useTrialEndingReminder, TrialEndingModal } from '../features/premium';
 import { useAnalyticsBootstrap } from './bootstrap/useAnalyticsBootstrap';
 import { useAuthBootstrap } from '../features/account';
-import { TrialEndingModal } from '../features/premium';
 import { AppEngagementLayer } from './AppEngagementLayer';
 import { logAppOpen, initAnalyticsConsent } from '../shared/analytics/analytics';
 import { CrashErrorBoundary } from './CrashErrorBoundary';
@@ -37,7 +41,6 @@ import {
 } from '../features/engagement';
 import { schedulePresenceStreakSaver } from '../features/presence';
 import { openScreenFromUrl } from './navigation/deepLinks';
-import { recordOptionalUpdateDismissed } from '../features/app-update';
 import { ThemeProvider, useTheme } from '../shared/theme';
 import {
   syncWidgetCache,
@@ -61,8 +64,6 @@ import {
   purchasesRepository,
   authSessionRepository,
 } from './di';
-import { ForceUpdateModal } from '../features/app-update';
-import { OptionalUpdateModal } from '../features/app-update';
 
 runMigrations();
 

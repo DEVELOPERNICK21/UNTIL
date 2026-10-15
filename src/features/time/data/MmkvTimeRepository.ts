@@ -12,16 +12,14 @@ import { getMonthProgress } from '../../../shared/time/month';
 import { getYearProgress } from '../../../shared/time/year';
 import { getLifeProgress } from '../../../shared/time/life';
 import { now } from '../../../shared/time/clock';
-import { presenceStreakDots } from '../../presence/domain';
-import { localDateKey } from '../../presence/domain';
-import { STORAGE_KEYS } from '../../../shared/persistence/schema';
+import { presenceStreakDots, localDateKey } from '../../presence/domain';
+import { STORAGE_KEYS, DEFAULTS } from '../../../shared/persistence/schema';
 import {
   getString,
   getNumber,
   setString,
   setNumber,
 } from '../../../shared/persistence/mmkv';
-import { DEFAULTS } from '../../../shared/persistence/schema';
 
 type Subscriber = () => void;
 

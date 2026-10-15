@@ -27,7 +27,7 @@ import {
   markEmberIntroShown,
   nextEmberTipIndex,
   setEmberTipIndex,
-} from '../data/emberCompanionMemory';
+} from '../services/emberCompanionMemory';
 import {
   getEmberSurfaceState,
   resolveEmberPlace,

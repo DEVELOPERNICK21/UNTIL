@@ -4,7 +4,7 @@
  */
 
 export { personalizedEmberTipsForRoute } from './domain/personalizedInsights';
-export type { OnboardingExitParams } from './data/onboardingCompletion';
+export type { OnboardingExitParams } from './services/onboardingCompletion';
 export { useOnboardingFunnel } from './hooks/useOnboardingFunnel';
 export { useOnboardingQuizAnswers } from './hooks/useOnboardingQuizAnswers';
 export { useOnboardingState } from './hooks/useOnboardingState';

@@ -30,9 +30,18 @@ import {
 } from '../../../shared/featureFlags/useGoalsFeatureEnabled';
 import { useAccessControl } from '../../premium';
 import { useReduceMotion } from '../../../shared/ui/useReduceMotion';
-import { usePresenceStreak, useStreakCelebration } from '../../presence';
-import { useDailyReflection } from '../../reflections';
-import { useBadges, useDailyQuests } from '../../badges';
+import {
+  usePresenceStreak,
+  useStreakCelebration,
+  StreakChip,
+} from '../../presence';
+import { useDailyReflection, TimeCoachCard } from '../../reflections';
+import {
+  useBadges,
+  useDailyQuests,
+  BadgeShelf,
+  DailyQuestsCard,
+} from '../../badges';
 import {
   Spacing,
   FontFamily,
@@ -46,9 +55,6 @@ import { logAnalyticsEvent } from '../../../shared/analytics/analytics';
 import { setEmberRouteOverride } from '../../../shared/ui/emberSurface';
 import { TaskReportContent } from '../../tasks';
 import { InterventionHomeCard } from '../../activity';
-import { TimeCoachCard } from '../../reflections';
-import { BadgeShelf, DailyQuestsCard } from '../../badges';
-import { StreakChip } from '../../presence';
 import {
   formatDayPassedLeftWithSeconds,
   formatLifePassedLeft,

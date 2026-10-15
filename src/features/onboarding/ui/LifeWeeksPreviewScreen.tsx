@@ -16,7 +16,7 @@ import {
   Radius,
 } from '../../../shared/theme';
 import { useAnalytics } from '../../../shared/analytics/useAnalytics';
-import { useLifeWeeks } from '../../../shared/time/useLifeWeeks';
+import { useLifeWeeks } from '../../../shared/hooks/useLifeWeeks';
 import { useObserveTimeState } from '../../time';
 import { useOnboardingFunnel } from '../hooks/useOnboardingFunnel';
 import type { AuthStackParamList } from '../../../shared/navigation/types';

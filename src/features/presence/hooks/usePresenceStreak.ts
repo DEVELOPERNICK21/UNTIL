@@ -6,7 +6,7 @@ import {
 } from '../../../app/di';
 import type { PresenceStreakState } from '../domain/presenceStreak';
 import { EMPTY_PRESENCE } from '../domain/presenceStreak';
-import { schedulePresenceStreakSaver } from '../data/presenceStreakNotifications';
+import { schedulePresenceStreakSaver } from '../services/presenceStreakNotifications';
 
 export function usePresenceStreak() {
   const [streak, setStreak] = useState<PresenceStreakState>(() =>

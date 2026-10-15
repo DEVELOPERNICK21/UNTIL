@@ -1,8 +1,8 @@
 import React, { useEffect, useRef } from 'react';
 import { InteractionManager } from 'react-native';
-import { markDeferredPaywallShown } from '../data/deferredPaywall';
+import { markDeferredPaywallShown } from '../services/deferredPaywall';
 import { logAnalyticsEvent } from '../../../shared/analytics/analytics';
-import { recordPaywallDismissed } from '../data/paywallPrompt';
+import { recordPaywallDismissed } from '../services/paywallPrompt';
 import { usePresentRevenueCatPaywall } from '../hooks/usePresentRevenueCatPaywall';
 import { navigateToPremium } from '../../../shared/navigation/rootNavigationRef';
 

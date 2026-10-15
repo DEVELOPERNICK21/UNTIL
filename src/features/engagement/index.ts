@@ -6,7 +6,7 @@
 export {
   recordRetentionAppOpen,
   scheduleRetentionNotifications,
-} from './data/retentionNotifications';
+} from './services/retentionNotifications';
 export { useEngagementModals } from './hooks/useEngagementModals';
 export { useInAppReview } from './hooks/useInAppReview';
 export { useRetentionNotifications } from './hooks/useRetentionNotifications';

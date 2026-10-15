@@ -39,10 +39,9 @@ import {
   getFontFamilyForWeight,
 } from '../../../shared/theme';
 import { appLogoIcon } from '../../../assets/images';
-import { MINIMUM_ACCOUNT_AGE_YEARS } from '../domain/ageGate';
+import { MINIMUM_ACCOUNT_AGE_YEARS } from '../hooks/useAccountActions';
 import { useAccountActions } from '../hooks/useAccountActions';
-import { useOnboardingComplete } from '../../onboarding';
-import { useEnter } from '../../onboarding';
+import { useOnboardingComplete, useEnter } from '../../onboarding';
 import { logAnalyticsEvent } from '../../../shared/analytics/analytics';
 import {
   EmailPasswordAuthForm,

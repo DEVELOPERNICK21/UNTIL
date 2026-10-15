@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { computeLifeWeeks } from './lifeWeeks';
+import { computeLifeWeeks } from '../time/lifeWeeks';
 
 export function useLifeWeeks(
   deathAge: number | undefined,

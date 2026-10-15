@@ -1,13 +1,15 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { AppState } from 'react-native';
 import { RootNavigator } from './navigation/RootNavigator';
-import { WidgetCoachModal } from '../features/engagement';
+import {
+  WidgetCoachModal,
+  FeatureDiscoveryModal,
+  SharePromptModal,
+  useEngagementModals,
+} from '../features/engagement';
 import { DeferredPaywallModal } from '../features/premium';
-import { FeatureDiscoveryModal } from '../features/engagement';
-import { SharePromptModal } from '../features/engagement';
 import { EmberCompanion } from '../features/ember';
 import { BadgeUnlockHost } from '../features/badges';
-import { useEngagementModals } from '../features/engagement';
 import { useAnalytics } from '../shared/analytics/useAnalytics';
 
 /**

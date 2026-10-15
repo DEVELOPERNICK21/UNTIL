@@ -2,8 +2,10 @@
  * PresentRevenueCatPaywallUseCase — show dashboard RC paywall, then sync entitlement.
  */
 
-import type { IPaywallPresenter } from '../ports/IPaywallPresenter';
-import type { PaywallPresentResult } from '../ports/IPaywallPresenter';
+import type {
+  IPaywallPresenter,
+  PaywallPresentResult,
+} from '../ports/IPaywallPresenter';
 import type { IPurchasesRepository } from '../ports/IPurchasesRepository';
 import type { SyncCustomerInfoUseCase } from './SyncCustomerInfoUseCase';
 

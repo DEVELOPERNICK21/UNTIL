@@ -6,7 +6,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { getDailyTaskStatsUseCase, observeDailyTasksUseCase } from '../../../app/di';
 import { buildDailyQuests } from '../domain/dailyQuests';
 import { usePresenceStreak } from '../../presence';
-import { useTodayIso } from '../../../shared/time/useTodayIso';
+import { useTodayIso } from '../../../shared/hooks/useTodayIso';
 
 export function useDailyQuests() {
   const today = useTodayIso();

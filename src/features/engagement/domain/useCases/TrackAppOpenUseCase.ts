@@ -2,8 +2,10 @@
  * TrackAppOpenUseCase — first-open trial start, app open count, 24h Life unlock after 3 opens.
  */
 
-import type { ISubscriptionRepository } from '../../../premium/domain';
-import type { SyncTrialPreviewUseCase } from '../../../premium/domain';
+import type {
+  ISubscriptionRepository,
+  SyncTrialPreviewUseCase,
+} from '../../../premium/domain';
 import { LIFE_EVENT_UNLOCK_MS } from '../../../../config/accessConstants';
 
 export class TrackAppOpenUseCase {

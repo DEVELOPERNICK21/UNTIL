@@ -5,7 +5,7 @@
 
 export {
   schedulePresenceStreakSaver,
-} from './data/presenceStreakNotifications';
+} from './services/presenceStreakNotifications';
 export { usePresenceStreak } from './hooks/usePresenceStreak';
 export { useStreakCelebration } from './hooks/useStreakCelebration';
 export { StreakChip } from './ui/StreakChip';

@@ -9,12 +9,14 @@ import { trackNavigationStateChange } from './useNavigationAnalytics';
 import {
   OnboardingScreen,
   OnboardingCompleteContext,
+  LifeWeeksPreviewScreen,
 } from '../../features/onboarding';
 import type { OnboardingExitParams } from '../../features/onboarding';
-import { IdentitySetupScreen } from '../../features/account';
-import { LifeWeeksPreviewScreen } from '../../features/onboarding';
+import {
+  IdentitySetupScreen,
+  AccountPromptScreen,
+} from '../../features/account';
 import { OnboardingPaywallScreen } from '../../features/premium';
-import { AccountPromptScreen } from '../../features/account';
 
 import type { AuthStackParamList } from '../../shared/navigation/types';
 export type { AuthStackParamList };

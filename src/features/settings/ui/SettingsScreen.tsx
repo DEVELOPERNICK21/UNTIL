@@ -25,13 +25,12 @@ import {
   useManageSubscription,
 } from '../../premium';
 import { useAppVersion } from '../../app-update';
-import { useRetentionNotifications } from '../../engagement';
+import { useRetentionNotifications, useInAppReview } from '../../engagement';
 import { useDailyNothingLimit } from '../../activity';
 import { useAuthSession } from '../../account';
 import {
   useAnalyticsConsent,
 } from '../../../shared/analytics/useAnalyticsConsent';
-import { useInAppReview } from '../../engagement';
 import {
   useTheme,
   Spacing,

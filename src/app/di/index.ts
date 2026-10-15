@@ -141,7 +141,7 @@ import {
   markUnderMinimumAge,
 } from '../../shared/analytics/analyticsConsent';
 import { AssertAccountAgeGateUseCase } from '../../features/account/domain/useCases/AssertAccountAgeGateUseCase';
-import { configureRetentionNotifications } from '../../features/engagement/data/retentionNotifications';
+import { configureRetentionNotifications } from '../../features/engagement/services/retentionNotifications';
 import { getTrialDurationDays } from '../../shared/analytics/analyticsUserProperties';
 
 /**
@@ -155,7 +155,7 @@ function syncPremiumBridge(): void {
 function syncPremiumAfterEntitlementChange(): void {
   syncPremiumBridge();
   // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const { cancelTrialLocalNotifications } = require('../../features/premium/data/trialReminders');
+  const { cancelTrialLocalNotifications } = require('../../features/premium/services/trialReminders');
   void cancelTrialLocalNotifications();
 }
 

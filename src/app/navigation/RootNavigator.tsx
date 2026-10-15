@@ -16,24 +16,30 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { HomeScreen } from '../../features/home';
 import { SettingsScreen } from '../../features/settings';
 import { LifeScreen } from '../../features/life';
-import { WidgetScreen } from '../../features/widgets';
-import { WidgetCustomizationScreen } from '../../features/widgets';
+import {
+  WidgetScreen,
+  WidgetCustomizationScreen,
+  HourCalculationScreen,
+  DynamicIslandScreen,
+  OverlayScreen,
+} from '../../features/widgets';
 import { CustomCountersScreen } from '../../features/counters';
 import { CountdownsScreen } from '../../features/countdowns';
-import { DailyTasksScreen } from '../../features/tasks';
-import { TaskReportScreen } from '../../features/tasks';
-import { DayDetailScreen } from '../../features/time';
-import { MonthDetailScreen } from '../../features/time';
-import { YearDetailScreen } from '../../features/time';
-import { MonthlyGoalsScreen } from '../../features/tasks';
-import { GoalDetailScreen } from '../../features/tasks';
-import { HourCalculationScreen } from '../../features/widgets';
-import { DynamicIslandScreen } from '../../features/widgets';
-import { OverlayScreen } from '../../features/widgets';
+import {
+  DailyTasksScreen,
+  TaskReportScreen,
+  MonthlyGoalsScreen,
+  GoalDetailScreen,
+  TasksComingSoonScreen,
+} from '../../features/tasks';
+import {
+  DayDetailScreen,
+  MonthDetailScreen,
+  YearDetailScreen,
+} from '../../features/time';
 import { ShareSnapshotScreen } from '../../features/share';
 import { BadgesScreen } from '../../features/badges';
 import { PremiumScreen } from '../../features/premium';
-import { TasksComingSoonScreen } from '../../features/tasks';
 import { AccountScreen } from '../../features/account';
 import {
   getPaletteForMode,

@@ -8,10 +8,12 @@ import {
 import { localDateKey } from '../../../presence/domain';
 import type { IBadgeRepository } from '../ports/IBadgeRepository';
 import type { ICountdownRepository } from '../../../countdowns/domain';
-import type { IMonthlyGoalRepository } from '../../../tasks/domain';
+import type {
+  IMonthlyGoalRepository,
+  ITaskRepository,
+} from '../../../tasks/domain';
 import type { IPresenceRepository } from '../../../presence/domain';
 import type { ISubscriptionRepository } from '../../../premium/domain';
-import type { ITaskRepository } from '../../../tasks/domain';
 import type { ITimeRepository } from '../../../time/domain';
 
 /**

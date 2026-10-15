@@ -3,16 +3,14 @@ import { View, StyleSheet, TouchableOpacity } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Text, ScreenGradient, GlassCard, LifeWeeksGrid } from '../../../shared/ui';
-import { PeriodDetailScreen } from '../../time';
-import { useObserveTimeState } from '../../time';
-import { useAccessControl } from '../../premium';
+import { PeriodDetailScreen, useObserveTimeState } from '../../time';
+import { useAccessControl, LifeUnlockEndedModal } from '../../premium';
 import { useTrackLifeScreenVisit } from '../hooks/useTrackLifeScreenVisit';
 import {
   useLifeUnlockPaywallPrompt,
 } from '../hooks/useLifeUnlockPaywallPrompt';
 import { usePresenceStreak } from '../../presence';
-import { useLifeWeeks } from '../../../shared/time/useLifeWeeks';
-import { LifeUnlockEndedModal } from '../../premium';
+import { useLifeWeeks } from '../../../shared/hooks/useLifeWeeks';
 import { Spacing, useTheme } from '../../../shared/theme';
 import type { RootStackParamList } from '../../../shared/navigation/types';
 

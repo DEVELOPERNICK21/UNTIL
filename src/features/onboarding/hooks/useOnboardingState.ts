@@ -8,8 +8,8 @@ import {
   setOnboardingCompletedUseCase,
   setWidgetCoachPendingUseCase,
 } from '../../../app/di';
-import { runOnboardingCompletionSideEffects } from '../data/onboardingCompletion';
-import type { OnboardingExitParams } from '../data/onboardingCompletion';
+import { runOnboardingCompletionSideEffects } from '../services/onboardingCompletion';
+import type { OnboardingExitParams } from '../services/onboardingCompletion';
 
 export function useOnboardingState() {
   const [hasCompleted, setHasCompleted] = useState(() =>

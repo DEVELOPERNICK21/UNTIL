@@ -14,7 +14,7 @@ jest.mock('@react-navigation/native', () => ({
   useFocusEffect: jest.fn(),
 }));
 
-jest.mock('../src/shared/time/useTodayIso', () => ({
+jest.mock('../src/shared/hooks/useTodayIso', () => ({
   useTodayIso: () => '2026-09-09',
 }));
 

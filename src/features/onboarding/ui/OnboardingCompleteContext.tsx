@@ -1,5 +1,5 @@
 import { createContext, useContext } from 'react';
-import type { OnboardingExitParams } from '../data/onboardingCompletion';
+import type { OnboardingExitParams } from '../services/onboardingCompletion';
 
 export const OnboardingCompleteContext = createContext<
   ((params?: OnboardingExitParams) => void) | null

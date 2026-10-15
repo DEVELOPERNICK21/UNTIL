@@ -2,7 +2,7 @@ import { useCallback, useState } from 'react';
 import {
   getRetentionNotificationsEnabled,
   setRetentionNotificationsEnabled,
-} from '../data/retentionNotifications';
+} from '../services/retentionNotifications';
 
 export function useRetentionNotifications(): {
   enabled: boolean;

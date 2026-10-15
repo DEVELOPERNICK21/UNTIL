@@ -5,7 +5,7 @@ import {
   getActiveTrialReminderDay,
   recordTrialReminderInAppShown,
   scheduleTrialLocalNotifications,
-} from '../data/trialReminders';
+} from '../services/trialReminders';
 import { logAnalyticsEvent } from '../../../shared/analytics/analytics';
 
 export function useTrialEndingReminder() {

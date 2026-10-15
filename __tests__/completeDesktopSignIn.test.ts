@@ -1,7 +1,7 @@
 import { CompleteDesktopSignInUseCase } from '../src/features/account/domain/useCases/CompleteDesktopSignInUseCase';
 import { RegisterDeviceUseCase } from '../src/features/account/domain/useCases/RegisterDeviceUseCase';
 import type { IAccountCloudStore } from '../src/features/account/domain/ports/IAccountCloudStore';
-import type { IDeviceIdProvider } from '../src/shared/platform/device/IDeviceIdProvider';
+import type { IDeviceIdProvider } from '../src/shared/ports/IDeviceIdProvider';
 import type { AccountDevice, AuthUser, CloudEntitlement } from '../src/shared/types';
 
 const USER: AuthUser = {

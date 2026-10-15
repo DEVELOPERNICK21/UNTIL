@@ -7,11 +7,14 @@ import type { IActivityRepository } from '../domain/ports/IActivityRepository';
 import type { TimeBlock, ActivityCategory } from '../../../shared/types';
 import { getString, setString, getNumber, setNumber } from '../../../shared/persistence/mmkv';
 import { STORAGE_KEYS, DEFAULTS } from '../../../shared/persistence/schema';
-import { formatDateToIso } from '../../../shared/time/clock';
+import {
+  formatDateToIso,
+  nowMs,
+  startOfYear,
+  endOfDay,
+  daysInYear,
+} from '../../../shared/time/clock';
 import { aggregateCategoryTotals } from '../domain/aggregate';
-import { nowMs } from '../../../shared/time/clock';
-import { startOfYear, endOfDay } from '../../../shared/time/clock';
-import { daysInYear } from '../../../shared/time/clock';
 
 type Subscriber = () => void;
 

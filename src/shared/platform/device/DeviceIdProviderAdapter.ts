@@ -2,7 +2,7 @@
  * Infrastructure adapter: implements IDeviceIdProvider using react-native-device-info.
  */
 
-import type { IDeviceIdProvider } from './IDeviceIdProvider';
+import type { IDeviceIdProvider } from '../../ports/IDeviceIdProvider';
 import { getDeviceId } from './DeviceId';
 
 export class DeviceIdProviderAdapter implements IDeviceIdProvider {

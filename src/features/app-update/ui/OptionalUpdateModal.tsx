@@ -2,7 +2,7 @@ import React from 'react';
 import { Modal, View, StyleSheet, TouchableOpacity } from 'react-native';
 import { Text } from '../../../shared/ui';
 import { useTheme, Spacing, Radius } from '../../../shared/theme';
-import { openStoreUrl } from '../data/updateService';
+import { openStoreUrl } from '../services/updateService';
 
 interface OptionalUpdateModalProps {
   visible: boolean;

@@ -52,7 +52,7 @@ import {
 import {
   clearPendingPurchase,
   setPendingPurchase,
-} from '../data/purchaseAnalyticsContext';
+} from '../services/purchaseAnalyticsContext';
 import { PaywallVisualHero } from './PaywallVisualHero';
 import { PaywallLossFrame } from './PaywallLossFrame';
 import { PaywallFeatureTiles } from './PaywallFeatureTiles';
