@@ -4,7 +4,8 @@ import { listen } from '@tauri-apps/api/event';
 import { buildPanelModel } from '@until/core/time/panelModel';
 import { getProgressColor } from '@until/theme/progressColor';
 import { timeOfDayLabel } from '@until/theme/emotionalCopy';
-import { loadLocalState, panelProfile } from './localState';
+import { panelProfile } from './localState';
+import { useLocalState } from './useLocalState';
 import { buildPeriods, type PeriodKey } from './periods';
 import {
   ISLAND_MODES,
@@ -165,7 +166,7 @@ export function NotchIsland() {
     void invoke('notch_open_panel').catch(() => {});
   }, []);
 
-  const local = loadLocalState();
+  const local = useLocalState();
   const profile = panelProfile(local);
   const model = buildPanelModel(profile, now);
   const periods = buildPeriods(model, { signedIn: profile.signedIn });

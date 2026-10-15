@@ -13,6 +13,7 @@ export interface DesktopLocalState {
 }
 
 const KEY = 'until.desktop.localState';
+export const LOCAL_STATE_KEY = KEY;
 
 export const EMPTY_LOCAL_STATE: DesktopLocalState = {
   uid: null,
