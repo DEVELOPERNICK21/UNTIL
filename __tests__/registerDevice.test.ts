@@ -1,8 +1,8 @@
-import { RegisterDeviceUseCase } from '../src/domain/useCases/RegisterDeviceUseCase';
-import { isConclusiveRegistration } from '../src/core/account/deviceLimit';
-import type { IAccountCloudStore } from '../src/domain/ports/IAccountCloudStore';
-import type { IDeviceIdProvider } from '../src/domain/ports/IDeviceIdProvider';
-import type { AccountDevice } from '../src/types';
+import { RegisterDeviceUseCase } from '../src/features/account/domain/useCases/RegisterDeviceUseCase';
+import { isConclusiveRegistration } from '../src/features/account/domain/deviceLimit';
+import type { IAccountCloudStore } from '../src/features/account/domain/ports/IAccountCloudStore';
+import type { IDeviceIdProvider } from '../src/shared/platform/device/IDeviceIdProvider';
+import type { AccountDevice } from '../src/shared/types';
 
 function makeDevice(
   id: string,

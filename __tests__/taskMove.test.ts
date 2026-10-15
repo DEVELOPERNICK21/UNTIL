@@ -3,8 +3,8 @@ import {
   applyMoveTask,
   isLastHourOfDay,
   shouldSkipMoveForGoalDuplicate,
-} from '../src/domain/tasks/taskMove';
-import type { DailyTask } from '../src/types';
+} from '../src/features/tasks/domain/taskMove';
+import type { DailyTask } from '../src/shared/types';
 
 function task(
   partial: Partial<DailyTask> & Pick<DailyTask, 'id' | 'date'>,

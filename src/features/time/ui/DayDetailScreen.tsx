@@ -1,0 +1,94 @@
+import React, { useEffect, useState } from 'react';
+import { StyleSheet, TouchableOpacity, Alert } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { Text } from '../../../shared/ui';
+import { PeriodDetailScreen } from './PeriodDetailScreen';
+import { useObserveTimeState } from '../hooks/useObserveTimeState';
+import {
+  useGoalsFeatureEnabled,
+} from '../../../shared/featureFlags/useGoalsFeatureEnabled';
+import { Spacing } from '../../../shared/theme';
+import type { RootStackParamList } from '../../../shared/navigation/types';
+
+function formatTime(date: Date) {
+  const startDate = new Date(date);
+  startDate.setHours(0, 0, 0, 0);
+  const endDate = new Date(startDate);
+  endDate.setHours(23, 59, 59, 999);
+  const start = startDate.getTime();
+  const end = endDate.getTime();
+  const passedMs = date.getTime() - start;
+  const remainingMs = Math.max(0, end - date.getTime());
+  const totalMs = Math.max(1, end - start);
+  const passedS = Math.floor(passedMs / 1000);
+  const remainingS = Math.floor(remainingMs / 1000);
+  const h = (n: number) => Math.floor(n / 3600);
+  const m = (n: number) => Math.floor((n % 3600) / 60);
+  const s = (n: number) => n % 60;
+  return {
+    passed: `${h(passedS)}h ${m(passedS)}m ${s(passedS)}s`,
+    left: `${h(remainingS)}h ${m(remainingS)}m ${s(remainingS)}s`,
+    progress: Math.min(1, Math.max(0, passedMs / totalMs)),
+  };
+}
+
+export function DayDetailScreen() {
+  const navigation =
+    useNavigation<NativeStackNavigationProp<RootStackParamList, 'DayDetail'>>();
+  const [live, setLive] = useState(() => new Date());
+  const goalsFeatureEnabled = useGoalsFeatureEnabled();
+  useObserveTimeState();
+
+  useEffect(() => {
+    const t = setInterval(() => setLive(new Date()), 1000);
+    return () => clearInterval(t);
+  }, []);
+
+  const { passed, left, progress } = formatTime(live);
+  const pctDone = Math.round(progress * 100);
+  const pctLeft = 100 - pctDone;
+
+  return (
+    <PeriodDetailScreen
+      kind="day"
+      title="Today"
+      progress={progress}
+      passedLabel={passed}
+      leftLabel={left}
+      passedCaption="Passed"
+      leftCaption="Left"
+      summary={`${pctDone}% of the day passed · ${pctLeft}% left`}
+      liveHint="Updates every second"
+      footer={
+        <TouchableOpacity
+          style={styles.cta}
+          onPress={() => {
+            if (goalsFeatureEnabled) {
+              navigation.navigate('DailyTasks');
+            } else {
+              Alert.alert(
+                'Coming soon',
+                'Daily tasks will be available in a future update.',
+              );
+            }
+          }}
+        >
+          <Text variant="sectionTitle" color="primary">
+            Today&apos;s tasks
+          </Text>
+          <Text variant="caption" color="secondary">
+            Add and tick off your daily tasks →
+          </Text>
+        </TouchableOpacity>
+      }
+    />
+  );
+}
+
+const styles = StyleSheet.create({
+  cta: {
+    marginTop: Spacing[2],
+    paddingVertical: Spacing[3],
+  },
+});

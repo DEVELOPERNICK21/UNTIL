@@ -1,9 +1,9 @@
-import type { CloudUserProfile } from '@until/types';
+import type { CloudUserProfile } from '@until/shared/types';
 import {
   evaluateAccountAgeGate,
   isUnderMinimumAge,
   type AccountAgeGateResult,
-} from '@until/core/legal/ageGate';
+} from '@until/features/account/domain/ageGate';
 
 /**
  * What the panel shows once Firebase has a user. Firestore rules refuse device

@@ -3,21 +3,21 @@ import {
   dayAppealLine,
   formatDayLeftoverLabel,
   presenceStreakDots,
-} from '../src/core/widget/dayWidgetAppeal';
-import { MmkvTimeRepository } from '../src/infrastructure/repositories/MmkvTimeRepository';
-import { MmkvPresenceRepository } from '../src/infrastructure/repositories/MmkvPresenceRepository';
-import { getNumber, getString } from '../src/persistence/mmkv';
-import { STORAGE_KEYS } from '../src/persistence/schema';
+} from '../src/features/presence/domain/dayWidgetAppeal';
+import { MmkvTimeRepository } from '../src/features/time/data/MmkvTimeRepository';
+import { MmkvPresenceRepository } from '../src/features/presence/data/MmkvPresenceRepository';
+import { getNumber, getString } from '../src/shared/persistence/mmkv';
+import { STORAGE_KEYS } from '../src/shared/persistence/schema';
 
-jest.mock('../src/persistence/mmkv', () => ({
+jest.mock('../src/shared/persistence/mmkv', () => ({
   getNumber: jest.fn(),
   getString: jest.fn(),
   setNumber: jest.fn(),
   setString: jest.fn(),
 }));
 
-jest.mock('../src/core/time/clock', () => ({
-  ...jest.requireActual('../src/core/time/clock'),
+jest.mock('../src/shared/time/clock', () => ({
+  ...jest.requireActual('../src/shared/time/clock'),
   now: jest.fn(() => new Date(2026, 6, 17, 12, 0, 0)),
 }));
 

@@ -3,7 +3,7 @@ import {
   getOnboardingStepIndex,
   onboardingStepViewProps,
   ONBOARDING_FUNNEL_ANALYTICS_ORDER,
-} from '../src/config/analyticsFunnels';
+} from '../src/features/onboarding/domain/analyticsFunnels';
 
 describe('analyticsFunnels', () => {
   it('assigns stable step indexes for PostHog funnels', () => {

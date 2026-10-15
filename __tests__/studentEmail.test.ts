@@ -1,7 +1,7 @@
 import {
   isEligibleStudentEmail,
   normalizeStudentEmail,
-} from '../src/core/monetization/studentEmail';
+} from '../src/features/premium/domain/studentEmail';
 
 describe('studentEmail', () => {
   it('accepts common school domains', () => {

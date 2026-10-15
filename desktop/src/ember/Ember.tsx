@@ -1,5 +1,5 @@
 import { memo, useCallback, useEffect, useId, useRef, useState, type CSSProperties } from 'react';
-import { progressBand, type ProgressBand } from '@until/theme/emotionalCopy';
+import { progressBand, type ProgressBand } from '@until/shared/theme/emotionalCopy';
 import './ember.css';
 
 /**

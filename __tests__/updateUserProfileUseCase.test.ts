@@ -1,5 +1,5 @@
-import { UpdateUserProfileUseCase } from '../src/domain/useCases/UpdateUserProfileUseCase';
-import type { ITimeRepository } from '../src/domain/repository/TimeRepository';
+import { UpdateUserProfileUseCase } from '../src/features/time/domain/useCases/UpdateUserProfileUseCase';
+import type { ITimeRepository } from '../src/features/time/domain/ports/TimeRepository';
 
 function fakes(uid: string | null, upsert: jest.Mock) {
   const repository = { setUserProfile: jest.fn() } as unknown as ITimeRepository;

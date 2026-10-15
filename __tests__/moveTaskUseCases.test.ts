@@ -1,9 +1,9 @@
-import type { ITaskRepository } from '../src/domain/repository/ITaskRepository';
-import type { DailyTask } from '../src/types';
-import { applyMoveTask } from '../src/domain/tasks/taskMove';
-import { GetStoredTasksForDayUseCase } from '../src/domain/useCases/GetStoredTasksForDayUseCase';
-import { MoveTaskUseCase } from '../src/domain/useCases/MoveTaskUseCase';
-import { MoveTasksUseCase } from '../src/domain/useCases/MoveTasksUseCase';
+import type { ITaskRepository } from '../src/features/tasks/domain/ports/ITaskRepository';
+import type { DailyTask } from '../src/shared/types';
+import { applyMoveTask } from '../src/features/tasks/domain/taskMove';
+import { GetStoredTasksForDayUseCase } from '../src/features/tasks/domain/useCases/GetStoredTasksForDayUseCase';
+import { MoveTaskUseCase } from '../src/features/tasks/domain/useCases/MoveTaskUseCase';
+import { MoveTasksUseCase } from '../src/features/tasks/domain/useCases/MoveTasksUseCase';
 
 class FakeTaskRepo implements ITaskRepository {
   tasks: DailyTask[] = [];

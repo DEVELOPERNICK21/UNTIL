@@ -1,4 +1,4 @@
-import { buildPanelModel } from '../src/core/time/panelModel';
+import { buildPanelModel } from '../src/shared/time/panelModel';
 import { buildPeriods } from '../desktop/src/periods';
 import {
   ISLAND_MODES,

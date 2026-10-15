@@ -2,10 +2,10 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react
 import { invoke } from '@tauri-apps/api/core';
 import { getCurrentWindow, LogicalSize } from '@tauri-apps/api/window';
 import type { UserCredential } from 'firebase/auth';
-import { buildPanelModel } from '@until/core/time/panelModel';
-import { getProgressColor } from '@until/theme/progressColor';
-import { timeOfDayLabel } from '@until/theme/emotionalCopy';
-import { DEVICE_LIMIT_BANNER_COPY } from '@until/core/account/accountCopy';
+import { buildPanelModel } from '@until/shared/time/panelModel';
+import { getProgressColor } from '@until/shared/theme/progressColor';
+import { timeOfDayLabel } from '@until/shared/theme/emotionalCopy';
+import { DEVICE_LIMIT_BANNER_COPY } from '@until/features/account/domain/accountCopy';
 import { loadLocalState, panelProfile } from './localState';
 import { pushExtra } from './extra';
 import {

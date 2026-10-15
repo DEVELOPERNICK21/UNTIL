@@ -14,9 +14,9 @@ import {
   type Firestore,
   type Unsubscribe,
 } from 'firebase/firestore';
-import type { IAccountCloudStore } from '@until/domain/ports/IAccountCloudStore';
-import type { AccountDevice, CloudEntitlement, CloudUserProfile } from '@until/types';
-import { withTimeout } from '@until/core/account/withTimeout';
+import type { IAccountCloudStore } from '@until/features/account/domain/ports/IAccountCloudStore';
+import type { AccountDevice, CloudEntitlement, CloudUserProfile } from '@until/shared/types';
+import { withTimeout } from '@until/shared/utils/withTimeout';
 
 const FIRESTORE_TIMEOUT_MS = 8000;
 

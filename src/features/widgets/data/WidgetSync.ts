@@ -1,0 +1,572 @@
+/**
+ * WidgetSync - Persists and bridges widget cache to native
+ * SSOT: cache is produced by SyncWidgetUseCase (from TimeRepository); this layer only I/O
+ */
+
+import { NativeModules, Platform } from 'react-native';
+import type { SyncWidgetUseCase } from '../domain/useCases/SyncWidgetUseCase';
+import type { GetCustomCountersUseCase } from '../../counters/domain';
+import type { GetCountdownsUseCase } from '../../countdowns/domain';
+import type { GetDailyTaskStatsUseCase } from '../../tasks/domain';
+import type { GetAccessStateUseCase } from '../../premium/domain';
+import type { WidgetAccent } from '../domain/WidgetConfig';
+import { STORAGE_KEYS } from '../../../shared/persistence/schema';
+import {
+  getString,
+  setString,
+  getBoolean,
+  setBoolean,
+  getNumber,
+  setNumber,
+} from '../../../shared/persistence/mmkv';
+import { hasPremiumBundle } from '../../premium/domain';
+import { getWidgetAccentColor } from '../config/widgetAccents';
+import { todayIso } from '../../../shared/time/clock';
+import { registerWidgetSync } from '../../../shared/platform/widgetSync';
+
+/** Use cases WidgetSync reads from. Injected by di.ts so this file never imports di. */
+export type WidgetSyncSources = {
+  syncWidgetUseCase: SyncWidgetUseCase;
+  getCustomCountersUseCase: GetCustomCountersUseCase;
+  getCountdownsUseCase: GetCountdownsUseCase;
+  getDailyTaskStatsUseCase: GetDailyTaskStatsUseCase;
+  getAccessStateUseCase: GetAccessStateUseCase;
+};
+
+let sources: WidgetSyncSources | null = null;
+
+export function configureWidgetSync(next: WidgetSyncSources): void {
+  sources = next;
+  registerWidgetSync({
+    syncWidgetCache,
+    syncPremiumStatus,
+    syncDailyTasksWidget,
+    syncCustomCounters,
+    syncCountdowns,
+  });
+}
+
+function src(): WidgetSyncSources {
+  if (!sources) {
+    throw new Error('WidgetSync used before di.ts called configureWidgetSync');
+  }
+  return sources;
+}
+
+const DEFAULT_ACCENT_HEX = getWidgetAccentColor('ember');
+
+function readAccentColorForNative(): string {
+  const stored = getString(STORAGE_KEYS.WIDGET_ACCENT_COLOR);
+  if (stored && /^#[0-9A-Fa-f]{6}$/.test(stored)) return stored;
+  return DEFAULT_ACCENT_HEX;
+}
+
+/** Store the accent native widgets render with (SSOT for WIDGET_ACCENT_COLOR). */
+export function publishWidgetAccent(
+  accent: WidgetAccent,
+  options: { sync: boolean },
+): void {
+  setString(STORAGE_KEYS.WIDGET_ACCENT_COLOR, getWidgetAccentColor(accent));
+  if (options.sync) syncWidgetCache();
+}
+
+export function syncWidgetCache(): void {
+  const cache = {
+    ...src().syncWidgetUseCase.execute(),
+    accentColor: readAccentColorForNative(),
+  };
+  const json = JSON.stringify(cache);
+  setString(STORAGE_KEYS.WIDGET_CACHE, json);
+  const { WidgetBridge } = NativeModules;
+  if (Platform.OS === 'ios') {
+    if (WidgetBridge?.setWidgetCache) {
+      WidgetBridge.setWidgetCache(json);
+    }
+  } else if (WidgetBridge?.updateWidgets) {
+    WidgetBridge.updateWidgets();
+  }
+}
+/** Sync premium status to native for widget gating. iOS: UserDefaults; Android: MMKV (already shared). */
+/**
+ * Trial unlocks the same widget surfaces as paid premium. Reads the same access
+ * state the app UI uses, so a signed-in device over the 3-device cap
+ * (devicePremiumAllowed = false) does not keep premium widgets alive.
+ */
+function readEffectivePremiumForNativeBridge(): boolean {
+  return hasPremiumBundle(src().getAccessStateUseCase.execute());
+}
+
+export function syncPremiumStatus(): void {
+  const effectivePremium = readEffectivePremiumForNativeBridge();
+  setBoolean(STORAGE_KEYS.PREMIUM_EFFECTIVE_ACCESS, effectivePremium);
+  const { WidgetBridge } = NativeModules;
+  if (Platform.OS === 'ios' && WidgetBridge?.setPremiumStatus) {
+    WidgetBridge.setPremiumStatus(effectivePremium);
+  } else if (Platform.OS === 'android' && WidgetBridge?.updateWidgets) {
+    WidgetBridge.updateWidgets();
+  }
+}
+
+/** Push custom counters to native so counter widgets can reload with latest data. */
+export function syncCustomCounters(): void {
+  const counters = src().getCustomCountersUseCase.execute();
+  const json = JSON.stringify(counters);
+  const { WidgetBridge } = NativeModules;
+  if (Platform.OS === 'ios') {
+    if (WidgetBridge?.setCustomCounters) {
+      WidgetBridge.setCustomCounters(json);
+    }
+  } else if (WidgetBridge?.updateWidgets) {
+    WidgetBridge.updateWidgets();
+  }
+}
+
+type NativeCounter = { id: string; title: string; count: number };
+
+/**
+ * The counter widget and the watch change the counter in the App Group while the app is
+ * closed. Take that value in first, and only then push the app's own. Pushing first (what the
+ * app used to do) overwrote their taps with an older count.
+ */
+export function syncCustomCountersAfterAdopting(
+  adopt: (counters: NativeCounter[]) => void,
+): Promise<void> {
+  const bridge = NativeModules.WidgetBridge;
+  if (Platform.OS !== 'ios' || !bridge?.getCustomCountersFromAppGroup) {
+    syncCustomCounters();
+    return Promise.resolve();
+  }
+  return bridge
+    .getCustomCountersFromAppGroup()
+    .then((json: unknown) => {
+      if (typeof json !== 'string' || !json) return;
+      try {
+        const parsed = JSON.parse(json);
+        if (Array.isArray(parsed)) adopt(parsed as NativeCounter[]);
+      } catch {
+        /* keep what the app has */
+      }
+    })
+    .catch(() => {
+      /* bridge unavailable */
+    })
+    .then(() => syncCustomCounters());
+}
+
+/** Push countdowns to native so countdown widgets can reload. */
+export function syncCountdowns(): void {
+  const countdowns = src().getCountdownsUseCase.execute();
+  const json = JSON.stringify(countdowns);
+  const { WidgetBridge } = NativeModules;
+  if (Platform.OS === 'ios') {
+    if (WidgetBridge?.setCountdowns) {
+      WidgetBridge.setCountdowns(json);
+    }
+  } else if (WidgetBridge?.updateWidgets) {
+    WidgetBridge.updateWidgets();
+  }
+}
+
+/** Push today's task stats to native for the daily tasks widget. */
+export function syncDailyTasksWidget(): void {
+  const payload = src().getDailyTaskStatsUseCase.getWidgetPayload(todayIso());
+  const json = JSON.stringify(payload);
+  setString(STORAGE_KEYS.DAILY_TASKS_WIDGET, json);
+  const { WidgetBridge } = NativeModules;
+  if (Platform.OS === 'ios') {
+    if (WidgetBridge?.setDailyTasksStats) {
+      WidgetBridge.setDailyTasksStats(json);
+    }
+  } else if (WidgetBridge?.updateWidgets) {
+    WidgetBridge.updateWidgets();
+  }
+}
+
+export type HourCalculationState = {
+  title: string;
+  isRunning: boolean;
+  startTimeMs: number;
+  totalElapsedMs: number;
+};
+
+const DEFAULT_HOUR_CALCULATION: HourCalculationState = {
+  title: 'Hour timer',
+  isRunning: false,
+  startTimeMs: 0,
+  totalElapsedMs: 0,
+};
+
+/** Read hour calculation widget state from storage (same key as native). */
+export function getHourCalculationState(): HourCalculationState {
+  const json = getString(STORAGE_KEYS.HOUR_CALCULATION_WIDGET);
+  if (!json) return DEFAULT_HOUR_CALCULATION;
+  try {
+    const o = JSON.parse(json);
+    return {
+      title:
+        typeof o.title === 'string' ? o.title : DEFAULT_HOUR_CALCULATION.title,
+      isRunning: Boolean(o.isRunning),
+      startTimeMs: Number(o.startTimeMs) || 0,
+      totalElapsedMs: Number(o.totalElapsedMs) || 0,
+    };
+  } catch {
+    return DEFAULT_HOUR_CALCULATION;
+  }
+}
+
+export type LiveActivityWidgetType =
+  | 'day'
+  | 'month'
+  | 'year'
+  | 'life'
+  | 'dailyTasks'
+  | 'hourCalc';
+
+const LIVE_ACTIVITY_WIDGET_TYPES: LiveActivityWidgetType[] = [
+  'day',
+  'month',
+  'year',
+  'life',
+  'dailyTasks',
+  'hourCalc',
+];
+
+/** Android overlay widget type (same options as Live Activity). */
+export type OverlayWidgetType = LiveActivityWidgetType;
+
+/** Get stored Live Activity widget type. */
+export function getLiveActivityWidgetType(): LiveActivityWidgetType {
+  const stored = getString(STORAGE_KEYS.LIVE_ACTIVITY_WIDGET_TYPE);
+  if (
+    stored &&
+    LIVE_ACTIVITY_WIDGET_TYPES.includes(stored as LiveActivityWidgetType)
+  ) {
+    return stored as LiveActivityWidgetType;
+  }
+  return 'day';
+}
+
+/** Set Live Activity widget type and persist. */
+export function setLiveActivityWidgetType(type: LiveActivityWidgetType): void {
+  setString(STORAGE_KEYS.LIVE_ACTIVITY_WIDGET_TYPE, type);
+}
+
+/** Build Live Activity state from all widget sources. Used for Dynamic Island / Lock Screen. */
+export function buildLiveActivityState(
+  activeWidget?: LiveActivityWidgetType,
+): object {
+  const widget = activeWidget ?? getLiveActivityWidgetType();
+  const cache = src().syncWidgetUseCase.execute();
+  const dailyPayload = src().getDailyTaskStatsUseCase.getWidgetPayload(todayIso());
+  const hourState = getHourCalculationState();
+
+  return {
+    activeWidget: widget,
+    dayProgress: cache.dayProgress,
+    dayPercentDone: cache.dayPercentDone,
+    dayPercentLeft: cache.dayPercentLeft,
+    dayHoursPassed: cache.dayHoursPassed,
+    dayHoursLeft: cache.dayHoursLeft,
+    startOfDay: cache.startOfDay ?? null,
+    endOfDay: cache.endOfDay ?? null,
+    monthProgress: cache.monthProgress,
+    monthDaysPassed: cache.monthDaysPassed,
+    monthDaysLeft: cache.monthDaysLeft,
+    monthPercent: cache.monthPercent,
+    yearProgress: cache.yearProgress,
+    yearDaysPassed: cache.yearDaysPassed,
+    yearDaysLeft: cache.yearDaysLeft,
+    yearPercent: cache.yearPercent,
+    lifeProgress: cache.lifeProgress ?? null,
+    remainingDaysLife: cache.remainingDaysLife ?? null,
+    lifePercent: cache.lifePercent ?? null,
+    dailyTasksCompleted: dailyPayload?.completed ?? 0,
+    dailyTasksTotal: dailyPayload?.total ?? 0,
+    hourCalcTitle: hourState.title || 'Hour timer',
+    hourCalcElapsedMs: hourState.totalElapsedMs,
+    hourCalcIsRunning: hourState.isRunning,
+    hourCalcStartMs: hourState.isRunning ? hourState.startTimeMs : null,
+    isPremium: readEffectivePremiumForNativeBridge(),
+    updatedAt: Date.now(),
+  };
+}
+
+export type LiveActivityStartResult =
+  | { ok: true }
+  | { ok: false; reason: 'disabled' | 'unsupported' | 'failed' };
+
+export type LiveActivityStatus = {
+  /** iOS 16.2 or later. */
+  supported: boolean;
+  /** Live Activities are allowed for UNTIL in iOS Settings. */
+  enabled: boolean;
+  /** An activity is running and can still show. */
+  active: boolean;
+  /** `active`, `stale`, `ended`, `dismissed` or `none`. */
+  state: string;
+};
+
+const NO_STATUS: LiveActivityStatus = {
+  supported: false,
+  enabled: false,
+  active: false,
+  state: 'none',
+};
+
+/** iOS ends a Live Activity after about 8 hours. */
+const LIVE_ACTIVITY_MAX_AGE_MS = 7.5 * 60 * 60 * 1000;
+
+/**
+ * Start the Dynamic Island / Lock Screen activity. iOS only, and only works while the app is
+ * in the foreground. Says why it failed so the screen can tell the user.
+ */
+export async function startLiveActivity(
+  activeWidget?: LiveActivityWidgetType,
+): Promise<LiveActivityStartResult> {
+  if (Platform.OS !== 'ios') return { ok: false, reason: 'unsupported' };
+  const bridge = NativeModules.LiveActivityBridge;
+  if (!bridge?.startActivity) return { ok: false, reason: 'unsupported' };
+  try {
+    await bridge.startActivity(JSON.stringify(buildLiveActivityState(activeWidget)));
+    setBoolean(STORAGE_KEYS.LIVE_ACTIVITY_ENABLED, true);
+    setNumber(STORAGE_KEYS.LIVE_ACTIVITY_STARTED_AT, Date.now());
+    return { ok: true };
+  } catch (error) {
+    const code = (error as { code?: string } | null)?.code;
+    if (code === 'disabled' || code === 'unsupported') {
+      return { ok: false, reason: code };
+    }
+    return { ok: false, reason: 'failed' };
+  }
+}
+
+/** Whether Live Activities are allowed and whether one is really showing. iOS only. */
+export async function getLiveActivityStatus(): Promise<LiveActivityStatus> {
+  if (Platform.OS !== 'ios') return NO_STATUS;
+  const bridge = NativeModules.LiveActivityBridge;
+  if (!bridge?.getStatus) return NO_STATUS;
+  try {
+    const status = (await bridge.getStatus()) as Partial<LiveActivityStatus> | null;
+    return {
+      supported: status?.supported ?? false,
+      enabled: status?.enabled ?? false,
+      active: status?.active ?? false,
+      state: status?.state ?? 'none',
+    };
+  } catch {
+    return NO_STATUS;
+  }
+}
+
+/** Update existing Live Activity. Call when app foregrounds. */
+export function updateLiveActivity(
+  activeWidget?: LiveActivityWidgetType,
+): void {
+  if (Platform.OS !== 'ios') return;
+  const LiveActivityBridge = NativeModules.LiveActivityBridge;
+  if (!LiveActivityBridge?.updateActivity) return;
+
+  const state = buildLiveActivityState(activeWidget);
+  const json = JSON.stringify(state);
+  LiveActivityBridge.updateActivity(json);
+}
+
+/**
+ * The Dynamic Island buttons switch the view while the app is closed. Take that
+ * choice back so the next refresh does not snap the island to the old view.
+ */
+export function adoptIslandSelection(): Promise<void> {
+  if (Platform.OS !== 'ios') return Promise.resolve();
+  const bridge = NativeModules.LiveActivityBridge;
+  if (!bridge?.getActiveWidget) return Promise.resolve();
+  return bridge
+    .getActiveWidget()
+    .then((type: unknown) => {
+      if (
+        typeof type === 'string' &&
+        LIVE_ACTIVITY_WIDGET_TYPES.includes(type as LiveActivityWidgetType)
+      ) {
+        setLiveActivityWidgetType(type as LiveActivityWidgetType);
+      }
+    })
+    .catch(() => {
+      /* island not running */
+    });
+}
+
+/**
+ * The home screen widget and the Dynamic Island can start or stop the hour
+ * timer with the app closed. Their state lives in the App Group, so copy it
+ * back before anything overwrites it.
+ */
+export function adoptNativeHourTimer(): Promise<void> {
+  if (Platform.OS !== 'ios') return Promise.resolve();
+  const bridge = NativeModules.WidgetBridge;
+  if (!bridge?.getHourCalculationFromAppGroup) return Promise.resolve();
+  return bridge
+    .getHourCalculationFromAppGroup()
+    .then((json: unknown) => {
+      if (typeof json !== 'string' || !json) return;
+      try {
+        const parsed = JSON.parse(json);
+        if (typeof parsed?.isRunning === 'boolean') {
+          setString(STORAGE_KEYS.HOUR_CALCULATION_WIDGET, json);
+        }
+      } catch {
+        /* keep what the app has */
+      }
+    })
+    .catch(() => {
+      /* bridge unavailable */
+    });
+}
+
+/** App came to the foreground: pull in native changes, then refresh the island. */
+export function refreshLiveActivity(): void {
+  void Promise.all([adoptIslandSelection(), adoptNativeHourTimer()])
+    .then(() => restartEndedLiveActivity())
+    .then(restarted => {
+      if (!restarted) updateLiveActivity();
+    })
+    .catch(() => {
+      /* island is optional; never block the app on it */
+    });
+}
+
+/**
+ * The user pressed Start and never Stop, but nothing is running. If iOS ended it after its
+ * time limit, start it again (the app is in the foreground, so iOS allows it). If the user
+ * swiped it away, leave it off.
+ */
+async function restartEndedLiveActivity(): Promise<boolean> {
+  if (Platform.OS !== 'ios') return false;
+  if (!(getBoolean(STORAGE_KEYS.LIVE_ACTIVITY_ENABLED) ?? false)) return false;
+
+  const status = await getLiveActivityStatus();
+  if (!status.supported || status.active) return false;
+  if (!status.enabled) return false;
+
+  const startedAt = getNumber(STORAGE_KEYS.LIVE_ACTIVITY_STARTED_AT) ?? 0;
+  const timedOut =
+    status.state === 'ended' || Date.now() - startedAt >= LIVE_ACTIVITY_MAX_AGE_MS;
+  if (!timedOut) {
+    // Gone well before the time limit: the user dismissed it. Respect that.
+    setBoolean(STORAGE_KEYS.LIVE_ACTIVITY_ENABLED, false);
+    return false;
+  }
+  return (await startLiveActivity()).ok;
+}
+
+/** End Live Activity. */
+export function endLiveActivity(): void {
+  if (Platform.OS !== 'ios') return;
+  setBoolean(STORAGE_KEYS.LIVE_ACTIVITY_ENABLED, false);
+  const LiveActivityBridge = NativeModules.LiveActivityBridge;
+  if (LiveActivityBridge?.endActivity) {
+    LiveActivityBridge.endActivity();
+  }
+}
+
+// --- Android floating overlay (Dynamic Island–like) ---
+
+/** Get stored overlay widget type. Android only. */
+export function getOverlayWidgetType(): OverlayWidgetType {
+  if (Platform.OS !== 'android') return 'day';
+  const stored = getString(STORAGE_KEYS.OVERLAY_WIDGET_TYPE);
+  if (
+    stored &&
+    LIVE_ACTIVITY_WIDGET_TYPES.includes(stored as OverlayWidgetType)
+  ) {
+    return stored as OverlayWidgetType;
+  }
+  return 'day';
+}
+
+/** Set overlay widget type and persist to MMKV. Android only. */
+export function setOverlayWidgetType(type: OverlayWidgetType): void {
+  if (Platform.OS !== 'android') return;
+  setString(STORAGE_KEYS.OVERLAY_WIDGET_TYPE, type);
+}
+
+/** Start Live Island (floating pill + live notification). Android only. */
+export function startOverlay(): void {
+  if (Platform.OS !== 'android') return;
+  setBoolean(STORAGE_KEYS.OVERLAY_ENABLED, true);
+  const { WidgetBridge } = NativeModules;
+  if (WidgetBridge?.startOverlay) {
+    WidgetBridge.startOverlay();
+  }
+}
+
+/** Stop floating overlay. Android only. */
+export function stopOverlay(): void {
+  if (Platform.OS !== 'android') return;
+  setBoolean(STORAGE_KEYS.OVERLAY_ENABLED, false);
+  const { WidgetBridge } = NativeModules;
+  if (WidgetBridge?.stopOverlay) {
+    WidgetBridge.stopOverlay();
+  }
+}
+
+/** Check if overlay is enabled (user has started it). Android only. */
+export function isOverlayEnabled(): boolean {
+  if (Platform.OS !== 'android') return false;
+  return getBoolean(STORAGE_KEYS.OVERLAY_ENABLED) ?? false;
+}
+
+/** Update overlay content. Call when cache changes. Android only. */
+export function updateOverlay(): void {
+  if (Platform.OS !== 'android') return;
+  const { WidgetBridge } = NativeModules;
+  if (WidgetBridge?.updateOverlay) {
+    WidgetBridge.updateOverlay();
+  }
+}
+
+/** Check if overlay permission is granted. Android only. */
+export function canDrawOverlays(): Promise<boolean> {
+  if (Platform.OS !== 'android') return Promise.resolve(false);
+  const { WidgetBridge } = NativeModules;
+  if (WidgetBridge?.canDrawOverlays) {
+    return WidgetBridge.canDrawOverlays();
+  }
+  return Promise.resolve(false);
+}
+
+/** Open overlay permission settings. Android only. */
+export function requestOverlayPermission(): void {
+  if (Platform.OS !== 'android') return;
+  const { WidgetBridge } = NativeModules;
+  if (WidgetBridge?.requestOverlayPermission) {
+    WidgetBridge.requestOverlayPermission();
+  }
+}
+
+/** Update title and/or reset the hour calculation widget. Triggers widget refresh on Android. */
+export function syncHourCalculationWidget(update: {
+  title?: string;
+  reset?: boolean;
+}): void {
+  const current = getHourCalculationState();
+  const next: HourCalculationState = update.reset
+    ? {
+        title: update.title ?? current.title,
+        isRunning: false,
+        startTimeMs: 0,
+        totalElapsedMs: 0,
+      }
+    : {
+        ...current,
+        ...(update.title !== undefined && { title: update.title }),
+      };
+  const json = JSON.stringify(next);
+  setString(STORAGE_KEYS.HOUR_CALCULATION_WIDGET, json);
+  const { WidgetBridge } = NativeModules;
+  if (Platform.OS === 'ios') {
+    if (WidgetBridge?.setHourCalculationState) {
+      WidgetBridge.setHourCalculationState(json);
+    }
+  } else if (WidgetBridge?.updateWidgets) {
+    WidgetBridge.updateWidgets();
+  }
+}

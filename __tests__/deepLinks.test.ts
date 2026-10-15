@@ -1,7 +1,7 @@
-import { parseOpenScreenUrl } from '../src/services/deepLinks';
+import { parseOpenScreenUrl } from '../src/app/navigation/deepLinks';
 
 // The navigation library is ESM; only the URL parser is under test here.
-jest.mock('../src/navigation/rootNavigationRef', () => ({
+jest.mock('../src/shared/navigation/rootNavigationRef', () => ({
   rootNavigationRef: { isReady: () => false, navigate: jest.fn() },
 }));
 

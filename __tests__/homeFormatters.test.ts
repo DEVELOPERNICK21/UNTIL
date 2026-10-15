@@ -4,7 +4,7 @@ import {
   formatLifePassedLeft,
   formatMonthPassedLeft,
   formatYearPassedLeft,
-} from '../src/core/time/homeFormatters';
+} from '../src/shared/time/homeFormatters';
 
 const NOW = new Date(2026, 2, 15, 8, 12, 4); // 15 Mar 2026, 08:12:04 local
 

@@ -1,10 +1,10 @@
 import {
   SyncAccountProfileUseCase,
   DEFAULT_LOCAL_THEME,
-} from '../src/domain/useCases/SyncAccountProfileUseCase';
-import type { IAccountCloudStore } from '../src/domain/ports/IAccountCloudStore';
-import type { ITimeRepository } from '../src/domain/repository/ITimeRepository';
-import type { CloudUserProfile } from '../src/types';
+} from '../src/features/account/domain/useCases/SyncAccountProfileUseCase';
+import type { IAccountCloudStore } from '../src/features/account/domain/ports/IAccountCloudStore';
+import type { ITimeRepository } from '../src/features/time/domain/ports/ITimeRepository';
+import type { CloudUserProfile } from '../src/shared/types';
 
 function makeTimeRepo(
   profile: { birthDate: string | null; deathAge: number } = {

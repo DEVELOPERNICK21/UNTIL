@@ -1,6 +1,6 @@
 import { useState, type ReactNode } from 'react';
-import type { AccountDevice } from '@until/types';
-import { replaceDesktopBody } from '@until/core/account/accountCopy';
+import type { AccountDevice } from '@until/shared/types';
+import { replaceDesktopBody } from '@until/features/account/domain/accountCopy';
 import { checkSetupForm } from './auth/afterSignIn';
 import { syncLabel } from './syncLabel';
 

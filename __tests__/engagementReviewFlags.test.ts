@@ -1,4 +1,4 @@
-import type { IEngagementRepository } from '../src/domain/repository/IEngagementRepository';
+import type { IEngagementRepository } from '../src/features/engagement/domain/ports/IEngagementRepository';
 
 /** In-memory fake mirroring review-flag semantics for Task 4 use-case tests. */
 function createInMemoryEngagementReviewFlags(): IEngagementRepository {

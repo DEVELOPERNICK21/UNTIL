@@ -3,7 +3,7 @@ import {
   PREMIUM_DEVICES_BENEFIT,
   formatAccountDeviceLabel,
   replaceDesktopBody,
-} from '../src/core/account/accountCopy';
+} from '../src/features/account/domain/accountCopy';
 
 describe('accountCopy', () => {
   it('says devices, not phones, in the sign-in benefit', () => {

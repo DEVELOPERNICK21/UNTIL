@@ -1,11 +1,11 @@
-import { buildPanelModel } from '../src/core/time/panelModel';
+import { buildPanelModel } from '../src/shared/time/panelModel';
 import {
   formatDayPassedLeftWithSeconds,
   formatLifePassedLeft,
   formatMonthPassedLeft,
   formatYearPassedLeft,
-} from '../src/core/time/homeFormatters';
-import { getLifeProgress } from '../src/core/time/life';
+} from '../src/shared/time/homeFormatters';
+import { getLifeProgress } from '../src/shared/time/life';
 import {
   EMPTY_LOCAL_STATE,
   entitlementAfterRead,

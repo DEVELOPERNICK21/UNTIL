@@ -1,4 +1,4 @@
-import { mapCustomerInfoToSyncPlan } from '../src/domain/billing/mapCustomerInfo';
+import { mapCustomerInfoToSyncPlan } from '../src/features/premium/domain/mapCustomerInfo';
 
 describe('mapCustomerInfoToSyncPlan', () => {
   it('grants premium when premium entitlement active', () => {

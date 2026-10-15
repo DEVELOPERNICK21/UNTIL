@@ -15,8 +15,8 @@ import type {
   AuthProviderId,
   AuthUser,
   CloudUserProfile,
-} from '@until/types';
-import { isUnderMinimumAge } from '@until/core/legal/ageGate';
+} from '@until/shared/types';
+import { isUnderMinimumAge } from '@until/features/account/domain/ageGate';
 import { auth } from './firebase';
 import { cloudStore, completeDesktopSignIn, deviceIdProvider } from './di';
 import { nextStepAfterSignIn } from './auth/afterSignIn';

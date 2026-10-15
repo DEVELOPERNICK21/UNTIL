@@ -1,8 +1,8 @@
-import { VerifySubscriptionUseCase } from '../src/domain/useCases/VerifySubscriptionUseCase';
-import type { ISubscriptionRepository } from '../src/domain/repository/ISubscriptionRepository';
-import type { IDeviceIdProvider } from '../src/domain/ports/IDeviceIdProvider';
-import type { ILicenseVerificationService } from '../src/domain/ports/ILicenseVerificationService';
-import type { PurchaseType, SubscriptionState } from '../src/types';
+import { VerifySubscriptionUseCase } from '../src/features/premium/domain/useCases/VerifySubscriptionUseCase';
+import type { ISubscriptionRepository } from '../src/features/premium/domain/ports/ISubscriptionRepository';
+import type { IDeviceIdProvider } from '../src/shared/platform/device/IDeviceIdProvider';
+import type { ILicenseVerificationService } from '../src/features/premium/domain/ports/ILicenseVerificationService';
+import type { PurchaseType, SubscriptionState } from '../src/shared/types';
 
 function fakeSub(seed: Partial<{
   isPremium: boolean;

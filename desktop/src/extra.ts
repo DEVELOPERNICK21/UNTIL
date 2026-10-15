@@ -1,6 +1,6 @@
 import { invoke } from '@tauri-apps/api/core';
-import { getProgressColor } from '@until/theme/progressColor';
-import type { PanelModel } from '@until/core/time/panelModel';
+import { getProgressColor } from '@until/shared/theme/progressColor';
+import type { PanelModel } from '@until/shared/time/panelModel';
 
 let lastKey: string | null = null;
 

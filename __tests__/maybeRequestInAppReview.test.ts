@@ -1,9 +1,11 @@
-import { MaybeRequestInAppReviewUseCase } from '../src/domain/useCases/MaybeRequestInAppReviewUseCase';
-import { RequestInAppReviewFromSettingsUseCase } from '../src/domain/useCases/RequestInAppReviewFromSettingsUseCase';
-import type { IInAppReviewService } from '../src/domain/ports/IInAppReviewService';
-import type { IEngagementRepository } from '../src/domain/repository/IEngagementRepository';
-import type { ISubscriptionRepository } from '../src/domain/repository/ISubscriptionRepository';
-import { AUTO_REVIEW_COOLDOWN_MS } from '../src/core/engagement';
+import { MaybeRequestInAppReviewUseCase } from '../src/features/engagement/domain/useCases/MaybeRequestInAppReviewUseCase';
+import { RequestInAppReviewFromSettingsUseCase } from '../src/features/engagement/domain/useCases/RequestInAppReviewFromSettingsUseCase';
+import type { IInAppReviewService } from '../src/features/engagement/domain/ports/IInAppReviewService';
+import type { IEngagementRepository } from '../src/features/engagement/domain/ports/IEngagementRepository';
+import type { ISubscriptionRepository } from '../src/features/premium/domain/ports/ISubscriptionRepository';
+import {
+  AUTO_REVIEW_COOLDOWN_MS,
+} from '../src/features/engagement/domain/inAppReviewEligibility';
 
 function createFakes(overrides?: {
   reviewPending?: boolean;

@@ -1,4 +1,4 @@
-import type { CloudEntitlement } from '@until/types';
+import type { CloudEntitlement } from '@until/shared/types';
 
 /** Last known account state on this computer, so the extra keeps ticking offline. */
 export interface DesktopLocalState {

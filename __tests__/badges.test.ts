@@ -9,8 +9,8 @@ import {
   getBadgeProgress,
   pickUpNext,
   type BadgeSnapshot,
-} from '../src/domain/badges/badgeCatalog';
-import { buildDailyQuests } from '../src/domain/badges/dailyQuests';
+} from '../src/features/badges/domain/badgeCatalog';
+import { buildDailyQuests } from '../src/features/badges/domain/dailyQuests';
 
 function snap(patch: Partial<BadgeSnapshot>): BadgeSnapshot {
   return { ...EMPTY_BADGE_SNAPSHOT, ...patch };

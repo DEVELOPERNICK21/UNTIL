@@ -5,18 +5,19 @@ import {
   BADGES,
   EMPTY_BADGE_SNAPSHOT,
   getBadgeProgress,
-} from '../src/domain/badges/badgeCatalog';
-import { buildDailyQuests } from '../src/domain/badges/dailyQuests';
-import type { BadgeView } from '../src/domain/useCases/GetBadgesUseCase';
-import { BadgeMedal, ConfettiBurst, ProgressRing, StreakFlame } from '../src/ui';
+} from '../src/features/badges/domain/badgeCatalog';
+import { buildDailyQuests } from '../src/features/badges/domain/dailyQuests';
+import type { BadgeView } from '../src/features/badges/domain/useCases/GetBadgesUseCase';
+import { BadgeMedal } from '../src/features/badges/ui/BadgeMedal';
+import { ConfettiBurst, ProgressRing, StreakFlame } from '../src/shared/ui';
+import { BadgeShelf } from '../src/features/badges/ui/BadgeShelf';
+import { BadgeUnlockHost } from '../src/features/badges/ui/BadgeUnlockHost';
 import {
-  BadgeShelf,
-  BadgeUnlockHost,
   BadgeUnlockOverlay,
-  DailyQuestsCard,
-  StreakChip,
-} from '../src/components/gamification';
-import { setEmberModalCoveringSource } from '../src/services/emberSurface';
+} from '../src/features/badges/ui/BadgeUnlockOverlay';
+import { DailyQuestsCard } from '../src/features/badges/ui/DailyQuestsCard';
+import { StreakChip } from '../src/features/presence/ui/StreakChip';
+import { setEmberModalCoveringSource } from '../src/shared/ui/emberSurface';
 
 // ui/index pulls in Skia grids; none of them are rendered here.
 jest.mock('@shopify/react-native-skia', () => ({
@@ -32,10 +33,10 @@ const mockOverview = {
   markSeen: jest.fn(),
   refresh: jest.fn(),
 };
-jest.mock('../src/hooks', () => ({
+jest.mock('../src/features/badges/hooks/useBadges', () => ({
   useBadgeOverview: () => mockOverview,
 }));
-jest.mock('../src/navigation/rootNavigationRef', () => ({
+jest.mock('../src/shared/navigation/rootNavigationRef', () => ({
   rootNavigationRef: { addListener: jest.fn(() => () => {}) },
 }));
 

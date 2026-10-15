@@ -2,9 +2,11 @@ import {
   computeAccessState,
   hasPremiumBundle,
   canAccessLife,
+} from '../src/features/premium/domain/accessControl';
+import {
   TRIAL_DURATION_MS,
   LIFE_EVENT_UNLOCK_MS,
-} from '../src/domain/accessControl';
+} from '../src/config/accessConstants';
 
 describe('accessControl', () => {
   it('trial active within preview window from start', () => {

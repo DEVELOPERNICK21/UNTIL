@@ -5,12 +5,12 @@
 import React from 'react';
 import ReactTestRenderer from 'react-test-renderer';
 import { Text } from 'react-native';
-import { CrashErrorBoundary } from '../src/components/CrashErrorBoundary';
+import { CrashErrorBoundary } from '../src/app/CrashErrorBoundary';
 
 const mockRecordCrashError = jest.fn();
 const mockLogCrashBreadcrumb = jest.fn();
 
-jest.mock('../src/services/analytics', () => ({
+jest.mock('../src/shared/analytics/analytics', () => ({
   recordCrashError: (...args: unknown[]) => mockRecordCrashError(...args),
   logCrashBreadcrumb: (...args: unknown[]) => mockLogCrashBreadcrumb(...args),
 }));

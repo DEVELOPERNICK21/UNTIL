@@ -1,7 +1,7 @@
 import { memo, useCallback, useMemo, useState, type CSSProperties, type MouseEvent } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { getCurrentWindow } from '@tauri-apps/api/window';
-import { buildPanelModel } from '@until/core/time/panelModel';
+import { buildPanelModel } from '@until/shared/time/panelModel';
 import { panelProfile } from './localState';
 import { useLocalState } from './useLocalState';
 import { dayChip } from './periods';

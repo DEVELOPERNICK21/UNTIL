@@ -6,7 +6,7 @@ import {
   nextFunnelStep,
   ONBOARDING_PROGRESS_STEPS,
   prevFunnelStep,
-} from '../src/core/onboarding';
+} from '../src/features/onboarding/domain/quizFunnel';
 
 describe('onboarding quiz funnel', () => {
   it('maps drain to reclaim hours', () => {

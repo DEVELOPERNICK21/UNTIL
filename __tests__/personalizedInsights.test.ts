@@ -1,7 +1,7 @@
 import {
   personalizedEmberTipsForRoute,
   personalizeWeeklyReflectionMessage,
-} from '../src/core/onboarding/personalizedInsights';
+} from '../src/features/onboarding/domain/personalizedInsights';
 
 describe('personalizedInsights', () => {
   it('adds life grid and priority copy to weekly reflections', () => {

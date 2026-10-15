@@ -3,7 +3,7 @@ import {
   FREEZE_REFILL_EVERY_DAYS,
   recordPresenceDay,
   type PresenceStreakState,
-} from '../src/domain/presence/presenceStreak';
+} from '../src/features/presence/domain/presenceStreak';
 
 function state(patch: Partial<PresenceStreakState>): PresenceStreakState {
   return { ...EMPTY_PRESENCE, ...patch };

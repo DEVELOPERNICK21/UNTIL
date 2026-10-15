@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useState, type CSSProperties, type MouseEvent } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
-import { buildPanelModel } from '@until/core/time/panelModel';
-import { getProgressColor } from '@until/theme/progressColor';
-import { timeOfDayLabel } from '@until/theme/emotionalCopy';
+import { buildPanelModel } from '@until/shared/time/panelModel';
+import { getProgressColor } from '@until/shared/theme/progressColor';
+import { timeOfDayLabel } from '@until/shared/theme/emotionalCopy';
 import { panelProfile } from './localState';
 import { useLocalState } from './useLocalState';
 import { buildPeriods, type PeriodKey } from './periods';

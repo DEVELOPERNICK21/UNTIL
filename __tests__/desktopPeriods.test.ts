@@ -1,4 +1,4 @@
-import { buildPanelModel } from '../src/core/time/panelModel';
+import { buildPanelModel } from '../src/shared/time/panelModel';
 import { buildPeriods, dayChip, dayParts } from '../desktop/src/periods';
 
 const NOON = new Date(2026, 9, 15, 12, 0, 0);
