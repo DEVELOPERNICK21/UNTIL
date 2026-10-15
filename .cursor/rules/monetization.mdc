@@ -3,9 +3,7 @@ description: Monetization, pricing, paywall copy, and free vs Premium gating for
 globs:
   - src/config/monetization.ts
   - src/config/billing.ts
-  - src/surfaces/app/PremiumScreen.tsx
-  - src/components/premium/**
-  - src/surfaces/auth/OnboardingPaywallScreen.tsx
+  - src/features/premium/**
   - docs/MONETIZATION_STRATEGY.md
   - docs/PLAY_BILLING.md
 ---
@@ -31,7 +29,7 @@ Secondary (not cards):
 
 - Copy & fallback prices: `src/config/monetization.ts`
 - Store product IDs: `src/config/billing.ts` (`BILLING_PAYWALL_IDS` = yearly · monthly · weekly)
-- Shared paywall UI: `src/components/premium/PremiumPaywallBody.tsx`
+- Shared paywall UI: `src/features/premium/ui/PremiumPaywallBody.tsx`
 - Social proof: set `PAYWALL_SOCIAL_PROOF.verifiedActiveWatchers` only from verified analytics (null = hidden)
 
 ## Free forever

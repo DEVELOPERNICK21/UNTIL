@@ -8,9 +8,10 @@ Index of project documentation for developers and AI agents.
 
 | Doc | Purpose |
 |-----|---------|
-| [ARCHITECTURE.md](./ARCHITECTURE.md) | Clean architecture, SSOT, data flow, layer boundaries |
+| [ARCHITECTURE.md](./ARCHITECTURE.md) | Feature-based + clean architecture, feature dependency table, SSOT, enforcement |
 | [FOLDER_STRUCTURE.md](./FOLDER_STRUCTURE.md) | Directory layout, naming, where to put new code |
 | [DECISIONS.md](./DECISIONS.md) | Architecture Decision Records (ADRs) |
+| [ARCHITECTURE_AUDIT_2026-10-16.md](./ARCHITECTURE_AUDIT_2026-10-16.md) | Audit of the layer-first codebase and the feature-based migration |
 
 ---
 

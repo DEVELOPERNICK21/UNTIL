@@ -116,7 +116,7 @@ Hooks that mutate data should call the appropriate sync after the use case execu
 - Premium/subscription state (if needed)
 - Cross-screen shared UI state that doesn't fit the repository model
 
-If adding Redux: create `redux/store.ts`, slices, and wrap app with `Provider` in `app.tsx`. Keep business data in repositories; Redux for UI-only state.
+If adding Redux: create `redux/store.ts`, slices, and wrap app with `Provider` in `src/app/App.tsx`. Keep business data in repositories; Redux for UI-only state.
 
 ---
 

@@ -14,7 +14,7 @@ alwaysApply: false
 
 ## Types
 
-- Define shared DTOs in `src/types/index.ts`
+- Define shared DTOs in `src/shared/types/index.ts`
 - Use `interface` for object shapes; `type` for unions/aliases
 - Avoid `any`; use `unknown` and narrow if needed
 
