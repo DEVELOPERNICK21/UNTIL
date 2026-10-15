@@ -21,6 +21,7 @@ function makeDevice(
 
 function makeCloud(devices: AccountDevice[]) {
   const upserted: AccountDevice[] = [];
+  const activations: Array<{ deviceId: string; active: boolean }> = [];
   const cloud: IAccountCloudStore = {
     getProfile: async () => null,
     upsertProfile: async () => {},
@@ -28,12 +29,29 @@ function makeCloud(devices: AccountDevice[]) {
     upsertDevice: async (_uid: string, device: AccountDevice) => {
       upserted.push(device);
     },
-    setDeviceActive: async () => {},
+    setDeviceActive: async (_uid, deviceId, active) => {
+      activations.push({ deviceId, active });
+    },
     getEntitlement: async () => null,
     setEntitlement: async () => {},
     deleteUserData: async () => {},
   };
-  return { cloud, upserted };
+  return { cloud, upserted, activations };
+}
+
+function makeDesktop(
+  id: string,
+  active: boolean,
+  platform: 'macos' | 'windows' = 'macos',
+): AccountDevice {
+  return {
+    id,
+    platform,
+    label: platform === 'macos' ? 'Nick’s MacBook' : 'Office PC',
+    lastSeenAt: 1_000,
+    createdAt: 1_000,
+    active,
+  };
 }
 
 const deviceIdProvider: IDeviceIdProvider = {
@@ -187,5 +205,108 @@ describe('RegisterDeviceUseCase', () => {
     await useCase.execute('uid-1', NOW);
 
     expect(upserted[0].label).toBe('iPhone 15');
+  });
+});
+
+describe('RegisterDeviceUseCase desktop path', () => {
+  const NOW = 9_000_000;
+  const desktopIds: IDeviceIdProvider = {
+    getDeviceId: async () => 'win-1',
+  };
+
+  it('does not deactivate until replace is confirmed', async () => {
+    const { cloud, upserted, activations } = makeCloud([
+      makeDevice('phone', true),
+      makeDesktop('mac-1', true, 'macos'),
+    ]);
+    const useCase = new RegisterDeviceUseCase(cloud, desktopIds, () => 'windows');
+    const result = await useCase.execute('uid-1', NOW);
+
+    expect(result).toEqual({
+      registered: false,
+      deviceId: 'win-1',
+      needsReplace: true,
+      existing: expect.objectContaining({ id: 'mac-1', platform: 'macos' }),
+    });
+    expect(upserted).toHaveLength(0);
+    expect(activations).toHaveLength(0);
+    expect(isConclusiveRegistration(result)).toBe(false);
+  });
+
+  it('deactivates the previous desktop then registers after confirm', async () => {
+    const { cloud, upserted, activations } = makeCloud([
+      makeDevice('phone', true),
+      makeDesktop('mac-1', true, 'macos'),
+    ]);
+    const useCase = new RegisterDeviceUseCase(cloud, desktopIds, () => 'windows');
+    const result = await useCase.execute('uid-1', NOW, { replaceConfirmed: true });
+
+    expect(result).toEqual({ registered: true, deviceId: 'win-1' });
+    expect(activations).toEqual([{ deviceId: 'mac-1', active: false }]);
+    expect(upserted[0]).toEqual(
+      expect.objectContaining({ id: 'win-1', platform: 'windows', active: true }),
+    );
+  });
+
+  it('replaces at the cap: two phones and a Mac, then Windows', async () => {
+    const { cloud, upserted, activations } = makeCloud([
+      makeDevice('a', true),
+      makeDevice('b', true),
+      makeDesktop('mac-1', true, 'macos'),
+    ]);
+    const useCase = new RegisterDeviceUseCase(cloud, desktopIds, () => 'windows');
+    const result = await useCase.execute('uid-1', NOW, { replaceConfirmed: true });
+
+    expect(result.registered).toBe(true);
+    expect(activations).toEqual([{ deviceId: 'mac-1', active: false }]);
+    expect(upserted).toHaveLength(1);
+  });
+
+  it('does not claim a slot when deactivating the old desktop fails', async () => {
+    const { cloud, upserted } = makeCloud([makeDesktop('mac-1', true, 'macos')]);
+    cloud.setDeviceActive = async () => {
+      throw new Error('offline');
+    };
+    const useCase = new RegisterDeviceUseCase(cloud, desktopIds, () => 'windows');
+    const result = await useCase.execute('uid-1', NOW, { replaceConfirmed: true });
+
+    expect(result).toEqual({
+      registered: false,
+      deviceId: 'win-1',
+      reason: 'write_failed',
+    });
+    expect(upserted).toHaveLength(0);
+  });
+
+  it('refreshes the same desktop with no prompt', async () => {
+    const { cloud, upserted, activations } = makeCloud([
+      makeDevice('phone', true),
+      makeDesktop('win-1', true, 'windows'),
+    ]);
+    const useCase = new RegisterDeviceUseCase(cloud, desktopIds, () => 'windows');
+    const result = await useCase.execute('uid-1', NOW);
+
+    expect(result).toEqual({ registered: true, deviceId: 'win-1' });
+    expect(activations).toHaveLength(0);
+    expect(upserted).toHaveLength(1);
+  });
+
+  it('does not replace a phone when three phones are active', async () => {
+    const { cloud, upserted, activations } = makeCloud([
+      makeDevice('a', true),
+      makeDevice('b', true),
+      makeDevice('c', true),
+    ]);
+    const useCase = new RegisterDeviceUseCase(cloud, desktopIds, () => 'macos');
+    const result = await useCase.execute('uid-1', NOW, { replaceConfirmed: true });
+
+    expect(result).toEqual({
+      registered: false,
+      deviceId: 'win-1',
+      reason: 'limit_reached',
+    });
+    expect(isConclusiveRegistration(result)).toBe(true);
+    expect(activations).toHaveLength(0);
+    expect(upserted).toHaveLength(0);
   });
 });
