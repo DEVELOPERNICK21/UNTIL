@@ -68,7 +68,11 @@ function useSession() {
       });
     refresh();
     const id = setInterval(refresh, REFRESH_INTERVAL_MS);
-    return () => clearInterval(id);
+    window.addEventListener('focus', refresh);
+    return () => {
+      clearInterval(id);
+      window.removeEventListener('focus', refresh);
+    };
   }, []);
 
   return { view, setView, run, signIn };

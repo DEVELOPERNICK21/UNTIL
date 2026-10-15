@@ -63,17 +63,14 @@ export class FirestoreJsAccountCloudStore implements IAccountCloudStore {
     );
   }
 
+  /** Throws on failure so callers can tell "no entitlement" from "unknown". */
   async getEntitlement(uid: string): Promise<CloudEntitlement | null> {
-    try {
-      const snap = await withTimeout(
-        getDoc(doc(this.db, 'users', uid, 'entitlement', 'current')),
-        FIRESTORE_TIMEOUT_MS,
-        'getEntitlement',
-      );
-      return snap.exists() ? (snap.data() as CloudEntitlement) : null;
-    } catch {
-      return null;
-    }
+    const snap = await withTimeout(
+      getDoc(doc(this.db, 'users', uid, 'entitlement', 'current')),
+      FIRESTORE_TIMEOUT_MS,
+      'getEntitlement',
+    );
+    return snap.exists() ? (snap.data() as CloudEntitlement) : null;
   }
 
   async setEntitlement(): Promise<void> {

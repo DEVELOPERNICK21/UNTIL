@@ -1,3 +1,5 @@
+import type { CloudEntitlement } from '@until/types';
+
 /** Last known account state on this computer, so the extra keeps ticking offline. */
 export interface DesktopLocalState {
   uid: string | null;
@@ -31,6 +33,20 @@ export function loadLocalState(): DesktopLocalState {
 
 export function saveLocalState(state: DesktopLocalState): void {
   localStorage.setItem(KEY, JSON.stringify(state));
+}
+
+/**
+ * `null` means the account has no entitlement. `'unknown'` means the read
+ * failed: keep what this machine last knew for the same account, so a network
+ * error never strips premium.
+ */
+export function entitlementAfterRead(
+  previous: DesktopLocalState,
+  uid: string,
+  read: Pick<CloudEntitlement, 'active'> | null | 'unknown',
+): boolean {
+  if (read === 'unknown') return previous.uid === uid && previous.entitlementActive;
+  return read?.active === true;
 }
 
 /** The extra shows numbers only for a registered, signed-in machine. */

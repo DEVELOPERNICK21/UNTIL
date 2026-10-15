@@ -6,6 +6,11 @@ import {
   formatYearPassedLeft,
 } from '../src/core/time/homeFormatters';
 import { getLifeProgress } from '../src/core/time/life';
+import {
+  EMPTY_LOCAL_STATE,
+  entitlementAfterRead,
+  panelProfile,
+} from '../desktop/src/localState';
 
 const NOW = new Date(2026, 2, 15, 8, 12, 4);
 
@@ -61,5 +66,43 @@ describe('buildPanelModel', () => {
       NOW,
     );
     expect(withDefault.life).toEqual(explicit.life);
+  });
+});
+
+describe('desktop local state', () => {
+  const registered = {
+    ...EMPTY_LOCAL_STATE,
+    uid: 'u1',
+    email: 'a@b.com',
+    birthDate: '1990-01-15',
+    deathAge: 80,
+    deviceRegistered: true,
+  };
+
+  it('still builds numbers when entitlement is inactive', () => {
+    const model = buildPanelModel(
+      panelProfile({ ...registered, entitlementActive: false }),
+      NOW,
+    );
+    expect(model.extraText).toBe('34%');
+    expect(model.day.passedStr).toBe('8h 12m 4s');
+  });
+
+  it('reads entitlement from the account when the read succeeds', () => {
+    const active = { active: true, source: 'play', purchaseType: 'yearly', lastValidatedAt: 1 } as const;
+    expect(entitlementAfterRead(registered, 'u1', active)).toBe(true);
+    expect(entitlementAfterRead({ ...registered, entitlementActive: true }, 'u1', null)).toBe(false);
+  });
+
+  it('keeps the last known flag when the read failed', () => {
+    expect(
+      entitlementAfterRead({ ...registered, entitlementActive: true }, 'u1', 'unknown'),
+    ).toBe(true);
+  });
+
+  it('does not carry premium over to another account', () => {
+    expect(
+      entitlementAfterRead({ ...registered, entitlementActive: true }, 'u2', 'unknown'),
+    ).toBe(false);
   });
 });

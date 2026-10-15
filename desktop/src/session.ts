@@ -20,7 +20,12 @@ import { isUnderMinimumAge } from '@until/core/legal/ageGate';
 import { auth } from './firebase';
 import { cloudStore, completeDesktopSignIn, deviceIdProvider } from './di';
 import { nextStepAfterSignIn } from './auth/afterSignIn';
-import { EMPTY_LOCAL_STATE, loadLocalState, saveLocalState } from './localState';
+import {
+  EMPTY_LOCAL_STATE,
+  entitlementAfterRead,
+  loadLocalState,
+  saveLocalState,
+} from './localState';
 
 export type SessionView =
   | { kind: 'signed_out'; message?: string }
@@ -139,7 +144,12 @@ export async function register(replaceConfirmed: boolean): Promise<SessionView> 
         birthDate: profile?.birthDate ?? null,
         deathAge: profile?.deathAge ?? null,
         deviceRegistered: true,
-        entitlementActive: result.entitlement?.active === true,
+        // The use case reports a failed read as null too; refreshSession settles it.
+        entitlementActive: entitlementAfterRead(
+          loadLocalState(),
+          user.uid,
+          result.entitlement ?? 'unknown',
+        ),
       });
       return { kind: 'signed_in' };
     }
@@ -168,22 +178,23 @@ export async function refreshSession(): Promise<SessionView | null> {
     if (!mine?.active) {
       await signOut(auth);
       saveLocalState(EMPTY_LOCAL_STATE);
-      return { kind: 'signed_out', message: 'UNTIL was turned on on another computer.' };
+      return { kind: 'signed_out', message: 'This computer was signed out of your account.' };
     }
-    const [profile, entitlement] = await Promise.all([
-      cloudStore.getProfile(user.uid),
-      cloudStore.getEntitlement(user.uid),
-    ]);
-    saveLocalState({
-      ...local,
-      email: user.email,
-      birthDate: profile?.birthDate ?? local.birthDate,
-      deathAge: profile?.deathAge ?? local.deathAge,
-      entitlementActive: entitlement?.active === true,
-    });
   } catch {
     return null;
   }
+
+  const [profile, entitlement] = await Promise.all([
+    cloudStore.getProfile(user.uid).catch(() => undefined),
+    cloudStore.getEntitlement(user.uid).catch(() => 'unknown' as const),
+  ]);
+  saveLocalState({
+    ...local,
+    email: user.email,
+    birthDate: profile ? profile.birthDate : local.birthDate,
+    deathAge: profile ? profile.deathAge : local.deathAge,
+    entitlementActive: entitlementAfterRead(local, user.uid, entitlement),
+  });
   return { kind: 'signed_in' };
 }
 
