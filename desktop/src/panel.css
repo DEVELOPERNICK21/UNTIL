@@ -24,7 +24,7 @@
   --border: rgba(255, 255, 255, 0.09);
   --text: #ededed;
   --text-2: #a3a3a9;
-  --text-3: #6f6f75;
+  --text-3: #85858c;
   --track: rgba(255, 255, 255, 0.09);
   --tick-off: rgba(255, 255, 255, 0.17);
   --warn: #f59e0b;
@@ -65,7 +65,7 @@
     --border: rgba(26, 26, 26, 0.09);
     --text: #1a1a1a;
     --text-2: #5a5a5a;
-    --text-3: #8a8a8a;
+    --text-3: #6b6b6b;
     --track: rgba(26, 26, 26, 0.08);
     --tick-off: rgba(26, 26, 26, 0.15);
     --btn-light-bg: #ffffff;
@@ -1016,6 +1016,47 @@ body,
   outline-offset: 2px;
 }
 
+/* First-run question: open at login? Never switched on without asking. */
+
+.login-ask {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: 8px 12px;
+  border-radius: var(--radius-card);
+  border: 1px solid var(--border);
+  background: var(--card);
+  font-size: 12px;
+}
+
+.login-ask-actions {
+  display: inline-flex;
+  gap: var(--space-3);
+}
+
+/* Version and legal links, the quietest line in the panel. */
+
+.panel-about {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--text-3);
+}
+
+.panel-about .link {
+  font-size: 11px;
+  color: var(--text-3);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.panel-about .link:hover {
+  color: var(--text-2);
+}
+
 /* Sync status in the signed-in footer. */
 
 .sync-row {
@@ -1049,4 +1090,82 @@ body,
 .link:disabled {
   opacity: 0.5;
   cursor: default;
+}
+
+/* Windows High Contrast and other forced-colors modes: the OS palette replaces ours, so say which
+   system colour each part should use and keep every control's edge and focus ring visible. */
+@media (forced-colors: active) {
+  .panel,
+  .card,
+  .login-ask,
+  .update,
+  .btn,
+  .btn-quit,
+  .chip,
+  .dial-button,
+  .wrow {
+    border: 1px solid CanvasText;
+    background: Canvas;
+    color: CanvasText;
+  }
+
+  .chip-on {
+    border-color: Highlight;
+    color: Highlight;
+  }
+
+  .chip:focus-visible,
+  .dial-button:focus-visible,
+  .btn:focus-visible,
+  .btn-quit:focus-visible,
+  .link:focus-visible,
+  .switch input:focus-visible + .switch-track {
+    outline: 2px solid Highlight;
+  }
+
+  .switch-track {
+    border: 1px solid CanvasText;
+    background: Canvas;
+  }
+
+  .switch input:checked + .switch-track {
+    background: Highlight;
+  }
+
+  .switch-track::after {
+    background: CanvasText;
+  }
+
+  .switch input:checked + .switch-track::after {
+    background: HighlightText;
+  }
+
+  .link,
+  .panel-about .link {
+    color: LinkText;
+  }
+
+  .panel-about,
+  .muted {
+    color: CanvasText;
+  }
+
+  /* The dial: track, marks and arc must stay distinguishable without our colours. */
+  .dial-track,
+  .tick-next {
+    stroke: GrayText;
+  }
+
+  .tick-past {
+    stroke: CanvasText;
+  }
+
+  .dial-arc,
+  .tick-now {
+    stroke: Highlight;
+  }
+
+  .dial-knob-glow {
+    fill: Highlight;
+  }
 }

@@ -133,6 +133,15 @@ fn quit_app(app: AppHandle) {
     app.exit(0);
 }
 
+/// Esc closes the panel, the way a menu bar popover or tray flyout does. Focus goes back to
+/// whatever window was in front before.
+#[tauri::command]
+fn hide_panel(app: AppHandle) {
+    if let Some(panel) = app.get_webview_window(PANEL) {
+        let _ = panel.hide();
+    }
+}
+
 #[derive(serde::Serialize)]
 struct NotchInfo {
     width: f64,
@@ -420,6 +429,7 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             set_extra,
             quit_app,
+            hide_panel,
             notch_info,
             notch_open_panel,
             widget_set_size,

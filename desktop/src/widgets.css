@@ -71,7 +71,8 @@ html[data-view='widget'] #root {
     transform 200ms var(--spring, cubic-bezier(0.34, 1.56, 0.64, 1));
 }
 
-.widget:hover .w-controls {
+.widget:hover .w-controls,
+.widget:focus-within .w-controls {
   opacity: 1;
   transform: none;
 }
@@ -364,5 +365,23 @@ html[data-view='widget'] #root {
   .w-controls button,
   .ring-arc {
     transition: none;
+  }
+}
+
+/* Keyboard users can reach the widget's buttons; show where they are. */
+.w-controls button:focus-visible {
+  outline: 2px solid var(--ember, #e87c20);
+  outline-offset: 2px;
+}
+
+@media (forced-colors: active) {
+  .widget {
+    border: 1px solid CanvasText;
+    background: Canvas;
+    color: CanvasText;
+  }
+
+  .w-controls button:focus-visible {
+    outline-color: Highlight;
   }
 }

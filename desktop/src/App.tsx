@@ -30,6 +30,8 @@ import {
 import { useNow } from './useNow';
 import { useSystem } from './useSystem';
 import { WidgetsRow } from './WidgetsRow';
+import { openUrl } from '@tauri-apps/plugin-opener';
+import { LEGAL_URLS } from '@until/config/monetization';
 import { restartApp } from './system';
 import { Ember } from './ember/Ember';
 import { Dial } from './Dial';
@@ -201,6 +203,11 @@ export function App() {
         void invoke('quit_app');
         return;
       }
+      // Esc closes the panel, like any menu bar popover or tray flyout.
+      if (event.key === 'Escape') {
+        void invoke('hide_panel').catch(() => {});
+        return;
+      }
       if (event.target instanceof HTMLInputElement) return;
       if (event.key === 'ArrowRight') step(1);
       else if (event.key === 'ArrowLeft') step(-1);
@@ -226,7 +233,7 @@ export function App() {
           <span className="date">{now.toLocaleDateString(undefined, DATE_FORMAT)}</span>
         </header>
 
-        <nav className="chips" role="tablist" aria-label="Period">
+        <div className="chips" role="tablist" aria-label="Period">
           <span
             className="chip-glide"
             aria-hidden="true"
@@ -240,7 +247,7 @@ export function App() {
               onSelect={() => choose(key)}
             />
           ))}
-        </nav>
+        </div>
 
         <section className="stage" aria-live="off" style={{ ['--accent' as string]: color }}>
           <button
@@ -356,9 +363,13 @@ export function App() {
       <PanelBar
         launchAtLogin={system.launchAtLogin}
         onLaunchAtLogin={system.toggleLaunchAtLogin}
+        askLaunchAtLogin={system.askLaunchAtLogin}
+        onAnswerLaunchAtLogin={system.answerLaunchAtLogin}
         updateReady={system.updateReady}
         onRestart={() => void restartApp()}
         onQuit={() => void invoke('quit_app')}
+        version={system.version}
+        onOpenLegal={page => void openUrl(LEGAL_URLS[page]).catch(() => {})}
       />
     </main>
   );

@@ -226,12 +226,30 @@ export function AccountFooter(props: {
 export function PanelBar(props: {
   launchAtLogin: boolean | null;
   onLaunchAtLogin: (on: boolean) => void;
+  /** True once, until the person answers whether UNTIL should open at login. */
+  askLaunchAtLogin: boolean;
+  onAnswerLaunchAtLogin: (on: boolean) => void;
   updateReady: boolean;
   onRestart: () => void;
   onQuit: () => void;
+  version: string;
+  onOpenLegal: (page: 'privacy' | 'terms') => void;
 }) {
   return (
     <div className="panel-bar">
+      {props.askLaunchAtLogin ? (
+        <div className="login-ask" role="group" aria-label="Open at login">
+          <span>Open UNTIL when you log in?</span>
+          <span className="login-ask-actions">
+            <button type="button" className="link strong" onClick={() => props.onAnswerLaunchAtLogin(true)}>
+              Yes
+            </button>
+            <button type="button" className="link" onClick={() => props.onAnswerLaunchAtLogin(false)}>
+              Not now
+            </button>
+          </span>
+        </div>
+      ) : null}
       {props.updateReady ? (
         <div className="update">
           <span>Update ready.</span>
@@ -262,6 +280,17 @@ export function PanelBar(props: {
           title="Quit UNTIL (Ctrl or Cmd + Q)"
         >
           Quit UNTIL
+        </button>
+      </div>
+      <div className="panel-about">
+        <span>UNTIL{props.version ? ` ${props.version}` : ''}</span>
+        <span aria-hidden="true">·</span>
+        <button type="button" className="link" onClick={() => props.onOpenLegal('privacy')}>
+          Privacy
+        </button>
+        <span aria-hidden="true">·</span>
+        <button type="button" className="link" onClick={() => props.onOpenLegal('terms')}>
+          Terms
         </button>
       </div>
     </div>
