@@ -2,8 +2,9 @@ import { getNumber, setNumber } from '../../../shared/persistence/mmkv';
 import { STORAGE_KEYS } from '../../../shared/persistence/schema';
 import { PAYWALL_DISMISS_COOLDOWN_MS } from '../../../config/monetization';
 import type { AccessState } from '../../../shared/types';
+import { MS_PER_DAY } from '../../../shared/time/constants';
 
-const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
+const SEVEN_DAYS_MS = 7 * MS_PER_DAY;
 
 export function shouldShowPaywallAfterCooldown(now: number = Date.now()): boolean {
   const last = getNumber(STORAGE_KEYS.PAYWALL_DISMISSED_AT);

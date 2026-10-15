@@ -1,6 +1,11 @@
 import type { DailyTask } from '../../../shared/types';
-import { formatDateToIso, parseDate } from '../../../shared/time/clock';
+import {
+  formatDateToIso,
+  parseDate,
+  now as clockNow,
+} from '../../../shared/time/clock';
 import { msUntilNextMidnight } from '../../../shared/time/projections';
+import { MS_PER_HOUR } from '../../../shared/time/constants';
 
 export function addDaysIso(dateIso: string, days: number): string {
   const d = parseDate(dateIso);
@@ -8,8 +13,8 @@ export function addDaysIso(dateIso: string, days: number): string {
   return formatDateToIso(d);
 }
 
-export function isLastHourOfDay(now: Date = new Date()): boolean {
-  return msUntilNextMidnight(now) < 60 * 60 * 1000;
+export function isLastHourOfDay(now: Date = clockNow()): boolean {
+  return msUntilNextMidnight(now) < MS_PER_HOUR;
 }
 
 export function shouldSkipMoveForGoalDuplicate(

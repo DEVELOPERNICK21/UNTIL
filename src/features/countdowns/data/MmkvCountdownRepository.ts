@@ -7,10 +7,8 @@ import type { ICountdownRepository } from '../domain/ports/ICountdownRepository'
 import type { Countdown } from '../../../shared/types';
 import { STORAGE_KEYS } from '../../../shared/persistence/schema';
 import { getString, setString } from '../../../shared/persistence/mmkv';
-
-function randomId(): string {
-  return Math.random().toString(36).slice(2, 12);
-}
+import { randomId } from '../../../shared/utils/randomId';
+import { todayIso } from '../../../shared/time/clock';
 
 function loadCountdowns(): Countdown[] {
   const raw = getString(STORAGE_KEYS.COUNTDOWNS);
@@ -40,8 +38,8 @@ export class MmkvCountdownRepository implements ICountdownRepository {
     const countdown: Countdown = {
       id: randomId(),
       title: (title || 'Deadline').trim() || 'Deadline',
-      date: date || new Date().toISOString().slice(0, 10),
-      createdAt: new Date().toISOString().slice(0, 10),
+      date: date || todayIso(),
+      createdAt: todayIso(),
     };
     // Single-item mode: keep exactly one deadline.
     saveCountdowns([countdown]);

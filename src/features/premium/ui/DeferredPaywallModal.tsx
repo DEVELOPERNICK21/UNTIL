@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { InteractionManager } from 'react-native';
 import { markDeferredPaywallShown } from '../services/deferredPaywall';
 import { logAnalyticsEvent } from '../../../shared/analytics/analytics';

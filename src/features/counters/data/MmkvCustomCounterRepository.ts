@@ -7,10 +7,7 @@ import type { ICustomCounterRepository } from '../domain/ports/ICustomCounterRep
 import type { CustomCounter } from '../../../shared/types';
 import { STORAGE_KEYS } from '../../../shared/persistence/schema';
 import { getString, setString } from '../../../shared/persistence/mmkv';
-
-function randomId(): string {
-  return Math.random().toString(36).slice(2, 12);
-}
+import { randomId } from '../../../shared/utils/randomId';
 
 function loadCounters(): CustomCounter[] {
   const raw = getString(STORAGE_KEYS.CUSTOM_COUNTERS);

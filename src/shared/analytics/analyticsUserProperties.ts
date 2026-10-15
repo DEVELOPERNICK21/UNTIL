@@ -7,6 +7,7 @@ import type { AccessState } from '../types';
 import { TRIAL_DURATION_MS } from '../../config/accessConstants';
 import { setPostHogPersonProperties } from './posthogClient';
 import { setCrashAttributes } from './analytics';
+import { MS_PER_DAY } from '../time/constants';
 
 export function buildAnalyticsUserProperties(input: {
   access: AccessState;
@@ -18,7 +19,7 @@ export function buildAnalyticsUserProperties(input: {
     access.trialEndsAt != null && access.trialActive
       ? Math.max(
           0,
-          Math.ceil((access.trialEndsAt - Date.now()) / (24 * 60 * 60 * 1000))
+          Math.ceil((access.trialEndsAt - Date.now()) / MS_PER_DAY)
         )
       : 0;
 
@@ -52,5 +53,5 @@ export function syncAnalyticsUserProperties(input: {
 }
 
 export function getTrialDurationDays(): number {
-  return Math.round(TRIAL_DURATION_MS / (24 * 60 * 60 * 1000));
+  return Math.round(TRIAL_DURATION_MS / MS_PER_DAY);
 }

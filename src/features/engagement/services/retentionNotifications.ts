@@ -14,11 +14,11 @@ import { STORAGE_KEYS } from '../../../shared/persistence/schema';
 import { logAnalyticsEvent } from '../../../shared/analytics/analytics';
 import { getTrialDayIndex } from '../../premium/domain';
 import { requestNotificationPermission } from '../../../shared/platform/notificationPermission';
+import { MS_PER_DAY, MS_PER_HOUR } from '../../../shared/time/constants';
 
 const CHANNEL_ID = 'retention';
 const DEFAULT_ENABLED = false;
-const ONE_DAY_MS = 24 * 60 * 60 * 1000;
-const MIN_RESCHEDULE_INTERVAL_MS = 6 * 60 * 60 * 1000;
+const MIN_RESCHEDULE_INTERVAL_MS = 6 * MS_PER_HOUR;
 
 let scheduleInFlight = false;
 
@@ -77,7 +77,7 @@ function getLifeWeeksLived(now: Date = new Date()): number | undefined {
   if (!birthDate) return undefined;
   const livedDays = Math.max(
     0,
-    Math.floor((now.getTime() - birthDate.getTime()) / ONE_DAY_MS)
+    Math.floor((now.getTime() - birthDate.getTime()) / MS_PER_DAY)
   );
   return Math.floor(livedDays / 7);
 }

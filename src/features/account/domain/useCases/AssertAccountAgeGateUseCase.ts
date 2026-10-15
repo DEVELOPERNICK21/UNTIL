@@ -7,6 +7,7 @@
 import type { ITimeRepository } from '../../../time/domain';
 import { evaluateAccountAgeGate } from '../ageGate';
 import { AgeGateError } from '../ageGateErrors';
+import { now as clockNow } from '../../../../shared/time/clock';
 
 export interface AgeConfirmation {
   confirmedMinimumAge: boolean;
@@ -22,7 +23,7 @@ export class AssertAccountAgeGateUseCase {
   constructor(
     private readonly timeRepository: Pick<ITimeRepository, 'getUserProfile'>,
     private readonly lockout: MinimumAgeLockout,
-    private readonly now: () => Date = () => new Date()
+    private readonly now: () => Date = clockNow
   ) {}
 
   execute(confirmation: AgeConfirmation): void {

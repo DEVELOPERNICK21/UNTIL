@@ -20,6 +20,7 @@ import {
   setString,
   setNumber,
 } from '../../../shared/persistence/mmkv';
+import { MS_PER_DAY, MS_PER_HOUR } from '../../../shared/time/constants';
 
 type Subscriber = () => void;
 
@@ -72,8 +73,8 @@ function computeWidgetCache(presence: IPresenceRepository): WidgetCache {
     dayProgress: day.progress,
     dayPercentDone: Math.round(day.progress * 100),
     dayPercentLeft: Math.round((1 - day.progress) * 100),
-    dayHoursPassed: Math.round((day.progress * 24 * 60 * 60 * 1000) / (60 * 60 * 1000) * 10) / 10,
-    dayHoursLeft: Math.round(day.remainingMs / (60 * 60 * 1000) * 10) / 10,
+    dayHoursPassed: Math.round((day.progress * MS_PER_DAY) / MS_PER_HOUR * 10) / 10,
+    dayHoursLeft: Math.round(day.remainingMs / MS_PER_HOUR * 10) / 10,
     dayPassedMinutes: passedMinutes,
     dayRemainingMinutes: remainingMinutes,
     startOfDay: day.startOfDay,

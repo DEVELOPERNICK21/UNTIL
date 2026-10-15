@@ -5,6 +5,7 @@ import type {
   TaskCategory,
 } from '../../../../shared/types';
 import { GetDailyTaskStatsUseCase } from './GetDailyTaskStatsUseCase';
+import { now as clockNow } from '../../../../shared/time/clock';
 
 const TASK_CATEGORIES: TaskCategory[] = [
   'health',
@@ -34,7 +35,7 @@ export class GetWeeklyTaskStatsUseCase {
     private readonly getDailyTaskStats: GetDailyTaskStatsUseCase
   ) {}
 
-  execute(referenceDate: Date = new Date()): WeeklyTaskStats {
+  execute(referenceDate: Date = clockNow()): WeeklyTaskStats {
     const byDay: DayTaskSummary[] = [];
     let completed = 0;
     let total = 0;

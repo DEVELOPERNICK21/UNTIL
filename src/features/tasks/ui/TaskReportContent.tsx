@@ -72,6 +72,8 @@ export function TaskReportContent({ embedded = false }: TaskReportContentProps) 
     setTimeout(() => setRefreshing(false), 400);
   }, []);
 
+  // refreshKey gives a fresh `now` after a pull-to-refresh.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const now = useMemo(() => new Date(), [refreshKey]);
   const { dailyStats, weeklyStats, monthlyStats } = useTaskReportStats({
     today,

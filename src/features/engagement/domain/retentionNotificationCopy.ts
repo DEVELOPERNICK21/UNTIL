@@ -1,4 +1,4 @@
-const ONE_DAY_MS = 24 * 60 * 60 * 1000;
+import { MS_PER_DAY } from '../../../shared/time/constants';
 
 export interface RetentionNotificationInput {
   date: Date;
@@ -143,7 +143,7 @@ export function buildRetentionNotificationSchedule(
   const items: RetentionScheduleItem[] = [];
 
   for (let offset = 0; offset < daysAhead; offset += 1) {
-    const date = new Date(input.now.getTime() + offset * ONE_DAY_MS);
+    const date = new Date(input.now.getTime() + offset * MS_PER_DAY);
     const triggerAt = notificationTimeForDate(date);
     if (!triggerAt || triggerAt <= input.now) continue;
     if (

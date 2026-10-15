@@ -23,6 +23,7 @@ import { hasPremiumBundle } from '../../premium/domain';
 import { getWidgetAccentColor } from '../config/widgetAccents';
 import { todayIso } from '../../../shared/time/clock';
 import { registerWidgetSync } from '../../../shared/platform/widgetSync';
+import { MS_PER_HOUR } from '../../../shared/time/constants';
 
 /** Use cases WidgetSync reads from. Injected by di.ts so this file never imports di. */
 export type WidgetSyncSources = {
@@ -314,7 +315,7 @@ const NO_STATUS: LiveActivityStatus = {
 };
 
 /** iOS ends a Live Activity after about 8 hours. */
-const LIVE_ACTIVITY_MAX_AGE_MS = 7.5 * 60 * 60 * 1000;
+const LIVE_ACTIVITY_MAX_AGE_MS = 7.5 * MS_PER_HOUR;
 
 /**
  * Start the Dynamic Island / Lock Screen activity. iOS only, and only works while the app is

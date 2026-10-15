@@ -13,6 +13,7 @@ import {
   startOfYear,
   endOfDay,
   daysInYear,
+  todayIso,
 } from '../../../shared/time/clock';
 import { aggregateCategoryTotals } from '../domain/aggregate';
 
@@ -72,13 +73,13 @@ export class MmkvActivityRepository implements IActivityRepository {
     const yearTotals = emptyTotals();
     const start = startOfYear(new Date(year, 0, 1));
     const days = daysInYear(year);
-    const todayIso = formatDateToIso(new Date());
+    const todayKey = todayIso();
     for (let d = 0; d < days; d++) {
       const dte = new Date(start);
       dte.setDate(dte.getDate() + d);
       const iso = formatDateToIso(dte);
       const blocks = this.getBlocksForDate(iso);
-      const refTime = iso === todayIso ? now : endOfDay(dte).getTime();
+      const refTime = iso === todayKey ? now : endOfDay(dte).getTime();
       const agg = aggregateCategoryTotals(blocks, refTime);
       for (const c of CATEGORIES) {
         yearTotals[c] += agg[c];

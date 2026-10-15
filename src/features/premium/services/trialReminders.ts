@@ -9,8 +9,8 @@ import {
 import { TRIAL_DURATION_MS } from '../../../config/accessConstants';
 import { requestNotificationPermission } from '../../../shared/platform/notificationPermission';
 import { getTrialDayIndex } from '../domain/trialDay';
+import { MS_PER_DAY, MS_PER_HOUR } from '../../../shared/time/constants';
 
-const ONE_DAY_MS = 24 * 60 * 60 * 1000;
 
 function reminderCopyForDay(day: number): string {
   return formatPreviewEndingMessage(day, FALLBACK_YEARLY_PRICE);
@@ -80,7 +80,7 @@ export async function scheduleTrialLocalNotifications(
 
     const ids: string[] = [];
     for (const day of TRIAL_REMINDER_DAYS) {
-      const triggerMs = trialStartMs + (day - 1) * ONE_DAY_MS + 10 * 60 * 60 * 1000;
+      const triggerMs = trialStartMs + (day - 1) * MS_PER_DAY + 10 * MS_PER_HOUR;
       if (triggerMs <= Date.now()) continue;
 
       const id = await notifee.createTriggerNotification(

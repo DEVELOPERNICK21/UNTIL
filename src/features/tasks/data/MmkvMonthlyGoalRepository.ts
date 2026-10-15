@@ -6,10 +6,7 @@ import type { IMonthlyGoalRepository } from '../domain/ports/IMonthlyGoalReposit
 import type { MonthlyGoal, GoalTask, RepeatDailyRule } from '../../../shared/types';
 import { STORAGE_KEYS } from '../../../shared/persistence/schema';
 import { getString, setString } from '../../../shared/persistence/mmkv';
-
-function randomId(): string {
-  return Math.random().toString(36).slice(2, 12);
-}
+import { randomId } from '../../../shared/utils/randomId';
 
 function loadGoals(): MonthlyGoal[] {
   const raw = getString(STORAGE_KEYS.MONTHLY_GOALS);

@@ -36,7 +36,7 @@ const DI = forbid(
 
 // ADR-7: UI must not call pure domain functions directly; derive from hook data instead.
 // `core` used to be its own folder; these are the modules it held, now inside their feature's
-// domain/ (or shared/time). Clock, home formatters and account copy stay allowed for display.
+// domain/ (or shared/time). Clock, time constants, home formatters and account copy stay allowed for display.
 const CORE_MESSAGE =
   'UI must not call core domain logic directly (ADR-7). Derive from hook data instead.';
 const CORE_MODULES = [
@@ -58,6 +58,7 @@ const CORE = forbid(
   [
     '**/shared/time/*',
     '!**/shared/time/clock',
+    '!**/shared/time/constants',
     '!**/shared/time/homeFormatters',
     '!**/shared/time/IClock',
     '!**/shared/time/ClockAdapter',

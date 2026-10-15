@@ -4,7 +4,8 @@
  */
 
 import type { RegretProjection } from '../../../shared/types';
-import { parseDate } from '../../../shared/time/clock';
+import { parseDate, now as clockNow } from '../../../shared/time/clock';
+import { MS_PER_YEAR } from '../../../shared/time/constants';
 
 const HOURS_PER_DAY = 24;
 const DAYS_PER_YEAR = 365.25;
@@ -32,7 +33,6 @@ export function projectRegret(
 
 function getCurrentAge(birthDateIso: string): number {
   const birth = parseDate(birthDateIso);
-  const now = new Date();
-  const msPerYear = 365.25 * 24 * 60 * 60 * 1000;
-  return (now.getTime() - birth.getTime()) / msPerYear;
+  const now = clockNow();
+  return (now.getTime() - birth.getTime()) / MS_PER_YEAR;
 }

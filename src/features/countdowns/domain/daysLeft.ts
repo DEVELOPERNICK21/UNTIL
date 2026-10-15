@@ -1,3 +1,5 @@
+import { MS_PER_DAY } from '../../../shared/time/constants';
+import { now as clockNow } from '../../../shared/time/clock';
 /**
  * Compute days left until a date (YYYY-MM-DD). Uses local date only.
  * Returns 0 if the date is today or in the past.
@@ -11,7 +13,7 @@ function parseLocalDate(dateStr: string): Date {
 }
 
 function startOfToday(): Date {
-  const today = new Date();
+  const today = clockNow();
   today.setHours(0, 0, 0, 0);
   return today;
 }
@@ -21,7 +23,7 @@ export function getSignedDaysUntil(dateStr: string): number {
   const target = parseLocalDate(dateStr);
   const today = startOfToday();
   const diffMs = target.getTime() - today.getTime();
-  return Math.ceil(diffMs / (24 * 60 * 60 * 1000));
+  return Math.ceil(diffMs / MS_PER_DAY);
 }
 
 export function getDaysLeft(dateStr: string): number {
@@ -32,7 +34,7 @@ export function daysBetween(startDateStr: string, endDateStr: string): number {
   const start = parseLocalDate(startDateStr);
   const end = parseLocalDate(endDateStr);
   const diffMs = end.getTime() - start.getTime();
-  return Math.max(0, Math.ceil(diffMs / (24 * 60 * 60 * 1000)));
+  return Math.max(0, Math.ceil(diffMs / MS_PER_DAY));
 }
 
 export function formatDaysLeft(daysLeft: number): string {

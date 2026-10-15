@@ -49,7 +49,6 @@ export function BarChart({
         style={styles.svg}
       >
         {data.map((point, i) => {
-          const total = point.value + (point.value2 ?? 0);
           const x = MARGIN_LEFT + i * (barWidth + barGap);
           const h1 = maxVal > 0 ? (point.value / maxVal) * PLOT_HEIGHT : 0;
           const h2 = maxVal > 0 && point.value2 != null ? (point.value2 / maxVal) * PLOT_HEIGHT : 0;

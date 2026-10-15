@@ -8,12 +8,10 @@ import {
   Alert,
   Platform,
 } from 'react-native';
-import { useNavigation, useFocusEffect } from '@react-navigation/native';
-import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useFocusEffect } from '@react-navigation/native';
 import { Text, ScreenGradient, Card } from '../../../shared/ui';
 import { useHourCalculationWidget } from '../hooks/useHourCalculationWidget';
 import { Spacing, Colors, Radius, Typography } from '../../../shared/theme';
-import type { RootStackParamList } from '../../../shared/navigation/types';
 
 function formatElapsed(totalElapsedMs: number, startTimeMs: number, isRunning: boolean): string {
   const now = Date.now();
@@ -26,7 +24,6 @@ function formatElapsed(totalElapsedMs: number, startTimeMs: number, isRunning: b
 }
 
 export function HourCalculationScreen() {
-  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList, 'HourCalculation'>>();
   const { getHourCalculationState, syncHourCalculationWidget } = useHourCalculationWidget();
   const [state, setState] = useState(() => getHourCalculationState());
   const [titleInput, setTitleInput] = useState(state.title);
@@ -35,7 +32,7 @@ export function HourCalculationScreen() {
     const next = getHourCalculationState();
     setState(next);
     setTitleInput(next.title);
-  }, []);
+  }, [getHourCalculationState]);
 
   useFocusEffect(
     useCallback(() => {
@@ -48,7 +45,7 @@ export function HourCalculationScreen() {
     if (!state.isRunning) return;
     const interval = setInterval(() => setState(getHourCalculationState()), 1000);
     return () => clearInterval(interval);
-  }, [state.isRunning]);
+  }, [state.isRunning, getHourCalculationState]);
 
   const handleSaveTitle = () => {
     const title = titleInput.trim() || 'Hour timer';

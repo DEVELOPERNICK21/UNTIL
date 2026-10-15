@@ -6,8 +6,8 @@ import { Platform } from 'react-native';
 import { getString, setString } from '../../../shared/persistence/mmkv';
 import { STORAGE_KEYS } from '../../../shared/persistence/schema';
 import { requestNotificationPermission } from '../../../shared/platform/notificationPermission';
+import { MS_PER_DAY, MS_PER_HOUR } from '../../../shared/time/constants';
 
-const ONE_DAY_MS = 24 * 60 * 60 * 1000;
 
 /** Schedule a single day-2 reminder after onboarding completes. */
 export async function scheduleDay2ReengagementNotification(
@@ -17,7 +17,7 @@ export async function scheduleDay2ReengagementNotification(
   if (getString(STORAGE_KEYS.DAY2_NOTIFICATION_SCHEDULED) === '1') return;
   if (completedAt <= 0) return;
 
-  const triggerMs = completedAt + 2 * ONE_DAY_MS + 9 * 60 * 60 * 1000;
+  const triggerMs = completedAt + 2 * MS_PER_DAY + 9 * MS_PER_HOUR;
   if (triggerMs <= Date.now()) return;
 
   try {

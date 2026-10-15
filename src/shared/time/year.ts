@@ -5,6 +5,7 @@
 
 import type { YearProgress } from '../types';
 import { daysInYear } from './clock';
+import { MS_PER_DAY } from './constants';
 
 /**
  * Get day of year (1-365 or 1-366)
@@ -12,8 +13,7 @@ import { daysInYear } from './clock';
 function getDayOfYear(date: Date): number {
   const start = new Date(date.getFullYear(), 0, 0);
   const diff = date.getTime() - start.getTime();
-  const oneDay = 86400000;
-  return Math.floor(diff / oneDay);
+  return Math.floor(diff / MS_PER_DAY);
 }
 
 /**

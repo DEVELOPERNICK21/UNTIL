@@ -21,7 +21,7 @@ export class GetRegretProjectionUseCase {
     const profile = this.timeRepository.getUserProfile();
     if (!profile.birthDate) return { projection: null, hasEnoughData: false };
 
-    const now = new Date();
+    const now = new Date(this.clock.nowMs());
     let totalNothingHours = 0;
     let daysWithData = 0;
 

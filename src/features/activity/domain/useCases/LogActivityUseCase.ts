@@ -6,8 +6,8 @@ import type { IActivityRepository } from '../ports/IActivityRepository';
 import type { IClock } from '../../../../shared/time/IClock';
 import type { ActivityCategory } from '../../../../shared/types';
 import { remainingNothingLoggableHours } from '../aggregate';
+import { MS_PER_HOUR } from '../../../../shared/time/constants';
 
-const MS_PER_HOUR = 60 * 60 * 1000;
 
 export class LogActivityUseCase {
   constructor(

@@ -5,8 +5,8 @@
 
 import type { TimeBlock, ActivityCategory } from '../../../shared/types';
 import { nowMs, startOfDay } from '../../../shared/time/clock';
+import { MS_PER_HOUR } from '../../../shared/time/constants';
 
-const MS_PER_HOUR = 60 * 60 * 1000;
 
 type Interval = { start: number; end: number };
 

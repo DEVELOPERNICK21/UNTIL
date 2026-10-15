@@ -1,3 +1,4 @@
+import { MS_PER_DAY, MS_PER_HOUR } from '../shared/time/constants';
 /**
  * Monetization SSOT — pricing, paywall copy, and plan positioning.
  * See docs/MONETIZATION_STRATEGY.md and docs/MONETIZATION_SETUP.md.
@@ -64,7 +65,7 @@ export const TRIAL_REMINDER_DAYS: readonly number[] =
       ]
     : [MONETIZATION_TRIAL_DAYS];
 
-export const PAYWALL_DISMISS_COOLDOWN_MS = 48 * 60 * 60 * 1000;
+export const PAYWALL_DISMISS_COOLDOWN_MS = 48 * MS_PER_HOUR;
 
 /** Legal pages — must be live HTTPS pages used in App Store / Play listing. */
 export const LEGAL_URLS = {
@@ -212,7 +213,7 @@ export function trialPreviewDaysLeft(
   nowMs: number = Date.now()
 ): number {
   if (trialEndsAtMs == null || nowMs >= trialEndsAtMs) return 0;
-  return Math.ceil((trialEndsAtMs - nowMs) / (24 * 60 * 60 * 1000));
+  return Math.ceil((trialEndsAtMs - nowMs) / MS_PER_DAY);
 }
 
 export function formatPreviewActiveBody(trialEndsAtMs: number | null): string {

@@ -4,9 +4,9 @@
  */
 
 import type { LifeProgress } from '../types';
-import { parseDate } from './clock';
+import { parseDate, now as clockNow } from './clock';
+import { MS_PER_YEAR } from './constants';
 
-const MS_PER_YEAR = 365.25 * 24 * 60 * 60 * 1000;
 const DEFAULT_DEATH_AGE = 80;
 
 /**
@@ -15,7 +15,7 @@ const DEFAULT_DEATH_AGE = 80;
 export function getLifeProgress(
   birthDateIso: string,
   deathAge: number = DEFAULT_DEATH_AGE,
-  nowDate: Date = new Date()
+  nowDate: Date = clockNow()
 ): LifeProgress {
   const birth = parseDate(birthDateIso);
   const death = new Date(birth);

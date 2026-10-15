@@ -7,9 +7,10 @@ import type { ISubscriptionRepository } from '../ports/ISubscriptionRepository';
 import type { IDeviceIdProvider } from '../../../../shared/ports/IDeviceIdProvider';
 import type { ILicenseVerificationService } from '../ports/ILicenseVerificationService';
 import type { VerificationResult } from '../../../../shared/types/subscription';
+import { MS_PER_DAY } from '../../../../shared/time/constants';
 
 /** Offline grace period: if last verification was within this ms, trust cached premium. */
-const OFFLINE_GRACE_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
+const OFFLINE_GRACE_MS = 7 * MS_PER_DAY; // 7 days
 
 export class VerifySubscriptionUseCase {
   constructor(

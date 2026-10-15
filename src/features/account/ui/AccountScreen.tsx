@@ -48,6 +48,7 @@ import {
   PREMIUM_DEVICES_BENEFIT,
   formatAccountDeviceLabel,
 } from '../domain/accountCopy';
+import { MS_PER_DAY } from '../../../shared/time/constants';
 
 const SIGN_IN_BENEFITS = [
   'Birth date and life settings',
@@ -57,7 +58,7 @@ const SIGN_IN_BENEFITS = [
 
 function formatLastSeen(timestampMs: number): string {
   const diffDays = Math.floor(
-    (Date.now() - timestampMs) / (24 * 60 * 60 * 1000),
+    (Date.now() - timestampMs) / MS_PER_DAY,
   );
   if (diffDays <= 0) return 'Active today';
   if (diffDays === 1) return 'Active yesterday';

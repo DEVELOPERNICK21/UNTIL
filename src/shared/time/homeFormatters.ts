@@ -1,3 +1,4 @@
+import { now as clockNow } from './clock';
 export function formatDayPassedLeftWithSeconds(date: Date) {
   const start = new Date(date);
   start.setHours(0, 0, 0, 0);
@@ -24,7 +25,7 @@ export function formatDayPassedLeftWithSeconds(date: Date) {
 
 export function formatMonthPassedLeft(
   remainingDaysMonth: number,
-  date: Date = new Date(),
+  date: Date = clockNow(),
 ) {
   const daysInMonth = new Date(
     date.getFullYear(),
@@ -44,7 +45,7 @@ export function formatMonthPassedLeft(
 
 export function formatYearPassedLeft(
   remainingDaysYear: number,
-  date: Date = new Date(),
+  date: Date = clockNow(),
 ) {
   const y = date.getFullYear();
   const daysInYear =

@@ -15,6 +15,7 @@ import type {
 import type { IPresenceRepository } from '../../../presence/domain';
 import type { ISubscriptionRepository } from '../../../premium/domain';
 import type { ITimeRepository } from '../../../time/domain';
+import { now as clockNow } from '../../../../shared/time/clock';
 
 /**
  * Reads the numbers badges are judged on, awards any badge whose rule is now
@@ -50,7 +51,7 @@ export class EvaluateBadgesUseCase {
     };
   }
 
-  execute(now: Date = new Date()): string[] {
+  execute(now: Date = clockNow()): string[] {
     const state = this.badgeRepository.getState();
     const newIds = findNewlyEarned(this.snapshot(), new Set(Object.keys(state.earned)));
     if (newIds.length === 0) return [];

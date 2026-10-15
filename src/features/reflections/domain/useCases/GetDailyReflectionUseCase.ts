@@ -10,6 +10,7 @@ import type { IOnboardingRepository } from '../../../onboarding/domain';
 import type { ITimeRepository } from '../../../time/domain';
 import type { AccessState } from '../../../../shared/types';
 import { hasPremiumBundle } from '../../../premium/domain';
+import { now as clockNow } from '../../../../shared/time/clock';
 
 /** Same shape as GetAccessStateUseCase; kept narrow so tests can stub it. */
 export interface AccessStateProvider {
@@ -34,7 +35,7 @@ export class GetDailyReflectionUseCase {
     private readonly onboardingRepository: IOnboardingRepository
   ) {}
 
-  execute(date: Date = new Date()): DailyReflectionState {
+  execute(date: Date = clockNow()): DailyReflectionState {
     const dateKey = getDateKey(date);
     const canUsePremiumReflections = this.canUsePremiumReflections(date);
     const tone = this.getTone(canUsePremiumReflections);

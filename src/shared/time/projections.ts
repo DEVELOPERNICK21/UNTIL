@@ -3,7 +3,8 @@
  * Pure functions - no side effects
  */
 
-import { parseDate } from './clock';
+import { parseDate, now as clockNow } from './clock';
+import { MS_PER_YEAR } from './constants';
 
 /**
  * Estimate timestamp when a given life progress (0-1) will be reached
@@ -14,7 +15,7 @@ export function projectLifeProgressTimestamp(
   deathAge: number = 80
 ): number {
   const birth = parseDate(birthDateIso);
-  const totalMs = deathAge * 365.25 * 24 * 60 * 60 * 1000;
+  const totalMs = deathAge * MS_PER_YEAR;
   const targetMs = birth.getTime() + targetProgress * totalMs;
   return targetMs;
 }
@@ -22,7 +23,7 @@ export function projectLifeProgressTimestamp(
 /**
  * Get milliseconds until next midnight (start of tomorrow)
  */
-export function msUntilNextMidnight(date: Date = new Date()): number {
+export function msUntilNextMidnight(date: Date = clockNow()): number {
   const tomorrow = new Date(date);
   tomorrow.setDate(tomorrow.getDate() + 1);
   tomorrow.setHours(0, 0, 0, 0);

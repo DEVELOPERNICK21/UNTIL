@@ -3,6 +3,7 @@ import DeviceInfo from 'react-native-device-info';
 import { getNumber, getString, setNumber, setString } from '../../../shared/persistence/mmkv';
 import { STORAGE_KEYS } from '../../../shared/persistence/schema';
 import { recordCrashError } from '../../../shared/analytics/analytics';
+import { MS_PER_DAY } from '../../../shared/time/constants';
 
 export type UpdateType = 'FORCE_UPDATE' | 'OPTIONAL_UPDATE' | 'NO_UPDATE';
 
@@ -28,7 +29,6 @@ const UPDATE_CONFIG_URL =
 
 const LAST_CHECK_KEY = STORAGE_KEYS.UPDATE_LAST_CHECK_AT;
 const DISMISSED_VERSION_KEY = STORAGE_KEYS.UPDATE_DISMISSED_VERSION;
-const ONE_DAY_MS = 24 * 60 * 60 * 1000;
 
 export function parseSemver(version: string): [number, number, number] {
   const [major, minor, patch] = version.split('.').map(part => {
@@ -120,7 +120,7 @@ export function shouldSkipUpdateCheck(now: number = Date.now()): boolean {
   // return false; // TEMP: always check for testing
   const last = getNumber(LAST_CHECK_KEY);
   if (!last) return false;
-  return now - last < ONE_DAY_MS;
+  return now - last < MS_PER_DAY;
 }
 
 export function recordUpdateCheck(now: number = Date.now()): void {

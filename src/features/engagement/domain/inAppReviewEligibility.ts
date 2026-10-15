@@ -1,4 +1,5 @@
-export const AUTO_REVIEW_COOLDOWN_MS = 90 * 24 * 60 * 60 * 1000;
+import { MS_PER_DAY } from '../../../shared/time/constants';
+export const AUTO_REVIEW_COOLDOWN_MS = 90 * MS_PER_DAY;
 export const MIN_APP_OPENS_FOR_REVIEW = 5;
 export const MIN_DAYS_SINCE_FIRST_OPEN = 3;
 
@@ -13,7 +14,7 @@ export function daysBetweenDateKeys(startKey: string, endKey: string): number {
   const start = parseLocalDateKey(startKey);
   const end = parseLocalDateKey(endKey);
   const diffMs = end.getTime() - start.getTime();
-  return Math.max(0, Math.round(diffMs / (24 * 60 * 60 * 1000)));
+  return Math.max(0, Math.round(diffMs / MS_PER_DAY));
 }
 
 export function isAutoReviewCooldownElapsed(

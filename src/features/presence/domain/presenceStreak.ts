@@ -1,3 +1,5 @@
+import { MS_PER_DAY } from '../../../shared/time/constants';
+import { now as clockNow } from '../../../shared/time/clock';
 /**
  * Pure presence-streak logic (daily “noticed” habit).
  * Local calendar day keys: YYYY-MM-DD.
@@ -15,7 +17,7 @@ export type PresenceStreakState = {
 /** A spent freeze comes back after this many days in a row. */
 export const FREEZE_REFILL_EVERY_DAYS = 7;
 
-export function localDateKey(d: Date = new Date()): string {
+export function localDateKey(d: Date = clockNow()): string {
   const y = d.getFullYear();
   const m = String(d.getMonth() + 1).padStart(2, '0');
   const day = String(d.getDate()).padStart(2, '0');
@@ -30,7 +32,7 @@ function parseKey(key: string): Date {
 function daysBetween(aKey: string, bKey: string): number {
   const a = parseKey(aKey).getTime();
   const b = parseKey(bKey).getTime();
-  return Math.round((b - a) / (24 * 60 * 60 * 1000));
+  return Math.round((b - a) / MS_PER_DAY);
 }
 
 export function recordPresenceDay(
