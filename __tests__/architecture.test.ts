@@ -64,7 +64,6 @@ const LEGACY_OVERSIZE: Record<string, number> = {
   'features/account/ui/AccountPromptScreen.tsx': 703,
   'shared/ui/Ember.tsx': 682,
   'shared/ui/PeriodGlyph.tsx': 586,
-  'app/di/index.ts': 579,
   'features/widgets/data/WidgetSync.ts': 573,
   'features/account/data/FirebaseAuthServiceAdapter.ts': 551,
   'features/widgets/ui/WidgetCustomizationScreen.tsx': 531,
@@ -299,6 +298,11 @@ describe('architecture', () => {
       if (allowed === undefined) tooLong.push(`${key} (${lines} lines)`);
       else if (lines > allowed) grown.push(`${key}: ${lines} > ${allowed}`);
     }
-    expect({ tooLong, grown }).toEqual({ tooLong: [], grown: [] });
+    const stale = Object.keys(LEGACY_OVERSIZE).filter(key => {
+      const file = path.join(SRC, key);
+      return !fs.existsSync(file) || fs.readFileSync(file, 'utf8').split('\n').length <= LINE_LIMIT;
+    });
+    // A file that got under the limit (or moved) must leave LEGACY_OVERSIZE so the ratchet tightens.
+    expect({ tooLong, grown, stale }).toEqual({ tooLong: [], grown: [], stale: [] });
   });
 });
