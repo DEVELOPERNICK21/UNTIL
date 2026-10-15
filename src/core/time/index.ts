@@ -9,3 +9,5 @@ export * from './year';
 export * from './life';
 export * from './lifeWeeks';
 export * from './projections';
+export * from './homeFormatters';
+export * from './panelModel';

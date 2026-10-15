@@ -1,0 +1,155 @@
+# Builds the UNTIL desktop companion for Mac (universal) and Windows.
+#
+# - Push a tag `desktop-vX.Y.Z` (matching desktop/src-tauri/tauri.conf.json
+#   "version") to publish a GitHub Release with the installers and the
+#   updater manifest (latest.json). The website's /download and
+#   /api/desktop/update routes pick up the newest desktop-v* release.
+# - Run manually (workflow_dispatch) for test builds: installers are attached
+#   to the run as artifacts, nothing is published.
+#
+# Signing is optional per platform: each block only turns on when its secrets
+# exist. See desktop/SHIP.md for the secret list.
+
+name: Desktop release
+
+on:
+  push:
+    tags: ['desktop-v*']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: desktop-release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: macos-latest
+            args: --target universal-apple-darwin
+            bundles: desktop/src-tauri/target/universal-apple-darwin/release/bundle
+          - platform: windows-latest
+            args: ''
+            bundles: desktop/src-tauri/target/release/bundle
+
+    runs-on: ${{ matrix.platform }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Tag matches app version
+        if: startsWith(github.ref, 'refs/tags/desktop-v')
+        shell: bash
+        run: |
+          app=$(node -p "require('./desktop/src-tauri/tauri.conf.json').version")
+          tag="${GITHUB_REF_NAME#desktop-v}"
+          if [ "$app" != "$tag" ]; then
+            echo "::error::Tag $GITHUB_REF_NAME does not match tauri.conf.json version $app"
+            exit 1
+          fi
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: desktop/package-lock.json
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.platform == 'macos-latest' && 'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
+
+      - uses: swatinem/rust-cache@v2
+        with:
+          workspaces: desktop/src-tauri -> target
+
+      - name: Install desktop dependencies
+        working-directory: desktop
+        run: npm ci
+
+      - name: Mac signing and notarization (when secrets are set)
+        if: matrix.platform == 'macos-latest'
+        shell: bash
+        env:
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          if [ -z "$APPLE_CERTIFICATE" ]; then
+            echo "::warning::No APPLE_CERTIFICATE secret: the Mac build is unsigned and Gatekeeper will block it."
+            exit 0
+          fi
+          for name in APPLE_CERTIFICATE APPLE_CERTIFICATE_PASSWORD APPLE_SIGNING_IDENTITY APPLE_ID APPLE_PASSWORD APPLE_TEAM_ID; do
+            echo "$name=${!name}" >> "$GITHUB_ENV"
+          done
+
+      - name: Windows signing via Azure Trusted Signing (when secrets are set)
+        if: matrix.platform == 'windows-latest'
+        shell: bash
+        env:
+          AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+          AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          TRUSTED_SIGNING_ENDPOINT: ${{ secrets.TRUSTED_SIGNING_ENDPOINT }}
+          TRUSTED_SIGNING_ACCOUNT: ${{ secrets.TRUSTED_SIGNING_ACCOUNT }}
+          TRUSTED_SIGNING_PROFILE: ${{ secrets.TRUSTED_SIGNING_PROFILE }}
+        run: |
+          if [ -z "$AZURE_CLIENT_ID" ]; then
+            echo "::warning::No Azure Trusted Signing secrets: the Windows build is unsigned and SmartScreen will warn."
+            exit 0
+          fi
+          cargo install trusted-signing-cli --locked
+          for name in AZURE_CLIENT_ID AZURE_CLIENT_SECRET AZURE_TENANT_ID; do
+            echo "$name=${!name}" >> "$GITHUB_ENV"
+          done
+          # Tauri merges tauri.windows.conf.json on Windows builds.
+          cat > desktop/src-tauri/tauri.windows.conf.json <<EOF
+          {
+            "bundle": {
+              "windows": {
+                "signCommand": "trusted-signing-cli -e $TRUSTED_SIGNING_ENDPOINT -a $TRUSTED_SIGNING_ACCOUNT -c $TRUSTED_SIGNING_PROFILE -d UNTIL %1"
+              }
+            }
+          }
+          EOF
+
+      - name: Build (and publish on tags)
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+          VITE_GOOGLE_DESKTOP_CLIENT_ID: ${{ secrets.VITE_GOOGLE_DESKTOP_CLIENT_ID }}
+          VITE_GOOGLE_DESKTOP_CLIENT_SECRET: ${{ secrets.VITE_GOOGLE_DESKTOP_CLIENT_SECRET }}
+        with:
+          projectPath: desktop
+          args: ${{ matrix.args }}
+          tagName: ${{ startsWith(github.ref, 'refs/tags/desktop-v') && github.ref_name || '' }}
+          releaseName: 'UNTIL desktop __VERSION__'
+          releaseBody: |
+            UNTIL for Mac and Windows. Day % in your menu bar or tray.
+
+            - Mac: download the .dmg, drag UNTIL to Applications.
+            - Windows: download the -setup.exe and run it.
+
+            Installed copies update themselves.
+          releaseDraft: false
+          prerelease: false
+          includeUpdaterJson: true
+
+      - name: Attach test build to the run
+        if: github.event_name == 'workflow_dispatch'
+        uses: actions/upload-artifact@v4
+        with:
+          name: until-desktop-${{ matrix.platform }}
+          path: |
+            ${{ matrix.bundles }}/dmg/*.dmg
+            ${{ matrix.bundles }}/nsis/*.exe
+          if-no-files-found: warn

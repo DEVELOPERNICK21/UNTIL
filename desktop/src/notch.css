@@ -1,0 +1,647 @@
+/* The notch island. Always black, so it joins the hardware notch whatever the theme is.
+   --card-w and --card-h must match CARD_W and CARD_H in src-tauri/src/notch.rs. */
+
+html[data-view='notch'] {
+  --text: #f2f2f2;
+  --text-2: #a8a8ae;
+  --text-3: #75757b;
+  --track: rgba(255, 255, 255, 0.12);
+  --tick-off: rgba(255, 255, 255, 0.2);
+  --card: rgba(255, 255, 255, 0.07);
+  --border: rgba(255, 255, 255, 0.1);
+  --soft: cubic-bezier(0.34, 1.32, 0.64, 1);
+  --fold: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+html[data-view='notch'],
+html[data-view='notch'] body,
+html[data-view='notch'] #root {
+  background: transparent;
+}
+
+.notch-root {
+  --card-w: 396px;
+  --card-h: 224px;
+  /* Width of each side of the compact island. Must match EAR_W in src-tauri/src/notch.rs. */
+  --ear: 74px;
+  /* How far the compact island hangs below the notch. Must match COMPACT_DROP in notch.rs. */
+  --drop: 28px;
+  --dial: var(--accent);
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  color: var(--text);
+}
+
+.island {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: calc(var(--nw) + 14px);
+  height: calc(var(--nh) + 3px);
+  margin-left: calc((var(--nw) + 14px) / -2);
+  background: #000;
+  border-radius: 0 0 12px 12px;
+  cursor: default;
+  outline: none;
+  transition:
+    width 360ms var(--fold),
+    height 360ms var(--fold),
+    margin-left 360ms var(--fold),
+    border-radius 360ms var(--fold),
+    box-shadow 360ms var(--fold);
+}
+
+.island[data-open='on'] {
+  width: var(--card-w);
+  height: var(--card-h);
+  margin-left: calc(var(--card-w) / -2);
+  border-radius: 0 0 28px 28px;
+  cursor: pointer;
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.55);
+  transition:
+    width 520ms var(--soft),
+    height 520ms var(--soft),
+    margin-left 520ms var(--soft),
+    border-radius 520ms var(--soft),
+    box-shadow 520ms var(--soft);
+}
+
+/* Compact: wider than the notch, with Ember and the time left either side and the day bar
+   hanging below, like the Dynamic Island. */
+.island[data-compact='on'][data-open='off'] {
+  width: calc(var(--nw) + 2 * var(--ear));
+  height: calc(var(--nh) + var(--drop));
+  margin-left: calc((var(--nw) + 2 * var(--ear)) / -2);
+  border-radius: 0 0 26px 26px;
+}
+
+.island[data-compact='on'] .island-line {
+  display: none;
+}
+
+/* The top corners flare outward, so the card looks like the notch itself growing. */
+.island::before,
+.island::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  width: 14px;
+  height: 14px;
+  opacity: 0;
+  transition: opacity 200ms var(--fold);
+  pointer-events: none;
+}
+
+.island::before {
+  left: -14px;
+  background: radial-gradient(circle at 0 100%, transparent 13.5px, #000 14px);
+}
+
+.island::after {
+  right: -14px;
+  background: radial-gradient(circle at 100% 100%, transparent 13.5px, #000 14px);
+}
+
+.island[data-open='on']::before,
+.island[data-open='on']::after {
+  opacity: 1;
+  transition-delay: 160ms;
+}
+
+.island-clip {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border-radius: inherit;
+}
+
+/* Folded: a thin line under the notch for how far through the day you are. */
+.island-line {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: 0;
+  height: 2px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.14);
+  overflow: hidden;
+  transition: opacity 200ms var(--fold);
+}
+
+.island-line i {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  box-shadow: 0 0 6px currentColor;
+  transition: width 1s var(--fold);
+}
+
+.island[data-open='on'] .island-line {
+  opacity: 0;
+}
+
+/* Ember lives in the left strip, folded or open, so it does not jump when the card grows. */
+.ember-ear {
+  position: absolute;
+  top: calc((var(--nh) - 38px) / 2);
+  left: 18px;
+  z-index: 2;
+  opacity: 0;
+  transition: opacity 200ms var(--fold);
+}
+
+.island[data-compact='on'] .ember-ear,
+.island[data-open='on'] .ember-ear {
+  opacity: 1;
+}
+
+.island[data-compact='on'] .ember-ear {
+  left: calc((var(--ear) - 38px) / 2);
+}
+
+.island[data-open='on'] .ember-ear {
+  left: 18px;
+  transition:
+    opacity 200ms var(--fold),
+    left 520ms var(--soft);
+}
+
+/* The countdown in the right strip. */
+.compact {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: var(--ear);
+  height: var(--nh);
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  line-height: 1;
+  transition: opacity 180ms var(--fold) 200ms;
+}
+
+.island[data-compact='on'] .compact {
+  display: flex;
+}
+
+.island[data-open='on'] .compact,
+.island[data-open='on'] .compact-bar {
+  opacity: 0;
+  pointer-events: none;
+  transition-duration: 110ms;
+  transition-delay: 0ms;
+}
+
+.compact-value {
+  display: inline-block;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: #fff;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  animation: compact-roll 360ms var(--fold) both;
+}
+
+.compact-label {
+  font-size: 9px;
+  color: var(--text-2);
+  white-space: nowrap;
+}
+
+/* The day bar under the notch: a label, a track with the share gone, and the percent. */
+.compact-bar {
+  position: absolute;
+  left: 20px;
+  right: 20px;
+  bottom: 0;
+  height: var(--drop);
+  display: none;
+  align-items: center;
+  gap: 9px;
+  font-size: 10px;
+  line-height: 1;
+  transition: opacity 180ms var(--fold) 200ms;
+}
+
+.island[data-compact='on'] .compact-bar {
+  display: flex;
+}
+
+.cb-label {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 62px;
+  color: var(--text-2);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-weight: 600;
+}
+
+.cb-sticker {
+  font-size: 12px;
+  letter-spacing: 0;
+  animation: compact-roll 360ms var(--fold) both;
+}
+
+.cb-track {
+  position: relative;
+  flex: 1;
+  height: 5px;
+  border-radius: 999px;
+  background: #3a342f;
+}
+
+.cb-track i {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: #bb86fc;
+  transition: width 1s var(--fold);
+}
+
+.island:not([data-mode='day']) .cb-track i {
+  background: var(--accent);
+}
+
+.cb-track b {
+  position: absolute;
+  top: 50%;
+  width: 9px;
+  height: 9px;
+  margin: -4.5px 0 0 -4.5px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 6px var(--accent);
+  transition: left 1s var(--fold);
+}
+
+.cb-pct {
+  min-width: 24px;
+  text-align: right;
+  font-weight: 700;
+  font-size: 11px;
+  color: #fff;
+  font-variant-numeric: tabular-nums;
+}
+
+@keyframes compact-roll {
+  from {
+    opacity: 0;
+    transform: translateY(40%);
+  }
+}
+
+.island-content {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transform: translateY(-8px) scale(0.97);
+  transform-origin: 50% 0;
+  transition:
+    opacity 140ms var(--fold),
+    transform 200ms var(--fold);
+  pointer-events: none;
+}
+
+.island[data-open='on'] .island-content {
+  opacity: 1;
+  transform: none;
+  pointer-events: auto;
+  transition:
+    opacity 300ms var(--fold) 150ms,
+    transform 520ms var(--soft) 120ms;
+}
+
+/* The two strips either side of the notch. */
+
+.ear {
+  position: absolute;
+  top: 0;
+  height: var(--nh);
+  display: flex;
+  align-items: center;
+}
+
+.ear-right {
+  right: 18px;
+  font-size: 11px;
+  color: var(--text-2);
+  white-space: nowrap;
+}
+
+.island-body {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: var(--nh);
+  bottom: 52px;
+  animation: view-in 380ms var(--fold) both;
+  display: grid;
+  grid-template-columns: 116px 1fr;
+  align-items: center;
+  gap: 16px;
+  padding: 0 22px 0 20px;
+}
+
+.island-dial {
+  display: grid;
+  place-items: center;
+}
+
+.island .pct {
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.island .pct small {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-2);
+}
+
+.island .pct-label {
+  margin-top: 2px;
+  font-size: 11px;
+  color: var(--text-2);
+}
+
+.island .dial-center {
+  gap: 0;
+}
+
+.island-info {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.island-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-2);
+}
+
+.island-hero {
+  margin-top: 2px;
+}
+
+.island-hero .digits {
+  justify-items: start;
+}
+
+.island-hero .digits-main {
+  font-size: 28px;
+}
+
+.island-hero .digits-sub {
+  display: inline-flex;
+  margin: 0 0 0 7px;
+  font-size: 15px;
+}
+
+.island-hero .digits {
+  display: flex;
+  align-items: baseline;
+}
+
+.island-caption {
+  font-size: 12px;
+  color: var(--text-2);
+  margin-bottom: 5px;
+}
+
+.island-rows {
+  display: grid;
+  gap: 5px;
+}
+
+.irow {
+  display: grid;
+  grid-template-columns: 42px 1fr auto;
+  align-items: center;
+  gap: 10px;
+  font-size: 12px;
+}
+
+.irow-label {
+  color: var(--text-2);
+}
+
+.irow-bar {
+  height: 5px;
+  border-radius: 999px;
+  background: var(--track);
+  overflow: hidden;
+}
+
+.irow-bar i {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--text-3);
+  transition: width 900ms var(--fold);
+}
+
+.irow-value {
+  min-width: 52px;
+  text-align: right;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.irow-locked .irow-value {
+  font-weight: 500;
+  color: var(--text-2);
+}
+
+/* A soft glow in the view's own colour behind the dial. It changes with the view. */
+.island-glow {
+  position: absolute;
+  left: -30px;
+  top: 20px;
+  width: 190px;
+  height: 190px;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, var(--accent), transparent);
+  opacity: 0;
+  filter: blur(16px);
+  transition:
+    opacity 400ms var(--fold),
+    background 400ms var(--fold);
+  pointer-events: none;
+}
+
+.island[data-open='on'] .island-glow {
+  opacity: 0.2;
+}
+
+@keyframes view-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px) scale(0.98);
+  }
+}
+
+.island-sticker {
+  font-size: 13px;
+  letter-spacing: 0;
+}
+
+/* The switcher: a sticker per view, like the phone's island. */
+.island-chips {
+  position: absolute;
+  left: 18px;
+  right: 18px;
+  bottom: 14px;
+  height: 32px;
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  padding: 2px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.07);
+}
+
+.island-glide {
+  position: absolute;
+  top: 2px;
+  bottom: 2px;
+  left: 2px;
+  width: calc((100% - 4px) / 5);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--accent) 30%, transparent);
+  box-shadow:
+    inset 0 0 0 1.2px var(--accent),
+    0 0 10px color-mix(in srgb, var(--accent) 55%, transparent);
+  transition:
+    transform 420ms var(--soft),
+    background 300ms var(--fold),
+    box-shadow 300ms var(--fold);
+}
+
+.ichip {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text-2);
+  font: inherit;
+  font-size: 11px;
+  cursor: pointer;
+  transition:
+    color 160ms var(--fold),
+    transform 160ms var(--soft);
+}
+
+.ichip:hover {
+  color: #fff;
+  transform: translateY(-1px);
+}
+
+.ichip:active {
+  transform: scale(0.94);
+}
+
+.ichip-on {
+  color: #fff;
+}
+
+.ichip-emoji {
+  font-size: 13px;
+  line-height: 1;
+}
+
+.ichip:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+/* Hour timer */
+
+.timer-hero {
+  font-size: 30px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.05;
+  font-variant-numeric: tabular-nums;
+  color: #fff;
+}
+
+.timer-buttons {
+  display: flex;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.round {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  cursor: pointer;
+  transition:
+    background-color 140ms var(--fold),
+    transform 180ms var(--soft),
+    box-shadow 180ms var(--fold);
+}
+
+.round:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.2);
+  transform: scale(1.08);
+}
+
+.round:active:not(:disabled) {
+  transform: scale(0.94);
+}
+
+.round:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.round-main {
+  background: var(--accent);
+  box-shadow: 0 0 12px color-mix(in srgb, var(--accent) 65%, transparent);
+  color: #0e0e10;
+}
+
+.round-main:hover:not(:disabled) {
+  background: var(--accent);
+  filter: brightness(1.12);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .island-body,
+  .island-glide {
+    animation: none;
+    transition: none;
+  }
+  .island,
+  .island[data-open='on'],
+  .island-content,
+  .island[data-open='on'] .island-content {
+    transition-duration: 1ms;
+  }
+}

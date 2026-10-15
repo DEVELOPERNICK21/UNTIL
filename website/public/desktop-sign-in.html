@@ -1,0 +1,122 @@
+<!doctype html>
+<!--
+  Sign in with Apple for the UNTIL desktop app. The app opens this page with
+  ?provider=apple&state=..&nonce=<sha256 hex>, keeps the raw nonce itself, and
+  gets the id token back through until-desktop://auth. Nothing is stored here.
+  APPLE_SERVICES_ID must match the Services ID whose return URL is this page.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex" />
+    <title>Sign in to UNTIL</title>
+    <style>
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        background: #0e0e10;
+        color: #ededed;
+        font-family: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+      }
+      main {
+        max-width: 320px;
+        text-align: center;
+        padding: 24px;
+      }
+      h1 {
+        font-size: 14px;
+        letter-spacing: 0.14em;
+        margin: 0 0 20px;
+      }
+      p {
+        color: #9a9a9a;
+        font-size: 14px;
+        line-height: 1.5;
+      }
+      button,
+      a.button {
+        display: block;
+        width: 100%;
+        box-sizing: border-box;
+        margin-top: 16px;
+        padding: 12px;
+        border-radius: 10px;
+        border: 0;
+        background: #ededed;
+        color: #0e0e10;
+        font: inherit;
+        font-weight: 600;
+        text-decoration: none;
+        cursor: pointer;
+      }
+      [hidden] {
+        display: none !important;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>UNTIL</h1>
+      <p id="status">Sign in with the Apple account you use on your phone.</p>
+      <button id="apple" type="button">Sign in with Apple</button>
+      <a id="back" class="button" hidden>Open UNTIL</a>
+    </main>
+
+    <script src="https://appleid.cdn-apple.com/appleauth/static/jsapi/appleid/1/en_US/appleid.auth.js"></script>
+    <script>
+      (function () {
+        var APPLE_SERVICES_ID = 'app.until.time.signin';
+        var params = new URLSearchParams(location.search);
+        var state = params.get('state') || '';
+        var nonce = params.get('nonce') || '';
+        var statusEl = document.getElementById('status');
+        var appleBtn = document.getElementById('apple');
+        var backLink = document.getElementById('back');
+
+        function returnToApp(query, message) {
+          var url = 'until-desktop://auth?' + new URLSearchParams(query).toString();
+          statusEl.textContent = message;
+          appleBtn.hidden = true;
+          backLink.href = url;
+          backLink.hidden = false;
+          location.href = url;
+        }
+
+        if (params.get('provider') !== 'apple' || !state || !nonce) {
+          statusEl.textContent = 'Open this page from the UNTIL app on your computer.';
+          appleBtn.hidden = true;
+          return;
+        }
+
+        AppleID.auth.init({
+          clientId: APPLE_SERVICES_ID,
+          scope: 'email',
+          redirectURI: location.origin + location.pathname,
+          state: state,
+          nonce: nonce,
+          usePopup: true,
+        });
+
+        appleBtn.addEventListener('click', function () {
+          AppleID.auth.signIn().then(
+            function (res) {
+              returnToApp(
+                { state: state, id_token: res.authorization.id_token },
+                'Signed in. Going back to UNTIL.'
+              );
+            },
+            function () {
+              returnToApp(
+                { state: state, error: 'cancelled' },
+                'Sign-in was cancelled. You can close this tab.'
+              );
+            }
+          );
+        });
+      })();
+    </script>
+  </body>
+</html>

@@ -35,6 +35,12 @@ export const SITE_CONFIG = {
   /** Placeholder; replace with real store URLs when published */
   playStoreUrl: 'https://play.google.com/store/apps/details?id=app.until.time',
   appStoreUrl: 'https://apps.apple.com/app/until/id000000000',
+  /** Desktop installers and updater manifest live on this repo's desktop-v* releases. */
+  githubRepo: 'DEVELOPERNICK21/UNTIL',
+  desktopDownload: {
+    mac: '/download/mac',
+    windows: '/download/windows',
+  },
   /** Pricing for landing page — mirrors live Play Store */
   pricing: {
     introLabel: 'Android Premium',

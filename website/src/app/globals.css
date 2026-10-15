@@ -658,6 +658,67 @@ section h2,
   transform: scale(0.98);
 }
 
+/* Desktop companion download */
+.desktop-download {
+  border-top: 1px solid var(--divider);
+  text-align: center;
+  scroll-margin-top: 80px;
+}
+
+.desktop-download-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  margin-bottom: 0.35rem;
+}
+
+.desktop-download-subtitle {
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+  max-width: 520px;
+  margin: 0 auto 1.5rem;
+  text-wrap: balance;
+}
+
+.desktop-download-buttons {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.desktop-download-buttons a {
+  gap: 0.5rem;
+}
+
+.desktop-download-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.75rem 1.5rem;
+  min-height: 44px;
+  border-radius: 999px;
+  border: 1px solid var(--divider);
+  color: var(--text) !important;
+  font-weight: 600;
+  text-decoration: none !important;
+  transition: background 0.15s ease-out, transform 0.1s ease-out;
+}
+
+.desktop-download-secondary:hover {
+  background: color-mix(in srgb, var(--text) 8%, transparent);
+}
+
+.desktop-download-secondary:active {
+  transform: scale(0.98);
+}
+
+.desktop-download-note {
+  margin-top: 0.85rem;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
 /* /play · full-screen slingshot game */
 .hero-toy {
   display: flex;

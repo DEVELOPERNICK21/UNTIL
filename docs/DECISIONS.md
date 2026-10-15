@@ -92,7 +92,7 @@ Single Source of Truth for each concern:
 
 **Context:** Prevent accidental coupling and make layer boundaries enforceable.
 
-**Decision:** Surfaces (screens) never import from `core` or `persistence` for business data. Exception: `getDayProgress`, `startOfDay`, etc. for **display formatting** when `timeState` doesn't provide the exact format (prefer deriving from `timeState` when possible).
+**Decision:** Surfaces (screens) never import from `core` or `persistence` for business data. Exception: `core/time/clock` (`getDayProgress`, `startOfDay`, etc.) and `core/time/homeFormatters` for **display formatting** when `timeState` doesn't provide the exact format (prefer deriving from `timeState` when possible).
 
 **Consequences:** Clear dependency direction; easier refactors.
 
@@ -130,7 +130,7 @@ Single Source of Truth for each concern:
 
 **Decision:** `.eslintrc.js` encodes the layer table as `@typescript-eslint/no-restricted-imports` errors (type-only imports of domain DTOs allowed). `lint:cycles` (madge) guards against import cycles.
 
-**Consequences:** New violations fail lint. Exceptions (ADR-7 `core/time/clock`) are explicit in config.
+**Consequences:** New violations fail lint. Exceptions (ADR-7 `core/time/clock`, `core/time/homeFormatters`) are explicit in config.
 
 ---
 

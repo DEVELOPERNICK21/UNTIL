@@ -11,9 +11,11 @@ export interface AuthUser {
   providers: AuthProviderId[];
 }
 
+export type DevicePlatform = 'ios' | 'android' | 'macos' | 'windows';
+
 export interface AccountDevice {
   id: string;
-  platform: 'ios' | 'android';
+  platform: DevicePlatform;
   label: string | null;
   lastSeenAt: number;
   createdAt: number;
@@ -46,11 +48,14 @@ export type RegisterDeviceFailureReason =
   | 'read_failed'
   | 'write_failed';
 
-/** Result of trying to claim one of the account's device slots for this phone. */
+/** Result of trying to claim one of the account's device slots for this device. */
 export interface RegisterDeviceResult {
   registered: boolean;
   deviceId: string;
   reason?: RegisterDeviceFailureReason;
+  /** Desktop only: another Mac/Windows is active; ask before turning it off. */
+  needsReplace?: true;
+  existing?: AccountDevice;
 }
 
 export interface SignInResult {

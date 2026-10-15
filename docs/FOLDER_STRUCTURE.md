@@ -12,6 +12,10 @@ UNTIL/
 ├── android/                # Android native (Kotlin, layouts, manifests)
 ├── ios/                    # iOS native (Swift, Xcode project)
 ├── website/                # Marketing website (Next.js)
+├── desktop/                # Mac menu bar + Windows tray companion (Tauri 2)
+│   ├── src/                # React panel UI, auth, adapters
+│   │   └── di.ts           # desktop composition root
+│   └── src-tauri/          # extra, tray, panel window, OAuth loopback (Rust)
 ├── docs/                   # Project documentation
 ├── __tests__/              # Jest tests
 └── .cursor/                # Cursor AI rules and system context
