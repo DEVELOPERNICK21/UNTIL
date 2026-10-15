@@ -1,6 +1,6 @@
 import { daysBetween, getDaysLeft } from '../../core/countdown/daysLeft';
 import type { ICountdownRepository } from '../repository/ICountdownRepository';
-import type { IEngagementRepository } from '../repository/IEngagementRepository';
+import type { ICountdownEngagementSignals } from '../ports/ICountdownEngagementSignals';
 
 export type CountdownCompletedEvent = {
   countdown_id: string;
@@ -10,7 +10,7 @@ export type CountdownCompletedEvent = {
 export class CheckCountdownCompletionUseCase {
   constructor(
     private readonly countdownRepository: ICountdownRepository,
-    private readonly engagementRepository: IEngagementRepository,
+    private readonly engagementRepository: ICountdownEngagementSignals,
     private readonly onCompleted?: (event: CountdownCompletedEvent) => void
   ) {}
 

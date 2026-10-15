@@ -5,16 +5,15 @@
 
 import type { IAuthService } from '../ports/IAuthService';
 import type { IAuthSessionRepository } from '../repository/IAuthSessionRepository';
-import type { ISubscriptionRepository } from '../repository/ISubscriptionRepository';
-import type { ResetPurchasesUserUseCase } from './ResetPurchasesUserUseCase';
+import type { ILocalEntitlementStore, IPurchasesReset } from '../ports/IPurchasesLink';
 import { hasLocalPurchaseProof } from '../../core/account/entitlementProof';
 
 export class SignOutUseCase {
   constructor(
     private readonly authService: IAuthService,
     private readonly authSession: IAuthSessionRepository,
-    private readonly subscriptionRepository: ISubscriptionRepository,
-    private readonly resetPurchasesUser: ResetPurchasesUserUseCase,
+    private readonly subscriptionRepository: ILocalEntitlementStore,
+    private readonly resetPurchasesUser: IPurchasesReset,
     private readonly onError?: (error: unknown, context: string) => void,
     private readonly onEntitlementChanged?: () => void
   ) {}

@@ -5,12 +5,12 @@
  */
 
 import type { ITimeRepository } from '../repository/TimeRepository';
-import type { IAccountCloudStore } from '../ports/IAccountCloudStore';
+import type { IProfileCloudSync } from '../ports/IProfileCloudSync';
 
 export class UpdateUserProfileUseCase {
   constructor(
     private readonly repository: ITimeRepository,
-    private readonly cloud?: Pick<IAccountCloudStore, 'upsertProfile'>,
+    private readonly cloud?: IProfileCloudSync,
     private readonly getUid: () => string | null = () => null
   ) {}
 

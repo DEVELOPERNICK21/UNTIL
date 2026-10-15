@@ -22,6 +22,7 @@ import {
 import { hasPremiumBundle } from '../domain/accessControl';
 import { getWidgetAccentColor } from '../config/widgetAccents';
 import { todayIso } from '../core/time/clock';
+import { registerWidgetSync } from '../platform/widgetSync';
 
 /** Use cases WidgetSync reads from. Injected by di.ts so this file never imports di. */
 export type WidgetSyncSources = {
@@ -36,6 +37,13 @@ let sources: WidgetSyncSources | null = null;
 
 export function configureWidgetSync(next: WidgetSyncSources): void {
   sources = next;
+  registerWidgetSync({
+    syncWidgetCache,
+    syncPremiumStatus,
+    syncDailyTasksWidget,
+    syncCustomCounters,
+    syncCountdowns,
+  });
 }
 
 function src(): WidgetSyncSources {

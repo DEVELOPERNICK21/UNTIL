@@ -11,7 +11,7 @@ import {
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Text, ScreenGradient, Card } from '../../ui';
-import { useWidgetSyncActions } from '../../hooks';
+import { useHourCalculationWidget } from '../../hooks';
 import { Spacing, Colors, Radius, Typography } from '../../theme';
 import type { RootStackParamList } from '../../navigation/types';
 
@@ -27,7 +27,7 @@ function formatElapsed(totalElapsedMs: number, startTimeMs: number, isRunning: b
 
 export function HourCalculationScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList, 'HourCalculation'>>();
-  const { getHourCalculationState, syncHourCalculationWidget } = useWidgetSyncActions();
+  const { getHourCalculationState, syncHourCalculationWidget } = useHourCalculationWidget();
   const [state, setState] = useState(() => getHourCalculationState());
   const [titleInput, setTitleInput] = useState(state.title);
 

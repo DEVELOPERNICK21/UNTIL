@@ -5,7 +5,7 @@
 
 import type { IAuthService } from '../ports/IAuthService';
 import type { IAccountCloudStore } from '../ports/IAccountCloudStore';
-import type { ResetPurchasesUserUseCase } from './ResetPurchasesUserUseCase';
+import type { IPurchasesReset } from '../ports/IPurchasesLink';
 import type { SignOutUseCase } from './SignOutUseCase';
 import {
   AuthRequiresPasswordError,
@@ -21,7 +21,7 @@ export class DeleteAccountUseCase {
   constructor(
     private readonly auth: IAuthService,
     private readonly cloud: IAccountCloudStore,
-    private readonly resetPurchasesUser: ResetPurchasesUserUseCase,
+    private readonly resetPurchasesUser: IPurchasesReset,
     private readonly signOut: SignOutUseCase,
     private readonly onError?: (error: unknown, context: string) => void
   ) {}

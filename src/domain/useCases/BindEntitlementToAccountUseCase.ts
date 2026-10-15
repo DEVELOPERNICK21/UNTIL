@@ -12,7 +12,7 @@
 
 import type { IAccountCloudStore } from '../ports/IAccountCloudStore';
 import type { IAuthSessionRepository } from '../repository/IAuthSessionRepository';
-import type { ISubscriptionRepository } from '../repository/ISubscriptionRepository';
+import type { ILocalEntitlementStore } from '../ports/IPurchasesLink';
 import type { CloudEntitlement } from '../../types';
 import { hasLocalPurchaseProof } from '../../core/account/entitlementProof';
 import { withTimeout } from '../../core/account/withTimeout';
@@ -33,7 +33,7 @@ export interface BindEntitlementResult {
 
 export class BindEntitlementToAccountUseCase {
   constructor(
-    private readonly subscriptionRepository: ISubscriptionRepository,
+    private readonly subscriptionRepository: ILocalEntitlementStore,
     private readonly authSession: IAuthSessionRepository,
     private readonly cloud: IAccountCloudStore,
     private readonly getPlatform: () => 'ios' | 'android',

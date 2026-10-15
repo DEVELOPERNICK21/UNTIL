@@ -29,7 +29,7 @@ import {
   syncAccountProfileUseCase,
 } from '../di';
 import { isConclusiveRegistration } from '../core/account/deviceLimit';
-import { syncPremiumStatus } from '../infrastructure/WidgetSync';
+import { widgetSync } from '../platform/widgetSync';
 import { recordCrashError } from '../services/analytics';
 import type { AuthUser } from '../types';
 
@@ -60,7 +60,7 @@ async function bootstrapSignedInUser(user: AuthUser): Promise<void> {
   if (!isConclusiveRegistration(registration)) return;
 
   authSessionRepository.setDevicePremiumAllowed(registration.registered);
-  syncPremiumStatus();
+  widgetSync.syncPremiumStatus();
 
   if (registration.registered) {
     try {

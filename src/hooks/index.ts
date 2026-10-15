@@ -25,6 +25,7 @@ export { useOverlayControl } from './useOverlayControl';
 export { useWidgetSurfaceStatus } from './useWidgetSurfaceStatus';
 export { useDynamicIslandControl } from './useDynamicIslandControl';
 export { useWidgetSyncActions } from './useWidgetSyncActions';
+export { useHourCalculationWidget } from './useHourCalculationWidget';
 export { useWidgetConfig } from './useWidgetConfig';
 export { useDailyReflection } from './useDailyReflection';
 export { useStudentVerification } from './useStudentVerification';

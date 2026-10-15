@@ -4,7 +4,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { observeTimeStateUseCase } from '../di';
-import { syncWidgetCache } from '../infrastructure/WidgetSync';
+import { widgetSync } from '../platform/widgetSync';
 
 const POLL_INTERVAL_MS = 60000; // 60 seconds
 
@@ -13,7 +13,7 @@ export function useObserveTimeState() {
 
   const refresh = useCallback(() => {
     setState(observeTimeStateUseCase.observe());
-    syncWidgetCache();
+    widgetSync.syncWidgetCache();
   }, []);
 
   useEffect(() => {
