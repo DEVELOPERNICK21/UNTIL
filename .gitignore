@@ -91,3 +91,9 @@ src/config/analytics.local.ts
 # Superpowers brainstorm mockups
 .superpowers/
 .worktrees
+
+# Desktop companion (Tauri)
+desktop/node_modules
+desktop/dist
+desktop/src-tauri/target
+desktop/src-tauri/gen

@@ -1,0 +1,29 @@
+:root {
+  color: #ededed;
+  background: #0e0e10;
+  font-family: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+html,
+body,
+#root {
+  margin: 0;
+  height: 100%;
+}
+
+.panel {
+  padding: 18px 20px;
+}
+
+h1 {
+  font-size: 12px;
+  letter-spacing: 0.14em;
+  font-weight: 600;
+  margin: 0 0 16px;
+}
+
+.muted {
+  font-size: 13px;
+  color: #9a9a9a;
+}
