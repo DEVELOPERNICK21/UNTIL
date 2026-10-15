@@ -10,6 +10,8 @@ npm install
 npm run tauri dev
 ```
 
+Sign-in needs `desktop/.env.local` and the console setup in `SHIP.md`.
+
 The extra shows a dash until you sign in with a birth date. Click it to open the panel. Closing the panel hides it. Right-click the extra to quit.
 
 Shared code comes from the phone app through the `@until/*` alias (`../src`). Desktop code must not import phone `di`, persistence, hooks, surfaces, or infrastructure. `__tests__/desktopBoundary.test.ts` enforces this.
