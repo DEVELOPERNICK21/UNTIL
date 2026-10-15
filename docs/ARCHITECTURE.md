@@ -107,6 +107,7 @@ src/
 │       ├── month.ts           # getMonthProgress()
 │       ├── year.ts            # getYearProgress()
 │       ├── life.ts            # getLifeProgress()
+│       ├── homeFormatters.ts  # Home / desktop display strings (passed/left, extra %)
 │       └── projections.ts     # projectLifeProgressTimestamp(), msUntilNextMidnight()
 │
 ├── di.ts                      # Composition root: wire repos → use cases (single place)

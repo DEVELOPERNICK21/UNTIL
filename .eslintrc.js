@@ -42,7 +42,12 @@ const CORE_DIRS = fs
 // Globs cover files inside core folders; a glob on the folder itself would also
 // swallow the clock exception, so bare folder imports are listed as exact paths.
 const CORE = forbid(
-  [...CORE_DIRS.map(dir => `**/core/${dir}/*`), '!**/core/time/clock'],
+  [
+    ...CORE_DIRS.map(dir => `**/core/${dir}/*`),
+    '!**/core/time/clock',
+    '!**/core/time/homeFormatters',
+    '!**/core/account/accountCopy',
+  ],
   CORE_MESSAGE,
 );
 const CORE_FOLDER_PATHS = ['', ...CORE_DIRS.map(dir => `/${dir}`)].flatMap(

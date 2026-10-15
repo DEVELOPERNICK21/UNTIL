@@ -11,7 +11,7 @@ Enforced by `npm run lint` (`.eslintrc.js`, level `error`), `npm run lint:cycles
 
 | Layer | Can Import | Must NOT Import |
 |-------|------------|-----------------|
-| **Surfaces / components** | `hooks`, `ui`, `theme`, `types`, `navigation`, `services` (analytics etc.), `core/time/clock` (display formatting, ADR-7) | `di`, `persistence`, `infrastructure`, other `core`, repository/use-case *runtime* imports |
+| **Surfaces / components** | `hooks`, `ui`, `theme`, `types`, `navigation`, `services` (analytics etc.), `core/time/clock`, `core/time/homeFormatters` (display formatting, ADR-7) | `di`, `persistence`, `infrastructure`, other `core`, repository/use-case *runtime* imports |
 | **ui/** (presentational) | `theme`, `types`, own `ui/` hooks (e.g. `useReduceMotion`) | `hooks`, `di`, `persistence`, `infrastructure`, `core` |
 | **Hooks** | `di`, `core`, `services`, `infrastructure` (WidgetSync), domain *types* | `persistence`, repository/use-case classes at runtime |
 | **Services / stores** | `persistence` for keys they own, `config`, `types` | `di` (take state as parameters or injected sources) |
