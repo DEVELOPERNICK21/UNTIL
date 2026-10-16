@@ -20,8 +20,17 @@ const isGranted = (status: number | undefined): boolean => status === 1 || statu
 
 let inFlight: Promise<boolean> | null = null;
 
-export function requestNotificationPermission(source: string): Promise<boolean> {
-  if (Platform.OS !== 'android') return Promise.resolve(false);
+/**
+ * Android always; iOS only for features that opt in (`allowIos`), because the older reminders were
+ * never built for iOS and must not start prompting there.
+ */
+export function requestNotificationPermission(
+  source: string,
+  options: { allowIos?: boolean } = {},
+): Promise<boolean> {
+  const supported =
+    Platform.OS === 'android' || (options.allowIos === true && Platform.OS === 'ios');
+  if (!supported) return Promise.resolve(false);
   if (inFlight) return inFlight;
 
   inFlight = (async () => {
@@ -46,4 +55,16 @@ export function requestNotificationPermission(source: string): Promise<boolean> 
     inFlight = null;
   });
   return inFlight;
+}
+
+/** Reads the current permission without prompting. */
+export async function hasNotificationPermission(): Promise<boolean> {
+  if (Platform.OS !== 'android' && Platform.OS !== 'ios') return false;
+  try {
+    const notifee = require('@notifee/react-native').default;
+    const settings = await notifee.getNotificationSettings();
+    return isGranted(settings?.authorizationStatus);
+  } catch {
+    return false;
+  }
 }

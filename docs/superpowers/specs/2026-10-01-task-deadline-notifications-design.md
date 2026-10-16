@@ -20,7 +20,7 @@ Send local notifications for daily tasks and countdown deadlines:
 | Deadline | `Countdown.date` is the deadline. Notify at 8:00 AM and 11:00 PM on that date. |
 | Zero tasks today | No notification |
 | Platforms | Android and iOS |
-| Settings | New toggle, on by default, schedules only if notification permission is already granted |
+| Settings | New toggle, off by default. Turning it on requests notification permission. Sync schedules only if permission is already granted. |
 
 ## Non-goals
 
@@ -84,7 +84,7 @@ Same layer as `retentionNotifications.ts`.
 - Notifee channel `task_deadline`, name "Tasks and deadlines".
 - Notifee is loaded with `require` inside try/catch, like the existing services. Failures are swallowed.
 - Not enabled: cancel everything and return.
-- Permission: sync checks existing permission and schedules only if granted. It never prompts. Turning the toggle on in Settings calls `requestNotificationPermission`.
+- Permission: sync checks existing permission and schedules only if granted. It never prompts. Turning the toggle on in Settings calls `requestNotificationPermission`. A new `hasNotificationPermission()` in `notificationPermission.ts` reads the status on both platforms. `requestNotificationPermission` gets an `allowIos` option, because it returned `false` on iOS before.
 
 ### 3. Storage keys (`src/persistence/schema.ts`)
 
@@ -98,9 +98,9 @@ Native widgets do not read these keys.
 
 ### 4. Composition root (`src/di.ts`)
 
-- Add `configureTaskDeadlineNotifications` with sources backed by the existing task use case (so repeat-daily and carryover rules match the Today screen) and `countdownRepository.getAll()`.
+- Add `configureTaskDeadlineNotifications` with sources backed by `getStoredTasksForDayUseCase` and `countdownRepository.getAll()`. `getStoredTasksForDayUseCase` reads stored tasks only; `getTasksForDayUseCase` is avoided because it writes repeat-daily tasks into storage.
 - Subscribe to task and countdown repositories and call `syncTaskDeadlineNotifications()` on change, debounced to avoid repeated work on bulk edits.
-- Completion detection: after a task toggle, if today has `total > 0` and `pending === 0` and today has not been notified, call `notifyTasksCompleted`. This lives in the subscribe callback so any path that completes a task triggers it. The only toggle path to verify during planning is `ToggleTaskUseCase` and anything that bypasses it.
+- Completion fires only on a transition from pending greater than 0 to 0 with total greater than 0, tracked in memory per app session. App open resets that baseline, so opening the app never triggers it. All toggles go through `useDailyTasks` and the task repository, so the repository subscription covers them.
 
 ### 5. App lifecycle (`src/app.tsx`)
 

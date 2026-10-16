@@ -4,12 +4,22 @@
 
 import { configureWidgetSync } from '../../features/widgets/data/WidgetSync';
 import { configureRetentionNotifications } from '../../features/engagement/services/retentionNotifications';
+import {
+  configureTaskDeadlineNotifications,
+  queueTaskDeadlineSync,
+} from '../../features/engagement/services/taskDeadlineNotifications';
+import type { TaskDayCounts } from '../../features/engagement/domain/taskDeadlineCopy';
 import { syncWidgetUseCase } from './widgets';
 import { getCustomCountersUseCase } from './counters';
 import { getCountdownsUseCase } from './countdowns';
-import { getDailyTaskStatsUseCase } from './tasks';
+import { getDailyTaskStatsUseCase, getStoredTasksForDayUseCase } from './tasks';
 import { getAccessStateUseCase } from './premium';
-import { subscriptionRepository, timeRepository } from './repositories';
+import {
+  countdownRepository,
+  subscriptionRepository,
+  taskRepository,
+  timeRepository,
+} from './repositories';
 
 configureWidgetSync({
   syncWidgetUseCase,
@@ -23,3 +33,25 @@ configureRetentionNotifications({
   getBirthDate: () => timeRepository.getUserProfile().birthDate,
   getTrialStartDate: () => subscriptionRepository.getTrialStartDate(),
 });
+
+configureTaskDeadlineNotifications({
+  getTaskCountsByDate: dateKeys => {
+    const counts: Record<string, TaskDayCounts> = {};
+    for (const dateKey of dateKeys) {
+      const tasks = getStoredTasksForDayUseCase.execute(dateKey);
+      counts[dateKey] = {
+        total: tasks.length,
+        pending: tasks.filter(task => !task.completed).length,
+      };
+    }
+    return counts;
+  },
+  getCountdowns: () =>
+    countdownRepository.getAll().map(({ id, title, date }) => ({
+      id,
+      title,
+      date,
+    })),
+});
+taskRepository.subscribe(queueTaskDeadlineSync);
+countdownRepository.subscribe(queueTaskDeadlineSync);
