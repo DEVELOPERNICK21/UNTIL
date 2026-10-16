@@ -177,7 +177,8 @@ fn build(app: &AppHandle, kind: &str) -> Option<WebviewWindow> {
     .skip_taskbar(true)
     .visible_on_all_workspaces(true)
     .focused(false)
-    .accept_first_mouse(true);
+    .accept_first_mouse(true)
+    .theme(Some(tauri::Theme::Dark));
     // Only one of the two: asking for both makes the second cancel the first.
     let builder = if on_top {
         builder.always_on_top(true)

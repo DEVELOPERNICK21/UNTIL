@@ -28,16 +28,19 @@ function token(css: string, name: string): string {
   return match[1];
 }
 
-describe('desktop: readable text (WCAG AA, 4.5:1)', () => {
+describe('desktop: always dark, and readable (WCAG AA, 4.5:1)', () => {
   const css = read('src/panel.css');
-  const [dark, light] = css.split('@media (prefers-color-scheme: light)');
 
-  it.each(['--text', '--text-2', '--text-3'])('%s on the dark panel', name => {
-    expect(contrast(token(dark, name), token(dark, '--bg-solid'))).toBeGreaterThanOrEqual(4.5);
+  it('has no light theme: dark colour scheme only, in the CSS and on the windows', () => {
+    expect(css).toMatch(/color-scheme:\s*dark;/);
+    expect(css).not.toMatch(/prefers-color-scheme:\s*light/);
+    expect(conf.app.windows[0].theme).toBe('Dark');
+    expect(read('src-tauri/src/lib.rs')).toMatch(/set_theme\(Some\(tauri::Theme::Dark\)\)/);
+    expect(read('src-tauri/src/widgets.rs')).toMatch(/theme\(Some\(tauri::Theme::Dark\)\)/);
   });
 
-  it.each(['--text', '--text-2', '--text-3'])('%s on the light panel', name => {
-    expect(contrast(token(light, name), token(light, '--bg-solid'))).toBeGreaterThanOrEqual(4.5);
+  it.each(['--text', '--text-2', '--text-3'])('%s on the panel', name => {
+    expect(contrast(token(css, name), token(css, '--bg-solid'))).toBeGreaterThanOrEqual(4.5);
   });
 });
 

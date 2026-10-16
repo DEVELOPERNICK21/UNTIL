@@ -167,6 +167,11 @@ export function App() {
   const [flipped, setFlipped] = useState(false);
   const [pulse, setPulse] = useState(0);
 
+  // Tells the app this page has run (the release self-test waits for it).
+  useEffect(() => {
+    void invoke('page_ready').catch(() => {});
+  }, []);
+
   // Follow the profile on your account, so a change made on the phone shows up here in seconds.
   useEffect(() => watchAccountProfile(), [local.uid, local.deviceRegistered]);
 

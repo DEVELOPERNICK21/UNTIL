@@ -1,4 +1,4 @@
-import { memo, useCallback, useMemo, useState, type CSSProperties, type MouseEvent } from 'react';
+import { memo, useCallback, useEffect, useMemo, useState, type CSSProperties, type MouseEvent } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { getCurrentWindow } from '@tauri-apps/api/window';
 import { buildPanelModel } from '@until/shared/time/panelModel';
@@ -178,6 +178,11 @@ export function DesktopWidget() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [model.life?.passedDays, model.life?.leftDays, model.life?.totalLifeDays, deathAge],
   );
+
+  // Tells the app this page has run (the release self-test waits for it).
+  useEffect(() => {
+    void invoke('page_ready').catch(() => {});
+  }, []);
 
   const toggleSize = useCallback(() => {
     const next: DaySize = size === 'small' ? 'medium' : 'small';

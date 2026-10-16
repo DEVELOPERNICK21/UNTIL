@@ -71,6 +71,7 @@ export function DesktopDownloadButtons(props: {
         {copy.requirements}
         {props.version ? ` · v${props.version}` : ''}
       </p>
+      <p className="desktop-download-note">{copy.firstOpen}</p>
     </>
   );
 }

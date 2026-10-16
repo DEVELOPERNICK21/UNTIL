@@ -5,6 +5,9 @@ description = "UNTIL desktop companion"
 authors = ["UNTIL"]
 edition = "2021"
 
+[lints.rust]
+unexpected_cfgs = { level = "warn", check-cfg = ['cfg(island_check)'] }
+
 [lib]
 name = "until_desktop_lib"
 crate-type = ["lib", "cdylib", "staticlib"]

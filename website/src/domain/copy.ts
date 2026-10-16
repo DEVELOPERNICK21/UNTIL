@@ -89,10 +89,12 @@ export const LANDING_COPY = {
   desktop: {
     title: 'UNTIL on your Mac or PC',
     subtitle:
-      'Day % in your menu bar or tray. Click it for today, this month, this year and your life. Sign in with the same account as your phone.',
+      'Day % in your menu bar or tray, a floating island at the top of your screen, and desktop widgets. Always dark. Sign in with the same account as your phone.',
     mac: 'Download for Mac',
     windows: 'Download for Windows',
     requirements: 'macOS 11 or later · Windows 10 or later',
+    firstOpen:
+      'First time: on a Mac, right-click UNTIL and choose Open. On Windows, choose More info, then Run anyway. The app is not code-signed yet.',
     comingSoon: 'Desktop downloads are coming soon.',
   },
 

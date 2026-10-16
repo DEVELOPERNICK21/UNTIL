@@ -129,6 +129,11 @@ export function NotchIsland() {
     return () => stops.forEach(stop => stop());
   }, []);
 
+  // Tells the app this page has run (the release self-test waits for it).
+  useEffect(() => {
+    if (inTauri) void invoke('page_ready').catch(() => {});
+  }, []);
+
   // Another window changed the view or the timer.
   useEffect(() => {
     const onStorage = (event: StorageEvent) => {
