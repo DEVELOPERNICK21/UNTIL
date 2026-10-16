@@ -435,10 +435,22 @@ pub fn run() {
                 widgets::moved(window.app_handle(), window, *position);
             }
             WindowEvent::Focused(false) if window.label() == PANEL => {
+                // Wait a beat before hiding. Dragging the borderless panel on Windows can blur
+                // it for a moment; closing immediately made it feel stuck to the tray.
                 if let Ok(mut at) = window.state::<PanelState>().blurred_at.lock() {
                     *at = Some(Instant::now());
                 }
-                let _ = window.hide();
+                let app = window.app_handle().clone();
+                std::thread::spawn(move || {
+                    std::thread::sleep(Duration::from_millis(220));
+                    let Some(panel) = app.get_webview_window(PANEL) else {
+                        return;
+                    };
+                    if panel.is_focused().unwrap_or(false) {
+                        return;
+                    }
+                    let _ = panel.hide();
+                });
             }
             _ => {}
         })

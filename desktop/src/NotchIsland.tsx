@@ -32,6 +32,7 @@ import {
   toggleTimer,
 } from './timer';
 import { useNow } from './useNow';
+import { startWindowDrag } from './drag';
 import { Ember } from './ember/Ember';
 import { Dial } from './Dial';
 import { Digits } from './Digits';
@@ -208,6 +209,8 @@ export function NotchIsland() {
         // In a plain browser there is no pointer watcher, so hover stands in for it.
         onMouseEnter={inTauri ? undefined : () => setOpen(true)}
         onMouseLeave={inTauri ? undefined : () => setOpen(false)}
+        // Drag on Mac and Windows. Buttons and Ember stay clickable.
+        onMouseDown={startWindowDrag}
         data-open={open ? 'on' : 'off'}
         data-compact={compact ? 'on' : 'off'}
         data-mode={mode}

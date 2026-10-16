@@ -33,6 +33,7 @@ import { WidgetsRow } from './WidgetsRow';
 import { openUrl } from '@tauri-apps/plugin-opener';
 import { LEGAL_URLS } from '@until/config/monetization';
 import { restartApp } from './system';
+import { startWindowDrag } from './drag';
 import { Ember } from './ember/Ember';
 import { Dial } from './Dial';
 import { Digits } from './Digits';
@@ -227,9 +228,9 @@ export function App() {
   const color = current.progress == null ? 'var(--text-3)' : getProgressColor(current.progress);
 
   return (
-    <main className="panel" ref={panelRef}>
+    <main className="panel" ref={panelRef} onMouseDown={startWindowDrag}>
       <div className="enter" key={openCount}>
-        <header className="top">
+        <header className="top" data-tauri-drag-region title="Drag to move">
           <Ember progress={model.day.progress} size={54} pulse={pulse} />
           <div className="greet">
             <span className="eyebrow">{timeOfDayLabel(now)}</span>

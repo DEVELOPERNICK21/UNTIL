@@ -37,6 +37,7 @@ import {
 } from '../../../shared/theme';
 import type { AccountDevice } from '../../../shared/types';
 import { logAnalyticsEvent } from '../../../shared/analytics/analytics';
+import { promptDesktopDownload } from '../../../shared/desktopDownload';
 import {
   EmailPasswordAuthForm,
   type EmailAuthMode,
@@ -552,6 +553,35 @@ export function AccountScreen() {
                 </GlassCard>
               </View>
 
+              <TouchableOpacity
+                style={[
+                  styles.desktopRow,
+                  { borderColor: theme.glassBorder },
+                ]}
+                onPress={promptDesktopDownload}
+                activeOpacity={0.7}
+                accessibilityRole="button"
+                accessibilityLabel="Download UNTIL for Mac or Windows"
+              >
+                <View style={styles.rowContent}>
+                  <Text variant="body" style={{ color: theme.textPrimary }}>
+                    Get Mac or Windows
+                  </Text>
+                  <Text
+                    variant="caption"
+                    style={[
+                      styles.rowSubtitle,
+                      { color: theme.textSecondary },
+                    ]}
+                  >
+                    Menu bar or tray. Counts as one of your 3 devices.
+                  </Text>
+                </View>
+                <Text style={[styles.chevron, { color: theme.textSecondary }]}>
+                  ›
+                </Text>
+              </TouchableOpacity>
+
               {error ? (
                 <Text
                   variant="caption"
@@ -721,6 +751,20 @@ const styles = StyleSheet.create({
   },
   rowSubtitle: {
     marginTop: 2,
+  },
+  desktopRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: Spacing[3],
+    paddingHorizontal: Spacing[3],
+    borderRadius: Radius.md,
+    borderWidth: StyleSheet.hairlineWidth,
+    marginBottom: Spacing[4],
+  },
+  chevron: {
+    fontSize: 22,
+    marginLeft: Spacing[2],
   },
   introCard: {
     padding: Spacing[4],

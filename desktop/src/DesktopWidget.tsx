@@ -1,11 +1,11 @@
-import { memo, useCallback, useEffect, useMemo, useState, type CSSProperties, type MouseEvent } from 'react';
+import { memo, useCallback, useEffect, useMemo, useState, type CSSProperties } from 'react';
 import { invoke } from '@tauri-apps/api/core';
-import { getCurrentWindow } from '@tauri-apps/api/window';
 import { buildPanelModel } from '@until/shared/time/panelModel';
 import { panelProfile } from './localState';
 import { useLocalState } from './useLocalState';
 import { dayChip } from './periods';
 import { useNow } from './useNow';
+import { startWindowDrag } from './drag';
 import { Ember } from './ember/Ember';
 import {
   LIFE_COLS,
@@ -26,7 +26,8 @@ import './widgets.css';
 /**
  * The phone's widgets on the desktop. Same colours, same dots, same one-number-per-widget rule as
  * ios/UNTILWidgets: Day is a ring with 24 hour dots and Ember in the middle, Month a calendar,
- * Year a dot for every day, Life a dot for every year. Drag a widget by its body.
+ * Year a dot for every day, Life a dot for every year. Drag a widget by its body
+ * anywhere on the screen; the place is remembered.
  */
 
 export type WidgetKind = 'day' | 'month' | 'year' | 'life';
@@ -43,18 +44,6 @@ function params() {
   };
 }
 
-/** Starts dragging the window, unless the press was on a button or on Ember. */
-function startDrag(event: MouseEvent) {
-  if (event.button !== 0) return;
-  if ((event.target as HTMLElement).closest('button, .ember-live')) return;
-  try {
-    void getCurrentWindow()
-      .startDragging()
-      .catch(() => {});
-  } catch {
-    // Outside Tauri (a plain browser) there is no window to drag.
-  }
-}
 
 const Dots = memo(function Dots(props: {
   states: Array<DotState | 'blank'>;
@@ -279,7 +268,10 @@ export function DesktopWidget() {
   }
 
   return (
-    <div className={`widget widget-${kind} widget-${kind === 'day' ? size : 'medium'}`} onMouseDown={startDrag}>
+    <div
+      className={`widget widget-${kind} widget-${kind === 'day' ? size : 'medium'}`}
+      onMouseDown={startWindowDrag}
+    >
       <div className="w-controls">
         <button type="button" onClick={openPanel} title="Open UNTIL" aria-label="Open UNTIL">
           <svg viewBox="0 0 16 16" width="11" height="11" aria-hidden="true">

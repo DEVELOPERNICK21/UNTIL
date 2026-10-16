@@ -112,7 +112,8 @@ export type AnalyticsEventName =
   | 'account_screen_signout_confirmed'
   | 'account_screen_device_removed'
   | 'account_delete_started'
-  | 'account_deleted';
+  | 'account_deleted'
+  | 'desktop_download_opened';
 
 type EventParams = Record<string, string | number | boolean | undefined>;
 

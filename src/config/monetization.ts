@@ -73,6 +73,16 @@ export const LEGAL_URLS = {
   terms: 'https://developernick1-until.vercel.app/terms',
 } as const;
 
+/**
+ * Desktop companion downloads (Mac .dmg, Windows setup). The phone opens the
+ * installer link; finish the download on that computer.
+ */
+export const DESKTOP_DOWNLOAD_URLS = {
+  page: 'https://developernick1-until.vercel.app/#desktop',
+  mac: 'https://developernick1-until.vercel.app/download/mac',
+  windows: 'https://developernick1-until.vercel.app/download/windows',
+} as const;
+
 export const STORE_SUBSCRIPTION_MANAGE_PATH =
   'Settings › Manage subscription, or your app store account';
 

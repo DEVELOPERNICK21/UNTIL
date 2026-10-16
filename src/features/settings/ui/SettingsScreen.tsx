@@ -42,6 +42,7 @@ import {
 } from '../../../shared/theme';
 import type { RootStackParamList } from '../../../shared/navigation/types';
 import { logAnalyticsEvent } from '../../../shared/analytics/analytics';
+import { promptDesktopDownload } from '../../../shared/desktopDownload';
 
 function parseBirthDate(str: string): Date {
   if (!str || str.length < 10) return new Date(1990, 0, 1);
@@ -454,6 +455,33 @@ export function SettingsScreen() {
                       {Platform.OS === 'ios'
                         ? 'Leave an App Store review'
                         : 'Leave a Play Store review'}
+                    </Text>
+                  </View>
+                  <Text
+                    style={[styles.chevron, { color: theme.textSecondary }]}
+                  >
+                    ›
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.row, { borderBottomColor: theme.glassBorder }]}
+                  onPress={promptDesktopDownload}
+                  activeOpacity={0.7}
+                  accessibilityRole="button"
+                  accessibilityLabel="Download UNTIL for Mac or Windows"
+                >
+                  <View style={styles.rowContent}>
+                    <Text variant="body" style={{ color: theme.textPrimary }}>
+                      UNTIL on Mac & Windows
+                    </Text>
+                    <Text
+                      variant="caption"
+                      style={[
+                        styles.rowSubtitle,
+                        { color: theme.textSecondary },
+                      ]}
+                    >
+                      Menu bar or tray. Same account.
                     </Text>
                   </View>
                   <Text
