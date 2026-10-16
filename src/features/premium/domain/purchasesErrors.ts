@@ -31,3 +31,28 @@ export function isPurchaseCancelledError(error: unknown): boolean {
   if (e.userCancelled === true) return true;
   return String(e.code) === '1' || e.code === PURCHASE_CANCELLED_CODE;
 }
+
+/**
+ * A short code for a failed purchase, for analytics: RevenueCat's readable code when it has one
+ * ("PRODUCT_NOT_AVAILABLE_FOR_PURCHASE", "PURCHASE_NOT_ALLOWED", ...), else its numeric code, else
+ * "unknown". Free of personal data.
+ */
+export function purchaseErrorCode(error: unknown): string {
+  if (error == null || typeof error !== 'object') return 'unknown';
+  const e = error as {
+    code?: unknown;
+    userInfo?: { readableErrorCode?: unknown } | null;
+    underlyingErrorMessage?: unknown;
+  };
+  const readable = e.userInfo?.readableErrorCode;
+  if (typeof readable === 'string' && readable) return readable.slice(0, 60);
+  if (e.code != null && e.code !== '') return String(e.code).slice(0, 60);
+  return 'unknown';
+}
+
+/** The store's own words for what went wrong, trimmed for analytics. */
+export function purchaseErrorDetail(error: unknown): string {
+  if (error == null || typeof error !== 'object') return '';
+  const under = (error as { underlyingErrorMessage?: unknown }).underlyingErrorMessage;
+  return typeof under === 'string' ? under.slice(0, 100) : '';
+}

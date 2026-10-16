@@ -68,7 +68,7 @@ The only feature-to-feature imports allowed (`FEATURE_DEPENDENCIES` in `__tests_
 | 5 | `reflections` | onboarding, premium, time |
 | 5 | `share` | premium, time |
 | 5 | `widgets` | countdowns, counters, premium, tasks, time |
-| 6 | `home` | activity, badges, premium, presence, reflections, tasks, time |
+| 6 | `home` | activity, badges, countdowns, premium, presence, reflections, tasks, time |
 | 6 | `settings` | account, activity, app-update, engagement, premium, time |
 
 A feature never uses one of a higher tier. Adding an edge is an architectural decision: change the table in the test, here, and say why in the PR. If a new need would create a cycle, **invert the dependency** instead: the lower feature declares the narrow port it needs and `app/di` hands it the implementation (see `IProfileCloudSync`, `ICountdownEngagementSignals`, `IPurchasesLink`, `platform/widgetSync`).

@@ -60,6 +60,8 @@ export type AnalyticsEventName =
   | 'trial_preview_ended'
   | 'trial_reminder_shown'
   | 'onboarding_paywall_skipped'
+  | 'onboarding_paywall_result'
+  | 'countdown_home_card_tapped'
   | 'task_added'
   | 'settings_birth_date_saved'
   | 'home_life_locked_tapped'
