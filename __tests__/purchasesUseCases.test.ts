@@ -1,14 +1,14 @@
-import { PurchaseCancelledError } from '../src/domain/errors/purchasesErrors';
-import type { IPurchasesRepository } from '../src/domain/repository/IPurchasesRepository';
-import type { ISubscriptionRepository } from '../src/domain/repository/ISubscriptionRepository';
-import { GetOfferingsUseCase } from '../src/domain/useCases/GetOfferingsUseCase';
-import { IdentifyPurchasesUserUseCase } from '../src/domain/useCases/IdentifyPurchasesUserUseCase';
-import { PurchasePackageUseCase } from '../src/domain/useCases/PurchasePackageUseCase';
-import { ResetPurchasesUserUseCase } from '../src/domain/useCases/ResetPurchasesUserUseCase';
-import { RestorePurchasesUseCase } from '../src/domain/useCases/RestorePurchasesUseCase';
-import { SyncCustomerInfoUseCase } from '../src/domain/useCases/SyncCustomerInfoUseCase';
-import type { CustomerInfoDTO, PurchasesOfferingDTO } from '../src/types/purchases';
-import type { PurchaseType, SubscriptionState } from '../src/types';
+import { PurchaseCancelledError } from '../src/features/premium/domain/purchasesErrors';
+import type { IPurchasesRepository } from '../src/features/premium/domain/ports/IPurchasesRepository';
+import type { ISubscriptionRepository } from '../src/features/premium/domain/ports/ISubscriptionRepository';
+import { GetOfferingsUseCase } from '../src/features/premium/domain/useCases/GetOfferingsUseCase';
+import { IdentifyPurchasesUserUseCase } from '../src/features/premium/domain/useCases/IdentifyPurchasesUserUseCase';
+import { PurchasePackageUseCase } from '../src/features/premium/domain/useCases/PurchasePackageUseCase';
+import { ResetPurchasesUserUseCase } from '../src/features/premium/domain/useCases/ResetPurchasesUserUseCase';
+import { RestorePurchasesUseCase } from '../src/features/premium/domain/useCases/RestorePurchasesUseCase';
+import { SyncCustomerInfoUseCase } from '../src/features/premium/domain/useCases/SyncCustomerInfoUseCase';
+import type { CustomerInfoDTO, PurchasesOfferingDTO } from '../src/shared/types/purchases';
+import type { PurchaseType, SubscriptionState } from '../src/shared/types';
 
 function fakeSub(seed: Partial<{
   isPremium: boolean;

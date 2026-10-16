@@ -1,0 +1,530 @@
+import React, { useCallback, useEffect, useMemo } from 'react';
+import {
+  View,
+  ScrollView,
+  StyleSheet,
+  TouchableOpacity,
+  TextInput,
+  Alert,
+} from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { Text, ScreenGradient } from '../../../shared/ui';
+import { Spacing, Radius, Typography, useTheme } from '../../../shared/theme';
+import type { ThemePalette } from '../../../shared/theme';
+import { WidgetPreview } from './WidgetPreview';
+import { useWidgetConfig } from '../hooks/useWidgetConfig';
+import { useAccessControl } from '../../premium';
+import { isPremiumWidgetConfigType } from '../config/widgetGating';
+import {
+  WIDGET_ACCENTS,
+  isPremiumWidgetAccent,
+} from '../config/widgetAccents';
+import type { RootStackParamList } from '../../../shared/navigation/types';
+
+const PRESET_MESSAGES = [
+  'Time is running',
+  'Make today count',
+  'You are using your life',
+];
+
+export function WidgetCustomizationScreen() {
+  const theme = useTheme();
+  const styles = useMemo(() => createStyles(theme), [theme]);
+  const navigation =
+    useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const { hasPremiumBundle } = useAccessControl();
+  const {
+    config,
+    hydrate,
+    setType,
+    setTheme,
+    setLayout,
+    setFont,
+    setAccent,
+    setShowMessage,
+    setMessage,
+  } = useWidgetConfig();
+
+  useEffect(() => {
+    void hydrate();
+  }, [hydrate]);
+
+  const promptPremiumForWidget = useCallback(
+    (widgetLabel: string) => {
+      Alert.alert(
+        'Premium widget',
+        `${widgetLabel} is part of Premium. Upgrade to add this widget to your home screen.`,
+        [
+          { text: 'Not now', style: 'cancel' },
+          {
+            text: 'View Premium',
+            onPress: () => navigation.navigate('Premium'),
+          },
+        ],
+      );
+    },
+    [navigation],
+  );
+
+  const handleSelectType = useCallback(
+    (value: string) => {
+      if (isPremiumWidgetConfigType(value) && !hasPremiumBundle) {
+        promptPremiumForWidget(value === 'month' ? 'Month' : 'Life');
+        return;
+      }
+      setType(value as Parameters<typeof setType>[0]);
+    },
+    [hasPremiumBundle, promptPremiumForWidget, setType],
+  );
+
+  const handleSelectAccent = useCallback(
+    (value: string) => {
+      if (isPremiumWidgetAccent(value) && !hasPremiumBundle) {
+        Alert.alert(
+          'Premium accent',
+          'Color accents are part of Premium. Upgrade to personalize your widgets.',
+          [
+            { text: 'Not now', style: 'cancel' },
+            {
+              text: 'View Premium',
+              onPress: () => navigation.navigate('Premium'),
+            },
+          ],
+        );
+        return;
+      }
+      setAccent(value as Parameters<typeof setAccent>[0]);
+    },
+    [hasPremiumBundle, navigation, setAccent],
+  );
+
+  const handleAddWidget = useCallback(() => {
+    if (isPremiumWidgetConfigType(config.type) && !hasPremiumBundle) {
+      promptPremiumForWidget(config.type === 'month' ? 'Month' : 'Life');
+      return;
+    }
+    Alert.alert(
+      'Add widget',
+      'Long-press your home screen, tap Widgets, then choose Until and your preferred size.',
+      [{ text: 'OK' }],
+    );
+  }, [config.type, hasPremiumBundle, promptPremiumForWidget]);
+
+  return (
+    <ScreenGradient>
+      <ScrollView
+        style={styles.scroll}
+        contentContainerStyle={styles.content}
+        bounces
+      >
+        <Text variant="title" style={styles.title}>
+          Widget preview
+        </Text>
+
+        <WidgetPreview config={config} />
+
+        <View style={styles.section}>
+          <SectionLabel label="Widget type" />
+          <HorizontalPills
+            options={[
+              { key: 'day', label: 'Today' },
+              { key: 'month', label: 'This month' },
+              { key: 'year', label: 'This year' },
+              { key: 'life', label: 'Life' },
+            ]}
+            selected={config.type}
+            onSelect={handleSelectType}
+          />
+        </View>
+
+        <View style={styles.section}>
+          <SectionLabel label="Theme" />
+          <HorizontalPills
+            options={[
+              { key: 'light', label: 'Light' },
+              { key: 'dark', label: 'Dark' },
+              { key: 'amoled', label: 'AMOLED' },
+            ]}
+            selected={config.theme}
+            onSelect={value => setTheme(value as any)}
+          />
+        </View>
+
+        <View style={styles.section}>
+          <SectionLabel label="Layout" />
+          <HorizontalPills
+            options={[
+              { key: 'minimal', label: 'Minimal' },
+              { key: 'detailed', label: 'Detailed' },
+            ]}
+            selected={config.layout}
+            onSelect={value => setLayout(value as any)}
+          />
+        </View>
+
+        <View style={styles.section}>
+          <SectionLabel label="Font style" />
+          <HorizontalPills
+            options={[
+              { key: 'clean', label: 'Clean' },
+              { key: 'emotional', label: 'Emotional' },
+            ]}
+            selected={config.font}
+            onSelect={value => setFont(value as any)}
+          />
+        </View>
+
+        <View style={styles.section}>
+          <View style={styles.accentHeaderRow}>
+            <SectionLabel label="Accent color" />
+            {!hasPremiumBundle && (
+              <Text
+                variant="caption"
+                color="secondary"
+                style={styles.premiumTag}
+              >
+                PREMIUM
+              </Text>
+            )}
+          </View>
+          <View style={styles.accentRow}>
+            {WIDGET_ACCENTS.map(option => {
+              const isActive = option.key === config.accent;
+              const locked = option.premium && !hasPremiumBundle;
+              return (
+                <TouchableOpacity
+                  key={option.key}
+                  activeOpacity={0.8}
+                  onPress={() => handleSelectAccent(option.key)}
+                  style={styles.accentItem}
+                >
+                  <View
+                    style={[
+                      styles.accentSwatch,
+                      { backgroundColor: option.color },
+                      isActive && styles.accentSwatchActive,
+                      locked && styles.accentSwatchLocked,
+                    ]}
+                  >
+                    {locked && <Text style={styles.accentLockGlyph}>•</Text>}
+                  </View>
+                  <Text
+                    variant="caption"
+                    color={isActive ? 'primary' : 'secondary'}
+                    style={styles.accentLabel}
+                  >
+                    {option.label}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        </View>
+
+        <View style={styles.section}>
+          <SectionLabel label="Optional message" />
+          <ToggleRow
+            label="Show message"
+            active={config.showMessage}
+            onToggle={() => setShowMessage(!config.showMessage)}
+          />
+          {config.showMessage && (
+            <View style={styles.messageSection}>
+              <Text variant="caption" color="secondary" style={styles.subLabel}>
+                Presets
+              </Text>
+              <HorizontalPills
+                options={PRESET_MESSAGES.map(m => ({ key: m, label: m }))}
+                selected={
+                  PRESET_MESSAGES.includes(config.message)
+                    ? config.message
+                    : undefined
+                }
+                onSelect={value => setMessage(value)}
+                wrap
+              />
+              <Text variant="caption" color="secondary" style={styles.subLabel}>
+                Or write your own
+              </Text>
+              <View style={styles.inputWrapper}>
+                <TextInput
+                  value={config.message}
+                  onChangeText={setMessage}
+                  placeholder="Type a short reminder to your future self"
+                  placeholderTextColor={theme.textSecondary}
+                  style={styles.input}
+                  maxLength={80}
+                />
+              </View>
+            </View>
+          )}
+        </View>
+
+        <View style={styles.footerSpacer} />
+      </ScrollView>
+
+      <View style={styles.footer}>
+        <TouchableOpacity
+          activeOpacity={0.8}
+          style={styles.primaryButton}
+          onPress={handleAddWidget}
+        >
+          <Text style={styles.primaryButtonText}>Add widget</Text>
+        </TouchableOpacity>
+      </View>
+    </ScreenGradient>
+  );
+}
+
+function SectionLabel({ label }: { label: string }) {
+  const theme = useTheme();
+  const styles = useMemo(() => createStyles(theme), [theme]);
+  return (
+    <Text variant="caption" color="secondary" style={styles.sectionLabel}>
+      {label.toUpperCase()}
+    </Text>
+  );
+}
+
+interface HorizontalPillsProps {
+  options: { key: string; label: string }[];
+  selected?: string;
+  onSelect: (key: string) => void;
+  wrap?: boolean;
+}
+
+function HorizontalPills({
+  options,
+  selected,
+  onSelect,
+  wrap,
+}: HorizontalPillsProps) {
+  const theme = useTheme();
+  const styles = useMemo(() => createStyles(theme), [theme]);
+  return (
+    <View
+      style={[styles.pillRow, wrap && { flexWrap: 'wrap', rowGap: Spacing.sm }]}
+    >
+      {options.map(option => {
+        const isActive = option.key === selected;
+        return (
+          <TouchableOpacity
+            key={option.key}
+            activeOpacity={0.8}
+            onPress={() => onSelect(option.key)}
+            style={[styles.pillOption, isActive && styles.pillOptionActive]}
+          >
+            <Text
+              style={[
+                styles.pillOptionText,
+                isActive && styles.pillOptionTextActive,
+              ]}
+            >
+              {option.label}
+            </Text>
+          </TouchableOpacity>
+        );
+      })}
+    </View>
+  );
+}
+
+interface ToggleRowProps {
+  label: string;
+  active: boolean;
+  onToggle: () => void;
+}
+
+function ToggleRow({ label, active, onToggle }: ToggleRowProps) {
+  const theme = useTheme();
+  const styles = useMemo(() => createStyles(theme), [theme]);
+  return (
+    <TouchableOpacity
+      activeOpacity={0.8}
+      style={styles.toggleRow}
+      onPress={onToggle}
+    >
+      <Text variant="body" style={styles.toggleLabel}>
+        {label}
+      </Text>
+      <View
+        style={[
+          styles.toggleTrack,
+          active ? styles.toggleTrackOn : styles.toggleTrackOff,
+        ]}
+      >
+        <View
+          style={[
+            styles.toggleThumb,
+            active ? styles.toggleThumbOn : styles.toggleThumbOff,
+          ]}
+        />
+      </View>
+    </TouchableOpacity>
+  );
+}
+
+function createStyles(theme: ThemePalette) {
+  return StyleSheet.create({
+    scroll: {
+      flex: 1,
+    },
+    content: {
+      paddingHorizontal: Spacing.lg,
+      paddingTop: Spacing.lg,
+      paddingBottom: Spacing.xl * 2,
+    },
+    title: {
+      marginBottom: Spacing.sm,
+    },
+    section: {
+      marginTop: Spacing.lg,
+    },
+    sectionLabel: {
+      marginBottom: Spacing.xs,
+      letterSpacing: 1,
+    },
+    accentHeaderRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+    },
+    premiumTag: {
+      letterSpacing: 1,
+      marginBottom: Spacing.xs,
+    },
+    accentRow: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      columnGap: Spacing.md,
+      rowGap: Spacing.sm,
+    },
+    accentItem: {
+      alignItems: 'center',
+      width: 56,
+    },
+    accentSwatch: {
+      width: 36,
+      height: 36,
+      borderRadius: 18,
+      borderWidth: 2,
+      borderColor: 'transparent',
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    accentSwatchActive: {
+      borderColor: theme.textPrimary,
+    },
+    accentSwatchLocked: {
+      opacity: 0.5,
+    },
+    accentLockGlyph: {
+      color: '#FFFFFF',
+      fontSize: 18,
+      fontWeight: '700',
+    },
+    accentLabel: {
+      marginTop: 4,
+    },
+    pillRow: {
+      flexDirection: 'row',
+      columnGap: Spacing.sm,
+    },
+    pillOption: {
+      borderRadius: 999,
+      paddingHorizontal: Spacing.md,
+      paddingVertical: 8,
+      borderWidth: 1,
+      borderColor: theme.divider,
+      backgroundColor: theme.cardBase,
+    },
+    pillOptionActive: {
+      backgroundColor: `${theme.percent}26`,
+      borderColor: theme.percent,
+    },
+    pillOptionText: {
+      fontSize: Typography.body,
+      color: theme.textPrimary,
+    },
+    pillOptionTextActive: {
+      color: theme.textPrimary,
+    },
+    messageSection: {
+      marginTop: Spacing.sm,
+    },
+    subLabel: {
+      marginTop: Spacing.sm,
+      marginBottom: Spacing.xs,
+    },
+    inputWrapper: {
+      borderRadius: Radius.lg,
+      borderWidth: 1,
+      borderColor: theme.divider,
+      paddingHorizontal: Spacing.md,
+      paddingVertical: Spacing.sm,
+      backgroundColor: theme.cardBase,
+      marginTop: Spacing.xs,
+    },
+    input: {
+      fontSize: Typography.body,
+      color: theme.textPrimary,
+    },
+    toggleRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      marginTop: Spacing.sm,
+    },
+    toggleLabel: {
+      color: theme.textPrimary,
+    },
+    toggleTrack: {
+      width: 44,
+      height: 26,
+      borderRadius: 13,
+      padding: 3,
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+    toggleTrackOn: {
+      backgroundColor: theme.percent,
+      justifyContent: 'flex-end',
+    },
+    toggleTrackOff: {
+      backgroundColor: theme.divider,
+      justifyContent: 'flex-start',
+    },
+    toggleThumb: {
+      width: 20,
+      height: 20,
+      borderRadius: 10,
+      backgroundColor: theme.cardBase,
+    },
+    toggleThumbOn: {},
+    toggleThumbOff: {},
+    footer: {
+      position: 'absolute',
+      left: 0,
+      right: 0,
+      bottom: 0,
+      padding: Spacing.lg,
+      backgroundColor: theme.background,
+      borderTopWidth: StyleSheet.hairlineWidth,
+      borderTopColor: theme.divider,
+    },
+    footerSpacer: {
+      height: Spacing.xl * 2,
+    },
+    primaryButton: {
+      backgroundColor: theme.percent,
+      borderRadius: Radius.lg,
+      paddingVertical: Spacing.md,
+      alignItems: 'center',
+    },
+    primaryButtonText: {
+      color: '#FFFFFF',
+      fontSize: Typography.body,
+    },
+  });
+}

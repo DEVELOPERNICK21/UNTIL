@@ -1,8 +1,8 @@
-import { CompleteDesktopSignInUseCase } from '../src/domain/useCases/CompleteDesktopSignInUseCase';
-import { RegisterDeviceUseCase } from '../src/domain/useCases/RegisterDeviceUseCase';
-import type { IAccountCloudStore } from '../src/domain/ports/IAccountCloudStore';
-import type { IDeviceIdProvider } from '../src/domain/ports/IDeviceIdProvider';
-import type { AccountDevice, AuthUser, CloudEntitlement } from '../src/types';
+import { CompleteDesktopSignInUseCase } from '../src/features/account/domain/useCases/CompleteDesktopSignInUseCase';
+import { RegisterDeviceUseCase } from '../src/features/account/domain/useCases/RegisterDeviceUseCase';
+import type { IAccountCloudStore } from '../src/features/account/domain/ports/IAccountCloudStore';
+import type { IDeviceIdProvider } from '../src/shared/ports/IDeviceIdProvider';
+import type { AccountDevice, AuthUser, CloudEntitlement } from '../src/shared/types';
 
 const USER: AuthUser = {
   uid: 'uid-1',

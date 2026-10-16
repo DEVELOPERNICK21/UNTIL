@@ -9,12 +9,14 @@ import {
   doc,
   getDoc,
   getDocs,
+  onSnapshot,
   setDoc,
   type Firestore,
+  type Unsubscribe,
 } from 'firebase/firestore';
-import type { IAccountCloudStore } from '@until/domain/ports/IAccountCloudStore';
-import type { AccountDevice, CloudEntitlement, CloudUserProfile } from '@until/types';
-import { withTimeout } from '@until/core/account/withTimeout';
+import type { IAccountCloudStore } from '@until/features/account/domain/ports/IAccountCloudStore';
+import type { AccountDevice, CloudEntitlement, CloudUserProfile } from '@until/shared/types';
+import { withTimeout } from '@until/shared/utils/withTimeout';
 
 const FIRESTORE_TIMEOUT_MS = 8000;
 
@@ -28,6 +30,26 @@ export class FirestoreJsAccountCloudStore implements IAccountCloudStore {
       'getProfile',
     );
     return snap.exists() ? (snap.data() as CloudUserProfile) : null;
+  }
+
+  /**
+   * Calls `onChange` now and every time the phone changes the profile. `fromCache` is true while
+   * the answer is only what this machine remembers, so it must not count as "synced". Errors are
+   * ignored: offline, the numbers keep ticking from the last profile and it picks up again later.
+   */
+  watchProfile(
+    uid: string,
+    onChange: (profile: CloudUserProfile | null, fromCache: boolean) => void,
+  ): Unsubscribe {
+    return onSnapshot(
+      doc(this.db, 'users', uid),
+      snap =>
+        onChange(
+          snap.exists() ? (snap.data() as CloudUserProfile) : null,
+          snap.metadata.fromCache,
+        ),
+      () => {},
+    );
   }
 
   async upsertProfile(uid: string, patch: Partial<CloudUserProfile>): Promise<void> {

@@ -15,14 +15,61 @@ function sourceFiles(dir: string): string[] {
 
 const IMPORT = /(?:from|import)\s*\(?\s*['"]([^'"]+)['"]/g;
 
+const SRC = path.join(__dirname, '..', 'src');
+
+/** What the desktop app may take from the phone code: pure kernel modules and feature domains. */
+const ALLOWED_SHARED = /^@until\/(shared\/(time|types|utils|ports)(\/|$)|shared\/theme\/(progressColor|emotionalCopy|palettes)$|features\/[^/]+\/domain\/|assets\/|config\/)/;
+
 const FORBIDDEN: Array<[RegExp, string]> = [
-  [/(^|\/)src\/di$|^@until\/di$/, 'phone di.ts'],
+  [/^@until\/app(\/|$)/, 'phone app shell and composition root'],
   [/(^|\/)persistence(\/|$)/, 'phone persistence (MMKV)'],
   [/(^|\/)hooks(\/|$)/, 'phone hooks'],
-  [/(^|\/)surfaces(\/|$)/, 'phone screens'],
-  [/(^|\/)infrastructure(\/|$)/, 'phone infrastructure'],
+  [/(^|\/)ui(\/|$)/, 'phone screens'],
+  [/(^|\/)data(\/|$)/, 'phone data adapters'],
+  [/(^|\/)services(\/|$)/, 'phone services'],
   [/^react-native($|-)|^@react-native/, 'React Native'],
 ];
+
+function resolveInSrc(from: string, spec: string): string | null {
+  const base = spec.startsWith('@until/')
+    ? path.join(SRC, spec.slice('@until/'.length))
+    : path.resolve(path.dirname(from), spec);
+  for (const ext of ['', '.ts', '.tsx', '/index.ts', '/index.tsx']) {
+    const candidate = base + ext;
+    if (fs.existsSync(candidate) && fs.statSync(candidate).isFile()) return candidate;
+  }
+  return null;
+}
+
+/** Every package and file the desktop reaches through @until/*, following imports inside src/. */
+function closureOfSharedImports(): { packages: Set<string>; files: Set<string> } {
+  const packages = new Set<string>();
+  const files = new Set<string>();
+  const queue: string[] = [];
+  for (const file of sourceFiles(DESKTOP)) {
+    for (const match of fs.readFileSync(file, 'utf8').matchAll(IMPORT)) {
+      if (match[1].startsWith('@until/')) {
+        const target = resolveInSrc(file, match[1]);
+        if (target) queue.push(target);
+      }
+    }
+  }
+  while (queue.length) {
+    const file = queue.pop()!;
+    if (files.has(file)) continue;
+    files.add(file);
+    for (const match of fs.readFileSync(file, 'utf8').matchAll(IMPORT)) {
+      const spec = match[1];
+      if (!spec.startsWith('.')) {
+        packages.add(spec);
+        continue;
+      }
+      const target = resolveInSrc(file, spec);
+      if (target) queue.push(target);
+    }
+  }
+  return { packages, files };
+}
 
 describe('desktop companion import boundary', () => {
   it('has source files to check', () => {
@@ -43,5 +90,24 @@ describe('desktop companion import boundary', () => {
       }
     }
     expect(violations).toEqual([]);
+  });
+
+  it('takes only pure kernel modules and feature domains from the phone code', () => {
+    const violations: string[] = [];
+    for (const file of sourceFiles(DESKTOP)) {
+      for (const match of fs.readFileSync(file, 'utf8').matchAll(IMPORT)) {
+        const spec = match[1];
+        if (spec.startsWith('@until/') && !ALLOWED_SHARED.test(spec)) {
+          violations.push(`${path.relative(DESKTOP, file)} imports ${spec}`);
+        }
+      }
+    }
+    expect(violations).toEqual([]);
+  });
+
+  it('never pulls a package into the web build through the shared code it imports', () => {
+    const { packages, files } = closureOfSharedImports();
+    expect(files.size).toBeGreaterThan(0);
+    expect([...packages]).toEqual([]);
   });
 });

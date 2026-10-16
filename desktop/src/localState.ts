@@ -1,4 +1,4 @@
-import type { CloudEntitlement } from '@until/types';
+import type { CloudEntitlement } from '@until/shared/types';
 
 /** Last known account state on this computer, so the extra keeps ticking offline. */
 export interface DesktopLocalState {
@@ -8,9 +8,12 @@ export interface DesktopLocalState {
   deathAge: number | null;
   deviceRegistered: boolean;
   entitlementActive: boolean;
+  /** When this machine last heard from the account (ms since the epoch). Null before the first time. */
+  syncedAt: number | null;
 }
 
 const KEY = 'until.desktop.localState';
+export const LOCAL_STATE_KEY = KEY;
 
 export const EMPTY_LOCAL_STATE: DesktopLocalState = {
   uid: null,
@@ -19,6 +22,7 @@ export const EMPTY_LOCAL_STATE: DesktopLocalState = {
   deathAge: null,
   deviceRegistered: false,
   entitlementActive: false,
+  syncedAt: null,
 };
 
 export function loadLocalState(): DesktopLocalState {

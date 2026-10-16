@@ -1,220 +1,162 @@
 # Until: Days left — App Architecture
 
-A **clean architecture** with **Single Source of Truth (SSOT)** for a time-progress app. Data flows in one direction; layers are independent and swappable.
-
----
-
-## Clean architecture & SSOT
-
-- **Core** (`core/time`, `core/activity`): Pure logic only. No React, no storage, no I/O. **SSOT for time and activity rules.**
-- **Domain**: Repository interfaces (ports) and use cases. Use cases orchestrate; they do not perform I/O themselves (except via repositories). **SSOT for what the app can do.**
-- **Infrastructure**: Repository implementations, persistence, native bridges. **SSOT for where data lives** (MMKV, schema keys).
-- **Surfaces / UI**: Only call use cases (via `di`) and render. No direct imports from `core` or `persistence` for business data.
-- **Composition root** (`di.ts`): Single place that wires implementations to use cases. All app code uses use cases from `di`.
-
-**Widget cache SSOT:** Widget data is produced by `TimeRepository.getWidgetCache()` (same time logic as `getTimeState()`). `SyncWidgetUseCase` returns that cache; `WidgetSync` only persists and bridges to native. The `WidgetCache` type lives in `types`; `surfaces/widgets/dataContract` re-exports for widget code.
-
-**Progress color SSOT:** The scale “green → orange → red” for “where you are” in time is defined once in `theme/progressColor.ts` as pure `getProgressColor(progress: number)`. UI only consumes it; no duplicate color logic in components.
-
----
-
-## One-Line Summary
-
-**"UI reads from use cases, use cases read from repositories, TimeRepository is SSOT for time/profile and widget cache, repositories use core + MMKV. Widgets read the same MMKV. Every storage key has exactly one owning module."**
-
----
-
-## Architecture Diagram
-
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                        UI LAYER                                 │
-│  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────────┐  │
-│  │ HomeScreen  │  │SettingsScreen│ │  Widgets (Swift/Kotlin) │  │
-│  └──────┬──────┘  └──────┬──────┘  └────────────┬────────────┘  │
-└─────────┼────────────────┼──────────────────────┼───────────────┘
-          │                │                      │
-          │  useObserveTimeState()                │  reads directly
-          │  useUpdateUserProfile()               │
-          ▼                ▼                      │
-┌─────────────────────────────────────────────────┼───────────────┐
-│                 USE CASE LAYER                  │               │
-│  ┌────────────────────────┐ ┌─-───────────────┐ │               │
-│  │ObserveTimeStateUseCase │ │UpdateUserProfile│ │               │
-│  └───────────┬────────────┘ └─-───────┬───────┘ │               │
-└──────────────┼────────────────────────┼─────────┼───────────────┘
-               │                        │         │
-               └────────────────────────┼─────────┘
-                                        ▼
-┌─────────────────────────────────────────────────────────────────┐
-│            SINGLE SOURCE OF TRUTH (SSOT)                        │
-│  ┌─────────────────────────────────────────────────────────────┐│
-│  │                    TimeRepository                           ││
-│  │  getUserProfile() | getTimeState() | getWidgetCache() | set  ││
-│  └─────────────────────────────┬───────────────────────────────┘│
-└────────────────────────────────┼────────────────────────────────┘
-                                 │
-                                 ▼
-┌─────────────────────────────────────────────────────────────────┐
-│                    DATA LAYER                                   │
-│  ┌─────────────────────────────────────────────────────────────┐│
-│  │  MMKV (persistence)     core/time (pure logic)              ││
-│  └─────────────────────────────────────────────────────────────┘│
-└─────────────────────────────────────────────────────────────────┘
-```
-
----
-
-## Data Flow (Step by Step)
-
-### Reading Time Progress (Home Screen)
-
-1. **HomeScreen** calls `useObserveTimeState()`
-2. Hook subscribes to **TimeRepository** and polls every 60s
-3. **TimeRepository** reads user profile from MMKV, calls **core/time** to compute progress
-4. Hook returns `{ userProfile, timeState }` to the screen
-5. Screen renders ProgressBars
-
-### Updating Profile (Settings Screen)
-
-1. **SettingsScreen** calls `useUpdateUserProfile()` and `useObserveTimeState()`
-2. User taps Save → `updateUserProfile(birthDate, deathAge)` runs
-3. **UpdateUserProfileUseCase** calls **TimeRepository.setUserProfile()**
-4. **TimeRepository** writes to MMKV and notifies subscribers
-5. **useObserveTimeState** subscribers re-run → UI re-renders with new data
-
-### Widget sync (SSOT)
-
-1. **syncWidgetCache()** (infrastructure) is called on app launch and when app becomes active
-2. It calls **SyncWidgetUseCase.execute()**, which returns **TimeRepository.getWidgetCache()**
-3. **getWidgetCache()** uses the same **core/time** functions as **getTimeState()** — no duplicated time logic
-4. WidgetSync then writes JSON to MMKV and (iOS/Android) notifies native widgets
-5. **Widgets** (iOS Swift / Android Kotlin) read from the same MMKV keys; keys in `persistence/schema.ts`
-
----
-
-## Folder Structure and File Descriptions
+**Feature-Based Architecture + Pragmatic Clean Architecture**, with a **Single Source of Truth (SSOT)** for every concern. The app is cut into vertical *features* (time, tasks, premium, …). Inside a feature, code is layered the clean-architecture way. Features talk to each other only through small public APIs, along a declared, acyclic dependency table.
 
 ```
 src/
-│
-├── app.tsx                    # Root: migrations, SafeAreaProvider, navigation
-│
-├── core/                      # DOMAIN: Pure business logic (no React, no storage)
-│   └── time/
-│       ├── clock.ts           # now(), startOfDay(), parseDate(), daysInMonth()
-│       ├── day.ts             # getDayProgress()
-│       ├── month.ts           # getMonthProgress()
-│       ├── year.ts            # getYearProgress()
-│       ├── life.ts            # getLifeProgress()
-│       ├── homeFormatters.ts  # Home / desktop display strings (passed/left, extra %)
-│       └── projections.ts     # projectLifeProgressTimestamp(), msUntilNextMidnight()
-│
-├── di.ts                      # Composition root: wire repos → use cases (single place)
-│
-├── domain/                    # Ports and use cases (no I/O, no storage details)
-│   ├── repository/            # Interfaces (ITimeRepository, IActivityRepository, …)
-│   └── useCases/
-│       ├── ObserveTimeStateUseCase.ts   # observe() + subscribe()
-│       ├── UpdateUserProfileUseCase.ts  # execute(birthDate, deathAge)
-│       ├── SyncWidgetUseCase.ts         # execute() → WidgetCache from TimeRepository
-│       └── …
-│
-├── persistence/               # DATA: Storage layer
-│   ├── mmkv.ts                # MMKV instance, getString/setString/etc
-│   ├── schema.ts              # STORAGE_KEYS, DEFAULTS (shared with widgets)
-│   └── migration.ts           # runMigrations() for version upgrades
-│
-├── hooks/                     # React bindings to use cases
-│   ├── useObserveTimeState.ts # Subscribes to TimeRepository, returns { userProfile, timeState }
-│   ├── useUpdateUserProfile.ts# Returns updateUserProfile(birthDate, deathAge)
-│   └── …                      # See docs/STATE_MANAGEMENT.md
-│
-├── surfaces/                  # UI: Screens and render targets
-│   ├── app/
-│   │   ├── HomeScreen.tsx     # Displays day/month/year/life progress
-│   │   └── SettingsScreen.tsx # Birth date, death age inputs
-│   ├── widgets/dataContract.ts # Shared types for native widgets
-│   ├── island/dataShape.ts    # Live Activity / Dynamic Island data shape
-│   └── overlay/               # Lock screen (placeholder)
-│
-├── ui/                        # Reusable presentational components
-│   ├── Text.tsx               # Text with variant (title, subtitle, body, caption)
-│   ├── ProgressBar.tsx        # progress 0-1, height, color
-│   └── DotsGrid.tsx           # rows x cols grid of dots
-│
-├── infrastructure/             # Repository implementations, WidgetSync, adapters
-│
-├── platform/                  # Native bridges (widgets, Live Activity)
-│   ├── ios/bridge.ts
-│   └── android/bridge.ts
-│
-├── navigation/
-│   └── RootNavigator.tsx      # Stack: Home, Settings
-│
-├── theme/                     # Colors, spacing, typography
-├── types/                     # UserProfile, TimeProgress, WidgetCache, … (SSOT for DTOs)
-├── utils/                     # Generic helpers (no time logic)
-└── assets/                    # Fonts, icons, images
+├── app/        composition root (di), navigation, app shell        → may use every feature
+├── features/   one folder per product capability                   → may use shared + declared features
+├── shared/     kernel: time math, theme, ui kit, types, platform   → uses nothing above it
+├── config/     app-wide constants (pricing, trial, analytics ids)  → kernel
+└── assets/     fonts, icons, images
 ```
 
 ---
 
-## Layer Responsibilities
+## The three rules that keep it maintainable
 
-| Layer                 | Responsibility                   | Rule                                        |
-| --------------------- | -------------------------------- | ------------------------------------------- |
-| **UI** (surfaces, components, ui) | Display data, capture user input | No business logic, no direct storage access, no `di` (use hooks) |
-| **Hooks**             | React bindings to use cases      | Only UI-facing code that imports `di`       |
-| **Use cases**         | Orchestrate reads/writes         | Call repository/ports; may use pure `core`; no storage details |
-| **Services / stores** | Notifications, analytics, UI caches | May own private storage keys; never import `di` |
-| **TimeRepository**    | Single source of truth           | Only place that writes user/time to MMKV; only place that builds WidgetCache from core/time |
-| **Core**              | Pure time calculations           | No React, no storage, no side effects       |
-| **Persistence**       | MMKV access, schema, migrations  | No business logic                           |
-| **Platform**          | Native modules, widget bridges   | Platform-specific code only                 |
+1. **A feature is a module.** Everything about tasks lives in `features/tasks/`. Other code sees only `features/tasks/index.ts` (and, for pure code, `features/tasks/domain/index.ts`). Deleting or rewriting a feature touches that folder and its callers, nothing else.
+2. **Dependencies point one way.** `app → features → shared`. Between features, only the edges in the table below exist, and they form a DAG. `shared/` and `config/` never import a feature or `app/`.
+3. **One owner per truth.** Each fact (time and profile, access rules, progress colours, storage keys, widget cache, DTOs) is defined in exactly one module; everything else reads it from there.
 
-### Enforcement
-
-Rules are checked, not just documented:
-
-- `npm run lint`: layer boundaries (`.eslintrc.js`, `@typescript-eslint/no-restricted-imports` at `error`). The full table is in `.cursor/rules/architecture.mdc`.
-- `npm run lint:cycles`: madge, must report no circular dependencies.
-- `npm test`: `__tests__/storageKeyOwnership.test.ts` fails if two modules use the same `STORAGE_KEYS` entry.
-
-When infrastructure needs data owned by a repository, `di.ts` injects it (`configureWidgetSync`, `configureRetentionNotifications`). Infrastructure and services never import `di`.
+All three are checked by tests, not just documented (see [Enforcement](#enforcement)).
 
 ---
 
-## Independence: What You Can Change Without Breaking Things
+## Layers inside a feature
 
-| Change                           | Impact                                     |
-| -------------------------------- | ------------------------------------------ |
-| Remove a screen                  | No change to repository or use cases       |
-| Remove widgets                   | No change; they read MMKV directly         |
-| Swap MMKV for SQLite or cloud    | Change only TimeRepository internals       |
-| Change time formulas             | Change only core/time; repository calls it |
-| Add a new surface (e.g. watchOS) | Reuse TimeRepository; read same MMKV keys  |
+```
+features/<feature>/
+├── domain/      pure TypeScript: rules, entities, ports (interfaces), use cases
+├── data/        implementations of the ports: MMKV repositories, SDK adapters
+├── services/    helpers screens may call directly (notifications, prompts, caches); own their storage keys
+├── hooks/       React bindings: the only place a feature reaches the composition root
+├── ui/          screens and components
+├── config/      feature-private constants (optional)
+└── index.ts     the public API
+```
+
+| Layer | Responsibility | Rule |
+|-------|---------------|------|
+| **ui** | Render, capture input | No `data/`, no storage, no `app/di`, no use-case classes. Take data from hooks. No pure domain logic (ADR-7) except clock/format helpers. |
+| **hooks** | React state over use cases | Import use-case *instances* from `app/di`. No storage, no repositories. |
+| **services** | Notifications, prompts, small caches | May own private storage keys. Never import `app/di`. |
+| **domain** | What the feature can do | No React, no SDKs, no packages, no `data`/`hooks`/`services`/`ui`, no `app`. Talks to the world only through ports it declares. |
+| **data** | Where data lives and which SDK is used | Implements domain ports. Wired in `app/di`. |
+
+`shared/` (the kernel) holds what several features need and nothing feature-specific: `time` (date and progress math, clock), `theme`, `ui` (design-system components), `types` (DTOs), `persistence` (MMKV, schema), `platform` (native bridges, device id, widget-sync port), `analytics`, `navigation` (route param types and the root ref), `hooks`, `featureFlags`, `utils`, `ports`.
 
 ---
 
-## Quick Reference: Key Files by Task
+## Feature dependency table
 
-| Task                              | Files                                                        |
-| --------------------------------- | ------------------------------------------------------------ |
-| Add a new time metric             | `core/time/*.ts`                                             |
-| Change storage keys               | `persistence/schema.ts`                                      |
-| Change what screens display       | `surfaces/app/*.tsx`                                         |
-| Change persistence implementation | `persistence/mmkv.ts`, `domain/repository/TimeRepository.ts` |
-| Add a use case                    | `domain/useCases/*.ts`, `hooks/*.ts`                         |
-| Add a reusable component          | `ui/*.tsx`                                                   |
-| Native widget data                | `surfaces/widgets/dataContract.ts`, `persistence/schema.ts`  |
+The only feature-to-feature imports allowed (`FEATURE_DEPENDENCIES` in `__tests__/architecture.test.ts`). Read it as "needs":
+
+| Tier | Feature | May use |
+|------|---------|---------|
+| 0 | `presence`, `countdowns`, `counters`, `app-update` | — |
+| 1 | `time` | presence |
+| 2 | `onboarding` | time |
+| 3 | `account` | onboarding, time |
+| 3 | `ember` | onboarding, presence, time |
+| 4 | `premium` | account, time |
+| 4 | `tasks` | ember |
+| 5 | `activity` | premium, time |
+| 5 | `badges` | countdowns, premium, presence, tasks, time |
+| 5 | `engagement` | countdowns, premium, presence |
+| 5 | `life` | premium, presence, time |
+| 5 | `reflections` | onboarding, premium, time |
+| 5 | `share` | premium, time |
+| 5 | `widgets` | countdowns, counters, premium, tasks, time |
+| 6 | `home` | activity, badges, premium, presence, reflections, tasks, time |
+| 6 | `settings` | account, activity, app-update, engagement, premium, time |
+
+A feature never uses one of a higher tier. Adding an edge is an architectural decision: change the table in the test, here, and say why in the PR. If a new need would create a cycle, **invert the dependency** instead: the lower feature declares the narrow port it needs and `app/di` hands it the implementation (see `IProfileCloudSync`, `ICountdownEngagementSignals`, `IPurchasesLink`, `platform/widgetSync`).
+
+### Public APIs
+
+- `features/<f>/index.ts` — for screens, hooks and the app shell. Exports hooks, components, screens, and the domain symbols other code needs.
+- `features/<f>/domain/index.ts` — for the **domain, data and services** layers of other features, and nothing else. It exports pure code only, so it never loads screens or hooks.
+- Everything else in a feature is private. To share more, add an export on purpose.
+- The composition root (`app/di`) may import any feature file, because wiring needs concrete classes.
 
 ---
 
-## Related Documentation
+## SSOT
 
-- **FOLDER_STRUCTURE.md** — Directory layout, naming, where to put new code
+- **Time and profile:** `features/time` — `TimeRepository` is the only place that reads and writes user/time data. Time math is `shared/time`.
+- **Widget cache:** `TimeRepository.getWidgetCache()` uses the same `shared/time` functions as `getTimeState()`. `SyncWidgetUseCase` returns it; `features/widgets/data/WidgetSync` only persists and bridges to native. Other features tell widgets to refresh through the `shared/platform/widgetSync` port, never by importing `widgets`.
+- **Access and premium rules:** `features/premium/domain/accessControl.ts`. Pricing and trial constants: `config/monetization.ts`, `config/accessConstants.ts`.
+- **Progress colours:** `shared/theme/progressColor.ts` (`getProgressColor`). UI consumes it; no colour logic in components.
+- **Types / DTOs:** `shared/types/index.ts`.
+- **Storage keys:** `shared/persistence/schema.ts`, shared with the native widgets. A key is used by exactly one module (`__tests__/storageKeyOwnership.test.ts`).
+- **Dependency wiring:** `app/di/`, one file per feature plus `repositories` and `wiring`.
+
+---
+
+## One-line summary
+
+**UI reads from hooks, hooks read from use cases (via `app/di`), use cases read from ports, data implements the ports. Features meet only at public APIs, along a declared acyclic table. Every fact has exactly one owner.**
+
+---
+
+## Data flow
+
+**Read** — `HomeScreen` (features/home/ui) → `useObserveTimeState()` (features/time/hooks) → `observeTimeStateUseCase` (from `app/di`) → `TimeRepository` → MMKV + `shared/time`.
+
+**Write** — `SettingsScreen` → `useUpdateUserProfile()` → `UpdateUserProfileUseCase` → `TimeRepository.setUserProfile()` → MMKV, then subscribers re-run. When signed in the use case also pushes the profile through its `IProfileCloudSync` port; the hook then calls `widgetSync.syncWidgetCache()`.
+
+**Widget sync** — `app/di/wiring.ts` calls `configureWidgetSync(...)` once, which registers the implementation behind `shared/platform/widgetSync`. Hooks and screens call `widgetSync.*`; `WidgetSync` calls `SyncWidgetUseCase`, writes MMKV and calls the native bridge.
+
+**Cross-feature wiring** — `app/di` builds every repository and use case, in dependency order, and hands narrow functions to modules that must not import it (`configureWidgetSync`, `configureRetentionNotifications`).
+
+---
+
+## Enforcement
+
+| Check | What it guards |
+|-------|----------------|
+| `npm run lint` (`.eslintrc.js`) | Layer rules inside features and `shared`: ui ↛ data/storage/di, domain pure, hooks ↛ storage, services ↛ di |
+| `npm test` → `__tests__/architecture.test.ts` | Only `app/features/shared/config/assets` in `src/`; shared never imports features; cross-feature imports use public APIs; the dependency table, acyclic; features reach `app/` only via `app/di`; domain purity; 300-line ratchet |
+| `npm test` → `__tests__/storageKeyOwnership.test.ts` | One owner per storage key |
+| `npm test` → `__tests__/desktopBoundary.test.ts` | The desktop app imports only pure shared and domain code |
+| `npm test` → `__tests__/compositionRoot.test.ts` | `app/di` builds every use case and wires start-up |
+| `npm run lint:cycles` (madge) | No circular imports |
+
+---
+
+## Independence: what you can change without breaking things
+
+| Change | Impact |
+|--------|--------|
+| Remove or rewrite a feature | Its folder, its row in the table, and the places listed as its dependents; nothing else |
+| Remove widgets | Nothing depends on `widgets`; data features only call the `widgetSync` port |
+| Swap MMKV for SQLite or cloud | Change `features/*/data` and `app/di/repositories.ts` |
+| Change time formulas | `shared/time` only; the repository calls it |
+| Add a surface (watchOS, desktop) | Reuse `shared/*` and `features/*/domain`; read the same MMKV keys |
+| Swap analytics vendor | `shared/analytics` only |
+
+---
+
+## Quick reference: where does it go?
+
+| Task | Where |
+|------|-------|
+| New time metric | `shared/time/*.ts`, surfaced via `features/time` |
+| New use case | `features/<f>/domain/useCases/`, built in `app/di/<f>.ts`, used in a hook in `features/<f>/hooks/` |
+| New screen | `features/<f>/ui/`, registered in `app/navigation/`, params in `shared/navigation/types.ts` |
+| New storage key | `shared/persistence/schema.ts`, used by exactly one module |
+| New reusable component | `shared/ui/` (generic) or `features/<f>/ui/` (feature-specific) |
+| New feature | New folder under `features/`, a row in the dependency table, a section in `app/di/` |
+| Native widget data | `shared/types/widgetDataContract.ts`, `shared/persistence/schema.ts` |
+
+---
+
+## Related documentation
+
+- **FOLDER_STRUCTURE.md** — directory layout, naming, where to put new code
 - **CODING_STANDARDS.md** — TypeScript, React, naming conventions
-- **STATE_MANAGEMENT.md** — Use cases, hooks, subscriptions, local state
-- **DECISIONS.md** — Architecture Decision Records (ADRs)
-- **WIDGETS.md** — Widget implementation guide
+- **STATE_MANAGEMENT.md** — use cases, hooks, subscriptions, local state
+- **DECISIONS.md** — Architecture Decision Records (ADR-11 onward cover the feature-based layout)
+- **ARCHITECTURE_AUDIT_2026-10-16.md** — the audit and migration that produced this layout
+- **WIDGETS.md** — widget implementation guide

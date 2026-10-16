@@ -1,13 +1,13 @@
-import { EvaluateBadgesUseCase } from '../src/domain/useCases/EvaluateBadgesUseCase';
-import { GetBadgesUseCase } from '../src/domain/useCases/GetBadgesUseCase';
-import { AcknowledgeBadgesUseCase } from '../src/domain/useCases/AcknowledgeBadgesUseCase';
+import { EvaluateBadgesUseCase } from '../src/features/badges/domain/useCases/EvaluateBadgesUseCase';
+import { GetBadgesUseCase } from '../src/features/badges/domain/useCases/GetBadgesUseCase';
+import { AcknowledgeBadgesUseCase } from '../src/features/badges/domain/useCases/AcknowledgeBadgesUseCase';
 import {
   EMPTY_BADGE_STATE,
   type BadgeState,
   type IBadgeRepository,
-} from '../src/domain/repository/IBadgeRepository';
-import { EMPTY_PRESENCE } from '../src/domain/presence/presenceStreak';
-import type { DailyTask } from '../src/types';
+} from '../src/features/badges/domain/ports/IBadgeRepository';
+import { EMPTY_PRESENCE } from '../src/features/presence/domain/presenceStreak';
+import type { DailyTask } from '../src/shared/types';
 
 function makeWorld() {
   let badgeState: BadgeState = { ...EMPTY_BADGE_STATE, earned: {}, seen: [] };

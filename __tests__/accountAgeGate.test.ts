@@ -2,15 +2,15 @@ import {
   ageInWholeYears,
   evaluateAccountAgeGate,
   isUnderMinimumAge,
-} from '../src/core/legal/ageGate';
-import { AssertAccountAgeGateUseCase } from '../src/domain/useCases/AssertAccountAgeGateUseCase';
-import { SignInWithAppleUseCase } from '../src/domain/useCases/SignInWithAppleUseCase';
-import { SignInWithGoogleUseCase } from '../src/domain/useCases/SignInWithGoogleUseCase';
-import { CreateAccountWithEmailUseCase } from '../src/domain/useCases/CreateAccountWithEmailUseCase';
-import { VerifyStudentEmailUseCase } from '../src/domain/useCases/VerifyStudentEmailUseCase';
-import { AgeGateError } from '../src/domain/errors/ageGateErrors';
-import type { CompleteAccountSignInUseCase } from '../src/domain/useCases/CompleteAccountSignInUseCase';
-import type { IAuthService } from '../src/domain/ports/IAuthService';
+} from '../src/features/account/domain/ageGate';
+import { AssertAccountAgeGateUseCase } from '../src/features/account/domain/useCases/AssertAccountAgeGateUseCase';
+import { SignInWithAppleUseCase } from '../src/features/account/domain/useCases/SignInWithAppleUseCase';
+import { SignInWithGoogleUseCase } from '../src/features/account/domain/useCases/SignInWithGoogleUseCase';
+import { CreateAccountWithEmailUseCase } from '../src/features/account/domain/useCases/CreateAccountWithEmailUseCase';
+import { VerifyStudentEmailUseCase } from '../src/features/premium/domain/useCases/VerifyStudentEmailUseCase';
+import { AgeGateError } from '../src/features/account/domain/ageGateErrors';
+import type { CompleteAccountSignInUseCase } from '../src/features/account/domain/useCases/CompleteAccountSignInUseCase';
+import type { IAuthService } from '../src/features/account/domain/ports/IAuthService';
 
 const NOW = new Date(2026, 8, 28);
 

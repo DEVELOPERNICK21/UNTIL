@@ -20,7 +20,7 @@ jest.mock('react-native', () => ({
   },
 }));
 
-jest.mock('../src/persistence/mmkv', () => ({
+jest.mock('../src/shared/persistence/mmkv', () => ({
   getString: () => undefined,
   setString: jest.fn(),
   getNumber: () => undefined,
@@ -34,7 +34,7 @@ jest.mock('../src/persistence/mmkv', () => ({
 import {
   configureWidgetSync,
   syncCustomCountersAfterAdopting,
-} from '../src/infrastructure/WidgetSync';
+} from '../src/features/widgets/data/WidgetSync';
 
 let appCounters = [{ id: 'c1', title: 'Water', count: 0 }];
 

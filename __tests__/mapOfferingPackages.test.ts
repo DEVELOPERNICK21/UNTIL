@@ -1,4 +1,4 @@
-import { mapOfferingPackagesToRows } from '../src/domain/billing/mapOfferingPackages';
+import { mapOfferingPackagesToRows } from '../src/features/premium/domain/mapOfferingPackages';
 
 describe('mapOfferingPackagesToRows', () => {
   it('maps offering packages to billing rows keyed by productId', () => {

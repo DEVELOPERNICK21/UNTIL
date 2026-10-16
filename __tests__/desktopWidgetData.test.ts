@@ -107,3 +107,17 @@ describe('overlines', () => {
     expect(monthOverline(d, 'en-US')).toBe('October 2026');
   });
 });
+
+describe('lifeEmptyMessage', () => {
+  // Imported here to keep the file's imports in one place above.
+  const { lifeEmptyMessage } = require('../desktop/src/widgetData');
+
+  it('asks to sign in when signed out, and for a birth date when signed in without one', () => {
+    expect(lifeEmptyMessage(false)).toBe('Sign in to UNTIL to see your life.');
+    expect(lifeEmptyMessage(true)).toBe('Add your birth date in UNTIL on your phone to see your life.');
+  });
+
+  it('never uses a dash', () => {
+    [true, false].forEach(signedIn => expect(lifeEmptyMessage(signedIn)).not.toMatch(/[—–]/));
+  });
+});

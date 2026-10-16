@@ -1,0 +1,79 @@
+/**
+ * VerifySubscriptionUseCase - Verifies license is still valid.
+ * Call on app launch and periodically. On failure, revokes premium.
+ */
+
+import type { ISubscriptionRepository } from '../ports/ISubscriptionRepository';
+import type { IDeviceIdProvider } from '../../../../shared/ports/IDeviceIdProvider';
+import type { ILicenseVerificationService } from '../ports/ILicenseVerificationService';
+import type { VerificationResult } from '../../../../shared/types/subscription';
+import { MS_PER_DAY } from '../../../../shared/time/constants';
+
+/** Offline grace period: if last verification was within this ms, trust cached premium. */
+const OFFLINE_GRACE_MS = 7 * MS_PER_DAY; // 7 days
+
+export class VerifySubscriptionUseCase {
+  constructor(
+    private readonly subscriptionRepository: ISubscriptionRepository,
+    private readonly deviceIdProvider: IDeviceIdProvider,
+    private readonly licenseService: ILicenseVerificationService
+  ) {}
+
+  async execute(): Promise<VerificationResult> {
+    const licenseKey = this.subscriptionRepository.getLicenseKey();
+    const storedDeviceId = this.subscriptionRepository.getDeviceId();
+    const lastVerified = this.subscriptionRepository.getLastVerifiedAt();
+
+    if (!licenseKey) {
+      /** Store entitlement (RevenueCat): no web license; trust stored purchase metadata. */
+      if (this.subscriptionRepository.getPurchaseType() != null) {
+        return { valid: true };
+      }
+      // RC sync owns store premium. Leave orphan isPremium until sync clears it.
+      return { valid: false, code: 'invalid', message: 'No license' };
+    }
+
+    const deviceId = await this.deviceIdProvider.getDeviceId();
+
+    // Device mismatch: user switched device without deactivating
+    if (storedDeviceId && storedDeviceId !== deviceId) {
+      this.revokeLicenseOnly();
+      return { valid: false, code: 'device_mismatch', message: 'License is bound to another device' };
+    }
+
+    const result = await this.licenseService.verify(licenseKey, deviceId);
+
+    if (result.valid) {
+      this.subscriptionRepository.setIsPremium(true);
+      this.subscriptionRepository.setDeviceId(deviceId);
+      this.subscriptionRepository.setLastVerifiedAt(Date.now());
+      return result;
+    }
+
+    // Network error: use offline grace — trust cache if last verified within grace period
+    if (result.code === 'network_error' && lastVerified && Date.now() - lastVerified < OFFLINE_GRACE_MS) {
+      return { valid: true };
+    }
+
+    this.revokeLicenseOnly();
+    return result;
+  }
+
+  /** Trust cached premium when offline and last verification was within grace period. */
+  isPremiumWithOfflineGrace(): boolean {
+    if (!this.subscriptionRepository.getIsPremium()) return false;
+    const lastVerified = this.subscriptionRepository.getLastVerifiedAt();
+    if (!lastVerified) return false;
+    return Date.now() - lastVerified < OFFLINE_GRACE_MS;
+  }
+
+  private revokeLicenseOnly(): void {
+    this.subscriptionRepository.setLicenseKey(null);
+    this.subscriptionRepository.setDeviceId(null);
+    this.subscriptionRepository.setLastVerifiedAt(0);
+    const hasStore = this.subscriptionRepository.getPurchaseType() != null;
+    if (!hasStore) {
+      this.subscriptionRepository.setIsPremium(false);
+    }
+  }
+}

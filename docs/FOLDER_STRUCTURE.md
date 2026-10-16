@@ -1,161 +1,150 @@
 # UNTIL — Folder Structure
 
-This document describes the directory layout and conventions for scalability and maintainability.
+Where code lives, how it is named, and where new code goes. The rules behind the layout are in `ARCHITECTURE.md`; the decisions in `DECISIONS.md` (ADR-11 onward).
 
 ---
 
-## Root Layout
+## Repository root
 
 ```
 UNTIL/
-├── src/                    # React Native app source
-├── android/                # Android native (Kotlin, layouts, manifests)
-├── ios/                    # iOS native (Swift, Xcode project)
-├── website/                # Marketing website (Next.js)
-├── desktop/                # Mac menu bar + Windows tray companion (Tauri 2)
-│   ├── src/                # React panel UI, auth, adapters
-│   │   └── di.ts           # desktop composition root
-│   └── src-tauri/          # extra, tray, panel window, OAuth loopback (Rust)
-├── docs/                   # Project documentation
-├── __tests__/              # Jest tests
-└── .cursor/                # Cursor AI rules and system context
+├── src/            React Native app (phone and tablet)
+├── desktop/        Tauri desktop app (macOS, Windows); imports pure code from src/ as @until/*
+├── website/        Marketing site and desktop update API (Next.js)
+├── android/ ios/   Native projects (widgets, Live Activity, watch)
+├── __tests__/      Jest tests (architecture guard, domain, desktop, UI)
+├── docs/           Documentation
+├── .cursor/rules/  Rules for AI agents (mirror these docs)
+└── App.tsx         Entry: renders src/app/App
 ```
 
 ---
 
-## src/ Structure
+## src/
 
 ```
 src/
-├── app.tsx                 # Root: migrations, SafeAreaProvider, navigation
-├── di.ts                   # Composition root — wire repos → use cases (single place)
+├── app/                    # Composition root and app shell. May import every feature.
+│   ├── App.tsx             #   providers, bootstrap hooks, navigation container
+│   ├── AppEngagementLayer.tsx   # shell: navigator + post-onboarding modals + Ember
+│   ├── CrashErrorBoundary.tsx
+│   ├── bootstrap/          #   start-up hooks that join several features
+│   ├── di/                 #   composition root, one file per feature
+│   │   ├── index.ts        #     barrel: the names hooks import
+│   │   ├── repositories.ts #     every repository and adapter instance
+│   │   ├── callbacks.ts    #     cross-cutting reactions (premium changed → refresh widgets)
+│   │   ├── <feature>.ts    #     that feature's use cases
+│   │   └── wiring.ts       #     start-up configuration of modules that must not import di
+│   ├── navigation/         #   navigators, deep links, screen-view analytics
+│   └── splash/
 │
-├── core/                   # Pure business logic (no React, no storage)
-│   ├── time/               # Day, month, year, life progress; clock; projections
-│   ├── activity/           # Activity blocks, regret projection, intervention
-│   └── countdown/          # Days-left calculations
+├── features/               # One folder per product capability
+│   └── <feature>/
+│       ├── domain/         #   pure: rules, entities, ports, useCases/        (+ index.ts, the domain entry)
+│       ├── data/           #   port implementations: Mmkv*Repository, SDK adapters
+│       ├── services/       #   helpers screens may call; own their storage keys
+│       ├── hooks/          #   React bindings; import use cases from app/di
+│       ├── ui/             #   screens and components
+│       ├── config/         #   feature-private constants (optional)
+│       └── index.ts        #   public API
 │
-├── domain/                 # Ports and use cases (no I/O details)
-│   ├── repository/         # Interfaces: ITimeRepository, IActivityRepository, etc.
-│   ├── ports/              # External service interfaces (IAppUpdateService, IAppVersionProvider)
-│   └── useCases/           # Orchestration: ObserveTimeStateUseCase, UpdateUserProfileUseCase, etc.
+├── shared/                 # Kernel: knows no feature
+│   ├── time/               #   day/month/year/life math, clock, panel model
+│   ├── theme/              #   palettes, tokens, ThemeContext, progressColor
+│   ├── ui/                 #   design-system components (Text, Card, ProgressRing, Ember, …)
+│   ├── types/              #   DTOs: UserProfile, TimeProgress, WidgetCache, …
+│   ├── persistence/        #   MMKV wrapper, STORAGE_KEYS schema, migrations
+│   ├── platform/           #   native bridges, device id, widget-sync port, notification permission
+│   ├── analytics/          #   analytics client, consent, user properties
+│   ├── navigation/         #   route param lists, root navigation ref
+│   ├── hooks/              #   useTodayIso, useLifeWeeks
+│   ├── featureFlags/
+│   ├── ports/              #   interfaces several features implement or use (IDeviceIdProvider)
+│   └── utils/
 │
-├── infrastructure/         # Implementations
-│   ├── repositories/      # MmkvTimeRepository, MmkvTaskRepository, etc.
-│   ├── adapters/           # AppUpdateServiceAdapter, AppVersionProviderAdapter
-│   ├── WidgetSync.ts       # syncWidgetCache, syncCustomCounters, syncDailyTasksWidget, etc.
-│   └── index.ts            # Re-exports for app entry
-│
-├── persistence/            # Storage layer
-│   ├── mmkv.ts             # MMKV instance, getString/setString
-│   ├── schema.ts           # STORAGE_KEYS, DEFAULTS (shared with widgets)
-│   └── migration.ts        # runMigrations()
-│
-├── hooks/                  # React bindings to use cases
-│   ├── useObserveTimeState.ts
-│   ├── useUpdateUserProfile.ts
-│   ├── useDailyTasks.ts
-│   └── ...
-│
-├── surfaces/               # UI entry points
-│   ├── app/                # App screens (HomeScreen, SettingsScreen, etc.)
-│   ├── widgets/            # dataContract.ts — shared types for native widgets
-│   ├── island/             # dataShape.ts — Live Activity / Dynamic Island
-│   └── overlay/            # Android overlay data shape (if any)
-│
-├── ui/                     # Reusable presentational components
-│   ├── Text.tsx
-│   ├── Card.tsx
-│   ├── ProgressLine.tsx
-│   ├── CircularProgress.tsx
-│   └── ...
-│
-├── navigation/
-│   └── RootNavigator.tsx   # Stack navigator, screen list
-│
-├── theme/                  # Design system
-│   ├── index.ts            # Colors, Typography, Spacing, Radius
-│   └── progressColor.ts    # getProgressColor(progress) — SSOT for progress colors
-│
-├── types/                  # Global TypeScript types (DTOs)
-│   └── index.ts            # UserProfile, TimeProgress, WidgetCache, DailyTask, etc.
-│
-├── platform/               # Native bridges (widgets, Live Activity)
-│   ├── ios/bridge.ts
-│   └── android/bridge.ts
-│
-├── utils/                  # Generic helpers (no time/activity logic)
+├── config/                 # App-wide constants and environment: monetization, accessConstants,
+│                           #   billing, revenueCat, storeUrls, analytics (+ gitignored analytics.local.ts)
 └── assets/                 # Fonts, icons, images
 ```
 
----
+### The features
 
-## Conventions
-
-### Where to Put New Code
-
-| Task | Location |
-|------|----------|
-| New time metric | `core/time/*.ts` |
-| New use case | `domain/useCases/XxxUseCase.ts` + wire in `di.ts` |
-| New hook | `hooks/useXxx.ts` |
-| New screen | `surfaces/app/XxxScreen.tsx` + add to `RootNavigator` |
-| New reusable component | `ui/Xxx.tsx` |
-| New storage key | `persistence/schema.ts` |
-| New type | `types/index.ts` |
-| New widget | See `docs/WIDGETS.md` — provider, layout, manifest, worker |
-
-### File Naming
-
-- **Use cases**: `PascalCase` + `UseCase` suffix (e.g. `ObserveTimeStateUseCase.ts`)
-- **Repositories**: `I` prefix for interfaces, `Mmkv` prefix for MMKV impl
-- **Hooks**: `use` prefix (e.g. `useObserveTimeState.ts`)
-- **Screens**: `PascalCase` + `Screen` suffix (e.g. `HomeScreen.tsx`)
-- **Components**: `PascalCase` (e.g. `Text.tsx`, `ProgressLine.tsx`)
-
-### Index Files
-
-- `hooks/index.ts` — re-exports all hooks
-- `ui/index.ts` — re-exports UI components
-- `infrastructure/index.ts` — re-exports sync functions, etc.
-- `domain/useCases/index.ts` — re-exports use cases (for di imports)
+| Feature | What it owns |
+|---------|--------------|
+| `time` | Profile (birth date, expected age), day/month/year/life state, detail screens |
+| `presence` | The daily presence streak, streak flame, streak notifications, the day-widget "appeal" |
+| `tasks` | Daily tasks, monthly goals, carry-over, task report |
+| `countdowns`, `counters` | Countdowns; custom counters |
+| `activity` | Activity log, regret projection, "do nothing" limit, intervention, hour calculation |
+| `badges` | Badge catalogue, evaluation, quests, unlock overlay |
+| `reflections` | Daily reflection and the time-coach card |
+| `onboarding` | Funnel state, quiz answers, onboarding screens, day-2 re-engagement |
+| `account` | Sign-in (Apple, Google, email), devices, age gate, cloud profile |
+| `premium` | Subscription, purchases (RevenueCat), trial preview, licences, access rules, paywall |
+| `engagement` | App-open side effects, in-app review, coach prompts, retention notifications |
+| `ember` | The Ember companion (tips, memory, docking) |
+| `widgets` | Home-screen widgets, Dynamic Island, overlay, widget sync to native |
+| `life` | The Life screen |
+| `home`, `settings`, `share` | Screens that compose other features |
+| `app-update` | Update checks and the force/optional update modals |
 
 ---
 
-## Native Folders
+## Naming
 
-### android/
+| Kind | Convention | Example |
+|------|------------|---------|
+| Use case | `XxxUseCase` in `domain/useCases/` | `ObserveTimeStateUseCase` |
+| Port | `IXxx` in `domain/ports/` | `ITimeRepository` |
+| Implementation | `MmkvXxxRepository`, `XxxAdapter` in `data/` | `MmkvTimeRepository` |
+| Hook | `useXxx` in `hooks/` | `useObserveTimeState` |
+| Screen | `XxxScreen` in `ui/` | `HomeScreen` |
+| Component | `PascalCase.tsx` | `ProgressLine` |
+| DI section | `app/di/<feature>.ts` | `app/di/tasks.ts` |
 
-```
-android/app/src/main/
-├── java/app/until/time/     # Kotlin: MainActivity, WidgetBridgeModule, *WidgetProvider, *Receiver
-├── res/
-│   ├── layout/              # widget_*.xml, overlay_*.xml
-│   ├── drawable/            # overlay backgrounds, etc.
-│   ├── values/strings.xml
-│   └── xml/                 # widget_*_info.xml (widget configs)
-└── AndroidManifest.xml
-```
-
-### ios/
-
-```
-ios/
-├── UNTIL/                   # Main app target
-│   ├── AppDelegate.swift
-│   ├── WidgetBridge.swift   # Native module for RN
-│   ├── LiveActivityBridge.swift
-│   └── Info.plist
-└── UNTILWidgets/            # Widget extension
-    ├── UNTILWidgets.swift   # Timeline providers, widget views
-    ├── WidgetMMKV.swift    # App Group MMKV access
-    └── Info.plist
-```
+One component, hook or use case per file. Keep files under ~300 lines (ratcheted: see `LEGACY_OVERSIZE` in `__tests__/architecture.test.ts`).
 
 ---
 
-## Scalability Notes
+## Where does new code go?
 
-- **Adding a new surface** (e.g. watchOS): Reuse `TimeRepository`, read same MMKV keys; add new `surfaces/watch/` and platform bridge.
-- **Adding a new domain** (e.g. notes): Add `core/notes/`, `domain/repository/INoteRepository.ts`, `domain/useCases/*`, `infrastructure/repositories/MmkvNoteRepository.ts`, wire in `di.ts`.
-- **Swapping persistence**: Change only repository implementations; interfaces and use cases stay the same.
+1. **Which feature owns it?** Put it there. If two features need it and it knows nothing about either, it belongs in `shared/`. If it is a decision about how features cooperate, it belongs in `app/`.
+2. **Which layer?** Pure rule → `domain`. Storage or SDK → `data`. A screen-callable helper that owns its own keys → `services`. React state over a use case → `hooks`. Rendering → `ui`.
+3. **Does another feature need it?** Export it from the public API on purpose (`index.ts`, or `domain/index.ts` if it is pure and used by another feature's domain/data/services). Otherwise leave it private.
+4. **Does it need a feature that is not in the dependency table?** Prefer inverting the dependency (declare a narrow port in the lower feature, implement it in `app/di`). Add a table row only when the dependency is genuinely one-way and natural.
+
+### Adding a feature
+
+1. `src/features/<name>/{domain,data,hooks,ui}` and an `index.ts`.
+2. A row in `FEATURE_DEPENDENCIES` (`__tests__/architecture.test.ts`) and in the table in `ARCHITECTURE.md`.
+3. A section `app/di/<name>.ts`, exported from `app/di/index.ts`.
+4. Screens registered in `app/navigation/`; route params in `shared/navigation/types.ts`.
+
+### Adding a use case
+
+1. Port (if new) in `domain/ports/`, class in `domain/useCases/`.
+2. Implementation in `data/`.
+3. Instance in `app/di/<feature>.ts`, exported from `app/di/index.ts`.
+4. Hook in `hooks/` that imports the instance from `app/di`.
+
+---
+
+## Layer responsibilities
+
+| Layer | Responsibility | Must not |
+|-------|----------------|----------|
+| `ui` | Display, capture input | Import `data`, storage, `app/di`, use-case classes, pure domain logic |
+| `hooks` | React bindings to use cases | Import storage or repositories |
+| `services` | Screen-callable helpers, own storage keys | Import `app/di` |
+| `domain` | Rules, ports, use cases | Import React, packages, `data`, `hooks`, `services`, `ui`, `app` |
+| `data` | Port implementations | Import `app/di` |
+| `shared` | Kernel | Import `features/`, `app/` |
+| `app` | Wiring, navigation, shell | — |
+
+`.eslintrc.js` enforces the layer table; `__tests__/architecture.test.ts` enforces the feature-level rules.
+
+---
+
+## Independence
+
+See the table in `ARCHITECTURE.md`. In short: a feature can be removed, rewritten or swapped (MMKV → SQLite, one analytics vendor → another) by touching its folder, its `app/di` section and its row in the dependency table.

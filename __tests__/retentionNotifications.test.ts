@@ -3,7 +3,7 @@ import {
   buildRetentionNotificationSchedule,
   getLocalDateKey,
   shouldSkipRetentionNotification,
-} from '../src/domain/notifications/retentionNotificationCopy';
+} from '../src/features/engagement/domain/retentionNotificationCopy';
 
 describe('retentionNotificationCopy', () => {
   it('uses week-start language on Monday', () => {

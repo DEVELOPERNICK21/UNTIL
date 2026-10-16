@@ -9,8 +9,8 @@ const SRC = path.join(__dirname, '..', 'src');
 
 /** Modules that legitimately touch keys they do not own. */
 const EXEMPT = new Set([
-  'persistence/schema.ts', // defines the keys
-  'persistence/migration.ts', // rewrites old keys on upgrade
+  'shared/persistence/schema.ts', // defines the keys
+  'shared/persistence/migration.ts', // rewrites old keys on upgrade
 ]);
 
 function sourceFiles(dir: string): string[] {

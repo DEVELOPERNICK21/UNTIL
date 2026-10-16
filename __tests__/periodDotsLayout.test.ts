@@ -3,7 +3,7 @@ import {
   DOT_CELL_W,
   DOT_RADIUS,
   dotCenter,
-} from '../src/ui/periodDotsLayout';
+} from '../src/shared/ui/periodDotsLayout';
 
 describe('periodDotsLayout', () => {
   it('computes columns from width and cell size', () => {

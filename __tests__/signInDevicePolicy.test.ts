@@ -1,12 +1,12 @@
-import { CompleteAccountSignInUseCase } from '../src/domain/useCases/CompleteAccountSignInUseCase';
-import { SignInWithGoogleUseCase } from '../src/domain/useCases/SignInWithGoogleUseCase';
-import { AssertAccountAgeGateUseCase } from '../src/domain/useCases/AssertAccountAgeGateUseCase';
-import type { BindEntitlementToAccountUseCase } from '../src/domain/useCases/BindEntitlementToAccountUseCase';
-import type { RegisterDeviceUseCase } from '../src/domain/useCases/RegisterDeviceUseCase';
-import type { SyncAccountProfileUseCase } from '../src/domain/useCases/SyncAccountProfileUseCase';
-import type { IAuthService } from '../src/domain/ports/IAuthService';
-import type { IAuthSessionRepository } from '../src/domain/repository/IAuthSessionRepository';
-import type { AuthUser, RegisterDeviceResult } from '../src/types';
+import { CompleteAccountSignInUseCase } from '../src/features/account/domain/useCases/CompleteAccountSignInUseCase';
+import { SignInWithGoogleUseCase } from '../src/features/account/domain/useCases/SignInWithGoogleUseCase';
+import { AssertAccountAgeGateUseCase } from '../src/features/account/domain/useCases/AssertAccountAgeGateUseCase';
+import type { BindEntitlementToAccountUseCase } from '../src/features/account/domain/useCases/BindEntitlementToAccountUseCase';
+import type { RegisterDeviceUseCase } from '../src/features/account/domain/useCases/RegisterDeviceUseCase';
+import type { SyncAccountProfileUseCase } from '../src/features/account/domain/useCases/SyncAccountProfileUseCase';
+import type { IAuthService } from '../src/features/account/domain/ports/IAuthService';
+import type { IAuthSessionRepository } from '../src/features/account/domain/ports/IAuthSessionRepository';
+import type { AuthUser, RegisterDeviceResult } from '../src/shared/types';
 
 const USER: AuthUser = {
   uid: 'uid-1',

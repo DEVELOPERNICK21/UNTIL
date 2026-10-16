@@ -44,6 +44,13 @@ export function monthLeadingBlanks(now: Date, weekStart = 0): number {
   return (weekday - weekStart + 7) % 7;
 }
 
+/** What the Life widget says while it has no birth date. Day, Month and Year never need one. */
+export function lifeEmptyMessage(signedIn: boolean): string {
+  return signedIn
+    ? 'Add your birth date in UNTIL on your phone to see your life.'
+    : 'Sign in to UNTIL to see your life.';
+}
+
 export type DotState = 'passed' | 'current' | 'left';
 
 /** The 24 hour dots around the day ring. */

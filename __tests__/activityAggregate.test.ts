@@ -2,8 +2,8 @@ import {
   aggregateCategoryTotals,
   capNothingHoursForToday,
   hoursElapsedInDay,
-} from '../src/core/activity/aggregate';
-import type { TimeBlock } from '../src/types';
+} from '../src/features/activity/domain/aggregate';
+import type { TimeBlock } from '../src/shared/types';
 
 describe('activity aggregate', () => {
   const afternoon = new Date(2026, 6, 17, 15, 25, 0).getTime();

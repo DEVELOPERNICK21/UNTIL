@@ -1,12 +1,12 @@
-import { DeleteAccountUseCase } from '../src/domain/useCases/DeleteAccountUseCase';
+import { DeleteAccountUseCase } from '../src/features/account/domain/useCases/DeleteAccountUseCase';
 import {
   AuthCancelledError,
   AuthRequiresPasswordError,
   AuthRequiresRecentLoginError,
-} from '../src/domain/errors/authErrors';
-import type { IAuthService } from '../src/domain/ports/IAuthService';
-import type { IAccountCloudStore } from '../src/domain/ports/IAccountCloudStore';
-import type { AuthUser } from '../src/types';
+} from '../src/features/account/domain/authErrors';
+import type { IAuthService } from '../src/features/account/domain/ports/IAuthService';
+import type { IAccountCloudStore } from '../src/features/account/domain/ports/IAccountCloudStore';
+import type { AuthUser } from '../src/shared/types';
 
 function makeAuth(overrides: Partial<IAuthService> & { user?: AuthUser | null } = {}) {
   let user: AuthUser | null =

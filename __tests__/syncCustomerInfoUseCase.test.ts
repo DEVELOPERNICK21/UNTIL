@@ -1,6 +1,6 @@
-import { SyncCustomerInfoUseCase } from '../src/domain/useCases/SyncCustomerInfoUseCase';
-import type { ISubscriptionRepository } from '../src/domain/repository/ISubscriptionRepository';
-import type { PurchaseType, SubscriptionState } from '../src/types';
+import { SyncCustomerInfoUseCase } from '../src/features/premium/domain/useCases/SyncCustomerInfoUseCase';
+import type { ISubscriptionRepository } from '../src/features/premium/domain/ports/ISubscriptionRepository';
+import type { PurchaseType, SubscriptionState } from '../src/shared/types';
 
 function fakeSub(seed: Partial<{
   isPremium: boolean;

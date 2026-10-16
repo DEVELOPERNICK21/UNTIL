@@ -1,8 +1,9 @@
 import { memo, useCallback, useMemo, useState, type CSSProperties, type MouseEvent } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { getCurrentWindow } from '@tauri-apps/api/window';
-import { buildPanelModel } from '@until/core/time/panelModel';
-import { loadLocalState, panelProfile } from './localState';
+import { buildPanelModel } from '@until/shared/time/panelModel';
+import { panelProfile } from './localState';
+import { useLocalState } from './useLocalState';
 import { dayChip } from './periods';
 import { useNow } from './useNow';
 import { Ember } from './ember/Ember';
@@ -13,6 +14,7 @@ import {
   fitCell,
   firstWeekday,
   lifeDots,
+  lifeEmptyMessage,
   monthCells,
   monthLeadingBlanks,
   monthOverline,
@@ -83,6 +85,12 @@ const Dots = memo(function Dots(props: {
     </div>
   );
 });
+
+/** The 365 year dots. Rebuilt only when the day changes, not on every minute tick. */
+function YearGrid({ daysPassed }: { daysPassed: number }) {
+  const states = useMemo(() => yearDots(daysPassed), [daysPassed]);
+  return <Dots states={states} cols={20} width={170} height={118} gap={2.5} round={0.46} />;
+}
 
 function DayRing({ progress, size }: { progress: number; size: number }) {
   const stroke = 10 * (size / 108);
@@ -156,14 +164,20 @@ function Hero(props: { value: string; unit?: string; size: number }) {
 export function DesktopWidget() {
   const initial = params();
   const { kind } = initial;
-  const now = useNow(15_000);
+  const now = useNow('minute');
   const [size, setSize] = useState<DaySize>(initial.size);
 
-  const local = loadLocalState();
+  const local = useLocalState();
   const profile = panelProfile(local);
   const model = buildPanelModel(profile, now);
   const weekStart = useMemo(() => firstWeekday(), []);
-  const ready = profile.signedIn;
+  const deathAge = profile.deathAge ?? 80;
+  const lifeInfo = useMemo(
+    () => (model.life ? lifeDots(model.life, deathAge) : null),
+    // Only the numbers matter, not the object: it is rebuilt on every tick.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [model.life?.passedDays, model.life?.leftDays, model.life?.totalLifeDays, deathAge],
+  );
 
   const toggleSize = useCallback(() => {
     const next: DaySize = size === 'small' ? 'medium' : 'small';
@@ -179,15 +193,10 @@ export function DesktopWidget() {
     void invoke('widget_open_panel').catch(() => {});
   }, []);
 
+  // Today, this month and this year need no account, like the phone's widgets. Only Life needs a
+  // birth date, which comes from the account.
   let body;
-  if (!ready) {
-    body = (
-      <div className="w-empty">
-        <Ember progress={0.32} size={64} ring={false} />
-        <p>Sign in to UNTIL to see your time.</p>
-      </div>
-    );
-  } else if (kind === 'day') {
+  if (kind === 'day') {
     const left = dayChip(model.day.leftStr);
     body =
       size === 'small' ? (
@@ -235,20 +244,12 @@ export function DesktopWidget() {
           <div className="w-spacer" />
         </div>
         <div className="grid-box year-box">
-          <Dots
-            states={yearDots(model.year.passedDays)}
-            cols={20}
-            width={170}
-            height={118}
-            gap={2.5}
-            round={0.46}
-          />
+          <YearGrid daysPassed={model.year.passedDays} />
         </div>
       </div>
     );
-  } else if (model.life) {
-    const deathAge = profile.deathAge ?? 80;
-    const life = lifeDots(model.life, deathAge);
+  } else if (lifeInfo) {
+    const life = lifeInfo;
     body = (
       <div className="split">
         <div className="w-text life-text">
@@ -267,7 +268,7 @@ export function DesktopWidget() {
     body = (
       <div className="w-empty">
         <Ember progress={model.day.progress} size={64} ring={false} />
-        <p>Add your birth date to see your life.</p>
+        <p>{lifeEmptyMessage(profile.signedIn)}</p>
       </div>
     );
   }

@@ -21,7 +21,7 @@ jest.mock('react-native', () => ({
   },
 }));
 
-jest.mock('../src/persistence/mmkv', () => ({
+jest.mock('../src/shared/persistence/mmkv', () => ({
   getString: (key: string) => mockStore.get(key) as string | undefined,
   setString: (key: string, value: string) => mockStore.set(key, value),
   getNumber: (key: string) => mockStore.get(key) as number | undefined,
@@ -38,8 +38,8 @@ import {
   getLiveActivityStatus,
   refreshLiveActivity,
   startLiveActivity,
-} from '../src/infrastructure/WidgetSync';
-import { STORAGE_KEYS } from '../src/persistence/schema';
+} from '../src/features/widgets/data/WidgetSync';
+import { STORAGE_KEYS } from '../src/shared/persistence/schema';
 
 const cache = {
   dayProgress: 0.5,

@@ -15,8 +15,8 @@ import type {
   AuthProviderId,
   AuthUser,
   CloudUserProfile,
-} from '@until/types';
-import { isUnderMinimumAge } from '@until/core/legal/ageGate';
+} from '@until/shared/types';
+import { isUnderMinimumAge } from '@until/features/account/domain/ageGate';
 import { auth } from './firebase';
 import { cloudStore, completeDesktopSignIn, deviceIdProvider } from './di';
 import { nextStepAfterSignIn } from './auth/afterSignIn';
@@ -150,6 +150,7 @@ export async function register(replaceConfirmed: boolean): Promise<SessionView> 
           user.uid,
           result.entitlement ?? 'unknown',
         ),
+        syncedAt: Date.now(),
       });
       return { kind: 'signed_in' };
     }
@@ -194,8 +195,34 @@ export async function refreshSession(): Promise<SessionView | null> {
     birthDate: profile ? profile.birthDate : local.birthDate,
     deathAge: profile ? profile.deathAge : local.deathAge,
     entitlementActive: entitlementAfterRead(local, user.uid, entitlement),
+    // Only counts as synced when the account actually answered.
+    syncedAt: profile !== undefined ? Date.now() : local.syncedAt,
   });
   return { kind: 'signed_in' };
+}
+
+/**
+ * Follows the profile on your account. When the phone changes the birth date or life expectancy
+ * the numbers here change within seconds, without waiting for the 15 minute refresh. Returns a
+ * function that stops listening.
+ */
+export function watchAccountProfile(): () => void {
+  const local = loadLocalState();
+  if (!local.uid || !local.deviceRegistered) return () => {};
+  const uid = local.uid;
+  return cloudStore.watchProfile(uid, (profile, fromCache) => {
+    const current = loadLocalState();
+    if (current.uid !== uid || !profile) return;
+    const changed =
+      current.birthDate !== profile.birthDate || current.deathAge !== profile.deathAge;
+    if (!changed && fromCache) return;
+    saveLocalState({
+      ...current,
+      birthDate: profile.birthDate,
+      deathAge: profile.deathAge,
+      syncedAt: fromCache ? current.syncedAt : Date.now(),
+    });
+  });
 }
 
 export async function signOutDesktop(): Promise<SessionView> {

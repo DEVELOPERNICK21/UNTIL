@@ -1,42 +1,34 @@
 import React from 'react';
 import ReactTestRenderer from 'react-test-renderer';
-import { AppEngagementLayer } from '../src/components/engagement/AppEngagementLayer';
-import { useEngagementModals } from '../src/hooks/useEngagementModals';
+import { AppEngagementLayer } from '../src/app/AppEngagementLayer';
+import { useEngagementModals } from '../src/features/engagement';
 
-jest.mock('../src/hooks/useEngagementModals', () => ({
+// The layer is tested against the public API of the features it composes.
+jest.mock('../src/features/engagement', () => ({
   useEngagementModals: jest.fn(),
-}));
-
-jest.mock('../src/hooks/useAnalytics', () => ({
-  useAnalytics: () => ({ logEvent: jest.fn() }),
-}));
-
-jest.mock('../src/navigation/RootNavigator', () => ({
-  RootNavigator: () => null,
-}));
-
-jest.mock('../src/components/engagement/WidgetCoachModal', () => ({
   WidgetCoachModal: () => null,
-}));
-
-jest.mock('../src/components/engagement/DeferredPaywallModal', () => ({
-  DeferredPaywallModal: () => null,
-}));
-
-jest.mock('../src/components/engagement/FeatureDiscoveryModal', () => ({
   FeatureDiscoveryModal: () => null,
-}));
-
-jest.mock('../src/components/engagement/SharePromptModal', () => ({
   SharePromptModal: () => null,
 }));
 
-jest.mock('../src/components/engagement/EmberCompanion', () => ({
+jest.mock('../src/features/premium', () => ({
+  DeferredPaywallModal: () => null,
+}));
+
+jest.mock('../src/features/ember', () => ({
   EmberCompanion: () => null,
 }));
 
-jest.mock('../src/components/gamification', () => ({
+jest.mock('../src/features/badges', () => ({
   BadgeUnlockHost: () => null,
+}));
+
+jest.mock('../src/shared/analytics/useAnalytics', () => ({
+  useAnalytics: () => ({ logEvent: jest.fn() }),
+}));
+
+jest.mock('../src/app/navigation/RootNavigator', () => ({
+  RootNavigator: () => null,
 }));
 
 describe('AppEngagementLayer review attempts', () => {

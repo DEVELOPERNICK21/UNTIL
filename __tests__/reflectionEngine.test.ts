@@ -1,12 +1,12 @@
 import {
   generateDailyReflection,
   getDateKey,
-} from '../src/domain/reflections/reflectionEngine';
-import { GetDailyReflectionUseCase } from '../src/domain/useCases/GetDailyReflectionUseCase';
-import { computeAccessState } from '../src/domain/accessControl';
-import type { ReflectionPersistence } from '../src/domain/reflections/reflectionTypes';
-import type { ITimeRepository } from '../src/domain/repository/ITimeRepository';
-import type { IOnboardingRepository } from '../src/domain/repository/IOnboardingRepository';
+} from '../src/features/reflections/domain/reflectionEngine';
+import { GetDailyReflectionUseCase } from '../src/features/reflections/domain/useCases/GetDailyReflectionUseCase';
+import { computeAccessState } from '../src/features/premium/domain/accessControl';
+import type { ReflectionPersistence } from '../src/features/reflections/domain/reflectionTypes';
+import type { ITimeRepository } from '../src/features/time/domain/ports/ITimeRepository';
+import type { IOnboardingRepository } from '../src/features/onboarding/domain/ports/IOnboardingRepository';
 
 const evening = new Date(2026, 4, 25, 21, 0, 0);
 const lifeEligibleMorning = new Date(2026, 4, 27, 10, 0, 0);

@@ -1,7 +1,8 @@
 import { useState, type ReactNode } from 'react';
-import type { AccountDevice } from '@until/types';
-import { replaceDesktopBody } from '@until/core/account/accountCopy';
+import type { AccountDevice } from '@until/shared/types';
+import { replaceDesktopBody } from '@until/features/account/domain/accountCopy';
 import { checkSetupForm } from './auth/afterSignIn';
+import { syncLabel } from './syncLabel';
 
 function Card(props: { children: ReactNode }) {
   return <section className="card">{props.children}</section>;
@@ -188,12 +189,27 @@ export function RetryCard(props: { onRetry: () => void; onCancel: () => void }) 
 export function AccountFooter(props: {
   email: string | null;
   premium: boolean;
+  syncedAt: number | null;
+  now: number;
+  onSync: () => Promise<unknown>;
   onSignOut: () => void;
 }) {
   const initial = (props.email ?? '?').charAt(0).toUpperCase();
+  const [syncing, setSyncing] = useState(false);
+  const sync = () => {
+    setSyncing(true);
+    void props.onSync().finally(() => setSyncing(false));
+  };
   return (
     <footer className="footer">
       {props.premium ? null : <p className="note">Premium is managed on your phone.</p>}
+      <div className="sync-row">
+        <span className={`sync-dot${props.syncedAt == null ? ' sync-dot-off' : ''}`} aria-hidden="true" />
+        <span className="sync-text">{syncing ? 'Syncing' : syncLabel(props.syncedAt, props.now)}</span>
+        <button className="link" onClick={sync} disabled={syncing}>
+          Sync now
+        </button>
+      </div>
       <div className="footer-row">
         <span className="avatar" aria-hidden="true">
           {initial}
@@ -210,12 +226,30 @@ export function AccountFooter(props: {
 export function PanelBar(props: {
   launchAtLogin: boolean | null;
   onLaunchAtLogin: (on: boolean) => void;
+  /** True once, until the person answers whether UNTIL should open at login. */
+  askLaunchAtLogin: boolean;
+  onAnswerLaunchAtLogin: (on: boolean) => void;
   updateReady: boolean;
   onRestart: () => void;
   onQuit: () => void;
+  version: string;
+  onOpenLegal: (page: 'privacy' | 'terms') => void;
 }) {
   return (
     <div className="panel-bar">
+      {props.askLaunchAtLogin ? (
+        <div className="login-ask" role="group" aria-label="Open at login">
+          <span>Open UNTIL when you log in?</span>
+          <span className="login-ask-actions">
+            <button type="button" className="link strong" onClick={() => props.onAnswerLaunchAtLogin(true)}>
+              Yes
+            </button>
+            <button type="button" className="link" onClick={() => props.onAnswerLaunchAtLogin(false)}>
+              Not now
+            </button>
+          </span>
+        </div>
+      ) : null}
       {props.updateReady ? (
         <div className="update">
           <span>Update ready.</span>
@@ -239,8 +273,24 @@ export function PanelBar(props: {
             <span>Open at login</span>
           </label>
         )}
-        <button className="link" onClick={props.onQuit}>
-          Quit
+        <button
+          type="button"
+          className="btn-quit"
+          onClick={props.onQuit}
+          title="Quit UNTIL (Ctrl or Cmd + Q)"
+        >
+          Quit UNTIL
+        </button>
+      </div>
+      <div className="panel-about">
+        <span>UNTIL{props.version ? ` ${props.version}` : ''}</span>
+        <span aria-hidden="true">·</span>
+        <button type="button" className="link" onClick={() => props.onOpenLegal('privacy')}>
+          Privacy
+        </button>
+        <span aria-hidden="true">·</span>
+        <button type="button" className="link" onClick={() => props.onOpenLegal('terms')}>
+          Terms
         </button>
       </div>
     </div>

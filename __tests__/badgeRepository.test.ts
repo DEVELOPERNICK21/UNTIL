@@ -1,8 +1,8 @@
-import { MmkvBadgeRepository } from '../src/infrastructure/repositories/MmkvBadgeRepository';
-import { STORAGE_KEYS } from '../src/persistence/schema';
+import { MmkvBadgeRepository } from '../src/features/badges/data/MmkvBadgeRepository';
+import { STORAGE_KEYS } from '../src/shared/persistence/schema';
 
 const mockStore = new Map<string, string>();
-jest.mock('../src/persistence/mmkv', () => ({
+jest.mock('../src/shared/persistence/mmkv', () => ({
   getString: (key: string) => mockStore.get(key),
   setString: (key: string, value: string) => {
     mockStore.set(key, value);

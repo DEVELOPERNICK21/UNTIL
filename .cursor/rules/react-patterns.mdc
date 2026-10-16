@@ -15,11 +15,11 @@ alwaysApply: false
 ## Data Access
 
 - **Screens**: Call hooks (e.g. `useObserveTimeState()`, `useDailyTasks()`); never import use cases or repositories directly
-- **No direct imports** from `core`, `persistence`, or `infrastructure` in surfaces — except `getDayProgress`, `startOfDay`, etc. for **display formatting only** when timeState doesn't provide it (prefer deriving from timeState when possible)
+- **No direct imports** of `data/`, `shared/persistence`, `app/di` or pure domain logic in `ui/` — except `shared/time/clock` (`getDayProgress`, `startOfDay`, etc.) and `shared/time/homeFormatters` for **display formatting only** when timeState doesn't provide it (prefer deriving from timeState when possible)
 
 ## Hooks
 
-- Extract reusable logic into custom hooks in `hooks/`
+- Extract reusable logic into custom hooks in the feature's `hooks/` (or `shared/hooks/`)
 - Hooks subscribe to use cases via `di`; call `syncWidgetCache()` etc. when data changes if needed
 
 ## Forms / Local UI State

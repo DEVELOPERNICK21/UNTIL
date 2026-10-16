@@ -2,7 +2,7 @@ import {
   LIFE_WEEKS_DOT_CAP,
   WEEKS_PER_YEAR,
   computeLifeWeeks,
-} from '../src/core/time/lifeWeeks';
+} from '../src/shared/time/lifeWeeks';
 
 describe('computeLifeWeeks', () => {
   it('computes total and lived weeks from deathAge and remaining days', () => {

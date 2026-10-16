@@ -3,20 +3,21 @@ import {
   dayAppealLine,
   formatDayLeftoverLabel,
   presenceStreakDots,
-} from '../src/core/widget/dayWidgetAppeal';
-import { MmkvTimeRepository } from '../src/infrastructure/repositories/MmkvTimeRepository';
-import { getNumber, getString } from '../src/persistence/mmkv';
-import { STORAGE_KEYS } from '../src/persistence/schema';
+} from '../src/features/presence/domain/dayWidgetAppeal';
+import { MmkvTimeRepository } from '../src/features/time/data/MmkvTimeRepository';
+import { MmkvPresenceRepository } from '../src/features/presence/data/MmkvPresenceRepository';
+import { getNumber, getString } from '../src/shared/persistence/mmkv';
+import { STORAGE_KEYS } from '../src/shared/persistence/schema';
 
-jest.mock('../src/persistence/mmkv', () => ({
+jest.mock('../src/shared/persistence/mmkv', () => ({
   getNumber: jest.fn(),
   getString: jest.fn(),
   setNumber: jest.fn(),
   setString: jest.fn(),
 }));
 
-jest.mock('../src/core/time/clock', () => ({
-  ...jest.requireActual('../src/core/time/clock'),
+jest.mock('../src/shared/time/clock', () => ({
+  ...jest.requireActual('../src/shared/time/clock'),
   now: jest.fn(() => new Date(2026, 6, 17, 12, 0, 0)),
 }));
 
@@ -59,7 +60,7 @@ describe('dayWidgetAppeal', () => {
       key === STORAGE_KEYS.PRESENCE_STREAK_LAST_DATE ? '2026-07-17' : undefined,
     );
 
-    const cache = new MmkvTimeRepository().getWidgetCache();
+    const cache = new MmkvTimeRepository(new MmkvPresenceRepository()).getWidgetCache();
 
     expect(cache.presenceStreakCount).toBe(4);
     expect(cache.presenceStreakDots).toEqual([
@@ -81,7 +82,7 @@ describe('dayWidgetAppeal', () => {
       key === STORAGE_KEYS.USER_DEATH_AGE ? 80 : undefined,
     );
 
-    const cache = new MmkvTimeRepository().getWidgetCache();
+    const cache = new MmkvTimeRepository(new MmkvPresenceRepository()).getWidgetCache();
 
     expect(cache.birthDate).toBe('1990-01-01');
     expect(cache.deathAge).toBe(80);
@@ -91,7 +92,7 @@ describe('dayWidgetAppeal', () => {
     mockGetString.mockReturnValue(undefined);
     mockGetNumber.mockReturnValue(undefined);
 
-    const cache = new MmkvTimeRepository().getWidgetCache();
+    const cache = new MmkvTimeRepository(new MmkvPresenceRepository()).getWidgetCache();
 
     expect(cache.birthDate).toBeUndefined();
   });

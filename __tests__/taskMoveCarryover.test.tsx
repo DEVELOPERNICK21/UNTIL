@@ -2,7 +2,7 @@ import React from 'react';
 import { Alert, Modal, Platform, TouchableOpacity } from 'react-native';
 import ReactTestRenderer from 'react-test-renderer';
 
-import { DailyTasksScreen } from '../src/surfaces/app/DailyTasksScreen';
+import { DailyTasksScreen } from '../src/features/tasks/ui/DailyTasksScreen';
 
 const mockMoveTasks = jest.fn();
 const mockSyncDailyTasksWidget = jest.fn();
@@ -14,8 +14,11 @@ jest.mock('@react-navigation/native', () => ({
   useFocusEffect: jest.fn(),
 }));
 
-jest.mock('../src/hooks', () => ({
+jest.mock('../src/shared/hooks/useTodayIso', () => ({
   useTodayIso: () => '2026-09-09',
+}));
+
+jest.mock('../src/features/tasks/hooks/useDailyTasks', () => ({
   useDailyTasks: () => ({
     tasks: [],
     stats: { total: 0, completed: 0, pending: 0 },
@@ -28,6 +31,9 @@ jest.mock('../src/hooks', () => ({
     removeTasks: jest.fn(),
     getGoalTitle: jest.fn(),
   }),
+}));
+
+jest.mock('../src/features/tasks/hooks/useTaskCarryoverPrompt', () => ({
   useTaskCarryoverPrompt: () => ({
     visible: true,
     unfinishedYesterday: [
@@ -43,12 +49,15 @@ jest.mock('../src/hooks', () => ({
     dismissNotNow: mockDismissCarryoverNotNow,
     clearYesterday: jest.fn(),
   }),
+}));
+
+jest.mock('../src/shared/platform/useWidgetSyncActions', () => ({
   useWidgetSyncActions: () => ({
     syncDailyTasksWidget: mockSyncDailyTasksWidget,
   }),
 }));
 
-jest.mock('../src/ui', () => {
+jest.mock('../src/shared/ui', () => {
   const ReactModule = require('react');
   const { View, Text: NativeText } = require('react-native');
 
@@ -63,7 +72,7 @@ jest.mock('../src/ui', () => {
   };
 });
 
-jest.mock('../src/theme', () => ({
+jest.mock('../src/shared/theme', () => ({
   Spacing: { 1: 4, 2: 8, 3: 12, 4: 16, 5: 20 },
   Colors: {
     accent: '#fff',
@@ -78,11 +87,11 @@ jest.mock('../src/theme', () => ({
   FontFamily: { bold: 'System' },
 }));
 
-jest.mock('../src/components/engagement/EmberLocalDock', () => ({
+jest.mock('../src/features/ember', () => ({
   EmberLocalDock: () => null,
 }));
 
-jest.mock('../src/components/tasks/TaskMoveSheet', () => {
+jest.mock('../src/features/tasks/ui/TaskMoveSheet', () => {
   const ReactModule = require('react');
 
   return {
@@ -94,7 +103,7 @@ jest.mock('../src/components/tasks/TaskMoveSheet', () => {
   };
 });
 
-jest.mock('../src/services/emberSurface', () => ({
+jest.mock('../src/shared/ui/emberSurface', () => ({
   setEmberModalCoveringSource: jest.fn(),
 }));
 

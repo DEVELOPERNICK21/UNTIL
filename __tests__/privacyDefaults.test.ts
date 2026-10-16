@@ -6,7 +6,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 
 const mockStore = new Map<string, string>();
-jest.mock('../src/persistence/mmkv', () => ({
+jest.mock('../src/shared/persistence/mmkv', () => ({
   getString: (key: string) => mockStore.get(key),
   setString: (key: string, value: string) => {
     mockStore.set(key, value);
@@ -24,7 +24,7 @@ import {
   markUnderMinimumAge,
   setAnalyticsConsent,
   setSessionRecordingConsent,
-} from '../src/services/analyticsConsent';
+} from '../src/shared/analytics/analyticsConsent';
 
 beforeEach(() => mockStore.clear());
 

@@ -3,7 +3,7 @@ import {
   isAutoReviewCooldownElapsed,
   isSustainedUseEligible,
   daysBetweenDateKeys,
-} from '../src/core/engagement';
+} from '../src/features/engagement/domain/inAppReviewEligibility';
 
 describe('inAppReviewEligibility', () => {
   it('allows auto when never asked', () => {

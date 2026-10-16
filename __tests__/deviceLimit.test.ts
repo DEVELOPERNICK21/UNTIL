@@ -4,8 +4,8 @@ import {
   countActiveDevices,
   isDesktopPlatform,
   planDesktopRegister,
-} from '../src/core/account/deviceLimit';
-import type { AccountDevice } from '../src/types';
+} from '../src/features/account/domain/deviceLimit';
+import type { AccountDevice } from '../src/shared/types';
 
 describe('deviceLimit', () => {
   const d = (id: string, active: boolean) => ({ id, active });

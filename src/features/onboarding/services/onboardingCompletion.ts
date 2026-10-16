@@ -1,0 +1,23 @@
+/**
+ * Side effects when user finishes shortened onboarding (reach Home).
+ */
+
+import { setNumber } from '../../../shared/persistence/mmkv';
+import { STORAGE_KEYS } from '../../../shared/persistence/schema';
+import { logAnalyticsEvent } from '../../../shared/analytics/analytics';
+import { scheduleDay2ReengagementNotification } from './engagementNotifications';
+
+export type OnboardingExitParams = {
+  exit_type: 'skipped' | 'completed';
+  step: number;
+  step_name: string;
+};
+
+export function runOnboardingCompletionSideEffects(
+  params?: OnboardingExitParams
+): void {
+  const completedAt = Date.now();
+  setNumber(STORAGE_KEYS.ONBOARDING_COMPLETED_AT, completedAt);
+  void logAnalyticsEvent('onboarding_complete', params);
+  void scheduleDay2ReengagementNotification(completedAt);
+}

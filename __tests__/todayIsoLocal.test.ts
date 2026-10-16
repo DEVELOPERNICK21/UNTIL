@@ -1,4 +1,4 @@
-import { formatDateToIso, todayIso } from '../src/core/time/clock';
+import { formatDateToIso, todayIso } from '../src/shared/time/clock';
 
 describe('todayIso / formatDateToIso (local calendar day)', () => {
   it('formats from local Y-M-D, not UTC', () => {

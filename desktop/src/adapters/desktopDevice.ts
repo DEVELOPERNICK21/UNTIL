@@ -1,5 +1,5 @@
-import type { IDeviceIdProvider } from '@until/domain/ports/IDeviceIdProvider';
-import type { DevicePlatform } from '@until/types';
+import type { IDeviceIdProvider } from '@until/shared/ports/IDeviceIdProvider';
+import type { DevicePlatform } from '@until/shared/types';
 
 const DEVICE_ID_KEY = 'until.desktop.deviceId';
 

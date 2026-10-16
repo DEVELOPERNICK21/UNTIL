@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
+import { getVersion } from '@tauri-apps/api/app';
+import { markLaunchAtLoginAsked, shouldAskLaunchAtLogin } from './loginConsent';
 import {
   UPDATE_CHECK_INTERVAL_MS,
-  applyLaunchAtLoginDefault,
   getLaunchAtLogin,
   installUpdateIfAny,
   setLaunchAtLogin,
@@ -9,20 +10,30 @@ import {
 
 /**
  * Launch at login and self-update, for the bar at the foot of the panel. In `tauri dev` both are
- * switched off (see system.ts): `launchAtLogin` stays null, so the bar shows no switch.
+ * switched off (see system.ts): `launchAtLogin` stays null, so the bar shows no switch. Opening at
+ * login is never switched on for the person: `askLaunchAtLogin` is true once, until they answer.
  */
 export function useSystem() {
   const [launchAtLogin, setLogin] = useState<boolean | null>(null);
   const [updateReady, setUpdateReady] = useState(false);
+  const [askLaunchAtLogin, setAsk] = useState(false);
+  const [version, setVersion] = useState('');
 
   useEffect(() => {
     let alive = true;
 
+    void getVersion()
+      .then(v => alive && setVersion(v))
+      .catch(() => {});
+
     void (async () => {
       try {
-        await applyLaunchAtLoginDefault();
         const on = await getLaunchAtLogin();
-        if (alive) setLogin(on);
+        if (!alive) return;
+        setLogin(on);
+        if (on == null) return;
+        if (on) markLaunchAtLoginAsked(localStorage);
+        else if (shouldAskLaunchAtLogin(localStorage, on)) setAsk(true);
       } catch {
         // No login item to read (a plain browser, or a build without the plugin).
       }
@@ -49,5 +60,21 @@ export function useSystem() {
     void setLaunchAtLogin(on).catch(() => setLogin(!on));
   }, []);
 
-  return { launchAtLogin, toggleLaunchAtLogin, updateReady };
+  const answerLaunchAtLogin = useCallback(
+    (on: boolean) => {
+      markLaunchAtLoginAsked(localStorage);
+      setAsk(false);
+      if (on) toggleLaunchAtLogin(true);
+    },
+    [toggleLaunchAtLogin],
+  );
+
+  return {
+    launchAtLogin,
+    toggleLaunchAtLogin,
+    askLaunchAtLogin,
+    answerLaunchAtLogin,
+    updateReady,
+    version,
+  };
 }

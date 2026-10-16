@@ -2,7 +2,7 @@ import {
   normalizeStoreProductId,
   productIdToPurchaseType,
   storeProductIdsMatch,
-} from '../src/domain/billing/mapProductId';
+} from '../src/features/premium/domain/mapProductId';
 
 describe('mapProductId Play base plans', () => {
   it('strips productId:basePlanId', () => {

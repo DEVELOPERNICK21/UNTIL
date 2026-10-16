@@ -1,3 +1,0 @@
-/**
- * Lock screen / overlay surface
- */

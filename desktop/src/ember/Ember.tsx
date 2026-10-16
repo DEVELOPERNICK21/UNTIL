@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useId, useRef, useState, type CSSProperties } from 'react';
-import { progressBand, type ProgressBand } from '@until/theme/emotionalCopy';
+import { memo, useCallback, useEffect, useId, useRef, useState, type CSSProperties } from 'react';
+import { progressBand, type ProgressBand } from '@until/shared/theme/emotionalCopy';
 import './ember.css';
 
 /**
@@ -55,7 +55,7 @@ export interface EmberProps {
   title?: string;
 }
 
-export function Ember({
+const EmberBody = memo(function EmberBody({
   progress,
   size = 56,
   interactive = true,
@@ -376,4 +376,13 @@ export function Ember({
       ) : null}
     </div>
   );
+});
+
+/** The ring only moves a hair a minute, so round to the minute: the panel and island tick every second, and this keeps Ember from being redrawn each time. */
+export function minuteProgress(progress: number): number {
+  return Math.round(Math.min(1, Math.max(0, progress)) * 1440) / 1440;
+}
+
+export function Ember(props: EmberProps) {
+  return <EmberBody {...props} progress={minuteProgress(props.progress)} />;
 }
