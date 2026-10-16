@@ -128,6 +128,12 @@ fn set_extra(
     Ok(())
 }
 
+/// A page tells us it has loaded and run (see `smoke::PagesReady`). The window is the caller.
+#[tauri::command]
+fn page_ready(window: tauri::Window, ready: tauri::State<smoke::PagesReady>) {
+    ready.mark(window.label());
+}
+
 #[tauri::command]
 fn quit_app(app: AppHandle) {
     app.exit(0);
@@ -152,7 +158,7 @@ struct NotchInfo {
 /// Size of this Mac's notch, so the island can be drawn around it. `None` where there is none.
 #[tauri::command]
 fn notch_info(app: AppHandle) -> Option<NotchInfo> {
-    #[cfg(target_os = "macos")]
+    #[cfg(any(target_os = "macos", windows))]
     {
         notch::info(&app).map(|(width, height, compact)| NotchInfo {
             width,
@@ -160,7 +166,7 @@ fn notch_info(app: AppHandle) -> Option<NotchInfo> {
             compact,
         })
     }
-    #[cfg(not(target_os = "macos"))]
+    #[cfg(not(any(target_os = "macos", windows)))]
     {
         let _ = app;
         None
@@ -170,9 +176,9 @@ fn notch_info(app: AppHandle) -> Option<NotchInfo> {
 /// The island's button: open the full panel, under the notch where there is one.
 #[tauri::command]
 fn notch_open_panel(app: AppHandle) {
-    #[cfg(target_os = "macos")]
+    #[cfg(any(target_os = "macos", windows))]
     notch::open_panel_under_notch(&app, PANEL);
-    #[cfg(not(target_os = "macos"))]
+    #[cfg(not(any(target_os = "macos", windows)))]
     show_panel(&app);
 }
 
@@ -267,10 +273,15 @@ pub fn run() {
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_process::init())
         .manage(PanelState::default())
+        .manage(smoke::PagesReady::default())
         .manage(widgets::TrayWidgets::default())
         .setup(|app| {
             #[cfg(target_os = "macos")]
             app.set_activation_policy(tauri::ActivationPolicy::Accessory);
+
+            // Always dark, whatever the system setting is: the panel, the island and the widgets
+            // are designed for it, and the native menus and window edges should match.
+            app.set_theme(Some(tauri::Theme::Dark));
 
             // Mac registers the scheme from the bundle's Info.plist; Windows and
             // Linux dev builds register at runtime.
@@ -287,22 +298,27 @@ pub fn run() {
 
             app.manage(settings::SettingsStore::load(app.handle()));
 
-            // Macs with a notch get the island. Other Macs and Windows never build it.
-            #[cfg(target_os = "macos")]
+            // Macs with a notch get the island, and so does Windows: a pill at the top of the main
+            // screen. Other Macs and Linux never build it.
+            #[cfg(any(target_os = "macos", windows))]
             let has_notch = notch::install(app);
-            #[cfg(not(target_os = "macos"))]
+            #[cfg(not(any(target_os = "macos", windows)))]
             let has_notch = false;
 
             let quit = MenuItemBuilder::with_id("quit", "Quit UNTIL").build(app)?;
             let prefs = app.state::<settings::SettingsStore>().get();
 
-            // "Show in the notch" and "Show beside the notch" only exist on a Mac with a notch.
+            // The island's two tick boxes only exist where the island does.
+            #[cfg(windows)]
+            let (island_label, compact_label) = ("Show the island", "Show time beside the island");
+            #[cfg(not(windows))]
+            let (island_label, compact_label) = ("Show in the notch", "Show time beside the notch");
             let notch_items = if has_notch {
                 Some((
-                    CheckMenuItemBuilder::with_id("notch", "Show in the notch")
+                    CheckMenuItemBuilder::with_id("notch", island_label)
                         .checked(prefs.notch)
                         .build(app)?,
-                    CheckMenuItemBuilder::with_id("compact", "Show time beside the notch")
+                    CheckMenuItemBuilder::with_id("compact", compact_label)
                         .checked(prefs.compact)
                         .build(app)?,
                 ))
@@ -371,7 +387,7 @@ pub fn run() {
                             widgets::set_open(&app, &kind, on);
                         });
                     } else if id == "notch" || id == "compact" {
-                        #[cfg(target_os = "macos")]
+                        #[cfg(any(target_os = "macos", windows))]
                         if let Some((notch_item, compact_item)) = &notch_items {
                             if id == "notch" {
                                 let on = !notch::is_enabled(app);
@@ -430,6 +446,7 @@ pub fn run() {
             set_extra,
             quit_app,
             hide_panel,
+            page_ready,
             notch_info,
             notch_open_panel,
             widget_set_size,

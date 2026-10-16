@@ -14,8 +14,8 @@
   font-weight: 700;
 }
 
-/* Tokens mirror the phone's palettes (src/theme/palettes.ts): near-black in the dark,
-   warm paper in the light. Ember orange is the one accent. */
+/* Tokens mirror the phone's dark palette (src/shared/theme/palettes.ts): near-black, with Ember
+   orange as the one accent. There is no light theme on the desktop. */
 :root {
   --bg: rgba(16, 16, 18, 0.76);
   --bg-solid: #0e0e10;
@@ -53,26 +53,8 @@
   font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
   font-size: 13px;
   -webkit-font-smoothing: antialiased;
-  color-scheme: light dark;
-}
-
-@media (prefers-color-scheme: light) {
-  :root {
-    --bg: rgba(247, 243, 238, 0.8);
-    --bg-solid: #f7f3ee;
-    --card: rgba(255, 255, 255, 0.66);
-    --card-strong: #ffffff;
-    --border: rgba(26, 26, 26, 0.09);
-    --text: #1a1a1a;
-    --text-2: #5a5a5a;
-    --text-3: #6b6b6b;
-    --track: rgba(26, 26, 26, 0.08);
-    --tick-off: rgba(26, 26, 26, 0.15);
-    --btn-light-bg: #ffffff;
-    --btn-light-text: #1a1a1a;
-    --btn-dark-bg: #1a1a1a;
-    --btn-dark-text: #ffffff;
-  }
+  /* UNTIL is always dark, on every Mac and Windows setting. */
+  color-scheme: dark;
 }
 
 html,

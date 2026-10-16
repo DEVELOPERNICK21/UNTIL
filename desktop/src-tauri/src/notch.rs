@@ -399,6 +399,9 @@ mod tests {
 #[cfg(target_os = "macos")]
 pub use mac::{info, install, is_compact, is_enabled, open_panel_under_notch, set_compact, set_enabled};
 
+#[cfg(windows)]
+pub use win::{info, install, is_compact, is_enabled, open_panel_under_notch, set_compact, set_enabled};
+
 #[cfg(target_os = "macos")]
 mod mac {
     use super::*;
@@ -675,5 +678,308 @@ mod mac {
             let _ = panel.show();
             let _ = panel.set_focus();
         });
+    }
+}
+
+/// The same island on Windows, where there is no hardware notch. A small black pill hangs from the
+/// top edge of the main screen, centred, and opens into the same card when the pointer rests on it.
+/// The geometry, the hover rules and the page are shared with the Mac; only the window and the
+/// pointer are different. (`island_check` lets a Mac compile this module for a type check.)
+#[cfg(any(windows, island_check))]
+#[allow(dead_code)]
+mod win {
+    use super::*;
+    use crate::settings::SettingsStore;
+    use std::sync::atomic::{AtomicBool, Ordering};
+    use std::sync::{Arc, Mutex};
+    use std::thread;
+    use tauri::{
+        AppHandle, Emitter, Manager, PhysicalPosition, WebviewUrl, WebviewWindowBuilder,
+    };
+
+    pub const LABEL: &str = "notch";
+
+    /// The pill the island is drawn around: where a hardware notch would be, in points.
+    const VIRTUAL_W: f64 = 96.0;
+    const VIRTUAL_H: f64 = 28.0;
+
+    pub struct NotchState {
+        enabled: AtomicBool,
+        compact: AtomicBool,
+        geometry: Mutex<Option<NotchGeometry>>,
+        fold_request: AtomicBool,
+    }
+
+    /// The island's geometry on a screen `w` by `h` points, origin at its bottom left like the Mac
+    /// code expects. A screen too small for the open card gets none.
+    pub(super) fn virtual_geometry(w: f64, h: f64) -> Option<NotchGeometry> {
+        if w < WINDOW_W || h < WINDOW_H {
+            return None;
+        }
+        Some(NotchGeometry {
+            screen: Rect { x: 0.0, y: 0.0, w, h },
+            notch_x: (w - VIRTUAL_W) / 2.0,
+            notch_w: VIRTUAL_W,
+            notch_h: VIRTUAL_H,
+        })
+    }
+
+    fn detect(app: &AppHandle) -> Option<NotchGeometry> {
+        let monitor = app.primary_monitor().ok().flatten()?;
+        let scale = monitor.scale_factor();
+        let size = monitor.size();
+        virtual_geometry(size.width as f64 / scale, size.height as f64 / scale)
+    }
+
+    /// The pointer in the same coordinates as `detect`: points on the main screen, y up.
+    fn pointer(app: &AppHandle, geo: &NotchGeometry) -> Option<(f64, f64)> {
+        let monitor = app.primary_monitor().ok().flatten()?;
+        let scale = monitor.scale_factor();
+        let origin = monitor.position();
+        let cursor = app.cursor_position().ok()?;
+        let x = (cursor.x - origin.x as f64) / scale;
+        let y_down = (cursor.y - origin.y as f64) / scale;
+        Some((x, geo.screen.h - y_down))
+    }
+
+    pub fn info(app: &AppHandle) -> Option<(f64, f64, bool)> {
+        let state = app.try_state::<Arc<NotchState>>()?;
+        let geo = (*state.geometry.lock().unwrap())?;
+        Some((geo.notch_w, geo.notch_h, state.compact.load(Ordering::Relaxed)))
+    }
+
+    pub fn is_enabled(app: &AppHandle) -> bool {
+        app.try_state::<Arc<NotchState>>()
+            .map(|state| state.enabled.load(Ordering::Relaxed))
+            .unwrap_or(false)
+    }
+
+    pub fn set_enabled(app: &AppHandle, enabled: bool) {
+        if let Some(state) = app.try_state::<Arc<NotchState>>() {
+            state.enabled.store(enabled, Ordering::Relaxed);
+        }
+        app.state::<SettingsStore>().update(|s| s.notch = enabled);
+    }
+
+    pub fn is_compact(app: &AppHandle) -> bool {
+        app.try_state::<Arc<NotchState>>()
+            .map(|state| state.compact.load(Ordering::Relaxed))
+            .unwrap_or(false)
+    }
+
+    pub fn set_compact(app: &AppHandle, compact: bool) {
+        if let Some(state) = app.try_state::<Arc<NotchState>>() {
+            state.compact.store(compact, Ordering::Relaxed);
+        }
+        app.state::<SettingsStore>().update(|s| s.compact = compact);
+        let _ = app.emit_to(LABEL, "notch://compact", compact);
+    }
+
+    /// Put the island window flush with the top edge of the main screen, centred.
+    fn place(app: &AppHandle, geo: &NotchGeometry) {
+        let Some(window) = app.get_webview_window(LABEL) else {
+            return;
+        };
+        let Some(monitor) = app.primary_monitor().ok().flatten() else {
+            return;
+        };
+        let scale = monitor.scale_factor();
+        let origin = monitor.position();
+        let x = origin.x as f64 + (geo.center_x() - WINDOW_W / 2.0) * scale;
+        let _ = window.set_position(PhysicalPosition::new(x.round() as i32, origin.y));
+    }
+
+    /// Builds the island window and starts watching the pointer. The window is made on another
+    /// thread, because creating one on the main thread deadlocks on Windows.
+    pub fn install(app: &mut tauri::App) -> bool {
+        let handle = app.handle().clone();
+        let geometry = detect(&handle);
+        let prefs = app.state::<SettingsStore>().get();
+        let state = Arc::new(NotchState {
+            enabled: AtomicBool::new(prefs.notch),
+            compact: AtomicBool::new(prefs.compact),
+            geometry: Mutex::new(geometry),
+            fold_request: AtomicBool::new(false),
+        });
+        app.manage(state.clone());
+        let Some(geo) = geometry else {
+            return false;
+        };
+
+        thread::spawn(move || {
+            let built = WebviewWindowBuilder::new(
+                &handle,
+                LABEL,
+                WebviewUrl::App("index.html?view=notch".into()),
+            )
+            .title("UNTIL island")
+            .inner_size(WINDOW_W, WINDOW_H)
+            .decorations(false)
+            .transparent(true)
+            .shadow(false)
+            .resizable(false)
+            .always_on_top(true)
+            .skip_taskbar(true)
+            .focused(false)
+            .focusable(false)
+            .theme(Some(tauri::Theme::Dark))
+            .visible(false)
+            .build();
+            let Ok(window) = built else {
+                return;
+            };
+            place(&handle, &geo);
+            let _ = window.set_ignore_cursor_events(true);
+            if state.enabled.load(Ordering::Relaxed) {
+                let _ = window.show();
+            }
+            watch_pointer(handle, state);
+        });
+        true
+    }
+
+    fn watch_pointer(app: AppHandle, state: Arc<NotchState>) {
+        let mut hover = Hover::default();
+        let mut ticks: u32 = 0;
+        let mut ignore_again_at: Option<Instant> = None;
+        let mut shown = state.enabled.load(Ordering::Relaxed);
+        loop {
+            thread::sleep(Duration::from_millis(33));
+            ticks = ticks.wrapping_add(1);
+            let Some(window) = app.get_webview_window(LABEL) else {
+                return;
+            };
+
+            // A monitor can come and go. Look again now and then and move the island.
+            if ticks % 45 == 0 {
+                let next = detect(&app);
+                let mut current = state.geometry.lock().unwrap();
+                if *current != next {
+                    *current = next;
+                    drop(current);
+                    if let Some(geo) = next {
+                        place(&app, &geo);
+                    }
+                }
+            }
+
+            let enabled = state.enabled.load(Ordering::Relaxed);
+            let geo = *state.geometry.lock().unwrap();
+            let visible = enabled && geo.is_some();
+            if visible != shown {
+                shown = visible;
+                if visible {
+                    let _ = window.show();
+                } else {
+                    hover.fold();
+                    let _ = app.emit_to(LABEL, "notch://state", false);
+                    let _ = window.hide();
+                }
+            }
+            let Some(geo) = geo.filter(|_| visible) else {
+                continue;
+            };
+
+            if state.fold_request.swap(false, Ordering::Relaxed) && hover.expanded {
+                hover.fold();
+                let _ = app.emit_to(LABEL, "notch://state", false);
+                ignore_again_at = Some(Instant::now() + Duration::from_millis(420));
+            }
+
+            let Some(cursor) = pointer(&app, &geo) else {
+                continue;
+            };
+            let now = Instant::now();
+            let compact = state.compact.load(Ordering::Relaxed);
+            match hover.update(&geo, compact, cursor, false, now) {
+                Some(Change::Expand) => {
+                    ignore_again_at = None;
+                    let _ = window.set_ignore_cursor_events(false);
+                    let _ = app.emit_to(LABEL, "notch://state", true);
+                }
+                Some(Change::Collapse) => {
+                    let _ = app.emit_to(LABEL, "notch://state", false);
+                    ignore_again_at = Some(now + Duration::from_millis(420));
+                }
+                None => {}
+            }
+            if let Some(at) = ignore_again_at {
+                if now >= at && !hover.expanded {
+                    let _ = window.set_ignore_cursor_events(true);
+                    ignore_again_at = None;
+                }
+            }
+        }
+    }
+
+    /// Opens the full panel under the island, centred and kept on the screen.
+    pub fn open_panel_under_notch(app: &AppHandle, panel_label: &str) {
+        let Some(state) = app.try_state::<Arc<NotchState>>() else {
+            return;
+        };
+        let geo = *state.geometry.lock().unwrap();
+        state.fold_request.store(true, Ordering::Relaxed);
+        let Some(panel) = app.get_webview_window(panel_label) else {
+            return;
+        };
+        if let (Some(geo), Some(monitor), Ok(size)) =
+            (geo, app.primary_monitor().ok().flatten(), panel.outer_size())
+        {
+            let scale = monitor.scale_factor();
+            let origin = monitor.position();
+            let width = size.width as f64 / scale;
+            let (x, _) = geo.panel_top_left(width);
+            let top = (VIRTUAL_H + 8.0) * scale;
+            let _ = panel.set_position(PhysicalPosition::new(
+                (origin.x as f64 + x * scale).round() as i32,
+                (origin.y as f64 + top).round() as i32,
+            ));
+        }
+        let _ = panel.show();
+        let _ = panel.set_focus();
+    }
+}
+
+#[cfg(all(test, any(windows, island_check)))]
+mod win_tests {
+    use super::win::virtual_geometry;
+    use super::*;
+
+    #[test]
+    fn the_island_hangs_from_the_middle_of_the_top_edge() {
+        let geo = virtual_geometry(1920.0, 1080.0).unwrap();
+        assert_eq!(geo.center_x(), 960.0);
+        assert_eq!(geo.top(), 1080.0);
+        let frame = geo.window_frame();
+        assert_eq!(frame.x + frame.w / 2.0, 960.0);
+        assert_eq!(frame.y + frame.h, 1080.0);
+    }
+
+    #[test]
+    fn resting_the_pointer_at_the_top_centre_opens_it() {
+        let geo = virtual_geometry(1920.0, 1080.0).unwrap();
+        let t0 = Instant::now();
+        let mut hover = Hover::default();
+        let top_centre = (960.0, 1079.0);
+        hover.update(&geo, true, top_centre, false, t0);
+        assert_eq!(
+            hover.update(&geo, true, top_centre, false, t0 + Duration::from_millis(300)),
+            Some(Change::Expand)
+        );
+    }
+
+    #[test]
+    fn a_pointer_elsewhere_on_the_top_edge_does_not() {
+        let geo = virtual_geometry(1920.0, 1080.0).unwrap();
+        let t0 = Instant::now();
+        let mut hover = Hover::default();
+        let far_left = (100.0, 1079.0);
+        hover.update(&geo, true, far_left, false, t0);
+        assert_eq!(hover.update(&geo, true, far_left, false, t0 + Duration::from_secs(2)), None);
+    }
+
+    #[test]
+    fn a_screen_too_small_for_the_card_has_no_island() {
+        assert_eq!(virtual_geometry(300.0, 200.0), None);
     }
 }
