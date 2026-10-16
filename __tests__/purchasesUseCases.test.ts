@@ -179,7 +179,24 @@ describe('PurchasePackageUseCase', () => {
       purchases,
       new SyncCustomerInfoUseCase(fakeSub()),
     ).execute('yearly_subscription');
-    expect(result).toEqual({ status: 'error', message: 'Store unavailable' });
+    expect(result).toEqual({ status: 'error', message: 'Store unavailable', code: 'unknown' });
+  });
+
+  it('reports the RevenueCat error code so a failure can be told apart', async () => {
+    const purchases = new FakePurchases();
+    purchases.purchaseError = Object.assign(new Error('Item unavailable'), {
+      code: '5',
+      userInfo: { readableErrorCode: 'PRODUCT_NOT_AVAILABLE_FOR_PURCHASE' },
+    });
+    const result = await new PurchasePackageUseCase(
+      purchases,
+      new SyncCustomerInfoUseCase(fakeSub()),
+    ).execute('yearly_subscription');
+    expect(result).toEqual({
+      status: 'error',
+      message: 'Item unavailable',
+      code: 'PRODUCT_NOT_AVAILABLE_FOR_PURCHASE',
+    });
   });
 });
 

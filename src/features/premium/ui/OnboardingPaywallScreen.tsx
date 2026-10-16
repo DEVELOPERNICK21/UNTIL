@@ -1,6 +1,10 @@
 /**
- * Hybrid paywall: RevenueCat first screen, then custom PremiumPaywallBody.
- * Settings → Premium stays custom-only.
+ * Hybrid paywall: the RevenueCat paywall first. If the person closes it, they move on: a second
+ * paywall straight after would be a second wall. The custom PremiumPaywallBody is the fallback
+ * only when the RevenueCat one errors or cannot be shown. Settings → Premium stays custom-only.
+ *
+ * Nobody is left on a spinner: if the RevenueCat paywall has not appeared after a while, a
+ * "Skip for now" appears.
  */
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
@@ -28,6 +32,9 @@ import { MONETIZATION_PAYWALL_COPY } from '../../../config/monetization';
 import { logAnalyticsEvent } from '../../../shared/analytics/analytics';
 import type { AuthStackParamList } from '../../../shared/navigation/types';
 
+/** How long to wait for the RevenueCat paywall before offering a way past the spinner. */
+const SPINNER_ESCAPE_AFTER_MS = 10_000;
+
 export function OnboardingPaywallScreen() {
   const insets = useSafeAreaInsets();
   const theme = useTheme();
@@ -39,6 +46,12 @@ export function OnboardingPaywallScreen() {
   const { present, presenting } = usePresentRevenueCatPaywall();
   const [showCustomPaywall, setShowCustomPaywall] = useState(false);
   const presentedOnce = useRef(false);
+  const [canSkipSpinner, setCanSkipSpinner] = useState(false);
+
+  useEffect(() => {
+    const id = setTimeout(() => setCanSkipSpinner(true), SPINNER_ESCAPE_AFTER_MS);
+    return () => clearTimeout(id);
+  }, []);
 
   const lifeProgress =
     typeof timeState.life === 'number' ? timeState.life : undefined;
@@ -56,11 +69,18 @@ export function OnboardingPaywallScreen() {
       void logAnalyticsEvent('onboarding_paywall_seen', { deferred: false });
       void logAnalyticsEvent('premium_viewed', { source: 'onboarding_paywall' });
       const result = await present();
+      void logAnalyticsEvent('onboarding_paywall_result', { result });
       if (result === 'purchased' || result === 'restored') {
         goNext();
         return;
       }
-      // Closed RC paywall, error, or unavailable → show custom second screen
+      if (result === 'cancelled') {
+        // They looked and closed it. Let them in.
+        void logAnalyticsEvent('onboarding_paywall_skipped', { source: 'revenuecat' });
+        goNext();
+        return;
+      }
+      // Error or not shown → our own paywall, so there is still a way to subscribe.
       setShowCustomPaywall(true);
     })();
   }, [present, goNext]);
@@ -72,6 +92,20 @@ export function OnboardingPaywallScreen() {
           {presenting && !showCustomPaywall ? (
             <View style={styles.loading}>
               <ActivityIndicator color={theme.textPrimary} />
+              {canSkipSpinner ? (
+                <TouchableOpacity
+                  onPress={() => {
+                    void logAnalyticsEvent('onboarding_paywall_skipped', { source: 'spinner' });
+                    goNext();
+                  }}
+                  style={styles.spinnerSkip}
+                  activeOpacity={0.7}
+                >
+                  <Text variant="body" style={{ color: theme.textSecondary }}>
+                    Skip for now
+                  </Text>
+                </TouchableOpacity>
+              ) : null}
             </View>
           ) : null}
 
@@ -131,6 +165,7 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   safe: { flex: 1 },
   loading: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  spinnerSkip: { marginTop: Spacing[4], padding: Spacing[2] },
   scroll: {
     paddingHorizontal: Spacing[4],
     paddingTop: Spacing[3],

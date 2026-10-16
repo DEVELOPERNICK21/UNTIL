@@ -55,6 +55,7 @@ import { logAnalyticsEvent } from '../../../shared/analytics/analytics';
 import { setEmberRouteOverride } from '../../../shared/ui/emberSurface';
 import { TaskReportContent } from '../../tasks';
 import { InterventionHomeCard } from '../../activity';
+import { CountdownHomeCard } from '../../countdowns';
 import {
   formatDayPassedLeftWithSeconds,
   formatLifePassedLeft,
@@ -444,6 +445,8 @@ export function HomeScreen() {
               </Animated.View>
 
               <DailyQuestsCard quests={quests} onQuestPress={handleFabPress} />
+
+              <CountdownHomeCard />
 
               <InterventionHomeCard />
 

@@ -16,6 +16,8 @@ import type { appleAuth as appleAuthType } from '@invertase/react-native-apple-a
 import {
   AuthCancelledError,
   AuthRequiresRecentLoginError,
+  describeAuthFailure,
+  friendlyGoogleSignInMessage,
   isAuthCancelledError,
 } from '../domain/authErrors';
 import { recordCrashError } from '../../../shared/analytics/analytics';
@@ -349,6 +351,9 @@ export class FirebaseAuthServiceAdapter implements IAuthService {
       if (isAuthCancelledError(e)) {
         throw new AuthCancelledError();
       }
+      const friendly = friendlyGoogleSignInMessage(e);
+      // Keep the native code on the error so the screen can report it.
+      if (friendly) throw Object.assign(new Error(friendly), { code: describeAuthFailure(e).error_code });
       throw e;
     }
     if (response.type !== 'success') {

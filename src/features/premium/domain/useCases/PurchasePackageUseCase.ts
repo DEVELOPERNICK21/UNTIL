@@ -1,11 +1,11 @@
-import { isPurchaseCancelledError } from '../purchasesErrors';
+import { isPurchaseCancelledError, purchaseErrorCode } from '../purchasesErrors';
 import type { IPurchasesRepository } from '../ports/IPurchasesRepository';
 import type { SyncCustomerInfoUseCase } from './SyncCustomerInfoUseCase';
 
 export type PurchasePackageResult =
   | { status: 'purchased' }
   | { status: 'cancelled' }
-  | { status: 'error'; message: string };
+  | { status: 'error'; message: string; code: string };
 
 export class PurchasePackageUseCase {
   constructor(
@@ -25,6 +25,7 @@ export class PurchasePackageUseCase {
       return {
         status: 'error',
         message: error instanceof Error ? error.message : 'Purchase failed',
+        code: purchaseErrorCode(error),
       };
     }
   }

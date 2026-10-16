@@ -298,8 +298,8 @@ export function PremiumPaywallBody({
             plan_id: productId,
             source,
             price_display: priceDisplay,
-            error_code: 'purchase_failed',
-            error_message: result.message,
+            error_code: result.code,
+            error_message: result.message.slice(0, 100),
             payment_provider: 'revenuecat',
           });
           recordCrashError(
@@ -335,7 +335,7 @@ export function PremiumPaywallBody({
           source,
           price_display: priceDisplay,
           error_code: err?.code ?? 'unknown',
-          error_message: err?.message ?? 'Unknown error',
+          error_message: (err?.message ?? 'Unknown error').slice(0, 100),
           payment_provider: 'revenuecat',
         });
         recordCrashError(e, 'PremiumPaywallBody.requestPurchase');

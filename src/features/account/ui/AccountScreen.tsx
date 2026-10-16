@@ -26,7 +26,7 @@ import { LEGAL_URLS } from '../../../config/monetization';
 import { MINIMUM_ACCOUNT_AGE_YEARS } from '../hooks/useAccountActions';
 import { useAuthSession } from '../hooks/useAuthSession';
 import { useAccountActions } from '../hooks/useAccountActions';
-import { isAuthRequiresPasswordError } from '../domain/authErrors';
+import { isAuthRequiresPasswordError, describeAuthFailure } from '../domain/authErrors';
 import {
   useTheme,
   Spacing,
@@ -141,8 +141,9 @@ export function AccountScreen() {
         provider: 'apple',
       });
       void loadDevices();
-    } catch {
+    } catch (e) {
       void logAnalyticsEvent('account_screen_signin_failed', {
+        ...describeAuthFailure(e),
         provider: 'apple',
       });
     }
@@ -160,8 +161,9 @@ export function AccountScreen() {
         provider: 'google',
       });
       void loadDevices();
-    } catch {
+    } catch (e) {
       void logAnalyticsEvent('account_screen_signin_failed', {
+        ...describeAuthFailure(e),
         provider: 'google',
       });
     }
@@ -180,8 +182,9 @@ export function AccountScreen() {
         mode: emailMode,
       });
       void loadDevices();
-    } catch {
+    } catch (e) {
       void logAnalyticsEvent('account_screen_signin_failed', {
+        ...describeAuthFailure(e),
         provider: 'password',
         mode: emailMode,
       });

@@ -41,6 +41,7 @@ import {
 import { appLogoIcon } from '../../../assets/images';
 import { MINIMUM_ACCOUNT_AGE_YEARS } from '../hooks/useAccountActions';
 import { useAccountActions } from '../hooks/useAccountActions';
+import { describeAuthFailure } from '../domain/authErrors';
 import { useOnboardingComplete, useEnter } from '../../onboarding';
 import { logAnalyticsEvent } from '../../../shared/analytics/analytics';
 import {
@@ -164,8 +165,9 @@ export function AccountPromptScreen() {
       });
       setConfirmVisible(false);
       finishSignedIn(result.deviceLimitReached);
-    } catch {
+    } catch (e) {
       void logAnalyticsEvent('account_prompt_signin_failed', {
+        ...describeAuthFailure(e),
         provider: 'apple',
       });
     } finally {
@@ -189,8 +191,9 @@ export function AccountPromptScreen() {
       });
       setConfirmVisible(false);
       finishSignedIn(result.deviceLimitReached);
-    } catch {
+    } catch (e) {
       void logAnalyticsEvent('account_prompt_signin_failed', {
+        ...describeAuthFailure(e),
         provider: 'google',
       });
     } finally {
@@ -214,8 +217,9 @@ export function AccountPromptScreen() {
       });
       setConfirmVisible(false);
       finishSignedIn(result.deviceLimitReached);
-    } catch {
+    } catch (e) {
       void logAnalyticsEvent('account_prompt_signin_failed', {
+        ...describeAuthFailure(e),
         provider: 'password',
         mode: emailMode,
       });

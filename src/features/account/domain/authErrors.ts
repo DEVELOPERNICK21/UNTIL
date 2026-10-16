@@ -68,3 +68,35 @@ export function isAuthRequiresPasswordError(error: unknown): boolean {
   const code = (error as { code?: unknown } | null | undefined)?.code;
   return code === AUTH_REQUIRES_PASSWORD_REAUTH_CODE;
 }
+
+/** What went wrong, short enough and free enough of personal data to send to analytics. */
+export function describeAuthFailure(error: unknown): { error_code: string; error_message: string } {
+  const code = (error as { code?: unknown } | null | undefined)?.code;
+  const message = error instanceof Error ? error.message : String(error ?? '');
+  return {
+    error_code: code == null || code === '' ? 'unknown' : String(code).slice(0, 60),
+    error_message: message.replace(/[^\s@]+@[^\s@]+/g, '[email]').slice(0, 100),
+  };
+}
+
+/**
+ * Google Sign-In reports setup problems as bare native codes ("10", "DEVELOPER_ERROR"). Say what
+ * the person can do about it instead. Null when the error is not one of these.
+ */
+export function friendlyGoogleSignInMessage(error: unknown): string | null {
+  const { error_code: code, error_message: message } = describeAuthFailure(error);
+  const text = `${code} ${message}`.toUpperCase();
+  if (code === '10' || text.includes('DEVELOPER_ERROR')) {
+    return 'Google sign-in is not available in this version yet. Use email to sign in.';
+  }
+  if (code === '7' || text.includes('NETWORK_ERROR')) {
+    return 'Network error. Check your connection and try again.';
+  }
+  if (text.includes('PLAY_SERVICES_NOT_AVAILABLE')) {
+    return 'Google Play services is missing or out of date. Update it and try again.';
+  }
+  if (code === '12500' || code === '8' || text.includes('SIGN_IN_FAILED')) {
+    return 'Google sign-in did not finish. Try again, or use email.';
+  }
+  return null;
+}

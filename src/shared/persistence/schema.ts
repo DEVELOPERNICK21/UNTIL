@@ -110,6 +110,8 @@ export const STORAGE_KEYS = {
 
   // App update checks
   UPDATE_LAST_CHECK_AT: 'update.lastCheckAt',
+  /** When the system notification prompt was last shown (shared/platform/notificationPermission). */
+  NOTIFICATION_PERMISSION_LAST_ASK_AT: 'notifications.permissionLastAskAt',
   UPDATE_DISMISSED_VERSION: 'update.dismissedVersion',
 
   // Play subscription reconcile (expired/canceled)
