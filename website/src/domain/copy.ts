@@ -94,7 +94,7 @@ export const LANDING_COPY = {
     windows: 'Download for Windows',
     requirements: 'macOS 11 or later · Windows 10 or later',
     firstOpen:
-      'First time: on a Mac, right-click UNTIL and choose Open. On Windows, choose More info, then Run anyway. The app is not code-signed yet.',
+      'First time on a Mac: open UNTIL, click Done, then go to System Settings, Privacy & Security, and choose Open Anyway. On Windows, choose More info, then Run anyway. The app is not notarized yet.',
     comingSoon: 'Desktop downloads are coming soon.',
   },
 
