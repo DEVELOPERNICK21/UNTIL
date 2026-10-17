@@ -444,23 +444,6 @@ export function HomeScreen() {
                 </Text>
               </Animated.View>
 
-              <DailyQuestsCard quests={quests} onQuestPress={handleFabPress} />
-
-              <CountdownHomeCard />
-
-              <InterventionHomeCard />
-
-              {reflectionVisible ? (
-                <TimeCoachCard
-                  reflection={reflection}
-                  tone={reflectionTone}
-                  canUsePremiumReflections={canUsePremiumReflections}
-                  onDismiss={dismissReflection}
-                  onToneChange={setReflectionTone}
-                  onBirthDatePress={() => navigation.navigate('Settings')}
-                />
-              ) : null}
-
               <View style={styles.tileGrid}>
                 <View style={[styles.tileCell, { width: tileWidth }]}>
                   <TodayTimeBlock
@@ -574,6 +557,23 @@ export function HomeScreen() {
                   )}
                 </View>
               </View>
+
+              <DailyQuestsCard quests={quests} onQuestPress={handleFabPress} />
+
+              <CountdownHomeCard />
+
+              <InterventionHomeCard />
+
+              {reflectionVisible ? (
+                <TimeCoachCard
+                  reflection={reflection}
+                  tone={reflectionTone}
+                  canUsePremiumReflections={canUsePremiumReflections}
+                  onDismiss={dismissReflection}
+                  onToneChange={setReflectionTone}
+                  onBirthDatePress={() => navigation.navigate('Settings')}
+                />
+              ) : null}
 
               <BadgeShelf overview={badgeOverview} onOpen={handleBadgesPress} />
 
