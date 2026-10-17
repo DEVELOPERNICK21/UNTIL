@@ -108,6 +108,9 @@ export const STORAGE_KEYS = {
   RETENTION_NOTIFICATIONS_PERMISSION_REQUESTED:
     'retention.notifications.permissionRequested',
 
+  // Home. Owner: home/services/swipeHint.
+  HOME_SWIPE_HINT_SHOWN: 'home.swipeHintShown',
+
   // App update checks
   UPDATE_LAST_CHECK_AT: 'update.lastCheckAt',
   /** When the system notification prompt was last shown (shared/platform/notificationPermission). */
