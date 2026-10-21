@@ -13,6 +13,7 @@ import {
   isCrashReportingAllowed,
   subscribeAnalyticsConsent,
 } from './analyticsConsent';
+import { isTransientNetworkError } from './transientErrors';
 
 export type AnalyticsPaywallSource =
   | 'premium_screen'
@@ -113,6 +114,7 @@ export type AnalyticsEventName =
   | 'account_prompt_skip_cancelled'
   | 'account_prompt_password_reset_requested'
   | 'account_prompt_password_reset_failed'
+  | 'account_age_backfill'
   | 'account_screen_viewed'
   | 'account_screen_apple_tapped'
   | 'account_screen_google_tapped'
@@ -288,6 +290,11 @@ export function recordCrashError(error: unknown, context?: string): void {
   if (!crashlytics) return;
   try {
     if (context) crashlytics.log(context);
+    // Offline is not a bug: leave a log line for the next real report instead of a report of its own.
+    if (isTransientNetworkError(err)) {
+      crashlytics.log(`offline: ${err.message}`);
+      return;
+    }
     crashlytics.recordError(err);
   } catch {
     //

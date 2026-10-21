@@ -19,6 +19,8 @@ import { SignOutUseCase } from '../../features/account/domain/useCases/SignOutUs
 import { ReleaseThisDeviceUseCase } from '../../features/account/domain/useCases/ReleaseThisDeviceUseCase';
 import { DeleteAccountUseCase } from '../../features/account/domain/useCases/DeleteAccountUseCase';
 import { RemoveAccountDeviceUseCase } from '../../features/account/domain/useCases/RemoveAccountDeviceUseCase';
+import { EnsureAccountAgeRecordedUseCase } from '../../features/account/domain/useCases/EnsureAccountAgeRecordedUseCase';
+import { isKnownUnderMinimumAge } from '../../shared/analytics/analyticsConsent';
 import {
   accountCloudStore,
   authService,
@@ -170,4 +172,11 @@ export const removeAccountDeviceUseCase = new RemoveAccountDeviceUseCase(
   registerDeviceUseCase,
   bindEntitlementToAccountUseCase,
   syncPremiumBridge
+);
+
+/** Gives accounts that signed in before the age gate the 13+ flag the Firestore rules require. */
+export const ensureAccountAgeRecordedUseCase = new EnsureAccountAgeRecordedUseCase(
+  accountCloudStore,
+  timeRepository,
+  { isLockedOut: isKnownUnderMinimumAge }
 );

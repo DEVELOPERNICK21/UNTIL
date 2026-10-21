@@ -12,6 +12,13 @@ import {
 
 export const APP_NAME = 'UNTIL : Countdown & Time Left' as const;
 
+/**
+ * The one address people write to for support, privacy requests and copyright notices.
+ * The "+until" part lands in the same Gmail inbox but can be filtered into its own label.
+ * Move to a custom-domain address (for example support@your-domain) once a domain is registered.
+ */
+const SUPPORT_EMAIL = 'developernick1+until@gmail.com';
+
 export const SITE_CONFIG = {
   /** Base URL for canonical links and sitemap */
   baseUrl:
@@ -20,7 +27,7 @@ export const SITE_CONFIG = {
   appName: APP_NAME,
   tagline: 'Countdown & time left. Day, month, year, life.',
   /** Contact email for privacy/legal inquiries (required for store listings) */
-  contactEmail: 'support@until-app.com',
+  contactEmail: SUPPORT_EMAIL,
   /**
    * DMCA designated agent. Must match the registration at
    * https://www.copyright.gov/dmca-directory/ exactly. Fields left null are hidden on /copyright.
@@ -29,7 +36,7 @@ export const SITE_CONFIG = {
     name: null as string | null,
     postalAddress: null as string | null,
     phone: null as string | null,
-    email: 'support@until-app.com',
+    email: SUPPORT_EMAIL,
     registrationNumber: null as string | null,
   },
   /** Placeholder; replace with real store URLs when published */
