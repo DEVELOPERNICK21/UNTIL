@@ -107,6 +107,18 @@ export const STORAGE_KEYS = {
   RETENTION_NOTIFICATIONS_IDS: 'retention.notifications.ids',
   RETENTION_NOTIFICATIONS_PERMISSION_REQUESTED:
     'retention.notifications.permissionRequested',
+  /** How often the daily check-in reminder was offered (engagement/data/MmkvReminderOptInStore). */
+  REMINDER_OPT_IN_ASKS: 'retention.optIn.asks',
+  REMINDER_OPT_IN_LAST_ASK_AT: 'retention.optIn.lastAskAt',
+
+  // Home. Owner: home/services/swipeHint.
+  HOME_SWIPE_HINT_SHOWN: 'home.swipeHintShown',
+
+  // Task and deadline notifications. Owner: engagement/services/taskDeadlineNotifications.
+  TASK_DEADLINE_NOTIFICATIONS_ENABLED: 'taskDeadline.notifications.enabled',
+  TASK_DEADLINE_NOTIFICATIONS_IDS: 'taskDeadline.notifications.ids',
+  TASK_DEADLINE_COMPLETION_NOTIFIED_DATE:
+    'taskDeadline.notifications.completionNotifiedDate',
 
   // App update checks
   UPDATE_LAST_CHECK_AT: 'update.lastCheckAt',

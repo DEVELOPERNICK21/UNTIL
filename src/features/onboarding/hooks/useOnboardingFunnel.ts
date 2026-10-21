@@ -18,6 +18,8 @@ import type {
   OnboardingFunnelStep,
   OnboardingQuizAnswers,
 } from '../../../shared/types';
+import { checkInReminders } from '../../../shared/platform/checkInReminders';
+import { wantsDailyCheckIns } from '../domain/quizFunnel';
 import type { OnboardingResultCard } from '../domain/useCases/GetOnboardingResultCardsUseCase';
 
 export function useOnboardingFunnel() {
@@ -66,6 +68,11 @@ export function useOnboardingFunnel() {
   const patchAnswers = useCallback(
     (patch: Partial<OnboardingQuizAnswers>) => {
       patchOnboardingQuizAnswersUseCase.execute(patch);
+      // They just asked for daily check-ins: turn the reminder on now, so the permission prompt
+      // arrives right after the choice that explains it.
+      if (wantsDailyCheckIns(patch.cadence)) {
+        void checkInReminders.enable('onboarding_cadence');
+      }
       sync();
     },
     [sync]

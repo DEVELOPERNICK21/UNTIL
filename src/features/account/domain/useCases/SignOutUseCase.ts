@@ -1,6 +1,7 @@
 /**
  * SignOutUseCase — end the session and stop treating cloud entitlement as active.
- * DOB, settings, and local purchases stay: sign-out is not a data wipe.
+ * DOB, settings, and local purchases stay: sign-out is not a data wipe. This device also gives
+ * its slot back, while the session can still write to the account.
  */
 
 import type { IAuthService } from '../ports/IAuthService';
@@ -15,10 +16,15 @@ export class SignOutUseCase {
     private readonly subscriptionRepository: ILocalEntitlementStore,
     private readonly resetPurchasesUser: IPurchasesReset,
     private readonly onError?: (error: unknown, context: string) => void,
-    private readonly onEntitlementChanged?: () => void
+    private readonly onEntitlementChanged?: () => void,
+    private readonly releaseThisDevice?: { execute(uid: string): Promise<boolean> }
   ) {}
 
   async execute(): Promise<{ localPremiumKept: boolean }> {
+    const uid = this.authSession.getUid();
+    if (uid && this.releaseThisDevice) {
+      await this.releaseThisDevice.execute(uid);
+    }
     await this.authService.signOut();
     try {
       await this.resetPurchasesUser.execute();

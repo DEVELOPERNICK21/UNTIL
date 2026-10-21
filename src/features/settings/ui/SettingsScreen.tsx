@@ -25,7 +25,11 @@ import {
   useManageSubscription,
 } from '../../premium';
 import { useAppVersion } from '../../app-update';
-import { useRetentionNotifications, useInAppReview } from '../../engagement';
+import {
+  useRetentionNotifications,
+  useInAppReview,
+  useTaskDeadlineNotifications,
+} from '../../engagement';
 import { useDailyNothingLimit } from '../../activity';
 import { useAuthSession } from '../../account';
 import {
@@ -98,6 +102,10 @@ export function SettingsScreen() {
     enabled: retentionRemindersEnabled,
     setEnabled: setRetentionRemindersEnabled,
   } = useRetentionNotifications();
+  const {
+    enabled: taskDeadlineRemindersEnabled,
+    setEnabled: setTaskDeadlineRemindersEnabled,
+  } = useTaskDeadlineNotifications();
   const { analyticsEnabled, analyticsLocked, setAnalyticsEnabled } =
     useAnalyticsConsent();
   const { hasPremiumBundle } = useAccessControl();
@@ -594,6 +602,36 @@ export function SettingsScreen() {
                     }}
                     thumbColor={
                       retentionRemindersEnabled
+                        ? theme.percent
+                        : theme.textSecondary
+                    }
+                  />
+                </View>
+                <View style={styles.row}>
+                  <View style={styles.rowContent}>
+                    <Text variant="body" style={{ color: theme.textPrimary }}>
+                      Task and deadline reminders
+                    </Text>
+                    <Text
+                      variant="caption"
+                      style={[
+                        styles.rowSubtitle,
+                        { color: theme.textSecondary },
+                      ]}
+                    >
+                      Reminder at 11 PM if tasks are open. Alerts on deadline
+                      days.
+                    </Text>
+                  </View>
+                  <Switch
+                    value={taskDeadlineRemindersEnabled}
+                    onValueChange={setTaskDeadlineRemindersEnabled}
+                    trackColor={{
+                      false: theme.divider,
+                      true: 'rgba(232, 124, 32, 0.45)',
+                    }}
+                    thumbColor={
+                      taskDeadlineRemindersEnabled
                         ? theme.percent
                         : theme.textSecondary
                     }

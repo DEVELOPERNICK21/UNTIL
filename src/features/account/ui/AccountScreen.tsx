@@ -3,7 +3,7 @@
  * Signed out: CTA + short benefit line. Signed in: email, devices, sign out.
  */
 
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   View,
   StyleSheet,
@@ -15,15 +15,7 @@ import {
   Platform,
   TextInput,
 } from 'react-native';
-import {
-  Text,
-  ScreenGradient,
-  GlassCard,
-  AgeConfirmationCheck,
-  LegalAgreementLine,
-} from '../../../shared/ui';
-import { LEGAL_URLS } from '../../../config/monetization';
-import { MINIMUM_ACCOUNT_AGE_YEARS } from '../hooks/useAccountActions';
+import { Text, ScreenGradient, GlassCard } from '../../../shared/ui';
 import { useAuthSession } from '../hooks/useAuthSession';
 import { useAccountActions } from '../hooks/useAccountActions';
 import { isAuthRequiresPasswordError, describeAuthFailure } from '../domain/authErrors';
@@ -31,40 +23,30 @@ import {
   useTheme,
   Spacing,
   Radius,
-  Shadows,
   Weight,
   getFontFamilyForWeight,
 } from '../../../shared/theme';
 import type { AccountDevice } from '../../../shared/types';
 import { logAnalyticsEvent } from '../../../shared/analytics/analytics';
 import { promptDesktopDownload } from '../../../shared/desktopDownload';
+import type { EmailAuthMode } from './EmailPasswordAuthForm';
+import { SignInOptions } from './SignInOptions';
+import { AccountDevicesSection } from './AccountDevicesSection';
 import {
-  EmailPasswordAuthForm,
-  type EmailAuthMode,
-} from './EmailPasswordAuthForm';
-import { AppleSignInButton } from './AppleSignInButton';
-import { GoogleMark } from './GoogleMark';
-import {
+  DESKTOP_SLOT_NOTE,
   DEVICE_LIMIT_BANNER_COPY,
   PREMIUM_DEVICES_BENEFIT,
   formatAccountDeviceLabel,
 } from '../domain/accountCopy';
-import { MS_PER_DAY } from '../../../shared/time/constants';
+
+/** Keeps the last line clear of the Ember companion that floats over the bottom-right corner. */
+const EMBER_CLEARANCE = 72;
 
 const SIGN_IN_BENEFITS = [
   'Birth date and life settings',
   PREMIUM_DEVICES_BENEFIT,
   'Restore after reinstall',
 ] as const;
-
-function formatLastSeen(timestampMs: number): string {
-  const diffDays = Math.floor(
-    (Date.now() - timestampMs) / MS_PER_DAY,
-  );
-  if (diffDays <= 0) return 'Active today';
-  if (diffDays === 1) return 'Active yesterday';
-  return `Active ${diffDays} days ago`;
-}
 
 export function AccountScreen() {
   const theme = useTheme();
@@ -75,6 +57,7 @@ export function AccountScreen() {
     signInWithGoogle,
     signInWithEmail,
     createAccountWithEmail,
+    sendPasswordReset,
     signOut,
     deleteAccount,
     removeDevice,
@@ -87,11 +70,9 @@ export function AccountScreen() {
 
   const [devices, setDevices] = useState<AccountDevice[]>([]);
   const [devicesLoading, setDevicesLoading] = useState(false);
+  const [devicesNow, setDevicesNow] = useState(() => Date.now());
   const [removingId, setRemovingId] = useState<string | null>(null);
-  const [authEmail, setAuthEmail] = useState('');
-  const [authPassword, setAuthPassword] = useState('');
-  const [emailMode, setEmailMode] = useState<EmailAuthMode>('sign_in');
-  const [ageConfirmed, setAgeConfirmed] = useState(false);
+  const scrollRef = useRef<ScrollView>(null);
   const [passwordForDelete, setPasswordForDelete] = useState('');
   const [passwordForDeleteVisible, setPasswordForDeleteVisible] =
     useState(false);
@@ -107,12 +88,9 @@ export function AccountScreen() {
     setDevicesLoading(true);
     try {
       const list = await refreshDevices();
-      /** Removed devices stay in Firestore for their history; only active ones hold a slot. */
-      setDevices(
-        list
-          .filter(d => d.active === true)
-          .sort((a, b) => b.lastSeenAt - a.lastSeenAt),
-      );
+      /** Removed devices stay in Firestore for their history; only active ones are listed. */
+      setDevices(list.filter(d => d.active === true));
+      setDevicesNow(Date.now());
     } catch {
       // Message is already surfaced via the hook's error state.
       setDevices([]);
@@ -130,7 +108,7 @@ export function AccountScreen() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const handleAppleSignIn = async () => {
+  const handleAppleSignIn = async (ageConfirmed: boolean) => {
     void logAnalyticsEvent('account_screen_apple_tapped');
     try {
       const result = await signInWithApple(ageConfirmed);
@@ -150,7 +128,7 @@ export function AccountScreen() {
     }
   };
 
-  const handleGoogleSignIn = async () => {
+  const handleGoogleSignIn = async (ageConfirmed: boolean) => {
     void logAnalyticsEvent('account_screen_google_tapped');
     try {
       const result = await signInWithGoogle(ageConfirmed);
@@ -170,26 +148,49 @@ export function AccountScreen() {
     }
   };
 
-  const handleEmailSubmit = async () => {
-    void logAnalyticsEvent('account_screen_email_tapped', { mode: emailMode });
+  const handleEmailSubmit = async (
+    mode: EmailAuthMode,
+    authEmail: string,
+    authPassword: string,
+    ageConfirmed: boolean,
+  ) => {
+    void logAnalyticsEvent('account_screen_email_tapped', { mode });
     try {
-      if (emailMode === 'sign_in') {
+      if (mode === 'sign_in') {
         await signInWithEmail(authEmail, authPassword, ageConfirmed);
       } else {
         await createAccountWithEmail(authEmail, authPassword, ageConfirmed);
       }
       void logAnalyticsEvent('account_screen_signin_succeeded', {
         provider: 'password',
-        mode: emailMode,
+        mode,
       });
       void loadDevices();
     } catch (e) {
       void logAnalyticsEvent('account_screen_signin_failed', {
         ...describeAuthFailure(e),
         provider: 'password',
-        mode: emailMode,
+        mode,
       });
     }
+  };
+
+  const handleForgotPassword = async (authEmail: string): Promise<boolean> => {
+    try {
+      await sendPasswordReset(authEmail);
+      void logAnalyticsEvent('account_screen_password_reset_requested');
+      return true;
+    } catch (e) {
+      void logAnalyticsEvent('account_screen_password_reset_failed', {
+        ...describeAuthFailure(e),
+      });
+      return false;
+    }
+  };
+
+  /** Lets the email form open and the keyboard settle, then brings the form into view. */
+  const scrollToEnd = () => {
+    setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 250);
   };
 
   const handleSignOut = () => {
@@ -313,10 +314,14 @@ export function AccountScreen() {
     <View style={styles.container}>
       <ScreenGradient>
         <ScrollView
+          ref={scrollRef}
           contentContainerStyle={[
             styles.content,
-            { paddingBottom: Spacing[6] },
+            { paddingBottom: Spacing[6] + EMBER_CLEARANCE },
           ]}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
+          automaticallyAdjustKeyboardInsets
           showsVerticalScrollIndicator={false}
         >
           {!signedIn ? (
@@ -351,95 +356,22 @@ export function AccountScreen() {
               </View>
 
               <GlassCard style={styles.introCard}>
-                <AgeConfirmationCheck
-                  checked={ageConfirmed}
-                  onChange={setAgeConfirmed}
-                  minimumAge={MINIMUM_ACCOUNT_AGE_YEARS}
-                  disabled={busy}
-                />
-                <LegalAgreementLine
-                  termsUrl={LEGAL_URLS.terms}
-                  privacyUrl={LEGAL_URLS.privacy}
-                />
-                {/* App Store guideline 4.8: Apple must sit alongside Google on iOS. */}
-                {appleSignInAvailable ? (
-                  <AppleSignInButton
-                    onPress={() => {
-                      void handleAppleSignIn();
-                    }}
-                    busy={busy}
-                  />
-                ) : null}
-                <TouchableOpacity
-                  style={[
-                    styles.googleButton,
-                    {
-                      backgroundColor: '#F8F8F8',
-                      borderColor: theme.glassBorder,
-                    },
-                  ]}
-                  onPress={handleGoogleSignIn}
-                  activeOpacity={0.85}
-                  disabled={busy}
-                  accessibilityRole="button"
-                  accessibilityLabel="Continue with Google"
-                  accessibilityState={{ busy, disabled: busy }}
-                >
-                  {busy ? (
-                    <ActivityIndicator color="#1A1A1A" />
-                  ) : (
-                    <>
-                      <GoogleMark />
-                      <Text
-                        variant="sectionTitle"
-                        style={styles.googleButtonLabel}
-                      >
-                        Continue with Google
-                      </Text>
-                    </>
-                  )}
-                </TouchableOpacity>
-
-                <View style={styles.orRow}>
-                  <View
-                    style={[styles.orLine, { backgroundColor: theme.divider }]}
-                  />
-                  <Text variant="caption" style={{ color: theme.textMuted }}>
-                    or with email
-                  </Text>
-                  <View
-                    style={[styles.orLine, { backgroundColor: theme.divider }]}
-                  />
-                </View>
-
-                <EmailPasswordAuthForm
-                  email={authEmail}
-                  password={authPassword}
-                  mode={emailMode}
+                <SignInOptions
+                  appleSignInAvailable={appleSignInAvailable}
                   busy={busy}
-                  onEmailChange={setAuthEmail}
-                  onPasswordChange={setAuthPassword}
-                  onModeChange={setEmailMode}
-                  onSubmit={() => {
-                    void handleEmailSubmit();
+                  error={error}
+                  onApple={handleAppleSignIn}
+                  onGoogle={handleGoogleSignIn}
+                  onEmail={handleEmailSubmit}
+                  onForgotPassword={handleForgotPassword}
+                  onClearError={clearError}
+                  onAgeGateBlocked={provider => {
+                    void logAnalyticsEvent('account_screen_age_gate_blocked', {
+                      provider,
+                    });
                   }}
+                  onEmailOpened={scrollToEnd}
                 />
-
-                <Text
-                  variant="caption"
-                  style={[styles.trustLine, { color: theme.textMuted }]}
-                >
-                  Up to 3 devices per account
-                </Text>
-
-                {error ? (
-                  <Text
-                    variant="caption"
-                    style={[styles.errorText, styles.errorBelowForm]}
-                  >
-                    {error}
-                  </Text>
-                ) : null}
               </GlassCard>
             </View>
           ) : (
@@ -482,76 +414,14 @@ export function AccountScreen() {
                 </GlassCard>
               )}
 
-              <View style={styles.section}>
-                <Text
-                  variant="caption"
-                  style={[styles.sectionLabel, { color: theme.textSecondary }]}
-                >
-                  Devices
-                </Text>
-                <GlassCard style={styles.sectionCard}>
-                  {devicesLoading ? (
-                    <View style={styles.devicesLoading}>
-                      <ActivityIndicator color={theme.textSecondary} />
-                    </View>
-                  ) : devices.length === 0 ? (
-                    <View style={[styles.row, styles.rowLast]}>
-                      <Text
-                        variant="caption"
-                        style={{ color: theme.textSecondary }}
-                      >
-                        No devices yet.
-                      </Text>
-                    </View>
-                  ) : (
-                    devices.map((device, index) => (
-                      <View
-                        key={device.id}
-                        style={[
-                          styles.row,
-                          index === devices.length - 1
-                            ? styles.rowLast
-                            : { borderBottomColor: theme.glassBorder },
-                        ]}
-                      >
-                        <View style={styles.rowContent}>
-                          <Text
-                            variant="body"
-                            style={{ color: theme.textPrimary }}
-                          >
-                            {formatAccountDeviceLabel(device)}
-                            {device.id === currentDeviceId
-                              ? ' · This device'
-                              : ''}
-                          </Text>
-                          <Text
-                            variant="caption"
-                            style={[
-                              styles.rowSubtitle,
-                              { color: theme.textSecondary },
-                            ]}
-                          >
-                            {formatLastSeen(device.lastSeenAt)}
-                          </Text>
-                        </View>
-                        <TouchableOpacity
-                          onPress={() => handleRemoveDevice(device)}
-                          disabled={removingId === device.id}
-                          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                        >
-                          {removingId === device.id ? (
-                            <ActivityIndicator color={theme.textSecondary} />
-                          ) : (
-                            <Text variant="caption" style={styles.removeLabel}>
-                              Remove
-                            </Text>
-                          )}
-                        </TouchableOpacity>
-                      </View>
-                    ))
-                  )}
-                </GlassCard>
-              </View>
+              <AccountDevicesSection
+                devices={devices}
+                currentDeviceId={currentDeviceId}
+                loading={devicesLoading}
+                removingId={removingId}
+                now={devicesNow}
+                onRemove={handleRemoveDevice}
+              />
 
               <TouchableOpacity
                 style={[
@@ -574,7 +444,7 @@ export function AccountScreen() {
                       { color: theme.textSecondary },
                     ]}
                   >
-                    Menu bar or tray. Counts as one of your 3 devices.
+                    {DESKTOP_SLOT_NOTE}
                   </Text>
                 </View>
                 <Text style={[styles.chevron, { color: theme.textSecondary }]}>
@@ -793,44 +663,9 @@ const styles = StyleSheet.create({
     height: 6,
     borderRadius: 3,
   },
-  googleButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: Spacing[3],
-    paddingHorizontal: Spacing[4],
-    borderRadius: Radius.md,
-    borderWidth: StyleSheet.hairlineWidth,
-    minHeight: 52,
-    width: '100%',
-    gap: Spacing.sm,
-    ...Shadows.card,
-  },
-  googleButtonLabel: {
-    fontFamily: getFontFamilyForWeight(Weight.semibold),
-    color: '#1A1A1A',
-  },
-  orRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing[2],
-    marginVertical: Spacing[3],
-    width: '100%',
-  },
-  orLine: {
-    flex: 1,
-    height: StyleSheet.hairlineWidth,
-  },
-  trustLine: {
-    textAlign: 'center',
-    marginTop: Spacing[3],
-  },
   errorText: {
     color: '#E85C5C',
     textAlign: 'center',
-  },
-  errorBelowForm: {
-    marginTop: Spacing[2],
   },
   errorTextSpacing: {
     marginBottom: Spacing[3],

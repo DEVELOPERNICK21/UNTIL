@@ -3,6 +3,7 @@
  */
 
 import { useState, useEffect, useCallback } from 'react';
+import { emitEmberReaction } from '../../../shared/ui/emberReactions';
 import {
   addTaskUseCase,
   getTasksForDayUseCase,
@@ -46,6 +47,7 @@ export function useDailyTasks(date: string) {
       toggleTaskUseCase.execute(id);
       refresh();
       if (task && !task.completed) {
+        emitEmberReaction('cheer');
         void logAnalyticsEvent('task_completed');
       }
     },

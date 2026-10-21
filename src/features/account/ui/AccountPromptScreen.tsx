@@ -50,7 +50,7 @@ import {
 } from './EmailPasswordAuthForm';
 import { AppleSignInButton } from './AppleSignInButton';
 import { EmailMark } from './EmailMark';
-import { GoogleMark } from './GoogleMark';
+import { GoogleSignInButton } from './GoogleSignInButton';
 import { PREMIUM_DEVICES_BENEFIT } from '../domain/accountCopy';
 
 const DEVICE_LIMIT_NOTE_MS = 2200;
@@ -74,6 +74,7 @@ export function AccountPromptScreen() {
     signInWithGoogle,
     signInWithEmail,
     createAccountWithEmail,
+    sendPasswordReset,
     busy,
     error,
   } = useAccountActions();
@@ -86,6 +87,7 @@ export function AccountPromptScreen() {
   const [ageConfirmed, setAgeConfirmed] = useState(false);
   const [ageNudge, setAgeNudge] = useState(false);
   const [pending, setPending] = useState<PendingProvider>(null);
+  const [resetNotice, setResetNotice] = useState<string | null>(null);
   const shakeX = useRef(new Animated.Value(0)).current;
   const isLight = theme.statusBarStyle === 'dark-content';
 
@@ -228,6 +230,21 @@ export function AccountPromptScreen() {
     }
   };
 
+  const handleForgotPassword = async () => {
+    setResetNotice(null);
+    try {
+      await sendPasswordReset(email);
+      void logAnalyticsEvent('account_prompt_password_reset_requested');
+      setResetNotice(
+        'If that email has an account, a reset link is on its way. Check your spam folder too.',
+      );
+    } catch (e) {
+      void logAnalyticsEvent('account_prompt_password_reset_failed', {
+        ...describeAuthFailure(e),
+      });
+    }
+  };
+
   const openEmailForm = () => {
     if (!reduceMotion) {
       LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
@@ -258,11 +275,6 @@ export function AccountPromptScreen() {
 
   const handleSheetDismiss = () => {
     setConfirmVisible(false);
-  };
-
-  const secondaryButtonColors = {
-    backgroundColor: isLight ? '#FFFFFF' : '#F8F8F8',
-    borderColor: isLight ? 'rgba(26,26,26,0.12)' : 'transparent',
   };
 
   return (
@@ -354,14 +366,6 @@ export function AccountPromptScreen() {
                           attention={ageNudge}
                         />
                       </Animated.View>
-                      {ageNudge && !ageConfirmed ? (
-                        <Text
-                          variant="caption"
-                          style={[styles.ageHint, { color: theme.percent }]}
-                        >
-                          Tick this to continue.
-                        </Text>
-                      ) : null}
 
                       <View style={styles.providers}>
                         {/* App Store guideline 4.8: Apple must sit alongside Google on iOS. */}
@@ -375,34 +379,13 @@ export function AccountPromptScreen() {
                           />
                         ) : null}
 
-                        <TouchableOpacity
-                          style={[styles.providerButton, secondaryButtonColors]}
+                        <GoogleSignInButton
                           onPress={() => {
                             void handleGoogleSignIn();
                           }}
-                          activeOpacity={0.85}
+                          busy={pending === 'google'}
                           disabled={busy}
-                          accessibilityRole="button"
-                          accessibilityLabel="Continue with Google"
-                          accessibilityState={{
-                            busy: pending === 'google',
-                            disabled: busy,
-                          }}
-                        >
-                          {pending === 'google' ? (
-                            <ActivityIndicator color="#1A1A1A" />
-                          ) : (
-                            <>
-                              <GoogleMark />
-                              <Text
-                                variant="sectionTitle"
-                                style={styles.providerLabel}
-                              >
-                                Continue with Google
-                              </Text>
-                            </>
-                          )}
-                        </TouchableOpacity>
+                        />
 
                         {emailOpen ? (
                           <View style={styles.emailForm}>
@@ -431,11 +414,23 @@ export function AccountPromptScreen() {
                               password={password}
                               mode={emailMode}
                               busy={busy}
-                              onEmailChange={setEmail}
+                              autoFocus
+                              submitting={pending === 'email'}
+                              notice={resetNotice}
+                              onEmailChange={value => {
+                                setEmail(value);
+                                setResetNotice(null);
+                              }}
                               onPasswordChange={setPassword}
-                              onModeChange={setEmailMode}
+                              onModeChange={mode => {
+                                setEmailMode(mode);
+                                setResetNotice(null);
+                              }}
                               onSubmit={() => {
                                 void handleEmailSubmit();
+                              }}
+                              onForgotPassword={() => {
+                                void handleForgotPassword();
                               }}
                             />
                           </View>
@@ -622,10 +617,6 @@ const styles = StyleSheet.create({
   actionsCard: {
     padding: Spacing[3],
     gap: Spacing[2],
-  },
-  ageHint: {
-    marginTop: -Spacing[1],
-    marginLeft: 30,
   },
   providers: {
     gap: Spacing[2],

@@ -1,29 +1,28 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   View,
   StyleSheet,
   Animated,
-  Easing,
-  Pressable,
   ScrollView,
   useWindowDimensions,
   NativeSyntheticEvent,
   NativeScrollEvent,
 } from 'react-native';
 import Svg, { Line, Rect } from 'react-native-svg';
-import { useNavigation, useFocusEffect } from '@react-navigation/native';
+import {
+  useNavigation,
+  useFocusEffect,
+  useIsFocused,
+} from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   Text,
   ScreenGradient,
   GlassCard,
-  PeriodGlyph,
-  PeriodCardBackdrop,
   Ember,
   FAB,
 } from '../../../shared/ui';
-import type { PeriodGlyphKind } from '../../../shared/ui';
 import { useObserveTimeState } from '../../time';
 import {
   useGoalsFeatureEnabled,
@@ -45,7 +44,6 @@ import {
 import {
   Spacing,
   FontFamily,
-  getProgressColor,
   useTheme,
   homeHeroSupport,
   timeOfDayLabel,
@@ -55,212 +53,22 @@ import { logAnalyticsEvent } from '../../../shared/analytics/analytics';
 import { setEmberRouteOverride } from '../../../shared/ui/emberSurface';
 import { TaskReportContent } from '../../tasks';
 import { InterventionHomeCard } from '../../activity';
-import { CountdownHomeCard } from '../../countdowns';
+import { CountdownHomeCard, useNextCountdownDays } from '../../countdowns';
+import { orderHomeCards, scrollDepthBucket } from '../domain/homeCardOrder';
+import { useSwipeHint } from '../hooks/useSwipeHint';
+import { HomeCardStack } from './HomeCardStack';
+import { LockedLifeTile, TimeBlock, TodayTimeBlock } from './TimeBlock';
 import {
-  formatDayPassedLeftWithSeconds,
   formatLifePassedLeft,
   formatMonthPassedLeft,
   formatYearPassedLeft,
 } from '../../../shared/time/homeFormatters';
 
-interface BlockProps {
-  title: string;
-  glyph: PeriodGlyphKind;
-  passedLabel: string;
-  leftLabel: string;
-  progress: number;
-  passedPct: number;
-  leftPct: number;
-  index?: number;
-  scrollY?: Animated.Value;
-  reduceMotion?: boolean;
-  onPress?: () => void;
-}
-
-function scrollRevealStyle(
-  scrollY: Animated.Value | undefined,
-  index: number,
-) {
-  if (!scrollY) {
-    return undefined;
-  }
-  // Motion only — no opacity fade (kept cards uneven / washed out down the list).
-  const mid = Math.max(0, index * 72) + 90;
-  return {
-    transform: [
-      {
-        translateY: scrollY.interpolate({
-          inputRange: [0, mid, mid + 160],
-          outputRange: [0, -4 * Math.min(index, 2) * 0.35, -8],
-          extrapolate: 'clamp' as const,
-        }),
-      },
-    ],
-  };
-}
-
-const TimeBlock = React.memo(function TimeBlock({
-  title,
-  glyph,
-  passedLabel,
-  leftLabel,
-  progress,
-  leftPct,
-  index = 0,
-  scrollY,
-  reduceMotion = false,
-  onPress,
-}: BlockProps) {
-  const progressColor = getProgressColor(progress);
-  const leftColor = getProgressColor(progress);
-  const opacity = useRef(new Animated.Value(reduceMotion ? 1 : 0)).current;
-  const enterY = useRef(new Animated.Value(reduceMotion ? 0 : 14)).current;
-  const reveal = reduceMotion ? undefined : scrollRevealStyle(scrollY, index);
-  const [pressed, setPressed] = useState(false);
-  const pressScale = useRef(new Animated.Value(1)).current;
-
-  const springTo = React.useCallback(
-    (toValue: number) => {
-      if (reduceMotion) return;
-      Animated.spring(pressScale, {
-        toValue,
-        friction: 6,
-        tension: 260,
-        useNativeDriver: true,
-      }).start();
-    },
-    [pressScale, reduceMotion],
-  );
-
-  useEffect(() => {
-    if (reduceMotion) {
-      opacity.setValue(1);
-      enterY.setValue(0);
-      return;
-    }
-    Animated.parallel([
-      Animated.timing(opacity, {
-        toValue: 1,
-        duration: 420,
-        delay: 50 + index * 55,
-        easing: Easing.out(Easing.cubic),
-        useNativeDriver: true,
-      }),
-      Animated.timing(enterY, {
-        toValue: 0,
-        duration: 460,
-        delay: 50 + index * 55,
-        easing: Easing.out(Easing.cubic),
-        useNativeDriver: true,
-      }),
-    ]).start();
-  }, [opacity, enterY, index, reduceMotion]);
-
-  const content = (
-    <GlassCard style={styles.tile}>
-      <PeriodCardBackdrop kind={glyph} />
-      <View style={styles.tileTop}>
-        <PeriodGlyph
-          kind={glyph}
-          size={28}
-          accent={progressColor}
-          progress={progress}
-          pressed={pressed}
-          animated={!reduceMotion}
-        />
-        <Text variant="caption" color="secondary" style={styles.tileTitle}>
-          {title}
-        </Text>
-      </View>
-      <Text
-        variant="title"
-        numberOfLines={2}
-        style={[styles.tileValue, { color: leftColor }]}
-        accessibilityRole="text"
-      >
-        {leftLabel}
-      </Text>
-      <Text variant="micro" color="secondary">
-        {leftPct}% left
-      </Text>
-    </GlassCard>
-  );
-
-  return (
-    <Animated.View style={[styles.tileAnim, { opacity, transform: [{ translateY: enterY }] }]}>
-      <Animated.View style={reveal}>
-        {onPress ? (
-          <Pressable
-            onPress={onPress}
-            onPressIn={() => {
-              setPressed(true);
-              springTo(0.96);
-            }}
-            onPressOut={() => {
-              setPressed(false);
-              springTo(1);
-            }}
-            accessibilityRole="button"
-            accessibilityLabel={`${title}: ${leftLabel} left, ${passedLabel} passed. Tap for details.`}
-          >
-            <Animated.View style={{ transform: [{ scale: pressScale }] }}>
-              {content}
-            </Animated.View>
-          </Pressable>
-        ) : (
-          content
-        )}
-      </Animated.View>
-    </Animated.View>
-  );
-});
-
-/**
- * TodayTimeBlock isolates the 1-second timer to prevent the entire HomeScreen
- * from re-rendering every second.
- */
-function TodayTimeBlock({
-  index,
-  scrollY,
-  reduceMotion,
-  onPress,
-}: {
-  index: number;
-  scrollY: Animated.Value;
-  reduceMotion: boolean;
-  onPress: () => void;
-}) {
-  const [liveNow, setLiveNow] = useState(() => new Date());
-
-  useEffect(() => {
-    const tick = () => setLiveNow(new Date());
-    const id = setInterval(tick, 1000);
-    return () => clearInterval(id);
-  }, []);
-
-  const day = formatDayPassedLeftWithSeconds(liveNow);
-
-  return (
-    <TimeBlock
-      index={index}
-      scrollY={scrollY}
-      reduceMotion={reduceMotion}
-      glyph="day"
-      title="Today"
-      passedLabel={day.passedStr}
-      leftLabel={day.leftStr}
-      progress={day.progress}
-      passedPct={day.passedPct}
-      leftPct={day.leftPct}
-      onPress={onPress}
-    />
-  );
-}
-
 export function HomeScreen() {
   const navigation =
     useNavigation<NativeStackNavigationProp<RootStackParamList, 'Home'>>();
   const insets = useSafeAreaInsets();
+  const isFocused = useIsFocused();
   const theme = useTheme();
   const { userProfile, timeState } = useObserveTimeState();
   const goalsFeatureEnabled = useGoalsFeatureEnabled();
@@ -282,9 +90,41 @@ export function HomeScreen() {
   const scrollY = useRef(new Animated.Value(0)).current;
   const { width: pageWidth } = useWindowDimensions();
   const tileGap = Spacing[2];
-  const tileWidth = (pageWidth - Spacing[4] * 2 - tileGap) / 2;
+  const contentWidth = pageWidth - Spacing[4] * 2;
+  const compactTileWidth = (contentWidth - tileGap * 2) / 3;
   const [pageIndex, setPageIndex] = useState(0);
   const loggedReportSwipe = useRef(false);
+  const swipeHint = useSwipeHint();
+  const nextCountdownDays = useNextCountdownDays();
+  const deepestScroll = useRef(0);
+
+  // Which cards show under the tiles depends on the hour and on any countdown that is close.
+  const cardOrder = useMemo(
+    () =>
+      orderHomeCards({
+        hour: new Date().getHours(),
+        nextCountdownDays,
+        coachAvailable: reflectionVisible,
+      }),
+    [nextCountdownDays, reflectionVisible],
+  );
+
+  /** Counts how far down Home people get, so the card order can be judged on evidence. */
+  const onHomeScrollEnd = React.useCallback(
+    (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+      const { contentOffset, layoutMeasurement, contentSize } = e.nativeEvent;
+      const depth = scrollDepthBucket(
+        contentOffset.y,
+        layoutMeasurement.height,
+        contentSize.height,
+      );
+      if (depth > deepestScroll.current) {
+        deepestScroll.current = depth;
+        void logAnalyticsEvent('home_scroll_depth', { depth });
+      }
+    },
+    [],
+  );
 
   useEffect(() => {
     navigation.setOptions({
@@ -306,9 +146,10 @@ export function HomeScreen() {
       if (next === 1 && !loggedReportSwipe.current) {
         loggedReportSwipe.current = true;
         void logAnalyticsEvent('home_swipe_to_task_report');
+        swipeHint.learned();
       }
     },
-    [pageWidth],
+    [pageWidth, swipeHint],
   );
 
   const handleDayPress = React.useCallback(
@@ -406,6 +247,8 @@ export function HomeScreen() {
               nestedScrollEnabled
               directionalLockEnabled
               scrollEventThrottle={16}
+              onScrollEndDrag={onHomeScrollEnd}
+              onMomentumScrollEnd={onHomeScrollEnd}
               onScroll={Animated.event(
                 [{ nativeEvent: { contentOffset: { y: scrollY } } }],
                 { useNativeDriver: true },
@@ -413,7 +256,12 @@ export function HomeScreen() {
             >
               <Animated.View style={[styles.hero, headerMotion]}>
                 <View style={styles.heroTop}>
-                    <Ember progress={timeState.day ?? 0} size={48} />
+                  <Ember
+                    progress={timeState.day ?? 0}
+                    size={44}
+                    reactive
+                    paused={!isFocused}
+                  />
                   <View style={styles.heroCopy}>
                     <Text
                       variant="caption"
@@ -422,7 +270,7 @@ export function HomeScreen() {
                     >
                       {timeOfDayLabel()}
                     </Text>
-                    <Text variant="large" color="primary" style={styles.headline}>
+                    <Text variant="title" color="primary" style={styles.headline}>
                       Time reality
                     </Text>
                   </View>
@@ -436,45 +284,37 @@ export function HomeScreen() {
                     />
                   ) : null}
                 </View>
-                <Text variant="body" color="secondary" style={styles.subhead}>
+                <Text
+                  variant="body"
+                  color="secondary"
+                  numberOfLines={2}
+                  style={styles.subhead}
+                >
                   {homeHeroSupport()}
                 </Text>
-                <Text variant="micro" color="secondary" style={styles.swipeHint}>
-                  Swipe left for task report →
-                </Text>
+                {swipeHint.visible ? (
+                  <Text variant="micro" color="secondary" style={styles.swipeHint}>
+                    Swipe left for task report →
+                  </Text>
+                ) : null}
               </Animated.View>
 
-              <DailyQuestsCard quests={quests} onQuestPress={handleFabPress} />
-
-              <CountdownHomeCard />
-
-              <InterventionHomeCard />
-
-              {reflectionVisible ? (
-                <TimeCoachCard
-                  reflection={reflection}
-                  tone={reflectionTone}
-                  canUsePremiumReflections={canUsePremiumReflections}
-                  onDismiss={dismissReflection}
-                  onToneChange={setReflectionTone}
-                  onBirthDatePress={() => navigation.navigate('Settings')}
+              <View style={styles.tileWide}>
+                <TodayTimeBlock
+                  index={0}
+                  scrollY={scrollY}
+                  reduceMotion={reduceMotion}
+                  size="wide"
+                  onPress={handleDayPress}
                 />
-              ) : null}
-
-              <View style={styles.tileGrid}>
-                <View style={[styles.tileCell, { width: tileWidth }]}>
-                  <TodayTimeBlock
-                    index={0}
-                    scrollY={scrollY}
-                    reduceMotion={reduceMotion}
-                    onPress={handleDayPress}
-                  />
-                </View>
-                <View style={[styles.tileCell, { width: tileWidth }]}>
+              </View>
+              <View style={styles.tileRow}>
+                <View style={[styles.tileCell, { width: compactTileWidth }]}>
                   <TimeBlock
                     index={1}
                     scrollY={scrollY}
                     reduceMotion={reduceMotion}
+                    size="compact"
                     glyph="month"
                     title="Month"
                     passedLabel={`${month.passedDays} days`}
@@ -485,11 +325,12 @@ export function HomeScreen() {
                     onPress={handleMonthPress}
                   />
                 </View>
-                <View style={[styles.tileCell, { width: tileWidth }]}>
+                <View style={[styles.tileCell, { width: compactTileWidth }]}>
                   <TimeBlock
                     index={2}
                     scrollY={scrollY}
                     reduceMotion={reduceMotion}
+                    size="compact"
                     glyph="year"
                     title="Year"
                     passedLabel={`${year.passedDays} days`}
@@ -500,82 +341,65 @@ export function HomeScreen() {
                     onPress={handleYearPress}
                   />
                 </View>
-                <View style={[styles.tileCell, { width: tileWidth }]}>
-                  {hasBirthDate ? (
-                    canAccessLife ? (
-                      <TimeBlock
-                        index={3}
-                        scrollY={scrollY}
-                        reduceMotion={reduceMotion}
-                        glyph="life"
-                        title="Life"
-                        passedLabel={`${life.passedDays.toLocaleString()} days`}
-                        leftLabel={`${life.leftDays.toLocaleString()} days`}
-                        progress={timeState.life}
-                        passedPct={life.passedPct}
-                        leftPct={life.leftPct}
-                        onPress={handleLifePress}
-                      />
-                    ) : (
-                      <Pressable
-                        onPress={handlePremiumPress}
-                        accessibilityRole="button"
-                        accessibilityLabel="Life is locked. Open Premium to unlock."
-                      >
-                        <GlassCard style={styles.tile}>
-                          <PeriodCardBackdrop kind="life" />
-                          <View style={styles.tileTop}>
-                            <PeriodGlyph
-                              kind="life"
-                              size={28}
-                              animated={!reduceMotion}
-                            />
-                            <Text
-                              variant="caption"
-                              color="secondary"
-                              style={styles.tileTitle}
-                            >
-                              Life
-                            </Text>
-                          </View>
-                          <Text variant="caption" color="primary">
-                            Unlock
-                          </Text>
-                        </GlassCard>
-                      </Pressable>
-                    )
+                <View style={[styles.tileCell, { width: compactTileWidth }]}>
+                  {hasBirthDate && canAccessLife ? (
+                    <TimeBlock
+                      index={3}
+                      scrollY={scrollY}
+                      reduceMotion={reduceMotion}
+                      size="compact"
+                      glyph="life"
+                      title="Life"
+                      passedLabel={`${life.passedDays.toLocaleString()} days`}
+                      leftLabel={`${life.leftDays.toLocaleString()} days`}
+                      progress={timeState.life}
+                      passedPct={life.passedPct}
+                      leftPct={life.leftPct}
+                      onPress={handleLifePress}
+                    />
+                  ) : hasBirthDate ? (
+                    <LockedLifeTile
+                      size="compact"
+                      reduceMotion={reduceMotion}
+                      label="Unlock"
+                      accessibilityLabel="Life is locked. Open Premium to unlock."
+                      onPress={handlePremiumPress}
+                    />
                   ) : (
-                    <Pressable
-                      onPress={handleSettingsPress}
-                      accessibilityRole="button"
+                    <LockedLifeTile
+                      size="compact"
+                      reduceMotion={reduceMotion}
+                      label="Set birth date"
                       accessibilityLabel="Set birth date in Settings to see life progress."
-                    >
-                      <GlassCard style={styles.tile}>
-                        <PeriodCardBackdrop kind="life" />
-                        <View style={styles.tileTop}>
-                          <PeriodGlyph
-                            kind="life"
-                            size={28}
-                            animated={!reduceMotion}
-                          />
-                          <Text
-                            variant="caption"
-                            color="secondary"
-                            style={styles.tileTitle}
-                          >
-                            Life
-                          </Text>
-                        </View>
-                        <Text variant="caption" color="primary">
-                          Set birth date
-                        </Text>
-                      </GlassCard>
-                    </Pressable>
+                      onPress={handleSettingsPress}
+                    />
                   )}
                 </View>
               </View>
 
-              <BadgeShelf overview={badgeOverview} onOpen={handleBadgesPress} />
+              <HomeCardStack
+                order={cardOrder}
+                cards={{
+                  quests: (
+                    <DailyQuestsCard quests={quests} onQuestPress={handleFabPress} />
+                  ),
+                  countdown: <CountdownHomeCard />,
+                  coach: reflectionVisible ? (
+                    <TimeCoachCard
+                      reflection={reflection}
+                      tone={reflectionTone}
+                      canUsePremiumReflections={canUsePremiumReflections}
+                      onDismiss={dismissReflection}
+                      onToneChange={setReflectionTone}
+                      onBirthDatePress={() => navigation.navigate('Settings')}
+                    />
+                  ) : null,
+                  lostTime: <InterventionHomeCard />,
+                  badges: (
+                    <BadgeShelf overview={badgeOverview} onOpen={handleBadgesPress} />
+                  ),
+                }}
+              />
 
               {!goalsFeatureEnabled ? (
                 <GlassCard style={styles.comingSoonBlock}>
@@ -715,11 +539,11 @@ const styles = StyleSheet.create({
     fontFamily: FontFamily.medium,
   },
   subhead: {
-    marginBottom: Spacing[2],
+    marginBottom: Spacing[3],
     lineHeight: 22,
   },
   swipeHint: {
-    marginBottom: Spacing[5],
+    marginBottom: Spacing[3],
     letterSpacing: 0.3,
     opacity: 0.75,
   },
@@ -736,35 +560,15 @@ const styles = StyleSheet.create({
     height: 6,
     borderRadius: 3,
   },
-  tileGrid: {
+  tileWide: {
+    marginBottom: Spacing[2],
+  },
+  tileRow: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
     gap: Spacing[2],
     marginBottom: Spacing[3],
   },
   tileCell: {},
-  tileAnim: {
-    width: '100%',
-  },
-  tile: {
-    minHeight: 118,
-    padding: Spacing[2],
-  },
-  tileTop: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing[1],
-    marginBottom: Spacing[2],
-  },
-  tileTitle: {
-    letterSpacing: 0.2,
-    flexShrink: 1,
-  },
-  tileValue: {
-    fontFamily: FontFamily.medium,
-    fontSize: 20,
-    marginBottom: 2,
-  },
   comingSoonBlock: {
     marginBottom: Spacing[3],
   },

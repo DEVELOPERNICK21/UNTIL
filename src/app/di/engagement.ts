@@ -12,9 +12,13 @@ import { SetWidgetCoachPendingUseCase } from '../../features/engagement/domain/u
 import { ClearWidgetCoachPendingUseCase } from '../../features/engagement/domain/useCases/ClearWidgetCoachPendingUseCase';
 import { MarkFeatureCoachShownUseCase } from '../../features/engagement/domain/useCases/MarkFeatureCoachShownUseCase';
 import { ClearSharePromptPendingUseCase } from '../../features/engagement/domain/useCases/ClearSharePromptPendingUseCase';
+import { GetReminderOptInDueUseCase } from '../../features/engagement/domain/useCases/GetReminderOptInDueUseCase';
+import { RecordReminderOptInAskUseCase } from '../../features/engagement/domain/useCases/RecordReminderOptInAskUseCase';
+import { getRetentionNotificationsEnabled } from '../../features/engagement/services/retentionNotifications';
 import {
   engagementRepository,
   inAppReviewService,
+  reminderOptInStore,
   subscriptionRepository,
 } from './repositories';
 import { syncTrialPreviewUseCase } from './premium';
@@ -66,4 +70,14 @@ export const markFeatureCoachShownUseCase = new MarkFeatureCoachShownUseCase(
 
 export const clearSharePromptPendingUseCase = new ClearSharePromptPendingUseCase(
   engagementRepository
+);
+
+export const getReminderOptInDueUseCase = new GetReminderOptInDueUseCase(
+  reminderOptInStore,
+  () => subscriptionRepository.getAppOpenCount(),
+  getRetentionNotificationsEnabled
+);
+
+export const recordReminderOptInAskUseCase = new RecordReminderOptInAskUseCase(
+  reminderOptInStore
 );

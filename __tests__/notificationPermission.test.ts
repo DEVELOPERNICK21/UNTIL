@@ -1,5 +1,10 @@
 const mockStore = new Map<string, number>();
-jest.mock('react-native', () => ({ Platform: { OS: 'android' } }));
+const mockPlatform = { OS: 'android' };
+jest.mock('react-native', () => ({
+  get Platform() {
+    return mockPlatform;
+  },
+}));
 jest.mock('../src/shared/persistence/mmkv', () => ({
   getNumber: (key: string) => mockStore.get(key),
   setNumber: (key: string, value: number) => void mockStore.set(key, value),
@@ -18,11 +23,15 @@ jest.mock('@notifee/react-native', () => ({
   },
 }));
 
-import { requestNotificationPermission } from '../src/shared/platform/notificationPermission';
+import {
+  hasNotificationPermission,
+  requestNotificationPermission,
+} from '../src/shared/platform/notificationPermission';
 import { MS_PER_DAY } from '../src/shared/time/constants';
 
 describe('requestNotificationPermission', () => {
   beforeEach(() => {
+    mockPlatform.OS = 'android';
     mockStore.clear();
     mockLog.mockReset();
     mockGetSettings.mockReset();
@@ -77,5 +86,43 @@ describe('requestNotificationPermission', () => {
     ]);
     expect([a, b]).toEqual([true, true]);
     expect(mockRequest).toHaveBeenCalledTimes(1);
+  });
+
+  it('stays off iOS unless the feature opts in', async () => {
+    mockPlatform.OS = 'ios';
+    mockGetSettings.mockResolvedValue({ authorizationStatus: 0 });
+    mockRequest.mockResolvedValue({ authorizationStatus: 1 });
+    await expect(requestNotificationPermission('old_reminder')).resolves.toBe(false);
+    expect(mockRequest).not.toHaveBeenCalled();
+    await expect(requestNotificationPermission('task_deadline', { allowIos: true })).resolves.toBe(true);
+  });
+
+  it('reads the current permission without prompting', async () => {
+    mockGetSettings.mockResolvedValue({ authorizationStatus: 2 });
+    await expect(hasNotificationPermission()).resolves.toBe(true);
+    mockGetSettings.mockResolvedValue({ authorizationStatus: 0 });
+    await expect(hasNotificationPermission()).resolves.toBe(false);
+    expect(mockRequest).not.toHaveBeenCalled();
+  });
+});
+
+describe('requestNotificationPermission when the person just asked for it', () => {
+  beforeEach(() => {
+    mockStore.clear();
+    mockLog.mockReset();
+    mockGetSettings.mockReset();
+    mockRequest.mockReset();
+  });
+
+  it('asks even inside the wait that follows an earlier no', async () => {
+    mockGetSettings.mockResolvedValue({ authorizationStatus: 0 });
+    mockRequest.mockResolvedValue({ authorizationStatus: 0 });
+    await requestNotificationPermission('trial_reminder');
+
+    mockRequest.mockResolvedValue({ authorizationStatus: 1 });
+    await expect(
+      requestNotificationPermission('opt_in_sheet', { userInitiated: true }),
+    ).resolves.toBe(true);
+    expect(mockRequest).toHaveBeenCalledTimes(2);
   });
 });

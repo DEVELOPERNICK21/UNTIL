@@ -1,5 +1,6 @@
 import { CompleteDesktopSignInUseCase } from '../src/features/account/domain/useCases/CompleteDesktopSignInUseCase';
 import { RegisterDeviceUseCase } from '../src/features/account/domain/useCases/RegisterDeviceUseCase';
+import { MAX_ACTIVE_DEVICES } from '../src/features/account/domain/deviceLimit';
 import type { IAccountCloudStore } from '../src/features/account/domain/ports/IAccountCloudStore';
 import type { IDeviceIdProvider } from '../src/shared/ports/IDeviceIdProvider';
 import type { AccountDevice, AuthUser, CloudEntitlement } from '../src/shared/types';
@@ -23,7 +24,8 @@ function makeDevice(
   active: boolean,
   platform: AccountDevice['platform'],
 ): AccountDevice {
-  return { id, platform, label: null, lastSeenAt: 1, createdAt: 1, active };
+  // Recently used: a device quiet for months no longer holds a slot.
+  return { id, platform, label: null, lastSeenAt: Date.now(), createdAt: 1, active };
 }
 
 function makeCloud(devices: AccountDevice[]) {
@@ -81,12 +83,12 @@ describe('CompleteDesktopSignInUseCase', () => {
     expect(activations).toEqual(['mac-1']);
   });
 
-  it('returns limit_reached for three phones', async () => {
-    const { cloud } = makeCloud([
-      makeDevice('a', true, 'ios'),
-      makeDevice('b', true, 'android'),
-      makeDevice('c', true, 'ios'),
-    ]);
+  it('returns limit_reached when every slot holds a phone', async () => {
+    const { cloud } = makeCloud(
+      Array.from({ length: MAX_ACTIVE_DEVICES }, (_, i) =>
+        makeDevice(`phone-${i}`, true, i % 2 ? 'android' : 'ios'),
+      ),
+    );
     const result = await makeUseCase(cloud).execute(USER);
     expect(result).toEqual({ status: 'limit_reached', user: USER });
   });

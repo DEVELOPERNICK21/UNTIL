@@ -1,5 +1,5 @@
 /**
- * RegisterDeviceUseCase — claim one of the account's 3 device slots for this device.
+ * RegisterDeviceUseCase — claim one of the account's device slots for this device.
  * A device that is already active keeps its slot, so re-signing in on the same
  * device never consumes a new one.
  *
@@ -36,7 +36,8 @@ export class RegisterDeviceUseCase {
     private readonly deviceIdProvider: IDeviceIdProvider,
     private readonly getPlatform: () => DevicePlatform,
     private readonly getDeviceLabel?: () => string | null,
-    private readonly onError?: (error: unknown, context: string) => void
+    private readonly onError?: (error: unknown, context: string) => void,
+    private readonly getAppVersion?: () => string | null
   ) {}
 
   async execute(
@@ -56,7 +57,7 @@ export class RegisterDeviceUseCase {
     }
 
     if (isDesktopPlatform(platform)) {
-      const plan = planDesktopRegister(devices, deviceId);
+      const plan = planDesktopRegister(devices, deviceId, now);
       if (plan.kind === 'limit_reached') {
         return { registered: false, deviceId, reason: 'limit_reached' };
       }
@@ -77,7 +78,7 @@ export class RegisterDeviceUseCase {
         }
       }
     } else {
-      const decision = canRegisterDevice(devices, deviceId);
+      const decision = canRegisterDevice(devices, deviceId, now);
       if (!decision.ok) {
         return { registered: false, deviceId, reason: decision.reason };
       }
@@ -88,6 +89,7 @@ export class RegisterDeviceUseCase {
       id: deviceId,
       platform,
       label: this.getDeviceLabel?.() ?? existing?.label ?? null,
+      appVersion: this.getAppVersion?.() ?? existing?.appVersion ?? null,
       lastSeenAt: now,
       createdAt: existing?.createdAt ?? now,
       active: true,

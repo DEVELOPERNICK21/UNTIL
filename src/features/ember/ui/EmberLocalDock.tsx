@@ -160,8 +160,9 @@ export function EmberLocalDock({
       ]).start();
     }
 
+    let idleLoop: Animated.CompositeAnimation | null = null;
     if (!reduceMotion) {
-      Animated.loop(
+      idleLoop = Animated.loop(
         Animated.sequence([
           Animated.timing(idle, {
             toValue: 1,
@@ -176,7 +177,8 @@ export function EmberLocalDock({
             useNativeDriver: true,
           }),
         ]),
-      ).start();
+      );
+      idleLoop.start();
     }
 
     if (autoIntro && !hasEmberIntroBeenShown(place)) {
@@ -188,7 +190,10 @@ export function EmberLocalDock({
       setInsight(pickEmberTip(place, ctx, 0));
     }
 
-    return () => clearHide();
+    return () => {
+      clearHide();
+      idleLoop?.stop();
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [place]);
 
@@ -269,7 +274,14 @@ export function EmberLocalDock({
           </Text>
         </Pressable>
       </Animated.View>
-      <Ember progress={dayProgress} size={42} interactive onInteract={onTap} />
+      <Ember
+        progress={dayProgress}
+        size={42}
+        interactive
+        reactive
+        paused={!focused}
+        onInteract={onTap}
+      />
     </Animated.View>
   );
 }
