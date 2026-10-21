@@ -9,7 +9,11 @@ import {
   NativeScrollEvent,
 } from 'react-native';
 import Svg, { Line, Rect } from 'react-native-svg';
-import { useNavigation, useFocusEffect } from '@react-navigation/native';
+import {
+  useNavigation,
+  useFocusEffect,
+  useIsFocused,
+} from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
@@ -64,6 +68,7 @@ export function HomeScreen() {
   const navigation =
     useNavigation<NativeStackNavigationProp<RootStackParamList, 'Home'>>();
   const insets = useSafeAreaInsets();
+  const isFocused = useIsFocused();
   const theme = useTheme();
   const { userProfile, timeState } = useObserveTimeState();
   const goalsFeatureEnabled = useGoalsFeatureEnabled();
@@ -251,7 +256,12 @@ export function HomeScreen() {
             >
               <Animated.View style={[styles.hero, headerMotion]}>
                 <View style={styles.heroTop}>
-                  <Ember progress={timeState.day ?? 0} size={44} />
+                  <Ember
+                    progress={timeState.day ?? 0}
+                    size={44}
+                    reactive
+                    paused={!isFocused}
+                  />
                   <View style={styles.heroCopy}>
                     <Text
                       variant="caption"

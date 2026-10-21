@@ -556,6 +556,13 @@ export function EmberCompanion({ suppressed = false }: EmberCompanionProps) {
     if (tip) showInsightBubble(tip, 0, true);
   }, [resolveTip, showInsightBubble]);
 
+  const onEmberHold = useCallback(
+    (timeLeft: string) => {
+      showInsightBubble({ eyebrow: 'Right now', body: timeLeft }, 0, false);
+    },
+    [showInsightBubble],
+  );
+
   const visible = !suppressed && !modalCovering && docked && insight != null;
   if (!visible || !insight) {
     return null;
@@ -685,7 +692,9 @@ export function EmberCompanion({ suppressed = false }: EmberCompanionProps) {
           progress={dayProgress}
           size={42}
           interactive
+          reactive
           onInteract={onEmberInteract}
+          onLongPress={onEmberHold}
         />
       </View>
     </Animated.View>
