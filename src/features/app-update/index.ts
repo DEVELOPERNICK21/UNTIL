@@ -3,8 +3,6 @@
  * everything else in this folder is private. Add an export deliberately when another module needs it.
  */
 
-export { recordOptionalUpdateDismissed } from './services/updateService';
-export { useAppUpdateCheck } from './hooks/useAppUpdateCheck';
+export { useAppUpdate } from './hooks/useAppUpdate';
 export { useAppVersion } from './hooks/useAppVersion';
-export { ForceUpdateModal } from './ui/ForceUpdateModal';
-export { OptionalUpdateModal } from './ui/OptionalUpdateModal';
+export { UpdateSheet } from './ui/UpdateSheet';
