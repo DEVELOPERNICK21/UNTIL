@@ -178,7 +178,8 @@ const EmberBody = memo(function EmberBody({
         }
       }}
     >
-      <div className="ember-hop" key={hopKey} data-hop={hopKey > 0 ? 'on' : 'off'}>
+      {/* The prefixes matter: both counters go up together on a tap, and two siblings with the same key make React keep the old copy, so every tap stacked another Ember. */}
+      <div className="ember-hop" key={`hop-${hopKey}`} data-hop={hopKey > 0 ? 'on' : 'off'}>
         <div className="ember-float">
           <svg viewBox="0 0 100 100" width={size} height={size} aria-hidden="true">
             <defs>
@@ -355,7 +356,7 @@ const EmberBody = memo(function EmberBody({
       </div>
 
       {burstKey > 0 ? (
-        <div className="ember-burst" key={burstKey} aria-hidden="true">
+        <div className="ember-burst" key={`burst-${burstKey}`} aria-hidden="true">
           {Array.from({ length: BURST }, (_, i) => {
             const angle = (i / BURST) * Math.PI * 2 + (i % 2) * 0.2;
             const reach = size * 0.62;
