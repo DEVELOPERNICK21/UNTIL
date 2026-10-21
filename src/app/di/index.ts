@@ -123,6 +123,7 @@ export {
   completeAccountSignInUseCase,
   createAccountWithEmailUseCase,
   deleteAccountUseCase,
+  ensureAccountAgeRecordedUseCase,
   observeAuthSessionUseCase,
   registerDeviceUseCase,
   removeAccountDeviceUseCase,

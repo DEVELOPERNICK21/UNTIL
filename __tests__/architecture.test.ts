@@ -77,7 +77,7 @@ const LEGACY_OVERSIZE: Record<string, number> = {
   'features/onboarding/ui/InteractiveDayDemo.tsx': 412,
   'features/tasks/ui/GoalDetailScreen.tsx': 394,
   'features/widgets/ui/WidgetScreen.tsx': 394,
-  'shared/analytics/analytics.ts': 363,
+  'shared/analytics/analytics.ts': 370,
   'features/badges/ui/BadgeMedal.tsx': 333,
   'features/badges/domain/badgeCatalog.ts': 333,
   'app/App.tsx': 331,

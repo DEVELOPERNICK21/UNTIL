@@ -69,9 +69,16 @@ class UNTILWidgetWorker(
             )
         }
 
+        /** The Day widget shows whole minutes and a whole percent, so once a minute is enough. */
+        private const val DAY_TICK_PERIOD_MS = 60_000L
+
+        /** Milliseconds until the next wall-clock minute starts (at least one second). */
+        internal fun millisUntilNextMinute(nowMs: Long): Long =
+            maxOf(1_000L, DAY_TICK_PERIOD_MS - (nowMs % DAY_TICK_PERIOD_MS))
+
         fun scheduleDayTick(context: Context) {
             val request = OneTimeWorkRequestBuilder<DayWidgetTickWorker>()
-                .setInitialDelay(1, TimeUnit.SECONDS)
+                .setInitialDelay(millisUntilNextMinute(System.currentTimeMillis()), TimeUnit.MILLISECONDS)
                 .build()
             WorkManager.getInstance(context).enqueueUniqueWork(
                 DAY_TICK_WORK_NAME,

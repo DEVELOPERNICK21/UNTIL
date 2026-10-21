@@ -23,6 +23,7 @@ import {
   authService,
   authSessionRepository,
   bindEntitlementToAccountUseCase,
+  ensureAccountAgeRecordedUseCase,
   identifyPurchasesUserUseCase,
   registerDeviceUseCase,
   resetPurchasesUserUseCase,
@@ -31,7 +32,7 @@ import {
 } from '../../../app/di';
 import { isConclusiveRegistration } from '../domain/deviceLimit';
 import { widgetSync } from '../../../shared/platform/widgetSync';
-import { recordCrashError } from '../../../shared/analytics/analytics';
+import { logAnalyticsEvent, recordCrashError } from '../../../shared/analytics/analytics';
 import { MS_PER_HOUR } from '../../../shared/time/constants';
 import type { AuthUser } from '../../../shared/types';
 
@@ -53,6 +54,19 @@ async function bootstrapSignedInUser(user: AuthUser): Promise<void> {
     } catch (e) {
       recordCrashError(e, 'useAuthBootstrap.identifyPurchases');
     }
+  }
+
+  /**
+   * Accounts from before the age gate lack the 13+ flag, and the Firestore rules refuse every
+   * write without it. Record it first (when a birth date proves the age) so the sync below works.
+   */
+  try {
+    const age = await ensureAccountAgeRecordedUseCase.execute(user.uid);
+    if (age !== 'already_recorded') {
+      void logAnalyticsEvent('account_age_backfill', { result: age });
+    }
+  } catch (e) {
+    recordCrashError(e, 'useAuthBootstrap.ensureAccountAge');
   }
 
   try {

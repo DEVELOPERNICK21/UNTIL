@@ -26,8 +26,20 @@ class MainApplication : Application(), ReactApplication {
     super.onCreate()
     MMKV.initialize(this)
     loadReactNative(this)
-    UNTILWidgetWorker.schedule(this)
-    WorkManager.getInstance(this).enqueue(OneTimeWorkRequestBuilder<UNTILWidgetWorker>().build())
-    UNTILWidgetWorker.scheduleDailyMidnight(this)
+    scheduleWidgetWork()
+  }
+
+  /**
+   * First use of WorkManager opens its database, which is slow on a cold start. Doing it here on
+   * the main thread showed up as ANRs, and nothing below needs to finish before the UI appears.
+   */
+  private fun scheduleWidgetWork() {
+    val context = this
+    Thread {
+      UNTILWidgetWorker.schedule(context)
+      WorkManager.getInstance(context)
+        .enqueue(OneTimeWorkRequestBuilder<UNTILWidgetWorker>().build())
+      UNTILWidgetWorker.scheduleDailyMidnight(context)
+    }.start()
   }
 }
