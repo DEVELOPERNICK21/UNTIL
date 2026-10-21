@@ -414,25 +414,28 @@ class UNTILWidgetWorker(
             }
         }
 
+        /**
+         * Days until a YYYY-MM-DD date, negative once it has passed. Counts calendar dates (as UTC
+         * midnights), not 24-hour blocks: on the day the clocks change a local day is 23 or 25 hours,
+         * which used to make a deadline show a day too few after the clocks went forward.
+         */
         private fun daysLeft(dateStr: String): Int {
             if (dateStr.length < 10) return 0
             return try {
                 val y = dateStr.substring(0, 4).toInt()
                 val m = dateStr.substring(5, 7).toInt() - 1
                 val d = dateStr.substring(8, 10).toInt()
-                val today = Calendar.getInstance().apply {
-                    set(Calendar.HOUR_OF_DAY, 0)
-                    set(Calendar.MINUTE, 0)
-                    set(Calendar.SECOND, 0)
-                    set(Calendar.MILLISECOND, 0)
+                val utc = java.util.TimeZone.getTimeZone("UTC")
+                val now = Calendar.getInstance()
+                val todayUtc = Calendar.getInstance(utc).apply {
+                    clear()
+                    set(now.get(Calendar.YEAR), now.get(Calendar.MONTH), now.get(Calendar.DAY_OF_MONTH))
                 }
-                val target = Calendar.getInstance().apply {
-                    set(y, m, d, 0, 0, 0)
-                    set(Calendar.MILLISECOND, 0)
+                val targetUtc = Calendar.getInstance(utc).apply {
+                    clear()
+                    set(y, m, d)
                 }
-                val diffMs = target.timeInMillis - today.timeInMillis
-                val diffDays = (diffMs / (24 * 60 * 60 * 1000)).toInt()
-                maxOf(0, diffDays)
+                Math.round((targetUtc.timeInMillis - todayUtc.timeInMillis) / 86_400_000.0).toInt()
             } catch (e: Exception) {
                 0
             }
@@ -624,7 +627,16 @@ class UNTILWidgetWorker(
             if (countdown != null) {
                 val days = daysLeft(countdown.date)
                 views.setTextViewText(R.id.widget_countdown_title, countdown.title)
-                if (days == 0) {
+                if (days < 0) {
+                    // The deadline has gone by: say so, rather than "Today" for ever.
+                    val ago = -days
+                    views.setTextViewTextSize(R.id.widget_countdown_days, android.util.TypedValue.COMPLEX_UNIT_SP, 34f)
+                    views.setTextViewText(R.id.widget_countdown_days, context.getString(R.string.widget_countdown_passed))
+                    views.setTextViewText(
+                        R.id.widget_countdown_unit,
+                        context.resources.getQuantityString(R.plurals.widget_countdown_days_ago, ago, ago),
+                    )
+                } else if (days == 0) {
                     views.setTextViewTextSize(R.id.widget_countdown_days, android.util.TypedValue.COMPLEX_UNIT_SP, 34f)
                     views.setTextViewText(R.id.widget_countdown_days, "Today")
                     views.setTextViewText(R.id.widget_countdown_unit, "")

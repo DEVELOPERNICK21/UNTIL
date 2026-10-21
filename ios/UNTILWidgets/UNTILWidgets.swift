@@ -1976,8 +1976,8 @@ private func daysLeft(from dateString: String) -> Int {
     guard let target = cal.date(from: DateComponents(year: parts[0], month: parts[1], day: parts[2])) else { return 0 }
     let startOfToday = cal.startOfDay(for: Date())
     let startOfTarget = cal.startOfDay(for: target)
-    let days = cal.dateComponents([.day], from: startOfToday, to: startOfTarget).day ?? 0
-    return max(0, days)
+    // Negative once the deadline has gone by; the widget says "Passed" instead of "Today" for ever.
+    return cal.dateComponents([.day], from: startOfToday, to: startOfTarget).day ?? 0
 }
 
 private func countdownSubtitle(days: Int) -> String {
@@ -2039,7 +2039,10 @@ private struct CountdownWidgetView: View {
                         .foregroundColor(Design.lightText)
                         .lineLimit(2)
                     Spacer(minLength: 4)
-                    if entry.daysLeft == 0 {
+                    if entry.daysLeft < 0 {
+                        WidgetHero(value: "Passed", size: 38, color: Design.percent)
+                        widgetCaption(entry.daysLeft == -1 ? "1 day ago" : "\(-entry.daysLeft) days ago")
+                    } else if entry.daysLeft == 0 {
                         WidgetHero(value: "Today", size: 38, color: Design.percent)
                     } else {
                         WidgetHero(value: "\(entry.daysLeft)", size: 54, color: Design.left)
@@ -2161,7 +2164,8 @@ struct ToggleHourCalculationIntent: AppIntent {
         let newStartTimeMs: Int64
         let newIsRunning: Bool
         if decoded.isRunning {
-            newTotalElapsed = decoded.totalElapsedMs + (nowMs - decoded.startTimeMs)
+            // Never bank negative time if the phone's clock was set back while it ran.
+            newTotalElapsed = decoded.totalElapsedMs + max(0, nowMs - decoded.startTimeMs)
             newStartTimeMs = 0
             newIsRunning = false
         } else {

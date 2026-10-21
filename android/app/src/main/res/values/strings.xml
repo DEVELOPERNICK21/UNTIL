@@ -31,6 +31,11 @@
     <string name="widget_life_percent_format">%d%%</string>
     <string name="widget_unit_days_left">days left</string>
     <string name="widget_unit_day_left">day left</string>
+    <string name="widget_countdown_passed">Passed</string>
+    <plurals name="widget_countdown_days_ago">
+        <item quantity="one">%d day ago</item>
+        <item quantity="other">%d days ago</item>
+    </plurals>
     <string name="widget_unit_years_left">years left</string>
     <string name="widget_life_plan_format">of %1$d years</string>
     <string name="widget_premium_title">Premium</string>

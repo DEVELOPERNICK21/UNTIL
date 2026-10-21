@@ -482,3 +482,28 @@ Android-only floating pill that appears over other apps. Similar to iOS Dynamic 
 | App Group ID | `group.com.until.app` |
 | Cache key | `widget.cache` |
 | MMKV instance | `until-storage` |
+
+---
+
+## What a tap does
+
+Every widget opens its own screen through `until://open/<Screen>` (the app reads it on a cold start and when it is already running; see `src/app/navigation/deepLinks.ts`, which holds the list of screens a link may open).
+
+| Widget | Android | iOS |
+|--------|---------|-----|
+| Day | Today | Today |
+| Month | This month | This month |
+| Year | This year | This year |
+| Life | Life | Life |
+| Tasks | Tasks (Today while it shows the day page). The Ember icon and the "left today" text flip the page | Tasks |
+| Hour timer | Tap the title: Hour calculation. Anywhere else: start / stop | Start / stop (the whole small widget is one button). Open Hour calculation in the app to reset |
+| Deadline | Deadlines | Deadlines |
+| Counter | +1 (opens Counters when there is no counter yet) | +1 (the link is a fallback) |
+
+Adding a widget? Add its route to `OPENABLE` in `deepLinks.ts`, point the widget at it (Android: `openScreenPendingIntent` in `UNTILWidgetWorker.kt`; iOS: `.widgetURL(widgetOpenURL("<Screen>"))`), and add it to the `widget tap targets` test.
+
+## Deadlines, counters and the hour timer
+
+- **Deadline days** are counted by calendar date, not by dividing local midnights by 24 hours, so the day the clocks change does not move the count (the app's old formula was a day too high after the clocks went back, and the Android widget a day too low after they went forward). A deadline that has passed shows "Passed" and "N days ago" in the widget and in the app.
+- **Counters** can be counted up, undone (−1, never below 0) and reset in the app; the widget still only adds +1.
+- **Hour timer**: start, stop and reset from the app (and, on Android, the title opens the screen). The same JSON is read and written by the Android widget, the iOS widget and the Dynamic Island, so `src/features/widgets/domain/hourTimer.ts` keeps the field names and the arithmetic identical. A timer stopped after the phone's clock was set back never banks negative time.
