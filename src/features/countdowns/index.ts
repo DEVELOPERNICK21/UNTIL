@@ -3,5 +3,6 @@
  * everything else in this folder is private. Add an export deliberately when another module needs it.
  */
 
+export { useNextCountdownDays } from './hooks/useNextCountdownDays';
 export { CountdownHomeCard } from './ui/CountdownHomeCard';
 export { CountdownsScreen } from './ui/CountdownsScreen';
