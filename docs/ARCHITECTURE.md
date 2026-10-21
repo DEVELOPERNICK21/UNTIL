@@ -161,3 +161,4 @@ A feature never uses one of a higher tier. Adding an edge is an architectural de
 - **ARCHITECTURE_AUDIT_2026-10-16.md** — the audit and migration that produced this layout
 - **WIDGETS.md** — widget implementation guide
 - **DEVICE_POLICY.md** — device limit, slot rules and known gaps
+- **APP_UPDATES.md** — the update bottom sheet and the release-day steps
