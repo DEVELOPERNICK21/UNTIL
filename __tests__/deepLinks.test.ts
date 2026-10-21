@@ -15,6 +15,10 @@ describe('parseOpenScreenUrl', () => {
     expect(parseOpenScreenUrl('until://open/HourCalculation')).toBe(
       'HourCalculation',
     );
+    expect(parseOpenScreenUrl('until://open/Countdowns')).toBe('Countdowns');
+    expect(parseOpenScreenUrl('until://open/CustomCounters')).toBe(
+      'CustomCounters',
+    );
     expect(parseOpenScreenUrl('until://open/Premium')).toBe('Premium');
     expect(parseOpenScreenUrl('until://open/Badges')).toBe('Badges');
   });
@@ -40,3 +44,22 @@ describe('parseOpenScreenUrl', () => {
     expect(parseOpenScreenUrl('until://open/Life/extra')).toBeNull();
   });
 });
+
+/** Every screen a widget on either platform sends a tap to must be on the allow list. */
+describe('widget tap targets', () => {
+  const WIDGET_ROUTES: Record<string, string> = {
+    'Day widget': 'DayDetail',
+    'Month widget': 'MonthDetail',
+    'Year widget': 'YearDetail',
+    'Life widget': 'Life',
+    'Tasks widget': 'DailyTasks',
+    'Hour timer widget': 'HourCalculation',
+    'Deadline widget': 'Countdowns',
+    'Counter widget (no counter yet)': 'CustomCounters',
+  };
+
+  it.each(Object.entries(WIDGET_ROUTES))('%s opens %s', (_widget, route) => {
+    expect(parseOpenScreenUrl(`until://open/${route}`)).toBe(route);
+  });
+});
+

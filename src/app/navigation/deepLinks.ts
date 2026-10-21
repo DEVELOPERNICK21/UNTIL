@@ -1,8 +1,9 @@
 /**
  * Screen deep links: `until://open/<Screen>`.
  *
- * The Dynamic Island and Lock Screen activity use these so a tap lands on the
- * matching screen (Today detail, Tasks, Life...) instead of only opening Home.
+ * The Dynamic Island, the Lock Screen activity and every home screen widget use these so a tap
+ * lands on the matching screen (Today, This month, Life, Tasks, Hour timer, Deadlines,
+ * Counters...) instead of only opening Home.
  */
 
 import { rootNavigationRef } from '../../shared/navigation/rootNavigationRef';
@@ -16,6 +17,8 @@ type OpenableScreen = Extract<
   | 'Life'
   | 'DailyTasks'
   | 'HourCalculation'
+  | 'Countdowns'
+  | 'CustomCounters'
   | 'Badges'
   | 'Premium'
 >;
@@ -27,6 +30,8 @@ const OPENABLE: ReadonlySet<string> = new Set<OpenableScreen>([
   'Life',
   'DailyTasks',
   'HourCalculation',
+  'Countdowns',
+  'CustomCounters',
   'Badges',
   'Premium',
 ]);

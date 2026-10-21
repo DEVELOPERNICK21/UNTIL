@@ -47,6 +47,10 @@ private const val PENDING_INTENT_COUNTER_BASE = 200
 private const val PENDING_INTENT_DAILY_TASKS = 103
 private const val PENDING_INTENT_HOUR_CALCULATION = 104
 private const val PENDING_INTENT_LIFE = 105
+private const val PENDING_INTENT_OPEN_COUNTDOWNS = 301
+private const val PENDING_INTENT_OPEN_COUNTERS = 302
+private const val PENDING_INTENT_OPEN_HOUR_CALCULATION = 303
+private const val PENDING_INTENT_OPEN_TASKS = 304
 
 class UNTILWidgetWorker(
     context: Context,
@@ -381,15 +385,10 @@ class UNTILWidgetWorker(
                 views.setTextViewText(R.id.widget_counter_title, "Add a counter in UNTIL")
                 views.setTextViewText(R.id.widget_counter_count, "")
                 views.setViewVisibility(R.id.widget_counter_plus, android.view.View.GONE)
-                val openApp = PendingIntent.getActivity(
-                    context,
-                    PENDING_INTENT_COUNTER_BASE + (appWidgetId and 0x7FFF),
-                    context.packageManager.getLaunchIntentForPackage(context.packageName)!!.apply {
-                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                    },
-                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+                views.setOnClickPendingIntent(
+                    R.id.widget_root,
+                    openScreenPendingIntent(context, "CustomCounters", PENDING_INTENT_OPEN_COUNTERS),
                 )
-                views.setOnClickPendingIntent(R.id.widget_root, openApp)
             }
             return views
         }
@@ -608,7 +607,15 @@ class UNTILWidgetWorker(
                 toggleIntent,
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             )
-            views.setOnClickPendingIntent(R.id.widget_root, togglePending)
+            // A tap opens what you are looking at: the tasks page opens Tasks, the day page opens Today.
+            val route = if (page == 0) "DailyTasks" else "DayDetail"
+            views.setOnClickPendingIntent(
+                R.id.widget_root,
+                openScreenPendingIntent(context, route, PENDING_INTENT_OPEN_TASKS),
+            )
+            // The small Ember (tasks page) and the "left today" text (day page) flip between the pages.
+            views.setOnClickPendingIntent(R.id.widget_daily_tasks_ember, togglePending)
+            views.setOnClickPendingIntent(R.id.widget_day_left, togglePending)
             return views
         }
 
@@ -635,13 +642,10 @@ class UNTILWidgetWorker(
                 views.setTextViewText(R.id.widget_countdown_unit, "")
                 views.setTextViewText(R.id.widget_countdown_date, "")
             }
-            val openApp = PendingIntent.getActivity(
-                context,
-                appWidgetId,
-                context.packageManager.getLaunchIntentForPackage(context.packageName)!!.apply { addFlags(Intent.FLAG_ACTIVITY_NEW_TASK) },
-                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            views.setOnClickPendingIntent(
+                R.id.widget_root,
+                openScreenPendingIntent(context, "Countdowns", PENDING_INTENT_OPEN_COUNTDOWNS),
             )
-            views.setOnClickPendingIntent(R.id.widget_root, openApp)
             return views
         }
 
@@ -706,6 +710,11 @@ class UNTILWidgetWorker(
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             )
             views.setOnClickPendingIntent(R.id.widget_root, togglePending)
+            // The title is the way into the app: reset the timer, rename it, or start and stop it there.
+            views.setOnClickPendingIntent(
+                R.id.widget_hour_calc_title,
+                openScreenPendingIntent(context, "HourCalculation", PENDING_INTENT_OPEN_HOUR_CALCULATION),
+            )
             return views
         }
 
@@ -799,15 +808,12 @@ class UNTILWidgetWorker(
          * PendingIntent to open the app when the user taps the widget.
          * Uses distinct request codes per widget type so the system doesn't collapse different widgets' intents.
          */
-        private fun openAppPendingIntent(context: Context, layoutId: Int): PendingIntent {
-            val requestCode = when (layoutId) {
-                R.layout.widget_day -> PENDING_INTENT_DAY
-                R.layout.widget_month -> PENDING_INTENT_MONTH
-                R.layout.widget_life -> PENDING_INTENT_LIFE
-                R.layout.widget_year -> PENDING_INTENT_YEAR
-                else -> PENDING_INTENT_DAY
-            }
-            val intent = Intent(context, MainActivity::class.java).apply {
+        /**
+         * Opens the app on one screen. The app reads `until://open/<Screen>` (see
+         * src/app/navigation/deepLinks.ts) on a cold start and when it is already running.
+         */
+        private fun openScreenPendingIntent(context: Context, route: String, requestCode: Int): PendingIntent {
+            val intent = Intent(Intent.ACTION_VIEW, Uri.parse("until://open/$route"), context, MainActivity::class.java).apply {
                 flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
             }
             return PendingIntent.getActivity(
@@ -816,6 +822,18 @@ class UNTILWidgetWorker(
                 intent,
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             )
+        }
+
+        /** The screen each time widget opens: Today, This month, This year, Your life. */
+        private fun openAppPendingIntent(context: Context, layoutId: Int): PendingIntent {
+            val (requestCode, route) = when (layoutId) {
+                R.layout.widget_day -> PENDING_INTENT_DAY to "DayDetail"
+                R.layout.widget_month -> PENDING_INTENT_MONTH to "MonthDetail"
+                R.layout.widget_life -> PENDING_INTENT_LIFE to "Life"
+                R.layout.widget_year -> PENDING_INTENT_YEAR to "YearDetail"
+                else -> PENDING_INTENT_DAY to "DayDetail"
+            }
+            return openScreenPendingIntent(context, route, requestCode)
         }
 
         private const val DEFAULT_ACCENT_HEX = "#E87C20"

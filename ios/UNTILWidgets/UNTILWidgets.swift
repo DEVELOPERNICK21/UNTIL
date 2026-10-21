@@ -963,12 +963,19 @@ private struct DailyTasksWidgetView: View {
     }
 }
 
+/// Where a tap on a widget goes. The app reads `until://open/<Screen>` on a cold start and when it is
+/// already running (src/app/navigation/deepLinks.ts).
+private func widgetOpenURL(_ route: String) -> URL? {
+    URL(string: "until://open/\(route)")
+}
+
 struct DailyTasksWidget: Widget {
     let kind: String = "UNTILDailyTasksWidget"
 
     var body: some WidgetConfiguration {
         StaticConfiguration(kind: kind, provider: DailyTasksWidgetProvider()) { entry in
             DailyTasksWidgetView(entry: entry)
+                .widgetURL(widgetOpenURL("DailyTasks"))
         }
         .configurationDisplayName("Daily tasks")
         .description("Today's tasks, by category. Large also shows time left today. Add tasks in UNTIL.")
@@ -1953,6 +1960,7 @@ struct CounterWidget: Widget {
     var body: some WidgetConfiguration {
         StaticConfiguration(kind: kind, provider: CounterWidgetProvider()) { entry in
             CounterWidgetView(entry: entry)
+                .widgetURL(widgetOpenURL("CustomCounters"))
         }
         .configurationDisplayName("Counter")
         .description("Tap to add +1. Create counters in UNTIL.")
@@ -2062,6 +2070,7 @@ struct CountdownWidget: Widget {
     var body: some WidgetConfiguration {
         StaticConfiguration(kind: kind, provider: CountdownWidgetProvider()) { entry in
             CountdownWidgetView(entry: entry)
+                .widgetURL(widgetOpenURL("Countdowns"))
         }
         .configurationDisplayName("Countdown")
         .description("Days left until a deadline. Add one in UNTIL.")
@@ -2220,6 +2229,7 @@ struct HourCalculationWidget: Widget {
     var body: some WidgetConfiguration {
         StaticConfiguration(kind: kind, provider: HourCalculationWidgetProvider()) { entry in
             HourCalculationWidgetView(entry: entry)
+                .widgetURL(widgetOpenURL("HourCalculation"))
         }
         .configurationDisplayName("Hour calculation")
         .description("Tap to start or stop one timer. Set its title in UNTIL.")
@@ -2234,6 +2244,7 @@ struct DayWidget: Widget {
     var body: some WidgetConfiguration {
         StaticConfiguration(kind: kind, provider: DayWidgetProvider()) { entry in
             DayWidgetView(entry: entry)
+                .widgetURL(widgetOpenURL("DayDetail"))
         }
         .configurationDisplayName("Until Day")
         .description("See your day progress. Home screen and Lock Screen.")
@@ -2247,6 +2258,7 @@ struct MonthWidget: Widget {
     var body: some WidgetConfiguration {
         StaticConfiguration(kind: kind, provider: MonthYearWidgetProvider()) { entry in
             MonthWidgetView(entry: entry)
+                .widgetURL(widgetOpenURL("MonthDetail"))
         }
         .configurationDisplayName("Until Month")
         .description("See your month progress. Home screen and Lock Screen.")
@@ -2260,6 +2272,7 @@ struct YearWidget: Widget {
     var body: some WidgetConfiguration {
         StaticConfiguration(kind: kind, provider: MonthYearWidgetProvider()) { entry in
             YearWidgetView(entry: entry)
+                .widgetURL(widgetOpenURL("YearDetail"))
         }
         .configurationDisplayName("Until Year")
         .description("See your year progress. Home screen and Lock Screen.")
@@ -2273,6 +2286,7 @@ struct LifeWidget: Widget {
     var body: some WidgetConfiguration {
         StaticConfiguration(kind: kind, provider: MonthYearWidgetProvider()) { entry in
             LifeWidgetView(entry: entry)
+                .widgetURL(widgetOpenURL("Life"))
         }
         .configurationDisplayName("Until Life")
         .description("See your life progress. Home screen and Lock Screen.")
