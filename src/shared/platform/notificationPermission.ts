@@ -20,11 +20,18 @@ const isGranted = (status: number | undefined): boolean => status === 1 || statu
 
 let inFlight: Promise<boolean> | null = null;
 
+/**
+ * Android always; iOS only for features that opt in (`allowIos`), because the older reminders were
+ * never built for iOS and must not start prompting there. `userInitiated` is for someone who just
+ * tapped "Yes, remind me": they get an answer even inside the wait that follows an earlier no.
+ */
 export function requestNotificationPermission(
   source: string,
-  options: { userInitiated?: boolean } = {},
+  options: { allowIos?: boolean; userInitiated?: boolean } = {},
 ): Promise<boolean> {
-  if (Platform.OS !== 'android' && Platform.OS !== 'ios') return Promise.resolve(false);
+  const supported =
+    Platform.OS === 'android' || (options.allowIos === true && Platform.OS === 'ios');
+  if (!supported) return Promise.resolve(false);
   if (inFlight) return inFlight;
 
   inFlight = (async () => {
@@ -56,4 +63,16 @@ export function requestNotificationPermission(
     inFlight = null;
   });
   return inFlight;
+}
+
+/** Reads the current permission without prompting. */
+export async function hasNotificationPermission(): Promise<boolean> {
+  if (Platform.OS !== 'android' && Platform.OS !== 'ios') return false;
+  try {
+    const notifee = require('@notifee/react-native').default;
+    const settings = await notifee.getNotificationSettings();
+    return isGranted(settings?.authorizationStatus);
+  } catch {
+    return false;
+  }
 }

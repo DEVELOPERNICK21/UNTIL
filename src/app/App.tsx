@@ -37,6 +37,7 @@ import {
 } from '../config/analytics';
 import {
   recordRetentionAppOpen,
+  refreshTaskDeadlineNotifications,
   scheduleRetentionNotifications,
 } from '../features/engagement';
 import { schedulePresenceStreakSaver } from '../features/presence';
@@ -167,6 +168,7 @@ function App() {
     recordRetentionAppOpen();
     logAppOpen().catch(() => {});
     scheduleRetentionNotifications().catch(() => {});
+    refreshTaskDeadlineNotifications().catch(() => {});
     syncWidgetCache();
     void syncCustomCountersAfterAdopting(counters =>
       replaceCustomCountersFromSyncUseCase.execute(counters),
@@ -204,6 +206,7 @@ function App() {
         recordRetentionAppOpen();
         logAppOpen().catch(() => {});
         scheduleRetentionNotifications().catch(() => {});
+        refreshTaskDeadlineNotifications().catch(() => {});
         verifySubscriptionUseCase.execute().then(() => syncPremiumStatus());
         refreshPurchasesCustomerInfo();
         void syncCustomCountersAfterAdopting(counters =>

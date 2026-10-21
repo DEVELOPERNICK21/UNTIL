@@ -51,6 +51,7 @@ describe('enableRetentionNotificationsWithPermission', () => {
 
     expect(mockRequestPermission).toHaveBeenCalledWith('opt_in_sheet', {
       userInitiated: true,
+      allowIos: true,
     });
     expect(getRetentionNotificationsEnabled()).toBe(true);
     expect(mockStrings.get(STORAGE_KEYS.RETENTION_NOTIFICATIONS_ENABLED)).toBe(

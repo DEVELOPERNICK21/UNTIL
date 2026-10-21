@@ -114,6 +114,12 @@ export const STORAGE_KEYS = {
   // Home. Owner: home/services/swipeHint.
   HOME_SWIPE_HINT_SHOWN: 'home.swipeHintShown',
 
+  // Task and deadline notifications. Owner: engagement/services/taskDeadlineNotifications.
+  TASK_DEADLINE_NOTIFICATIONS_ENABLED: 'taskDeadline.notifications.enabled',
+  TASK_DEADLINE_NOTIFICATIONS_IDS: 'taskDeadline.notifications.ids',
+  TASK_DEADLINE_COMPLETION_NOTIFIED_DATE:
+    'taskDeadline.notifications.completionNotifiedDate',
+
   // App update checks
   UPDATE_LAST_CHECK_AT: 'update.lastCheckAt',
   /** When the system notification prompt was last shown (shared/platform/notificationPermission). */

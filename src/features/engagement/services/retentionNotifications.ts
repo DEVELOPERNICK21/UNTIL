@@ -115,7 +115,7 @@ async function requestRetentionNotificationPermissionOnce(): Promise<void> {
     return;
   }
   setString(STORAGE_KEYS.RETENTION_NOTIFICATIONS_PERMISSION_REQUESTED, '1');
-  await requestNotificationPermission('settings_retention');
+  await requestNotificationPermission('settings_retention', { allowIos: true });
 }
 
 export async function cancelRetentionNotifications(): Promise<void> {
@@ -158,6 +158,7 @@ export async function enableRetentionNotificationsWithPermission(
   if (!supportsLocalReminders()) return false;
   const granted = await requestNotificationPermission(source, {
     userInitiated: true,
+    allowIos: true,
   });
   if (!granted) {
     void logAnalyticsEvent('retention_notification_permission_denied', { source });
