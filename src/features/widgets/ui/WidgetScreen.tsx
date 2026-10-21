@@ -14,6 +14,7 @@ import { Text, ScreenGradient } from '../../../shared/ui';
 import { Spacing, Radius, Typography, useTheme } from '../../../shared/theme';
 import type { ThemePalette } from '../../../shared/theme';
 import type { RootStackParamList } from '../../../shared/navigation/types';
+import { AddToHomeScreenSection } from './AddToHomeScreenSection';
 
 function SectionHeader({ label }: { label: string }) {
   const theme = useTheme();
@@ -212,6 +213,11 @@ export function WidgetScreen() {
               />
             )}
           </View>
+
+          <AddToHomeScreenSection
+            premium={hasPremiumBundle}
+            onLocked={() => navigation.navigate('Premium')}
+          />
 
           <SectionHeader label="Premium home screen widgets" />
           <View style={styles.sectionGroup}>

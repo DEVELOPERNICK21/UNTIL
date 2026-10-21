@@ -107,6 +107,9 @@ export const STORAGE_KEYS = {
   RETENTION_NOTIFICATIONS_IDS: 'retention.notifications.ids',
   RETENTION_NOTIFICATIONS_PERMISSION_REQUESTED:
     'retention.notifications.permissionRequested',
+  /** How often the daily check-in reminder was offered (engagement/data/MmkvReminderOptInStore). */
+  REMINDER_OPT_IN_ASKS: 'retention.optIn.asks',
+  REMINDER_OPT_IN_LAST_ASK_AT: 'retention.optIn.lastAskAt',
 
   // App update checks
   UPDATE_LAST_CHECK_AT: 'update.lastCheckAt',

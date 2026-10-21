@@ -11,6 +11,7 @@ import {
   deleteAccountUseCase,
   deviceIdProvider,
   removeAccountDeviceUseCase,
+  sendPasswordResetUseCase,
   signInWithAppleUseCase,
   signInWithEmailUseCase,
   signInWithGoogleUseCase,
@@ -119,6 +120,12 @@ export function useAccountActions() {
     [runAction],
   );
 
+  const sendPasswordReset = useCallback(
+    (email: string): Promise<void> =>
+      runAction(() => sendPasswordResetUseCase.execute(email)),
+    [runAction],
+  );
+
   const signOut = useCallback(
     (): Promise<void> =>
       runAction(async () => {
@@ -165,6 +172,7 @@ export function useAccountActions() {
     signInWithGoogle,
     signInWithEmail,
     createAccountWithEmail,
+    sendPasswordReset,
     signOut,
     deleteAccount,
     removeDevice,

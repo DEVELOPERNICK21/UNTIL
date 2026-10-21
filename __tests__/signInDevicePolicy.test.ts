@@ -22,6 +22,7 @@ const authService: IAuthService = {
   signInWithGoogle: async () => USER,
   signInWithEmail: async () => USER,
   createAccountWithEmail: async () => USER,
+  sendPasswordReset: async () => {},
   signOut: async () => {},
   deleteAccount: async () => {},
   reauthenticateWithGoogle: async () => {},

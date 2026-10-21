@@ -4,6 +4,7 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Build
 import android.appwidget.AppWidgetManager
+import android.content.ComponentName
 import android.provider.Settings
 import com.facebook.react.bridge.Promise
 import com.facebook.react.bridge.ReactApplicationContext
@@ -62,6 +63,51 @@ class WidgetBridgeModule(reactContext: ReactApplicationContext) :
             ).apply { addFlags(Intent.FLAG_ACTIVITY_NEW_TASK) }
             reactApplicationContext.startActivity(intent)
         }
+    }
+
+    /** True when the launcher can show the "Add widget" prompt (Android 8+ and a launcher that supports pinning). */
+    @ReactMethod
+    fun canPinWidgets(promise: Promise) {
+        promise.resolve(pinSupported())
+    }
+
+    /**
+     * Asks the launcher to place one of our widgets on the home screen. The system shows its own
+     * confirmation; resolves "requested" once the prompt is up, "unsupported" when the launcher or
+     * Android version cannot do it, "unknown_kind" for a name we do not ship.
+     */
+    @ReactMethod
+    fun requestPinWidget(kind: String, promise: Promise) {
+        try {
+            val ctx = reactApplicationContext.applicationContext ?: run {
+                promise.resolve("unsupported")
+                return
+            }
+            if (!pinSupported()) {
+                promise.resolve("unsupported")
+                return
+            }
+            val provider = when (kind) {
+                "day" -> ComponentName(ctx, UNTILDayWidgetProvider::class.java)
+                "year" -> ComponentName(ctx, UNTILYearWidgetProvider::class.java)
+                "month" -> ComponentName(ctx, UNTILMonthWidgetProvider::class.java)
+                "life" -> ComponentName(ctx, UNTILLifeWidgetProvider::class.java)
+                else -> {
+                    promise.resolve("unknown_kind")
+                    return
+                }
+            }
+            val requested = AppWidgetManager.getInstance(ctx).requestPinAppWidget(provider, null, null)
+            promise.resolve(if (requested) "requested" else "unsupported")
+        } catch (e: Exception) {
+            promise.reject("PIN_WIDGET_ERROR", e.message, e)
+        }
+    }
+
+    private fun pinSupported(): Boolean {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return false
+        val ctx = reactApplicationContext.applicationContext ?: return false
+        return AppWidgetManager.getInstance(ctx).isRequestPinAppWidgetSupported
     }
 
     @ReactMethod

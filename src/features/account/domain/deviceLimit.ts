@@ -3,23 +3,55 @@ import type {
   DevicePlatform,
   RegisterDeviceResult,
 } from '../../../shared/types';
+import { MS_PER_DAY } from '../../../shared/time/constants';
 
-export const MAX_ACTIVE_DEVICES = 3;
+/** Premium works on this many devices at once (phones, tablets and one Mac or Windows PC). */
+export const MAX_ACTIVE_DEVICES = 5;
 
-export type AccountDeviceRef = { id: string; active: boolean };
+/**
+ * A device that has not opened UNTIL for this long stops holding a slot, so a sold, lost or
+ * wiped phone cannot block the account for ever. It claims a slot again the next time it opens.
+ */
+export const STALE_DEVICE_DAYS = 90;
+const STALE_DEVICE_MS = STALE_DEVICE_DAYS * MS_PER_DAY;
 
-export function countActiveDevices(devices: AccountDeviceRef[]): number {
-  return devices.filter(d => d.active).length;
+export type AccountDeviceRef = {
+  id: string;
+  active: boolean;
+  lastSeenAt?: number;
+};
+
+/** True when the device has been quiet long enough to give its slot up. Needs `now`; without it nothing is stale. */
+export function isDeviceStale(
+  device: Pick<AccountDeviceRef, 'lastSeenAt'>,
+  now?: number
+): boolean {
+  if (now === undefined || device.lastSeenAt === undefined) return false;
+  return now - device.lastSeenAt >= STALE_DEVICE_MS;
+}
+
+/** Active devices that really hold a slot. Pass `now` to leave out stale ones. */
+export function countActiveDevices(
+  devices: AccountDeviceRef[],
+  now?: number
+): number {
+  return devices.filter(d => d.active && !isDeviceStale(d, now)).length;
+}
+
+/** The device already holds a current slot, so re-signing in never consumes another. */
+function holdsSlot(devices: AccountDeviceRef[], deviceId: string, now?: number): boolean {
+  const existing = devices.find(d => d.id === deviceId);
+  return existing?.active === true && !isDeviceStale(existing, now);
 }
 
 export function canRegisterDevice(
   devices: AccountDeviceRef[],
-  deviceId: string
+  deviceId: string,
+  now?: number
 ): { ok: true } | { ok: false; reason: 'limit_reached' } {
-  const existing = devices.find(d => d.id === deviceId);
-  if (existing?.active) return { ok: true };
-  const active = countActiveDevices(devices);
-  if (active >= MAX_ACTIVE_DEVICES) {
+  if (holdsSlot(devices, deviceId, now)) return { ok: true };
+  const others = devices.filter(d => d.id !== deviceId);
+  if (countActiveDevices(others, now) >= MAX_ACTIVE_DEVICES) {
     return { ok: false, reason: 'limit_reached' };
   }
   return { ok: true };
@@ -41,16 +73,21 @@ export type DesktopRegisterPlan =
  */
 export function planDesktopRegister(
   devices: AccountDevice[],
-  deviceId: string
+  deviceId: string,
+  now?: number
 ): DesktopRegisterPlan {
-  if (devices.find(d => d.id === deviceId)?.active) return { kind: 'register' };
+  if (holdsSlot(devices, deviceId, now)) return { kind: 'register' };
 
   const otherDesktop = devices.find(
-    d => d.active && d.id !== deviceId && isDesktopPlatform(d.platform)
+    d =>
+      d.active &&
+      d.id !== deviceId &&
+      !isDeviceStale(d, now) &&
+      isDesktopPlatform(d.platform)
   );
   if (otherDesktop) return { kind: 'needs_replace', existing: otherDesktop };
 
-  return canRegisterDevice(devices, deviceId).ok
+  return canRegisterDevice(devices, deviceId, now).ok
     ? { kind: 'register' }
     : { kind: 'limit_reached' };
 }

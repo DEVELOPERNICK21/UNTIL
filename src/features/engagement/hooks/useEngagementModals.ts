@@ -4,9 +4,12 @@ import {
   clearWidgetCoachPendingUseCase,
   getAccessStateUseCase,
   getEngagementModalStateUseCase,
+  getReminderOptInDueUseCase,
   markFeatureCoachShownUseCase,
   maybeRequestInAppReviewUseCase,
+  recordReminderOptInAskUseCase,
 } from '../../../app/di';
+import { enableRetentionNotificationsWithPermission } from '../services/retentionNotifications';
 import { getLocalDateKey } from '../domain/retentionNotificationCopy';
 import type { EngagementModalState } from '../domain/ports/IEngagementRepository';
 import { shouldShowDeferredPaywall } from '../../premium';
@@ -14,6 +17,10 @@ import { shouldShowDeferredPaywall } from '../../premium';
 export function useEngagementModals(): {
   readModalState: () => EngagementModalState;
   readDeferredPaywallDue: () => boolean;
+  /** `widgetsOnly`: they told onboarding they only want widgets, so the offer stays quiet. */
+  readReminderOptInDue: (widgetsOnly: boolean) => boolean;
+  recordReminderOptInAsk: () => void;
+  acceptReminderOptIn: () => Promise<boolean>;
   dismissWidgetCoach: () => void;
   dismissFeatureCoach: () => void;
   dismissSharePrompt: () => void;
@@ -28,6 +35,21 @@ export function useEngagementModals(): {
 
   const readDeferredPaywallDue = useCallback(
     () => shouldShowDeferredPaywall(getAccessStateUseCase.execute()),
+    []
+  );
+
+  const readReminderOptInDue = useCallback(
+    (widgetsOnly: boolean) =>
+      getReminderOptInDueUseCase.execute({ widgetsOnly }),
+    []
+  );
+
+  const recordReminderOptInAsk = useCallback(() => {
+    recordReminderOptInAskUseCase.execute();
+  }, []);
+
+  const acceptReminderOptIn = useCallback(
+    () => enableRetentionNotificationsWithPermission('opt_in_sheet'),
     []
   );
 
@@ -67,6 +89,9 @@ export function useEngagementModals(): {
   return {
     readModalState,
     readDeferredPaywallDue,
+    readReminderOptInDue,
+    recordReminderOptInAsk,
+    acceptReminderOptIn,
     dismissWidgetCoach,
     dismissFeatureCoach,
     dismissSharePrompt,

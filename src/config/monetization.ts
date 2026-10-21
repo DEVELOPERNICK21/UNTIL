@@ -1,4 +1,5 @@
 import { MS_PER_DAY, MS_PER_HOUR } from '../shared/time/constants';
+import { SITE_URL } from './storeUrls';
 /**
  * Monetization SSOT — pricing, paywall copy, and plan positioning.
  * See docs/MONETIZATION_STRATEGY.md and docs/MONETIZATION_SETUP.md.
@@ -69,8 +70,8 @@ export const PAYWALL_DISMISS_COOLDOWN_MS = 48 * MS_PER_HOUR;
 
 /** Legal pages — must be live HTTPS pages used in App Store / Play listing. */
 export const LEGAL_URLS = {
-  privacy: 'https://developernick1-until.vercel.app/privacy',
-  terms: 'https://developernick1-until.vercel.app/terms',
+  privacy: `${SITE_URL}/privacy`,
+  terms: `${SITE_URL}/terms`,
 } as const;
 
 /**
@@ -78,9 +79,9 @@ export const LEGAL_URLS = {
  * installer link; finish the download on that computer.
  */
 export const DESKTOP_DOWNLOAD_URLS = {
-  page: 'https://developernick1-until.vercel.app/#desktop',
-  mac: 'https://developernick1-until.vercel.app/download/mac',
-  windows: 'https://developernick1-until.vercel.app/download/windows',
+  page: `${SITE_URL}/#desktop`,
+  mac: `${SITE_URL}/download/mac`,
+  windows: `${SITE_URL}/download/windows`,
 } as const;
 
 export const STORE_SUBSCRIPTION_MANAGE_PATH =

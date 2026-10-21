@@ -2,7 +2,7 @@
  * Shared email + password fields for account sign-in / create.
  */
 
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import {
   View,
   StyleSheet,
@@ -30,6 +30,14 @@ interface EmailPasswordAuthFormProps {
   onPasswordChange: (value: string) => void;
   onModeChange: (mode: EmailAuthMode) => void;
   onSubmit: () => void;
+  /** Shows "Forgot password?" in sign-in mode. */
+  onForgotPassword?: () => void;
+  /** Confirmation under the form, e.g. after a reset email was requested. */
+  notice?: string | null;
+  /** Focus the email field as soon as the form appears. */
+  autoFocus?: boolean;
+  /** Spinner on the submit button; defaults to `busy`. */
+  submitting?: boolean;
 }
 
 export function EmailPasswordAuthForm({
@@ -41,12 +49,16 @@ export function EmailPasswordAuthForm({
   onPasswordChange,
   onModeChange,
   onSubmit,
+  onForgotPassword,
+  notice,
+  autoFocus = false,
+  submitting = busy,
 }: EmailPasswordAuthFormProps) {
   const theme = useTheme();
+  const passwordRef = useRef<TextInput>(null);
   const [showPassword, setShowPassword] = useState(false);
-  const submitLabel = mode === 'sign_in' ? 'Sign in' : 'Create account';
-  const switchLabel =
-    mode === 'sign_in' ? 'New here? Create an account' : 'Have an account? Sign in';
+  const isCreate = mode === 'create';
+  const submitLabel = isCreate ? 'Create account' : 'Sign in';
 
   const fieldStyle = [
     styles.field,
@@ -75,6 +87,10 @@ export function EmailPasswordAuthForm({
         keyboardType="email-address"
         textContentType="emailAddress"
         autoComplete="email"
+        autoFocus={autoFocus}
+        returnKeyType="next"
+        blurOnSubmit={false}
+        onSubmitEditing={() => passwordRef.current?.focus()}
         editable={!busy}
         style={fieldStyle}
         accessibilityLabel="Email"
@@ -94,24 +110,53 @@ export function EmailPasswordAuthForm({
           accessibilityRole="button"
           accessibilityLabel={showPassword ? 'Hide password' : 'Show password'}
         >
-          <Text variant="caption" style={{ color: theme.textMuted }}>
+          <Text variant="caption" style={{ color: theme.textSecondary }}>
             {showPassword ? 'Hide' : 'Show'}
           </Text>
         </TouchableOpacity>
       </View>
       <TextInput
+        ref={passwordRef}
         value={password}
         onChangeText={onPasswordChange}
-        placeholder="At least 6 characters"
+        placeholder={isCreate ? 'At least 6 characters' : 'Your password'}
         placeholderTextColor={theme.textMuted}
         secureTextEntry={!showPassword}
-        textContentType={mode === 'create' ? 'newPassword' : 'password'}
-        autoComplete={mode === 'create' ? 'new-password' : 'password'}
+        autoCapitalize="none"
+        autoCorrect={false}
+        textContentType={isCreate ? 'newPassword' : 'password'}
+        autoComplete={isCreate ? 'new-password' : 'current-password'}
+        returnKeyType="go"
         editable={!busy}
         style={fieldStyle}
         accessibilityLabel="Password"
         onSubmitEditing={onSubmit}
       />
+
+      {!isCreate && onForgotPassword ? (
+        <TouchableOpacity
+          onPress={onForgotPassword}
+          disabled={busy}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          style={styles.forgotHit}
+          accessibilityRole="button"
+          accessibilityLabel="Forgot password"
+        >
+          <Text variant="caption" style={{ color: theme.percent }}>
+            Forgot password?
+          </Text>
+        </TouchableOpacity>
+      ) : null}
+
+      {notice ? (
+        <Text
+          variant="caption"
+          accessibilityLiveRegion="polite"
+          style={[styles.notice, { color: theme.textPrimary }]}
+        >
+          {notice}
+        </Text>
+      ) : null}
 
       <TouchableOpacity
         style={[styles.submit, { backgroundColor: theme.percent }]}
@@ -122,7 +167,7 @@ export function EmailPasswordAuthForm({
         accessibilityLabel={submitLabel}
         accessibilityState={{ busy, disabled: busy }}
       >
-        {busy ? (
+        {submitting ? (
           <ActivityIndicator color="#FFFFFF" />
         ) : (
           <Text variant="sectionTitle" style={styles.submitLabel}>
@@ -132,14 +177,22 @@ export function EmailPasswordAuthForm({
       </TouchableOpacity>
 
       <TouchableOpacity
-        onPress={() => onModeChange(mode === 'sign_in' ? 'create' : 'sign_in')}
+        onPress={() => onModeChange(isCreate ? 'sign_in' : 'create')}
         disabled={busy}
         style={styles.switchHit}
         accessibilityRole="button"
-        accessibilityLabel={switchLabel}
+        accessibilityLabel={
+          isCreate ? 'Have an account? Sign in' : 'New here? Create an account'
+        }
       >
         <Text variant="caption" style={{ color: theme.textSecondary }}>
-          {switchLabel}
+          {isCreate ? 'Have an account? ' : 'New here? '}
+          <Text
+            variant="caption"
+            style={[styles.switchAction, { color: theme.percent }]}
+          >
+            {isCreate ? 'Sign in' : 'Create an account'}
+          </Text>
         </Text>
       </TouchableOpacity>
     </View>
@@ -175,6 +228,15 @@ const styles = StyleSheet.create({
     fontFamily: getFontFamilyForWeight(Weight.regular),
     fontSize: 16,
   },
+  forgotHit: {
+    alignSelf: 'flex-end',
+    marginTop: -Spacing[1],
+    paddingHorizontal: Spacing[1],
+  },
+  notice: {
+    lineHeight: 18,
+    paddingHorizontal: Spacing[1],
+  },
   submit: {
     borderRadius: Radius.md,
     minHeight: 48,
@@ -189,5 +251,8 @@ const styles = StyleSheet.create({
   switchHit: {
     alignItems: 'center',
     paddingVertical: Spacing.sm,
+  },
+  switchAction: {
+    fontFamily: getFontFamilyForWeight(Weight.semibold),
   },
 });

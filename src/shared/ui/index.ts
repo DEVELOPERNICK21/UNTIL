@@ -8,6 +8,7 @@ export { Card } from './Card';
 export { GlassCard } from './GlassCard';
 export { AgeConfirmationCheck } from './AgeConfirmationCheck';
 export { LegalAgreementLine } from './LegalAgreementLine';
+export { PinWidgetButton } from './PinWidgetButton';
 export { useReduceMotion } from './useReduceMotion';
 export { PeriodGlyph } from './PeriodGlyph';
 export type { PeriodGlyphKind } from './PeriodGlyph';

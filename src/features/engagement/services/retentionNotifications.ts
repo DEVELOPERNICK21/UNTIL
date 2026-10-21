@@ -22,6 +22,11 @@ const MIN_RESCHEDULE_INTERVAL_MS = 6 * MS_PER_HOUR;
 
 let scheduleInFlight = false;
 
+/** Local reminders run on both phone platforms; anything else (tests, web) is a no-op. */
+function supportsLocalReminders(): boolean {
+  return Platform.OS === 'android' || Platform.OS === 'ios';
+}
+
 /** Profile data owned by other repositories. Injected by di.ts. */
 export type RetentionProfileSource = {
   getBirthDate: () => string | null;
@@ -103,7 +108,7 @@ export function recordRetentionAppOpen(date: Date = new Date()): void {
 }
 
 async function requestRetentionNotificationPermissionOnce(): Promise<void> {
-  if (Platform.OS !== 'android') return;
+  if (!supportsLocalReminders()) return;
   if (
     getString(STORAGE_KEYS.RETENTION_NOTIFICATIONS_PERMISSION_REQUESTED) === '1'
   ) {
@@ -114,7 +119,7 @@ async function requestRetentionNotificationPermissionOnce(): Promise<void> {
 }
 
 export async function cancelRetentionNotifications(): Promise<void> {
-  if (Platform.OS !== 'android') return;
+  if (!supportsLocalReminders()) return;
   const ids = parseIds(getString(STORAGE_KEYS.RETENTION_NOTIFICATIONS_IDS));
   if (ids.length === 0) return;
   try {
@@ -142,11 +147,34 @@ export async function setRetentionNotificationsEnabled(
   }
 }
 
+/**
+ * Turns the daily reminder on only when the person lets us send notifications. Used where they
+ * have just asked for it (the quiz, the opt-in sheet), so a "no" leaves the setting off instead
+ * of showing a reminder switch that cannot work. Resolves true when reminders are on.
+ */
+export async function enableRetentionNotificationsWithPermission(
+  source: string
+): Promise<boolean> {
+  if (!supportsLocalReminders()) return false;
+  const granted = await requestNotificationPermission(source, {
+    userInitiated: true,
+  });
+  if (!granted) {
+    void logAnalyticsEvent('retention_notification_permission_denied', { source });
+    return false;
+  }
+  setString(STORAGE_KEYS.RETENTION_NOTIFICATIONS_ENABLED, '1');
+  setString(STORAGE_KEYS.RETENTION_NOTIFICATIONS_PERMISSION_REQUESTED, '1');
+  void logAnalyticsEvent('retention_notification_enabled', { source });
+  await scheduleRetentionNotifications(new Date(), { force: true });
+  return true;
+}
+
 export async function scheduleRetentionNotifications(
   now: Date = new Date(),
   options: { force?: boolean } = {}
 ): Promise<void> {
-  if (Platform.OS !== 'android') return;
+  if (!supportsLocalReminders()) return;
   if (scheduleInFlight) return;
   if (!getRetentionNotificationsEnabled()) {
     await cancelRetentionNotifications();

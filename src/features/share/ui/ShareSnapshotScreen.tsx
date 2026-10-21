@@ -4,6 +4,7 @@ import {
   StyleSheet,
   TouchableOpacity,
   Alert,
+  Platform,
   useWindowDimensions,
   ScrollView,
 } from 'react-native';
@@ -26,6 +27,7 @@ import RNFS from 'react-native-fs';
 import { logAnalyticsEvent, recordCrashError } from '../../../shared/analytics/analytics';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text, ScreenGradient, Card } from '../../../shared/ui';
+import { shareInviteUrl } from '../../../config/storeUrls';
 import { useAccessControl } from '../../premium';
 import { useObserveTimeState } from '../../time';
 import {
@@ -221,7 +223,7 @@ export function ShareSnapshotScreen() {
       await Share.open({
         url: `file://${filePath}`,
         type: 'image/png',
-        message: `${quote}\n\nbuilt with UNTIL · until-app.com`,
+        message: `${quote}\n\nbuilt with UNTIL · ${shareInviteUrl(Platform.OS)}`,
         failOnCancel: false,
       });
       void logAnalyticsEvent('share_completed', {

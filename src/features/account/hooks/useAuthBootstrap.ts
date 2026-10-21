@@ -18,6 +18,7 @@
  */
 
 import { useEffect } from 'react';
+import { AppState } from 'react-native';
 import {
   authService,
   authSessionRepository,
@@ -31,7 +32,15 @@ import {
 import { isConclusiveRegistration } from '../domain/deviceLimit';
 import { widgetSync } from '../../../shared/platform/widgetSync';
 import { recordCrashError } from '../../../shared/analytics/analytics';
+import { MS_PER_HOUR } from '../../../shared/time/constants';
 import type { AuthUser } from '../../../shared/types';
+
+/**
+ * A phone can stay alive in the background for weeks, so coming back to the foreground re-checks
+ * the device slot (at most this often). That is how a device removed from the account elsewhere
+ * learns about it without a restart.
+ */
+const FOREGROUND_RECHECK_MS = 6 * MS_PER_HOUR;
 
 async function bootstrapSignedInUser(user: AuthUser): Promise<void> {
   const hadUid = authSessionRepository.getUid() != null;
@@ -52,7 +61,12 @@ async function bootstrapSignedInUser(user: AuthUser): Promise<void> {
     recordCrashError(e, 'useAuthBootstrap.syncAccountProfile');
   }
 
-  const registration = await registerDeviceUseCase.execute(user.uid);
+  await refreshDeviceAccess(user.uid);
+}
+
+/** Claims or confirms this device's slot, then binds the account's entitlement if it holds one. */
+async function refreshDeviceAccess(uid: string): Promise<void> {
+  const registration = await registerDeviceUseCase.execute(uid);
   /**
    * Leave devicePremiumAllowed untouched when the cloud call failed: a network
    * error should not strip cloud premium from a device that already held it.
@@ -64,7 +78,7 @@ async function bootstrapSignedInUser(user: AuthUser): Promise<void> {
 
   if (registration.registered) {
     try {
-      await bindEntitlementToAccountUseCase.execute(user.uid);
+      await bindEntitlementToAccountUseCase.execute(uid);
     } catch (e) {
       recordCrashError(e, 'useAuthBootstrap.bindEntitlement');
     }
@@ -75,6 +89,17 @@ export function useAuthBootstrap(): void {
   useEffect(() => {
     const syncedUids = new Set<string>();
     let cancelled = false;
+    let lastDeviceCheckAt = Date.now();
+
+    const appStateSubscription = AppState.addEventListener('change', state => {
+      if (state !== 'active' || cancelled) return;
+      const uid = authSessionRepository.getUid();
+      if (!uid || Date.now() - lastDeviceCheckAt < FOREGROUND_RECHECK_MS) return;
+      lastDeviceCheckAt = Date.now();
+      void refreshDeviceAccess(uid).catch(e => {
+        recordCrashError(e, 'useAuthBootstrap.foregroundDeviceCheck');
+      });
+    });
 
     const unsubscribe = authService.subscribe(user => {
       if (cancelled) return;
@@ -106,6 +131,7 @@ export function useAuthBootstrap(): void {
 
     return () => {
       cancelled = true;
+      appStateSubscription.remove();
       unsubscribe();
     };
   }, []);

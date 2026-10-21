@@ -67,6 +67,11 @@ const VALUES_LABELS: Record<OnboardingValues, string> = {
   rest: 'protected rest',
 };
 
+/** Picking daily check-ins (alone or with widgets) means they want the morning reminder. */
+export function wantsDailyCheckIns(cadence: OnboardingCadence | undefined): boolean {
+  return cadence === 'checkins' || cadence === 'both';
+}
+
 export function getReclaimHours(drain: OnboardingDrain | undefined): number {
   if (!drain) return RECLAIM_HOURS.unsure;
   return RECLAIM_HOURS[drain];
@@ -86,7 +91,7 @@ export function buildResultCards(
 
   let cadenceText = 'Gentle start. Widgets when you’re ready';
   const cadence: OnboardingCadence | undefined = answers.cadence;
-  if (cadence === 'checkins' || cadence === 'both') {
+  if (wantsDailyCheckIns(cadence)) {
     cadenceText = 'Daily awareness check-ins enabled';
   } else if (cadence === 'widgets') {
     cadenceText = 'Home screen widgets prioritized';

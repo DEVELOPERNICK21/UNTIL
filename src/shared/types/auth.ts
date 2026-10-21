@@ -17,6 +17,8 @@ export interface AccountDevice {
   id: string;
   platform: DevicePlatform;
   label: string | null;
+  /** App version last seen on this device, so the list can tell two phones apart. Older docs lack it. */
+  appVersion?: string | null;
   lastSeenAt: number;
   createdAt: number;
   active: boolean;

@@ -69,6 +69,7 @@ interface AuthModule {
     email: string,
     password: string,
   ) => Promise<{ user: MinimalFirebaseUser }>;
+  sendPasswordResetEmail: (auth: unknown, email: string) => Promise<void>;
   signOut: (auth: unknown) => Promise<void>;
   deleteUser: (user: MinimalFirebaseUser) => Promise<void>;
   reauthenticateWithCredential: (
@@ -176,6 +177,7 @@ function getAuthModule(): AuthModule | null {
       signInWithCredential,
       signInWithEmailAndPassword,
       createUserWithEmailAndPassword,
+      sendPasswordResetEmail,
       signOut,
       deleteUser,
       reauthenticateWithCredential,
@@ -188,6 +190,7 @@ function getAuthModule(): AuthModule | null {
       signInWithCredential: AuthModule['signInWithCredential'];
       signInWithEmailAndPassword: AuthModule['signInWithEmailAndPassword'];
       createUserWithEmailAndPassword: AuthModule['createUserWithEmailAndPassword'];
+      sendPasswordResetEmail: AuthModule['sendPasswordResetEmail'];
       signOut: AuthModule['signOut'];
       deleteUser: AuthModule['deleteUser'];
       reauthenticateWithCredential: AuthModule['reauthenticateWithCredential'];
@@ -202,6 +205,7 @@ function getAuthModule(): AuthModule | null {
       signInWithCredential,
       signInWithEmailAndPassword,
       createUserWithEmailAndPassword,
+      sendPasswordResetEmail,
       signOut,
       deleteUser,
       reauthenticateWithCredential,
@@ -395,6 +399,25 @@ export class FirebaseAuthServiceAdapter implements IAuthService {
       return mapped;
     } catch (e) {
       throw mapAuthError(e, 'Could not sign in with email.');
+    }
+  }
+
+  async sendPasswordReset(email: string): Promise<void> {
+    const auth = requireAuth();
+    const normalized = normalizeEmail(email);
+    if (!normalized) {
+      throw new Error('Enter your email first.');
+    }
+    try {
+      await auth.sendPasswordResetEmail(auth.instance, normalized);
+    } catch (e) {
+      // An unknown address looks the same as a known one, so nobody can probe for accounts.
+      const code =
+        e && typeof e === 'object' && 'code' in e
+          ? String((e as { code: unknown }).code)
+          : '';
+      if (code === 'auth/user-not-found') return;
+      throw mapAuthError(e, 'Could not send the reset email.');
     }
   }
 

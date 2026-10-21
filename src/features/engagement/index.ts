@@ -13,3 +13,4 @@ export { useRetentionNotifications } from './hooks/useRetentionNotifications';
 export { FeatureDiscoveryModal } from './ui/FeatureDiscoveryModal';
 export { SharePromptModal } from './ui/SharePromptModal';
 export { WidgetCoachModal } from './ui/WidgetCoachModal';
+export { ReminderOptInModal } from './ui/ReminderOptInModal';

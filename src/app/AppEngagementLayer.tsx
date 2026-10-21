@@ -5,8 +5,10 @@ import {
   WidgetCoachModal,
   FeatureDiscoveryModal,
   SharePromptModal,
+  ReminderOptInModal,
   useEngagementModals,
 } from '../features/engagement';
+import { useOnboardingQuizAnswers } from '../features/onboarding';
 import { DeferredPaywallModal } from '../features/premium';
 import { EmberCompanion } from '../features/ember';
 import { BadgeUnlockHost } from '../features/badges';
@@ -19,6 +21,9 @@ export function AppEngagementLayer() {
   const {
     readModalState,
     readDeferredPaywallDue,
+    readReminderOptInDue,
+    recordReminderOptInAsk,
+    acceptReminderOptIn,
     dismissWidgetCoach,
     dismissFeatureCoach,
     dismissSharePrompt,
@@ -28,6 +33,8 @@ export function AppEngagementLayer() {
   } = useEngagementModals();
   const { logEvent } = useAnalytics();
   const autoReviewAttemptedRef = useRef(false);
+  const quizAnswers = useOnboardingQuizAnswers();
+  const widgetsOnly = quizAnswers.cadence === 'widgets';
 
   const initial = readModalState();
   const [widgetCoachVisible, setWidgetCoachVisible] = useState(
@@ -40,6 +47,7 @@ export function AppEngagementLayer() {
     initial.sharePromptPending
   );
   const [deferredPaywallVisible, setDeferredPaywallVisible] = useState(false);
+  const [reminderOptInVisible, setReminderOptInVisible] = useState(false);
 
   const showNextEngagementModal = useCallback(() => {
     const state = readModalState();
@@ -72,8 +80,21 @@ export function AppEngagementLayer() {
       widgetCoachVisible ||
       nextFeatureCoachVisible ||
       nextSharePromptVisible;
+    // Last in line: only when nothing else is asking for attention.
+    const nextReminderOptInVisible =
+      reminderOptInVisible ||
+      (!engagementBlockingVisible &&
+        !nextDeferredPaywallVisible &&
+        readReminderOptInDue(widgetsOnly));
     const reviewBlocked =
-      engagementBlockingVisible || nextDeferredPaywallVisible;
+      engagementBlockingVisible ||
+      nextDeferredPaywallVisible ||
+      nextReminderOptInVisible;
+
+    if (nextReminderOptInVisible && !reminderOptInVisible) {
+      recordReminderOptInAsk();
+      setReminderOptInVisible(true);
+    }
 
     if (nextFeatureCoachVisible && !featureCoachVisible) {
       setFeatureCoachVisible(true);
@@ -93,10 +114,20 @@ export function AppEngagementLayer() {
     featureCoachVisible,
     readDeferredPaywallDue,
     readModalState,
+    readReminderOptInDue,
+    recordReminderOptInAsk,
+    reminderOptInVisible,
     sharePromptVisible,
     tryAutoReview,
     widgetCoachVisible,
+    widgetsOnly,
   ]);
+
+  useEffect(() => {
+    if (reminderOptInVisible) {
+      logEvent('reminder_optin_shown');
+    }
+  }, [reminderOptInVisible, logEvent]);
 
   useEffect(() => {
     if (widgetCoachVisible) {
@@ -128,7 +159,8 @@ export function AppEngagementLayer() {
 
   const engagementBlockingVisible =
     widgetCoachVisible || featureCoachVisible || sharePromptVisible;
-  const reviewBlocked = engagementBlockingVisible || deferredPaywallVisible;
+  const reviewBlocked =
+    engagementBlockingVisible || deferredPaywallVisible || reminderOptInVisible;
 
   const handleDeferredPaywallClose = useCallback(() => {
     setDeferredPaywallVisible(false);
@@ -175,6 +207,11 @@ export function AppEngagementLayer() {
           dismissSharePrompt();
           setSharePromptVisible(false);
         }}
+      />
+      <ReminderOptInModal
+        visible={reminderOptInVisible}
+        onAccept={acceptReminderOptIn}
+        onDismiss={() => setReminderOptInVisible(false)}
       />
       <DeferredPaywallModal
         visible={deferredPaywallVisible && !engagementBlockingVisible}
