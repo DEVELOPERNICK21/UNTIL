@@ -125,6 +125,7 @@ export {
   registerDeviceUseCase,
   removeAccountDeviceUseCase,
   signInWithAppleUseCase,
+  sendPasswordResetUseCase,
   signInWithEmailUseCase,
   signInWithGoogleUseCase,
   signOutUseCase,

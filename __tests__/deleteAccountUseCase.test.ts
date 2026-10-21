@@ -25,6 +25,7 @@ function makeAuth(overrides: Partial<IAuthService> & { user?: AuthUser | null } 
     signInWithGoogle: async () => user!,
     signInWithEmail: async () => user!,
     createAccountWithEmail: async () => user!,
+    sendPasswordReset: async () => {},
     signOut: async () => {},
     deleteAccount: async () => {},
     reauthenticateWithGoogle: async () => {},

@@ -22,44 +22,52 @@ export function AgeConfirmationCheck({
 }: AgeConfirmationCheckProps) {
   const theme = useTheme();
   const label = `I'm ${minimumAge} or older`;
-  const borderColor = checked || attention ? theme.percent : theme.divider;
+  const needsTick = attention && !checked;
+  const borderColor = checked || attention ? theme.percent : theme.textMuted;
   return (
-    <Pressable
-      onPress={() => onChange(!checked)}
-      disabled={disabled}
-      style={styles.row}
-      hitSlop={8}
-      accessibilityRole="checkbox"
-      accessibilityLabel={label}
-      accessibilityState={{ checked, disabled }}
-    >
-      <View
-        style={[
-          styles.box,
-          {
-            borderColor,
-            borderWidth: attention && !checked ? 2 : 1.5,
-            backgroundColor: checked ? theme.percent : 'transparent',
-          },
-        ]}
+    <View>
+      <Pressable
+        onPress={() => onChange(!checked)}
+        disabled={disabled}
+        style={styles.row}
+        hitSlop={8}
+        accessibilityRole="checkbox"
+        accessibilityLabel={label}
+        accessibilityState={{ checked, disabled }}
       >
-        {checked ? (
-          <Svg width={14} height={14} viewBox="0 0 24 24">
-            <Path
-              d="M5 12.5l4.5 4.5L19 7.5"
-              stroke="#FFFFFF"
-              strokeWidth={3}
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              fill="none"
-            />
-          </Svg>
-        ) : null}
-      </View>
-      <Text variant="body" color={attention && !checked ? 'primary' : 'secondary'}>
-        {label}
-      </Text>
-    </Pressable>
+        <View
+          style={[
+            styles.box,
+            {
+              borderColor,
+              borderWidth: needsTick ? 2 : 1.5,
+              backgroundColor: checked ? theme.percent : 'transparent',
+            },
+          ]}
+        >
+          {checked ? (
+            <Svg width={14} height={14} viewBox="0 0 24 24">
+              <Path
+                d="M5 12.5l4.5 4.5L19 7.5"
+                stroke="#FFFFFF"
+                strokeWidth={3}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                fill="none"
+              />
+            </Svg>
+          ) : null}
+        </View>
+        <Text variant="body" color={needsTick ? 'primary' : 'secondary'}>
+          {label}
+        </Text>
+      </Pressable>
+      {needsTick ? (
+        <Text variant="caption" style={[styles.hint, { color: theme.percent }]}>
+          Tick this to continue.
+        </Text>
+      ) : null}
+    </View>
   );
 }
 
@@ -69,6 +77,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: Spacing[2],
     paddingVertical: Spacing[1],
+  },
+  hint: {
+    marginLeft: 22 + Spacing[2],
   },
   box: {
     width: 22,

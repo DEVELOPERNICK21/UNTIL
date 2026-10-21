@@ -14,6 +14,7 @@ import { SignInWithAppleUseCase } from '../../features/account/domain/useCases/S
 import { SignInWithGoogleUseCase } from '../../features/account/domain/useCases/SignInWithGoogleUseCase';
 import { SignInWithEmailUseCase } from '../../features/account/domain/useCases/SignInWithEmailUseCase';
 import { CreateAccountWithEmailUseCase } from '../../features/account/domain/useCases/CreateAccountWithEmailUseCase';
+import { SendPasswordResetUseCase } from '../../features/account/domain/useCases/SendPasswordResetUseCase';
 import { SignOutUseCase } from '../../features/account/domain/useCases/SignOutUseCase';
 import { DeleteAccountUseCase } from '../../features/account/domain/useCases/DeleteAccountUseCase';
 import { RemoveAccountDeviceUseCase } from '../../features/account/domain/useCases/RemoveAccountDeviceUseCase';
@@ -128,6 +129,8 @@ export const createAccountWithEmailUseCase = new CreateAccountWithEmailUseCase(
   completeAccountSignInUseCase,
   assertAccountAgeGateUseCase
 );
+
+export const sendPasswordResetUseCase = new SendPasswordResetUseCase(authService);
 
 export const signOutUseCase = new SignOutUseCase(
   authService,
