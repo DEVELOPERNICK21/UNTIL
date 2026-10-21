@@ -28,8 +28,8 @@ export interface PlatformUpdate {
 
 export const APP_UPDATE: { android: PlatformUpdate; ios: PlatformUpdate } = {
   android: {
-    // 1.3 (33) is the latest build confirmed on Play. Raise this when the next release is live.
-    latestBuild: 33,
+    // 1.3 (34) is the latest build live on Play. Raise this when the next release is live.
+    latestBuild: 34,
     minimumBuild: 1,
     versionName: '1.3',
     storeUrl: 'https://play.google.com/store/apps/details?id=app.until.time',
