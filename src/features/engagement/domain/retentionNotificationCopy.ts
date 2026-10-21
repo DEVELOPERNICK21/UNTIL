@@ -124,6 +124,39 @@ export function buildRetentionNotification(
   };
 }
 
+/** From this many days away the daily line becomes a gentle "still here" instead of a routine one. */
+export const WIN_BACK_AFTER_DAYS = 3;
+/** Past this the reminders stop: a person who has not opened the app in two weeks is not helped by more. */
+export const WIN_BACK_GIVE_UP_AFTER_DAYS = 14;
+
+/** Whole local days from one YYYY-MM-DD key to another (never negative). */
+export function daysBetweenDateKeys(fromKey: string, toKey: string): number {
+  const parse = (key: string) => {
+    const [y, m, d] = key.split('-').map(Number);
+    return Date.UTC(y, (m || 1) - 1, d || 1);
+  };
+  const diff = Math.round((parse(toKey) - parse(fromKey)) / MS_PER_DAY);
+  return Number.isFinite(diff) ? Math.max(0, diff) : 0;
+}
+
+/** Copy for someone who has been away `daysAway` days. Calm, no guilt, one fact. */
+export function buildWinBackNotification(
+  daysAway: number,
+  yearProgress: number
+): RetentionNotificationCopy {
+  const yearPct = clampPercent(yearProgress);
+  if (daysAway >= 7) {
+    return {
+      title: 'UNTIL',
+      body: `A week of your life went by. Your year is ${yearPct}% gone. Take ten seconds to look.`,
+    };
+  }
+  return {
+    title: 'UNTIL',
+    body: `${daysAway} days since you looked. Your year is ${yearPct}% gone. Still here when you are.`,
+  };
+}
+
 export function shouldSkipRetentionNotification(input: RetentionSkipInput): boolean {
   const triggerDay = getLocalDateKey(input.triggerAt);
   return (
@@ -159,11 +192,19 @@ export function buildRetentionNotificationSchedule(
     const dateKey = getLocalDateKey(triggerAt);
     if (scheduledDays.has(dateKey)) continue;
 
-    const copy = buildRetentionNotification({
-      date: triggerAt,
-      yearProgress: input.yearProgress,
-      lifeWeeksLived: input.lifeWeeksLived,
-    });
+    const daysAway = input.lastAppOpenDateKey
+      ? daysBetweenDateKeys(input.lastAppOpenDateKey, dateKey)
+      : 0;
+    if (daysAway > WIN_BACK_GIVE_UP_AFTER_DAYS) continue;
+
+    const copy =
+      daysAway >= WIN_BACK_AFTER_DAYS
+        ? buildWinBackNotification(daysAway, input.yearProgress)
+        : buildRetentionNotification({
+            date: triggerAt,
+            yearProgress: input.yearProgress,
+            lifeWeeksLived: input.lifeWeeksLived,
+          });
     if (!copy) continue;
 
     scheduledDays.add(dateKey);

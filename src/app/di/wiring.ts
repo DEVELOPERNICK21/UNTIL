@@ -3,7 +3,11 @@
  */
 
 import { configureWidgetSync } from '../../features/widgets/data/WidgetSync';
-import { configureRetentionNotifications } from '../../features/engagement/services/retentionNotifications';
+import {
+  configureRetentionNotifications,
+  enableRetentionNotificationsWithPermission,
+} from '../../features/engagement/services/retentionNotifications';
+import { registerCheckInReminders } from '../../shared/platform/checkInReminders';
 import { syncWidgetUseCase } from './widgets';
 import { getCustomCountersUseCase } from './counters';
 import { getCountdownsUseCase } from './countdowns';
@@ -22,4 +26,8 @@ configureWidgetSync({
 configureRetentionNotifications({
   getBirthDate: () => timeRepository.getUserProfile().birthDate,
   getTrialStartDate: () => subscriptionRepository.getTrialStartDate(),
+});
+
+registerCheckInReminders({
+  enable: source => enableRetentionNotificationsWithPermission(source),
 });

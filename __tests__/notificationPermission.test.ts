@@ -79,3 +79,24 @@ describe('requestNotificationPermission', () => {
     expect(mockRequest).toHaveBeenCalledTimes(1);
   });
 });
+
+describe('requestNotificationPermission when the person just asked for it', () => {
+  beforeEach(() => {
+    mockStore.clear();
+    mockLog.mockReset();
+    mockGetSettings.mockReset();
+    mockRequest.mockReset();
+  });
+
+  it('asks even inside the wait that follows an earlier no', async () => {
+    mockGetSettings.mockResolvedValue({ authorizationStatus: 0 });
+    mockRequest.mockResolvedValue({ authorizationStatus: 0 });
+    await requestNotificationPermission('trial_reminder');
+
+    mockRequest.mockResolvedValue({ authorizationStatus: 1 });
+    await expect(
+      requestNotificationPermission('opt_in_sheet', { userInitiated: true }),
+    ).resolves.toBe(true);
+    expect(mockRequest).toHaveBeenCalledTimes(2);
+  });
+});

@@ -20,8 +20,11 @@ const isGranted = (status: number | undefined): boolean => status === 1 || statu
 
 let inFlight: Promise<boolean> | null = null;
 
-export function requestNotificationPermission(source: string): Promise<boolean> {
-  if (Platform.OS !== 'android') return Promise.resolve(false);
+export function requestNotificationPermission(
+  source: string,
+  options: { userInitiated?: boolean } = {},
+): Promise<boolean> {
+  if (Platform.OS !== 'android' && Platform.OS !== 'ios') return Promise.resolve(false);
   if (inFlight) return inFlight;
 
   inFlight = (async () => {
@@ -30,8 +33,15 @@ export function requestNotificationPermission(source: string): Promise<boolean> 
       const current = await notifee.getNotificationSettings();
       if (isGranted(current?.authorizationStatus)) return true;
 
+      // Someone who just tapped "Yes, remind me" must get an answer, not a silent wait.
       const lastAsk = getNumber(STORAGE_KEYS.NOTIFICATION_PERMISSION_LAST_ASK_AT);
-      if (lastAsk != null && Date.now() - lastAsk < ASK_AGAIN_AFTER_MS) return false;
+      if (
+        !options.userInitiated &&
+        lastAsk != null &&
+        Date.now() - lastAsk < ASK_AGAIN_AFTER_MS
+      ) {
+        return false;
+      }
 
       setNumber(STORAGE_KEYS.NOTIFICATION_PERMISSION_LAST_ASK_AT, Date.now());
       const settings = await notifee.requestPermission();

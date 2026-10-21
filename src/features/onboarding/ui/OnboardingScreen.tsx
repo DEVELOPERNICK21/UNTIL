@@ -38,6 +38,7 @@ import type {
   OnboardingValues,
 } from '../../../shared/types';
 import { FunnelProgressBar } from './FunnelProgressBar';
+import { OnboardingPinWidget } from './OnboardingPinWidget';
 import { QuizOptionList } from './QuizOptionList';
 import { InteractiveWelcome } from './InteractiveWelcome';
 import { InteractiveDayDemo } from './InteractiveDayDemo';
@@ -162,6 +163,7 @@ export function OnboardingScreen() {
     analyticsStep: string
   ) => {
     patchAnswers({ [field]: value } as Partial<typeof answers>);
+
     logEvent('onboarding_answer', {
       ...onboardingStepViewProps(analyticsStep as typeof step),
       value,
@@ -321,7 +323,7 @@ export function OnboardingScreen() {
               {
                 paddingBottom:
                   Math.max(insets.bottom, Spacing[4]) +
-                  (showContinue ? 88 : Spacing[4]),
+                  (showContinue ? (step === 'widgets_demo' ? 128 : 88) : Spacing[4]),
               },
             ]}
             showsVerticalScrollIndicator={false}
@@ -337,6 +339,7 @@ export function OnboardingScreen() {
                 { paddingBottom: Math.max(insets.bottom, Spacing[3]) },
               ]}
             >
+              {step === 'widgets_demo' ? <OnboardingPinWidget /> : null}
               <Animated.View style={{ transform: [{ scale: ctaScale }] }}>
                 <TouchableOpacity
                   style={[styles.ctaFull, { backgroundColor: theme.percent }]}

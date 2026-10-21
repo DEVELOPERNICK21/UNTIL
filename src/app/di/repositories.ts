@@ -13,6 +13,7 @@ import { MmkvTaskRepository } from '../../features/tasks/data/MmkvTaskRepository
 import { MmkvMonthlyGoalRepository } from '../../features/tasks/data/MmkvMonthlyGoalRepository';
 import { MmkvOnboardingRepository } from '../../features/onboarding/data/MmkvOnboardingRepository';
 import { MmkvEngagementRepository } from '../../features/engagement/data/MmkvEngagementRepository';
+import { MmkvReminderOptInStore } from '../../features/engagement/data/MmkvReminderOptInStore';
 import { AsyncStorageWidgetConfigRepository } from '../../features/widgets/data/AsyncStorageWidgetConfigRepository';
 import { MmkvReflectionRepository } from '../../features/reflections/data/MmkvReflectionRepository';
 import { MmkvStudentVerificationRepository } from '../../features/premium/data/MmkvStudentVerificationRepository';
@@ -51,6 +52,7 @@ export const monthlyGoalRepository = new MmkvMonthlyGoalRepository();
 export const onboardingRepository = new MmkvOnboardingRepository();
 
 export const engagementRepository = new MmkvEngagementRepository();
+export const reminderOptInStore = new MmkvReminderOptInStore();
 
 export const widgetConfigRepository = new AsyncStorageWidgetConfigRepository();
 
