@@ -16,6 +16,7 @@ import { SignInWithEmailUseCase } from '../../features/account/domain/useCases/S
 import { CreateAccountWithEmailUseCase } from '../../features/account/domain/useCases/CreateAccountWithEmailUseCase';
 import { SendPasswordResetUseCase } from '../../features/account/domain/useCases/SendPasswordResetUseCase';
 import { SignOutUseCase } from '../../features/account/domain/useCases/SignOutUseCase';
+import { ReleaseThisDeviceUseCase } from '../../features/account/domain/useCases/ReleaseThisDeviceUseCase';
 import { DeleteAccountUseCase } from '../../features/account/domain/useCases/DeleteAccountUseCase';
 import { RemoveAccountDeviceUseCase } from '../../features/account/domain/useCases/RemoveAccountDeviceUseCase';
 import {
@@ -57,6 +58,17 @@ function currentDeviceLabel(): string | null {
   }
 }
 
+/** App version shown next to each device in the account list. */
+function currentAppVersion(): string | null {
+  try {
+    const DeviceInfo = require('react-native-device-info').default;
+    const version = DeviceInfo?.getVersion?.();
+    return typeof version === 'string' && version ? version : null;
+  } catch {
+    return null;
+  }
+}
+
 export const observeAuthSessionUseCase = new ObserveAuthSessionUseCase(
   authSessionRepository
 );
@@ -79,7 +91,8 @@ export const registerDeviceUseCase = new RegisterDeviceUseCase(
   deviceIdProvider,
   accountPlatform,
   currentDeviceLabel,
-  recordCrashError
+  recordCrashError,
+  currentAppVersion
 );
 
 export const bindEntitlementToAccountUseCase = new BindEntitlementToAccountUseCase(
@@ -138,7 +151,8 @@ export const signOutUseCase = new SignOutUseCase(
   subscriptionRepository,
   resetPurchasesUserUseCase,
   recordCrashError,
-  syncPremiumAfterEntitlementChange
+  syncPremiumAfterEntitlementChange,
+  new ReleaseThisDeviceUseCase(accountCloudStore, deviceIdProvider, recordCrashError)
 );
 
 export const deleteAccountUseCase = new DeleteAccountUseCase(

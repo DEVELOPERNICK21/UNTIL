@@ -1,5 +1,10 @@
 import { RegisterDeviceUseCase } from '../src/features/account/domain/useCases/RegisterDeviceUseCase';
-import { isConclusiveRegistration } from '../src/features/account/domain/deviceLimit';
+import {
+  MAX_ACTIVE_DEVICES,
+  STALE_DEVICE_DAYS,
+  isConclusiveRegistration,
+} from '../src/features/account/domain/deviceLimit';
+import { MS_PER_DAY } from '../src/shared/time/constants';
 import type { IAccountCloudStore } from '../src/features/account/domain/ports/IAccountCloudStore';
 import type { IDeviceIdProvider } from '../src/shared/ports/IDeviceIdProvider';
 import type { AccountDevice } from '../src/shared/types';
@@ -17,6 +22,13 @@ function makeDevice(
     createdAt,
     active,
   };
+}
+
+/** An account whose every slot is taken by a recently used phone. */
+function fullAccount(): AccountDevice[] {
+  return Array.from({ length: MAX_ACTIVE_DEVICES }, (_, i) =>
+    makeDevice(`slot-${i}`, true, 9_000_000 - 1000)
+  );
 }
 
 function makeCloud(devices: AccountDevice[]) {
@@ -76,6 +88,7 @@ describe('RegisterDeviceUseCase', () => {
         id: 'this-device',
         platform: 'ios',
         label: null,
+        appVersion: null,
         lastSeenAt: NOW,
         createdAt: NOW,
         active: true,
@@ -83,12 +96,8 @@ describe('RegisterDeviceUseCase', () => {
     ]);
   });
 
-  it('blocks a new device once three others are active', async () => {
-    const { cloud, upserted } = makeCloud([
-      makeDevice('a', true),
-      makeDevice('b', true),
-      makeDevice('c', true),
-    ]);
+  it('blocks a new device once every slot is taken', async () => {
+    const { cloud, upserted } = makeCloud(fullAccount());
 
     const useCase = new RegisterDeviceUseCase(cloud, deviceIdProvider, () => 'android');
     const result = await useCase.execute('uid-1', NOW);
@@ -103,8 +112,7 @@ describe('RegisterDeviceUseCase', () => {
 
   it('refreshes an already-active device at the cap and keeps createdAt', async () => {
     const { cloud, upserted } = makeCloud([
-      makeDevice('a', true),
-      makeDevice('b', true),
+      ...fullAccount().slice(1),
       makeDevice('this-device', true, 500),
     ]);
 
@@ -131,10 +139,43 @@ describe('RegisterDeviceUseCase', () => {
       id: 'this-device',
       platform: 'android',
       label: null,
+      appVersion: null,
       lastSeenAt: NOW,
       createdAt: 400,
       active: true,
     });
+  });
+
+  it('lets a new device in when the only other holder has not been opened for months', async () => {
+    const lostPhone = makeDevice('lost', true, NOW - (STALE_DEVICE_DAYS + 1) * MS_PER_DAY);
+    const { cloud, upserted } = makeCloud([...fullAccount().slice(1), lostPhone]);
+
+    const useCase = new RegisterDeviceUseCase(cloud, deviceIdProvider, () => 'ios');
+    const result = await useCase.execute('uid-1', NOW);
+
+    expect(result.registered).toBe(true);
+    expect(upserted).toHaveLength(1);
+  });
+
+  it('records the app version, and keeps the last one when none is available', async () => {
+    const withVersion = makeCloud([]);
+    await new RegisterDeviceUseCase(
+      withVersion.cloud,
+      deviceIdProvider,
+      () => 'ios',
+      undefined,
+      undefined,
+      () => '1.3.2'
+    ).execute('uid-1', NOW);
+    expect(withVersion.upserted[0].appVersion).toBe('1.3.2');
+
+    const known: AccountDevice = { ...makeDevice('this-device', true, 500), appVersion: '1.2.0' };
+    const without = makeCloud([known]);
+    await new RegisterDeviceUseCase(without.cloud, deviceIdProvider, () => 'ios').execute(
+      'uid-1',
+      NOW
+    );
+    expect(without.upserted[0].appVersion).toBe('1.2.0');
   });
 
   it('does not claim a slot when the device list cannot be read', async () => {
@@ -181,11 +222,7 @@ describe('RegisterDeviceUseCase', () => {
   });
 
   it('treats a real limit answer as conclusive', async () => {
-    const { cloud } = makeCloud([
-      makeDevice('a', true),
-      makeDevice('b', true),
-      makeDevice('c', true),
-    ]);
+    const { cloud } = makeCloud(fullAccount());
 
     const useCase = new RegisterDeviceUseCase(cloud, deviceIdProvider, () => 'ios');
     const result = await useCase.execute('uid-1', NOW);
@@ -291,12 +328,8 @@ describe('RegisterDeviceUseCase desktop path', () => {
     expect(upserted).toHaveLength(1);
   });
 
-  it('does not replace a phone when three phones are active', async () => {
-    const { cloud, upserted, activations } = makeCloud([
-      makeDevice('a', true),
-      makeDevice('b', true),
-      makeDevice('c', true),
-    ]);
+  it('does not replace a phone when every slot holds a phone', async () => {
+    const { cloud, upserted, activations } = makeCloud(fullAccount());
     const useCase = new RegisterDeviceUseCase(cloud, desktopIds, () => 'macos');
     const result = await useCase.execute('uid-1', NOW, { replaceConfirmed: true });
 

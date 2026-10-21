@@ -56,7 +56,7 @@ const LEGACY_OVERSIZE: Record<string, number> = {
   'features/tasks/ui/DailyTasksScreen.tsx': 1078,
   'features/share/ui/ShareSnapshotScreen.tsx': 1043,
   'features/settings/ui/SettingsScreen.tsx': 897,
-  'features/account/ui/AccountScreen.tsx': 807,
+  'features/account/ui/AccountScreen.tsx': 735,
   'features/premium/ui/PremiumPaywallBody.tsx': 819,
   'features/home/ui/HomeScreen.tsx': 776,
   'features/ember/ui/EmberCompanion.tsx': 755,

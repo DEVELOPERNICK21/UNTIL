@@ -31,12 +31,13 @@ import { logAnalyticsEvent } from '../../../shared/analytics/analytics';
 import { promptDesktopDownload } from '../../../shared/desktopDownload';
 import type { EmailAuthMode } from './EmailPasswordAuthForm';
 import { SignInOptions } from './SignInOptions';
+import { AccountDevicesSection } from './AccountDevicesSection';
 import {
+  DESKTOP_SLOT_NOTE,
   DEVICE_LIMIT_BANNER_COPY,
   PREMIUM_DEVICES_BENEFIT,
   formatAccountDeviceLabel,
 } from '../domain/accountCopy';
-import { MS_PER_DAY } from '../../../shared/time/constants';
 
 /** Keeps the last line clear of the Ember companion that floats over the bottom-right corner. */
 const EMBER_CLEARANCE = 72;
@@ -46,15 +47,6 @@ const SIGN_IN_BENEFITS = [
   PREMIUM_DEVICES_BENEFIT,
   'Restore after reinstall',
 ] as const;
-
-function formatLastSeen(timestampMs: number): string {
-  const diffDays = Math.floor(
-    (Date.now() - timestampMs) / MS_PER_DAY,
-  );
-  if (diffDays <= 0) return 'Active today';
-  if (diffDays === 1) return 'Active yesterday';
-  return `Active ${diffDays} days ago`;
-}
 
 export function AccountScreen() {
   const theme = useTheme();
@@ -78,6 +70,7 @@ export function AccountScreen() {
 
   const [devices, setDevices] = useState<AccountDevice[]>([]);
   const [devicesLoading, setDevicesLoading] = useState(false);
+  const [devicesNow, setDevicesNow] = useState(() => Date.now());
   const [removingId, setRemovingId] = useState<string | null>(null);
   const scrollRef = useRef<ScrollView>(null);
   const [passwordForDelete, setPasswordForDelete] = useState('');
@@ -95,12 +88,9 @@ export function AccountScreen() {
     setDevicesLoading(true);
     try {
       const list = await refreshDevices();
-      /** Removed devices stay in Firestore for their history; only active ones hold a slot. */
-      setDevices(
-        list
-          .filter(d => d.active === true)
-          .sort((a, b) => b.lastSeenAt - a.lastSeenAt),
-      );
+      /** Removed devices stay in Firestore for their history; only active ones are listed. */
+      setDevices(list.filter(d => d.active === true));
+      setDevicesNow(Date.now());
     } catch {
       // Message is already surfaced via the hook's error state.
       setDevices([]);
@@ -424,76 +414,14 @@ export function AccountScreen() {
                 </GlassCard>
               )}
 
-              <View style={styles.section}>
-                <Text
-                  variant="caption"
-                  style={[styles.sectionLabel, { color: theme.textSecondary }]}
-                >
-                  Devices
-                </Text>
-                <GlassCard style={styles.sectionCard}>
-                  {devicesLoading ? (
-                    <View style={styles.devicesLoading}>
-                      <ActivityIndicator color={theme.textSecondary} />
-                    </View>
-                  ) : devices.length === 0 ? (
-                    <View style={[styles.row, styles.rowLast]}>
-                      <Text
-                        variant="caption"
-                        style={{ color: theme.textSecondary }}
-                      >
-                        No devices yet.
-                      </Text>
-                    </View>
-                  ) : (
-                    devices.map((device, index) => (
-                      <View
-                        key={device.id}
-                        style={[
-                          styles.row,
-                          index === devices.length - 1
-                            ? styles.rowLast
-                            : { borderBottomColor: theme.glassBorder },
-                        ]}
-                      >
-                        <View style={styles.rowContent}>
-                          <Text
-                            variant="body"
-                            style={{ color: theme.textPrimary }}
-                          >
-                            {formatAccountDeviceLabel(device)}
-                            {device.id === currentDeviceId
-                              ? ' · This device'
-                              : ''}
-                          </Text>
-                          <Text
-                            variant="caption"
-                            style={[
-                              styles.rowSubtitle,
-                              { color: theme.textSecondary },
-                            ]}
-                          >
-                            {formatLastSeen(device.lastSeenAt)}
-                          </Text>
-                        </View>
-                        <TouchableOpacity
-                          onPress={() => handleRemoveDevice(device)}
-                          disabled={removingId === device.id}
-                          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                        >
-                          {removingId === device.id ? (
-                            <ActivityIndicator color={theme.textSecondary} />
-                          ) : (
-                            <Text variant="caption" style={styles.removeLabel}>
-                              Remove
-                            </Text>
-                          )}
-                        </TouchableOpacity>
-                      </View>
-                    ))
-                  )}
-                </GlassCard>
-              </View>
+              <AccountDevicesSection
+                devices={devices}
+                currentDeviceId={currentDeviceId}
+                loading={devicesLoading}
+                removingId={removingId}
+                now={devicesNow}
+                onRemove={handleRemoveDevice}
+              />
 
               <TouchableOpacity
                 style={[
@@ -516,7 +444,7 @@ export function AccountScreen() {
                       { color: theme.textSecondary },
                     ]}
                   >
-                    Menu bar or tray. Counts as one of your 3 devices.
+                    {DESKTOP_SLOT_NOTE}
                   </Text>
                 </View>
                 <Text style={[styles.chevron, { color: theme.textSecondary }]}>

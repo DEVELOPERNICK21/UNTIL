@@ -160,3 +160,4 @@ A feature never uses one of a higher tier. Adding an edge is an architectural de
 - **DECISIONS.md** — Architecture Decision Records (ADR-11 onward cover the feature-based layout)
 - **ARCHITECTURE_AUDIT_2026-10-16.md** — the audit and migration that produced this layout
 - **WIDGETS.md** — widget implementation guide
+- **DEVICE_POLICY.md** — device limit, slot rules and known gaps
