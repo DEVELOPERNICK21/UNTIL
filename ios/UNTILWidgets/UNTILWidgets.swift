@@ -963,12 +963,19 @@ private struct DailyTasksWidgetView: View {
     }
 }
 
+/// Where a tap on a widget goes. The app reads `until://open/<Screen>` on a cold start and when it is
+/// already running (src/app/navigation/deepLinks.ts).
+private func widgetOpenURL(_ route: String) -> URL? {
+    URL(string: "until://open/\(route)")
+}
+
 struct DailyTasksWidget: Widget {
     let kind: String = "UNTILDailyTasksWidget"
 
     var body: some WidgetConfiguration {
         StaticConfiguration(kind: kind, provider: DailyTasksWidgetProvider()) { entry in
             DailyTasksWidgetView(entry: entry)
+                .widgetURL(widgetOpenURL("DailyTasks"))
         }
         .configurationDisplayName("Daily tasks")
         .description("Today's tasks, by category. Large also shows time left today. Add tasks in UNTIL.")
@@ -1953,6 +1960,7 @@ struct CounterWidget: Widget {
     var body: some WidgetConfiguration {
         StaticConfiguration(kind: kind, provider: CounterWidgetProvider()) { entry in
             CounterWidgetView(entry: entry)
+                .widgetURL(widgetOpenURL("CustomCounters"))
         }
         .configurationDisplayName("Counter")
         .description("Tap to add +1. Create counters in UNTIL.")
@@ -1968,8 +1976,8 @@ private func daysLeft(from dateString: String) -> Int {
     guard let target = cal.date(from: DateComponents(year: parts[0], month: parts[1], day: parts[2])) else { return 0 }
     let startOfToday = cal.startOfDay(for: Date())
     let startOfTarget = cal.startOfDay(for: target)
-    let days = cal.dateComponents([.day], from: startOfToday, to: startOfTarget).day ?? 0
-    return max(0, days)
+    // Negative once the deadline has gone by; the widget says "Passed" instead of "Today" for ever.
+    return cal.dateComponents([.day], from: startOfToday, to: startOfTarget).day ?? 0
 }
 
 private func countdownSubtitle(days: Int) -> String {
@@ -2031,7 +2039,10 @@ private struct CountdownWidgetView: View {
                         .foregroundColor(Design.lightText)
                         .lineLimit(2)
                     Spacer(minLength: 4)
-                    if entry.daysLeft == 0 {
+                    if entry.daysLeft < 0 {
+                        WidgetHero(value: "Passed", size: 38, color: Design.percent)
+                        widgetCaption(entry.daysLeft == -1 ? "1 day ago" : "\(-entry.daysLeft) days ago")
+                    } else if entry.daysLeft == 0 {
                         WidgetHero(value: "Today", size: 38, color: Design.percent)
                     } else {
                         WidgetHero(value: "\(entry.daysLeft)", size: 54, color: Design.left)
@@ -2062,6 +2073,7 @@ struct CountdownWidget: Widget {
     var body: some WidgetConfiguration {
         StaticConfiguration(kind: kind, provider: CountdownWidgetProvider()) { entry in
             CountdownWidgetView(entry: entry)
+                .widgetURL(widgetOpenURL("Countdowns"))
         }
         .configurationDisplayName("Countdown")
         .description("Days left until a deadline. Add one in UNTIL.")
@@ -2152,7 +2164,8 @@ struct ToggleHourCalculationIntent: AppIntent {
         let newStartTimeMs: Int64
         let newIsRunning: Bool
         if decoded.isRunning {
-            newTotalElapsed = decoded.totalElapsedMs + (nowMs - decoded.startTimeMs)
+            // Never bank negative time if the phone's clock was set back while it ran.
+            newTotalElapsed = decoded.totalElapsedMs + max(0, nowMs - decoded.startTimeMs)
             newStartTimeMs = 0
             newIsRunning = false
         } else {
@@ -2220,6 +2233,7 @@ struct HourCalculationWidget: Widget {
     var body: some WidgetConfiguration {
         StaticConfiguration(kind: kind, provider: HourCalculationWidgetProvider()) { entry in
             HourCalculationWidgetView(entry: entry)
+                .widgetURL(widgetOpenURL("HourCalculation"))
         }
         .configurationDisplayName("Hour calculation")
         .description("Tap to start or stop one timer. Set its title in UNTIL.")
@@ -2234,6 +2248,7 @@ struct DayWidget: Widget {
     var body: some WidgetConfiguration {
         StaticConfiguration(kind: kind, provider: DayWidgetProvider()) { entry in
             DayWidgetView(entry: entry)
+                .widgetURL(widgetOpenURL("DayDetail"))
         }
         .configurationDisplayName("Until Day")
         .description("See your day progress. Home screen and Lock Screen.")
@@ -2247,6 +2262,7 @@ struct MonthWidget: Widget {
     var body: some WidgetConfiguration {
         StaticConfiguration(kind: kind, provider: MonthYearWidgetProvider()) { entry in
             MonthWidgetView(entry: entry)
+                .widgetURL(widgetOpenURL("MonthDetail"))
         }
         .configurationDisplayName("Until Month")
         .description("See your month progress. Home screen and Lock Screen.")
@@ -2260,6 +2276,7 @@ struct YearWidget: Widget {
     var body: some WidgetConfiguration {
         StaticConfiguration(kind: kind, provider: MonthYearWidgetProvider()) { entry in
             YearWidgetView(entry: entry)
+                .widgetURL(widgetOpenURL("YearDetail"))
         }
         .configurationDisplayName("Until Year")
         .description("See your year progress. Home screen and Lock Screen.")
@@ -2273,6 +2290,7 @@ struct LifeWidget: Widget {
     var body: some WidgetConfiguration {
         StaticConfiguration(kind: kind, provider: MonthYearWidgetProvider()) { entry in
             LifeWidgetView(entry: entry)
+                .widgetURL(widgetOpenURL("Life"))
         }
         .configurationDisplayName("Until Life")
         .description("See your life progress. Home screen and Lock Screen.")

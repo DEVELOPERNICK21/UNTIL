@@ -8,6 +8,7 @@ import type { CustomCounter } from '../../../shared/types';
 import { STORAGE_KEYS } from '../../../shared/persistence/schema';
 import { getString, setString } from '../../../shared/persistence/mmkv';
 import { randomId } from '../../../shared/utils/randomId';
+import { MAX_TITLE_LENGTH } from '../../../config/inputLimits';
 
 function loadCounters(): CustomCounter[] {
   const raw = getString(STORAGE_KEYS.CUSTOM_COUNTERS);
@@ -18,6 +19,13 @@ function loadCounters(): CustomCounter[] {
   } catch {
     return [];
   }
+}
+
+/** A stored count that is not a sane whole number counts as zero, so one bad write cannot poison every later tap. */
+function safeCount(count: unknown): number {
+  return typeof count === 'number' && Number.isFinite(count) && count > 0
+    ? Math.floor(count)
+    : 0;
 }
 
 function saveCounters(counters: CustomCounter[]): void {
@@ -34,7 +42,7 @@ export class MmkvCustomCounterRepository implements ICustomCounterRepository {
   }
 
   add(title: string): CustomCounter {
-    const trimmed = title.trim() || 'Counter';
+    const trimmed = title.trim().slice(0, MAX_TITLE_LENGTH).trim() || 'Counter';
     const counter: CustomCounter = {
       id: randomId(),
       title: trimmed,
@@ -53,10 +61,22 @@ export class MmkvCustomCounterRepository implements ICustomCounterRepository {
   }
 
   increment(id: string): void {
+    this.setCount(id, count => safeCount(count) + 1);
+  }
+
+  decrement(id: string): void {
+    this.setCount(id, count => Math.max(0, safeCount(count) - 1));
+  }
+
+  reset(id: string): void {
+    this.setCount(id, () => 0);
+  }
+
+  private setCount(id: string, next: (count: number) => number): void {
     const list = loadCounters();
     const index = list.findIndex((c) => c.id === id);
     if (index === -1) return;
-    list[index] = { ...list[index], count: list[index].count + 1 };
+    list[index] = { ...list[index], count: next(list[index].count) };
     saveCounters(list);
     this.notifySubscribers();
   }

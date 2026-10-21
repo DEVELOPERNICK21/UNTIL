@@ -12,19 +12,11 @@ import { useFocusEffect } from '@react-navigation/native';
 import { Text, ScreenGradient, Card } from '../../../shared/ui';
 import { useHourCalculationWidget } from '../hooks/useHourCalculationWidget';
 import { Spacing, Colors, Radius, Typography } from '../../../shared/theme';
-
-function formatElapsed(totalElapsedMs: number, startTimeMs: number, isRunning: boolean): string {
-  const now = Date.now();
-  const totalMs = totalElapsedMs + (isRunning && startTimeMs > 0 ? now - startTimeMs : 0);
-  const totalSec = Math.floor(totalMs / 1000);
-  const h = Math.floor(totalSec / 3600);
-  const m = Math.floor((totalSec % 3600) / 60);
-  const s = totalSec % 60;
-  return `${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
-}
+import { MAX_TITLE_LENGTH } from '../../../config/inputLimits';
 
 export function HourCalculationScreen() {
-  const { getHourCalculationState, syncHourCalculationWidget } = useHourCalculationWidget();
+  const { getHourCalculationState, syncHourCalculationWidget, elapsedLabel, hasTime } =
+    useHourCalculationWidget();
   const [state, setState] = useState(() => getHourCalculationState());
   const [titleInput, setTitleInput] = useState(state.title);
 
@@ -53,25 +45,31 @@ export function HourCalculationScreen() {
     refresh();
   };
 
+  const handleToggle = () => {
+    syncHourCalculationWidget({ toggle: true });
+    refresh();
+  };
+
   const handleReset = () => {
+    if (!hasTime(state)) return;
+    const reset = () => {
+      syncHourCalculationWidget({ reset: true });
+      refresh();
+    };
+    // Nothing banked and not running: there is nothing to lose, so no question.
     Alert.alert(
       'Reset timer',
-      'Reset elapsed time to zero? The widget will show 0:00:00.',
+      state.isRunning
+        ? 'Stop the timer and set it back to 0:00:00?'
+        : 'Set the timer back to 0:00:00? The widget will show 0:00:00.',
       [
         { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Reset',
-          style: 'destructive',
-          onPress: () => {
-            syncHourCalculationWidget({ reset: true, title: titleInput.trim() || state.title });
-            refresh();
-          },
-        },
-      ]
+        { text: 'Reset', style: 'destructive', onPress: reset },
+      ],
     );
   };
 
-  const elapsedDisplay = formatElapsed(state.totalElapsedMs, state.startTimeMs, state.isRunning);
+  const elapsedDisplay = elapsedLabel(state);
 
   return (
     <View style={styles.container}>
@@ -85,7 +83,7 @@ export function HourCalculationScreen() {
             Hour calculation
           </Text>
           <Text variant="body" color="secondary" style={styles.subtitle}>
-            Set a title (e.g. Office hour), then add the Hour calculation widget. Tap the widget to start, tap again to stop. One timer only.
+            Set a title (e.g. Office hour), then add the Hour calculation widget. Tap the widget to start, tap again to stop. You can also start, stop and reset it here. One timer only.
           </Text>
 
           <Card style={styles.card}>
@@ -100,6 +98,7 @@ export function HourCalculationScreen() {
                 placeholder="e.g. Office hour"
                 placeholderTextColor={Colors.textSecondary}
                 autoCapitalize="words"
+                maxLength={MAX_TITLE_LENGTH}
                 onSubmitEditing={handleSaveTitle}
                 returnKeyType="done"
               />
@@ -118,12 +117,32 @@ export function HourCalculationScreen() {
             </Text>
             {state.isRunning && (
               <Text variant="caption" color="secondary" style={styles.runningHint}>
-                Running. Tap widget to stop
+                Running
               </Text>
             )}
-            <TouchableOpacity style={styles.resetButton} onPress={handleReset}>
-              <Text variant="caption" style={styles.resetButtonText}>Reset to 0:00:00</Text>
-            </TouchableOpacity>
+            <View style={styles.timerActions}>
+              <TouchableOpacity
+                style={[styles.timerButton, styles.timerPrimary]}
+                onPress={handleToggle}
+                accessibilityRole="button"
+                accessibilityLabel={state.isRunning ? 'Stop the timer' : 'Start the timer'}
+              >
+                <Text variant="sectionTitle" style={styles.timerPrimaryText}>
+                  {state.isRunning ? 'Stop' : state.totalElapsedMs > 0 ? 'Resume' : 'Start'}
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.timerButton, !hasTime(state) && styles.timerButtonDisabled]}
+                onPress={handleReset}
+                disabled={!hasTime(state)}
+                accessibilityRole="button"
+                accessibilityLabel="Reset the timer to zero"
+              >
+                <Text variant="sectionTitle" style={styles.timerSecondaryText}>
+                  Reset
+                </Text>
+              </TouchableOpacity>
+            </View>
           </Card>
 
           <Text variant="caption" color="secondary" style={styles.hint}>
@@ -175,14 +194,21 @@ const styles = StyleSheet.create({
     marginVertical: Spacing[2],
   },
   runningHint: { marginBottom: Spacing[2] },
-  resetButton: {
-    alignSelf: 'flex-start',
-    paddingVertical: Spacing[1],
-    paddingHorizontal: Spacing[2],
+  timerActions: {
+    flexDirection: 'row',
+    gap: Spacing[2],
+    marginTop: Spacing[2],
   },
-  resetButtonText: {
-    color: Colors.textSecondary,
-    textDecorationLine: 'underline',
+  timerButton: {
+    flex: 1,
+    alignItems: 'center',
+    backgroundColor: Colors.divider,
+    paddingVertical: Spacing[3],
+    borderRadius: Radius.md,
   },
+  timerPrimary: { backgroundColor: Colors.percent },
+  timerButtonDisabled: { opacity: 0.4 },
+  timerPrimaryText: { color: '#FFFFFF' },
+  timerSecondaryText: { color: Colors.textPrimary },
   hint: { marginTop: Spacing[2], fontStyle: 'italic' },
 });

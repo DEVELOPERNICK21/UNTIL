@@ -9,13 +9,20 @@ import { STORAGE_KEYS } from '../../../shared/persistence/schema';
 import { getString, setString } from '../../../shared/persistence/mmkv';
 import { randomId } from '../../../shared/utils/randomId';
 import { todayIso } from '../../../shared/time/clock';
+import { MAX_TITLE_LENGTH } from '../../../config/inputLimits';
+import { isValidDateKey } from '../domain/daysLeft';
 
 function loadCountdowns(): Countdown[] {
   const raw = getString(STORAGE_KEYS.COUNTDOWNS);
   if (!raw) return [];
   try {
     const parsed = JSON.parse(raw) as unknown;
-    return Array.isArray(parsed) ? parsed : [];
+    if (!Array.isArray(parsed)) return [];
+    // Drop anything that is not a deadline with a real date, so it can never reach the screen as "NaN days".
+    return parsed.filter(
+      (c): c is Countdown =>
+        !!c && typeof c.id === 'string' && typeof c.title === 'string' && isValidDateKey(c.date),
+    );
   } catch {
     return [];
   }
@@ -37,8 +44,8 @@ export class MmkvCountdownRepository implements ICountdownRepository {
   add(title: string, date: string): Countdown {
     const countdown: Countdown = {
       id: randomId(),
-      title: (title || 'Deadline').trim() || 'Deadline',
-      date: date || todayIso(),
+      title: (title || 'Deadline').trim().slice(0, MAX_TITLE_LENGTH) || 'Deadline',
+      date: isValidDateKey(date) ? date : todayIso(),
       createdAt: todayIso(),
     };
     // Single-item mode: keep exactly one deadline.

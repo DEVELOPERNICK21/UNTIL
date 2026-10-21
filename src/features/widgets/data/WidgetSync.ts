@@ -24,6 +24,14 @@ import { getWidgetAccentColor } from '../config/widgetAccents';
 import { todayIso } from '../../../shared/time/clock';
 import { registerWidgetSync } from '../../../shared/platform/widgetSync';
 import { MS_PER_HOUR } from '../../../shared/time/constants';
+import {
+  DEFAULT_HOUR_TIMER,
+  normalizeTimerTitle,
+  parseHourTimerState,
+  resetTimer,
+  toggleTimer,
+  type HourTimerState,
+} from '../domain/hourTimer';
 
 /** Use cases WidgetSync reads from. Injected by di.ts so this file never imports di. */
 export type WidgetSyncSources = {
@@ -183,35 +191,16 @@ export function syncDailyTasksWidget(): void {
   }
 }
 
-export type HourCalculationState = {
-  title: string;
-  isRunning: boolean;
-  startTimeMs: number;
-  totalElapsedMs: number;
-};
-
-const DEFAULT_HOUR_CALCULATION: HourCalculationState = {
-  title: 'Hour timer',
-  isRunning: false,
-  startTimeMs: 0,
-  totalElapsedMs: 0,
-};
+export type HourCalculationState = HourTimerState;
 
 /** Read hour calculation widget state from storage (same key as native). */
 export function getHourCalculationState(): HourCalculationState {
   const json = getString(STORAGE_KEYS.HOUR_CALCULATION_WIDGET);
-  if (!json) return DEFAULT_HOUR_CALCULATION;
+  if (!json) return DEFAULT_HOUR_TIMER;
   try {
-    const o = JSON.parse(json);
-    return {
-      title:
-        typeof o.title === 'string' ? o.title : DEFAULT_HOUR_CALCULATION.title,
-      isRunning: Boolean(o.isRunning),
-      startTimeMs: Number(o.startTimeMs) || 0,
-      totalElapsedMs: Number(o.totalElapsedMs) || 0,
-    };
+    return parseHourTimerState(JSON.parse(json));
   } catch {
-    return DEFAULT_HOUR_CALCULATION;
+    return DEFAULT_HOUR_TIMER;
   }
 }
 
@@ -543,23 +532,20 @@ export function requestOverlayPermission(): void {
   }
 }
 
-/** Update title and/or reset the hour calculation widget. Triggers widget refresh on Android. */
+/**
+ * Change the hour timer from the app: rename it, start or stop it, or reset it. The widgets, the
+ * Dynamic Island and the watch are told straight away, so nothing keeps showing the old time.
+ */
 export function syncHourCalculationWidget(update: {
   title?: string;
   reset?: boolean;
+  toggle?: boolean;
 }): void {
   const current = getHourCalculationState();
-  const next: HourCalculationState = update.reset
-    ? {
-        title: update.title ?? current.title,
-        isRunning: false,
-        startTimeMs: 0,
-        totalElapsedMs: 0,
-      }
-    : {
-        ...current,
-        ...(update.title !== undefined && { title: update.title }),
-      };
+  let next: HourCalculationState = current;
+  if (update.reset) next = resetTimer(next);
+  if (update.toggle) next = toggleTimer(next, Date.now());
+  if (update.title !== undefined) next = { ...next, title: normalizeTimerTitle(update.title) };
   const json = JSON.stringify(next);
   setString(STORAGE_KEYS.HOUR_CALCULATION_WIDGET, json);
   const { WidgetBridge } = NativeModules;
@@ -569,5 +555,12 @@ export function syncHourCalculationWidget(update: {
     }
   } else if (WidgetBridge?.updateWidgets) {
     WidgetBridge.updateWidgets();
+  }
+  // The island shows this timer too; without a refresh it kept the old time until the next foreground.
+  // Best effort: a failed island refresh must never undo or hide a reset.
+  try {
+    updateLiveActivity();
+  } catch {
+    /* the island picks the new state up when the app next comes forward */
   }
 }

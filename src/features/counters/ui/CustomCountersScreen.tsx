@@ -15,11 +15,20 @@ import {
   useWidgetSyncActions,
 } from '../../../shared/platform/useWidgetSyncActions';
 import { Spacing, Colors, Radius, Typography } from '../../../shared/theme';
+import { MAX_TITLE_LENGTH } from '../../../config/inputLimits';
 import type { CustomCounter } from '../../../shared/types';
 
 export function CustomCountersScreen() {
   const { syncCustomCounters } = useWidgetSyncActions();
-  const { counters, refresh, addCounter, removeCounter } = useCustomCounters();
+  const {
+    counters,
+    refresh,
+    addCounter,
+    removeCounter,
+    incrementCounter,
+    decrementCounter,
+    resetCounter,
+  } = useCustomCounters();
   const [newTitle, setNewTitle] = useState('');
   const hasCounter = counters.length > 0;
 
@@ -36,6 +45,30 @@ export function CustomCountersScreen() {
     addCounter(title);
     setNewTitle('');
     syncCustomCounters();
+  };
+
+  const handleStep = (counter: CustomCounter, step: 1 | -1) => {
+    (step === 1 ? incrementCounter : decrementCounter)(counter.id);
+    syncCustomCounters();
+  };
+
+  const handleReset = (counter: CustomCounter) => {
+    if (counter.count === 0) return;
+    Alert.alert(
+      'Reset counter',
+      `Set "${counter.title}" back to 0? It is at ${counter.count}.`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Reset',
+          style: 'destructive',
+          onPress: () => {
+            resetCounter(counter.id);
+            syncCustomCounters();
+          },
+        },
+      ]
+    );
   };
 
   const handleRemove = (counter: CustomCounter) => {
@@ -68,7 +101,7 @@ export function CustomCountersScreen() {
             Custom counters
           </Text>
           <Text variant="body" color="secondary" style={styles.subtitle}>
-            Set one counter (e.g. Water), then add the Counter widget to your home screen. Tapping the widget opens the app and adds +1.
+            Set one counter (e.g. Water), then add the Counter widget to your home screen. Tap the widget to add +1. Use −1 here if you tapped by mistake, or reset it to start again.
           </Text>
 
           <View style={styles.addRow}>
@@ -79,6 +112,7 @@ export function CustomCountersScreen() {
               placeholder="Counter name (e.g. Water)"
               placeholderTextColor={Colors.textSecondary}
               autoCapitalize="words"
+              maxLength={MAX_TITLE_LENGTH}
               onSubmitEditing={handleAdd}
               returnKeyType="done"
               editable={!hasCounter}
@@ -119,6 +153,34 @@ export function CustomCountersScreen() {
                     hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
                   >
                     <Text variant="caption" style={styles.deleteText}>Remove</Text>
+                  </TouchableOpacity>
+                </View>
+                <View style={styles.actions}>
+                  <TouchableOpacity
+                    style={[styles.stepBtn, c.count === 0 && styles.stepBtnDisabled]}
+                    onPress={() => handleStep(c, -1)}
+                    disabled={c.count === 0}
+                    accessibilityRole="button"
+                    accessibilityLabel="Subtract one"
+                  >
+                    <Text variant="sectionTitle" style={styles.stepText}>−1</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.stepBtn}
+                    onPress={() => handleStep(c, 1)}
+                    accessibilityRole="button"
+                    accessibilityLabel="Add one"
+                  >
+                    <Text variant="sectionTitle" style={styles.stepText}>+1</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.stepBtn, c.count === 0 && styles.stepBtnDisabled]}
+                    onPress={() => handleReset(c)}
+                    disabled={c.count === 0}
+                    accessibilityRole="button"
+                    accessibilityLabel="Reset to zero"
+                  >
+                    <Text variant="sectionTitle" style={styles.stepText}>Reset</Text>
                   </TouchableOpacity>
                 </View>
               </Card>
@@ -193,6 +255,24 @@ const styles = StyleSheet.create({
   },
   counterTitle: {
     marginBottom: 2,
+  },
+  actions: {
+    flexDirection: 'row',
+    gap: Spacing[2],
+    marginTop: Spacing[3],
+  },
+  stepBtn: {
+    flex: 1,
+    alignItems: 'center',
+    backgroundColor: Colors.divider,
+    paddingVertical: Spacing[2],
+    borderRadius: Radius.md,
+  },
+  stepBtnDisabled: {
+    opacity: 0.4,
+  },
+  stepText: {
+    color: Colors.textPrimary,
   },
   deleteBtn: {
     paddingVertical: Spacing[1],

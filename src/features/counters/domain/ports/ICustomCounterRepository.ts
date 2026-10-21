@@ -11,6 +11,10 @@ export interface ICustomCounterRepository {
   add(title: string): CustomCounter;
   remove(id: string): void;
   increment(id: string): void;
+  /** One less, never below zero: the undo for a tap by mistake. */
+  decrement(id: string): void;
+  /** Back to zero, keeping the counter and its title. */
+  reset(id: string): void;
   replaceAll(counters: CustomCounter[]): void;
   subscribe(callback: Subscriber): () => void;
 }
