@@ -35,7 +35,8 @@ class HourCalculationTapReceiver : BroadcastReceiver() {
 
             val now = System.currentTimeMillis()
             if (isRunning) {
-                totalElapsedMs += (now - startTimeMs)
+                // Never bank negative time if the phone's clock was set back while it ran.
+                totalElapsedMs += maxOf(0L, now - startTimeMs)
                 startTimeMs = 0L
             } else {
                 startTimeMs = now

@@ -9,6 +9,7 @@ import {
   useEngagementModals,
 } from '../features/engagement';
 import { useOnboardingQuizAnswers } from '../features/onboarding';
+import { UpdateSheet, useAppUpdate } from '../features/app-update';
 import { DeferredPaywallModal } from '../features/premium';
 import { EmberCompanion } from '../features/ember';
 import { BadgeUnlockHost } from '../features/badges';
@@ -33,6 +34,9 @@ export function AppEngagementLayer() {
   } = useEngagementModals();
   const { logEvent } = useAnalytics();
   const autoReviewAttemptedRef = useRef(false);
+  // A new store version comes first: while its sheet is up the other prompts wait their turn.
+  const appUpdate = useAppUpdate();
+  const updateVisible = appUpdate.decision.kind !== 'none';
   const quizAnswers = useOnboardingQuizAnswers();
   const widgetsOnly = quizAnswers.cadence === 'widgets';
 
@@ -85,6 +89,7 @@ export function AppEngagementLayer() {
       reminderOptInVisible ||
       (!engagementBlockingVisible &&
         !nextDeferredPaywallVisible &&
+        !updateVisible &&
         readReminderOptInDue(widgetsOnly));
     const reviewBlocked =
       engagementBlockingVisible ||
@@ -119,6 +124,7 @@ export function AppEngagementLayer() {
     reminderOptInVisible,
     sharePromptVisible,
     tryAutoReview,
+    updateVisible,
     widgetCoachVisible,
     widgetsOnly,
   ]);
@@ -160,7 +166,10 @@ export function AppEngagementLayer() {
   const engagementBlockingVisible =
     widgetCoachVisible || featureCoachVisible || sharePromptVisible;
   const reviewBlocked =
-    engagementBlockingVisible || deferredPaywallVisible || reminderOptInVisible;
+    engagementBlockingVisible ||
+    deferredPaywallVisible ||
+    reminderOptInVisible ||
+    updateVisible;
 
   const handleDeferredPaywallClose = useCallback(() => {
     setDeferredPaywallVisible(false);
@@ -180,8 +189,13 @@ export function AppEngagementLayer() {
       <RootNavigator />
       <EmberCompanion suppressed={reviewBlocked} />
       <BadgeUnlockHost suppressed={reviewBlocked} />
+      <UpdateSheet
+        decision={appUpdate.decision}
+        onUpdate={appUpdate.update}
+        onLater={appUpdate.later}
+      />
       <WidgetCoachModal
-        visible={widgetCoachVisible}
+        visible={widgetCoachVisible && !updateVisible}
         onDismiss={() => {
           dismissWidgetCoach();
           setWidgetCoachVisible(false);
@@ -189,7 +203,7 @@ export function AppEngagementLayer() {
         }}
       />
       <FeatureDiscoveryModal
-        visible={featureCoachVisible && !widgetCoachVisible}
+        visible={featureCoachVisible && !widgetCoachVisible && !updateVisible}
         onDismiss={() => {
           dismissFeatureCoach();
           setFeatureCoachVisible(false);
@@ -202,19 +216,26 @@ export function AppEngagementLayer() {
         }}
       />
       <SharePromptModal
-        visible={sharePromptVisible && !widgetCoachVisible && !featureCoachVisible}
+        visible={
+          sharePromptVisible &&
+          !widgetCoachVisible &&
+          !featureCoachVisible &&
+          !updateVisible
+        }
         onDismiss={() => {
           dismissSharePrompt();
           setSharePromptVisible(false);
         }}
       />
       <ReminderOptInModal
-        visible={reminderOptInVisible}
+        visible={reminderOptInVisible && !updateVisible}
         onAccept={acceptReminderOptIn}
         onDismiss={() => setReminderOptInVisible(false)}
       />
       <DeferredPaywallModal
-        visible={deferredPaywallVisible && !engagementBlockingVisible}
+        visible={
+          deferredPaywallVisible && !engagementBlockingVisible && !updateVisible
+        }
         onClose={handleDeferredPaywallClose}
       />
     </>

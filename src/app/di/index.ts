@@ -58,7 +58,9 @@ export {
 export {
   addCustomCounterUseCase,
   getCustomCountersUseCase,
+  decrementCustomCounterUseCase,
   incrementCustomCounterUseCase,
+  resetCustomCounterUseCase,
   removeCustomCounterUseCase,
   replaceCustomCountersFromSyncUseCase,
 } from './counters';

@@ -47,6 +47,10 @@ private const val PENDING_INTENT_COUNTER_BASE = 200
 private const val PENDING_INTENT_DAILY_TASKS = 103
 private const val PENDING_INTENT_HOUR_CALCULATION = 104
 private const val PENDING_INTENT_LIFE = 105
+private const val PENDING_INTENT_OPEN_COUNTDOWNS = 301
+private const val PENDING_INTENT_OPEN_COUNTERS = 302
+private const val PENDING_INTENT_OPEN_HOUR_CALCULATION = 303
+private const val PENDING_INTENT_OPEN_TASKS = 304
 
 class UNTILWidgetWorker(
     context: Context,
@@ -381,15 +385,10 @@ class UNTILWidgetWorker(
                 views.setTextViewText(R.id.widget_counter_title, "Add a counter in UNTIL")
                 views.setTextViewText(R.id.widget_counter_count, "")
                 views.setViewVisibility(R.id.widget_counter_plus, android.view.View.GONE)
-                val openApp = PendingIntent.getActivity(
-                    context,
-                    PENDING_INTENT_COUNTER_BASE + (appWidgetId and 0x7FFF),
-                    context.packageManager.getLaunchIntentForPackage(context.packageName)!!.apply {
-                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                    },
-                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+                views.setOnClickPendingIntent(
+                    R.id.widget_root,
+                    openScreenPendingIntent(context, "CustomCounters", PENDING_INTENT_OPEN_COUNTERS),
                 )
-                views.setOnClickPendingIntent(R.id.widget_root, openApp)
             }
             return views
         }
@@ -415,25 +414,28 @@ class UNTILWidgetWorker(
             }
         }
 
+        /**
+         * Days until a YYYY-MM-DD date, negative once it has passed. Counts calendar dates (as UTC
+         * midnights), not 24-hour blocks: on the day the clocks change a local day is 23 or 25 hours,
+         * which used to make a deadline show a day too few after the clocks went forward.
+         */
         private fun daysLeft(dateStr: String): Int {
             if (dateStr.length < 10) return 0
             return try {
                 val y = dateStr.substring(0, 4).toInt()
                 val m = dateStr.substring(5, 7).toInt() - 1
                 val d = dateStr.substring(8, 10).toInt()
-                val today = Calendar.getInstance().apply {
-                    set(Calendar.HOUR_OF_DAY, 0)
-                    set(Calendar.MINUTE, 0)
-                    set(Calendar.SECOND, 0)
-                    set(Calendar.MILLISECOND, 0)
+                val utc = java.util.TimeZone.getTimeZone("UTC")
+                val now = Calendar.getInstance()
+                val todayUtc = Calendar.getInstance(utc).apply {
+                    clear()
+                    set(now.get(Calendar.YEAR), now.get(Calendar.MONTH), now.get(Calendar.DAY_OF_MONTH))
                 }
-                val target = Calendar.getInstance().apply {
-                    set(y, m, d, 0, 0, 0)
-                    set(Calendar.MILLISECOND, 0)
+                val targetUtc = Calendar.getInstance(utc).apply {
+                    clear()
+                    set(y, m, d)
                 }
-                val diffMs = target.timeInMillis - today.timeInMillis
-                val diffDays = (diffMs / (24 * 60 * 60 * 1000)).toInt()
-                maxOf(0, diffDays)
+                Math.round((targetUtc.timeInMillis - todayUtc.timeInMillis) / 86_400_000.0).toInt()
             } catch (e: Exception) {
                 0
             }
@@ -608,7 +610,15 @@ class UNTILWidgetWorker(
                 toggleIntent,
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             )
-            views.setOnClickPendingIntent(R.id.widget_root, togglePending)
+            // A tap opens what you are looking at: the tasks page opens Tasks, the day page opens Today.
+            val route = if (page == 0) "DailyTasks" else "DayDetail"
+            views.setOnClickPendingIntent(
+                R.id.widget_root,
+                openScreenPendingIntent(context, route, PENDING_INTENT_OPEN_TASKS),
+            )
+            // The small Ember (tasks page) and the "left today" text (day page) flip between the pages.
+            views.setOnClickPendingIntent(R.id.widget_daily_tasks_ember, togglePending)
+            views.setOnClickPendingIntent(R.id.widget_day_left, togglePending)
             return views
         }
 
@@ -617,7 +627,16 @@ class UNTILWidgetWorker(
             if (countdown != null) {
                 val days = daysLeft(countdown.date)
                 views.setTextViewText(R.id.widget_countdown_title, countdown.title)
-                if (days == 0) {
+                if (days < 0) {
+                    // The deadline has gone by: say so, rather than "Today" for ever.
+                    val ago = -days
+                    views.setTextViewTextSize(R.id.widget_countdown_days, android.util.TypedValue.COMPLEX_UNIT_SP, 34f)
+                    views.setTextViewText(R.id.widget_countdown_days, context.getString(R.string.widget_countdown_passed))
+                    views.setTextViewText(
+                        R.id.widget_countdown_unit,
+                        context.resources.getQuantityString(R.plurals.widget_countdown_days_ago, ago, ago),
+                    )
+                } else if (days == 0) {
                     views.setTextViewTextSize(R.id.widget_countdown_days, android.util.TypedValue.COMPLEX_UNIT_SP, 34f)
                     views.setTextViewText(R.id.widget_countdown_days, "Today")
                     views.setTextViewText(R.id.widget_countdown_unit, "")
@@ -635,13 +654,10 @@ class UNTILWidgetWorker(
                 views.setTextViewText(R.id.widget_countdown_unit, "")
                 views.setTextViewText(R.id.widget_countdown_date, "")
             }
-            val openApp = PendingIntent.getActivity(
-                context,
-                appWidgetId,
-                context.packageManager.getLaunchIntentForPackage(context.packageName)!!.apply { addFlags(Intent.FLAG_ACTIVITY_NEW_TASK) },
-                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            views.setOnClickPendingIntent(
+                R.id.widget_root,
+                openScreenPendingIntent(context, "Countdowns", PENDING_INTENT_OPEN_COUNTDOWNS),
             )
-            views.setOnClickPendingIntent(R.id.widget_root, openApp)
             return views
         }
 
@@ -706,6 +722,11 @@ class UNTILWidgetWorker(
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             )
             views.setOnClickPendingIntent(R.id.widget_root, togglePending)
+            // The title is the way into the app: reset the timer, rename it, or start and stop it there.
+            views.setOnClickPendingIntent(
+                R.id.widget_hour_calc_title,
+                openScreenPendingIntent(context, "HourCalculation", PENDING_INTENT_OPEN_HOUR_CALCULATION),
+            )
             return views
         }
 
@@ -799,15 +820,12 @@ class UNTILWidgetWorker(
          * PendingIntent to open the app when the user taps the widget.
          * Uses distinct request codes per widget type so the system doesn't collapse different widgets' intents.
          */
-        private fun openAppPendingIntent(context: Context, layoutId: Int): PendingIntent {
-            val requestCode = when (layoutId) {
-                R.layout.widget_day -> PENDING_INTENT_DAY
-                R.layout.widget_month -> PENDING_INTENT_MONTH
-                R.layout.widget_life -> PENDING_INTENT_LIFE
-                R.layout.widget_year -> PENDING_INTENT_YEAR
-                else -> PENDING_INTENT_DAY
-            }
-            val intent = Intent(context, MainActivity::class.java).apply {
+        /**
+         * Opens the app on one screen. The app reads `until://open/<Screen>` (see
+         * src/app/navigation/deepLinks.ts) on a cold start and when it is already running.
+         */
+        private fun openScreenPendingIntent(context: Context, route: String, requestCode: Int): PendingIntent {
+            val intent = Intent(Intent.ACTION_VIEW, Uri.parse("until://open/$route"), context, MainActivity::class.java).apply {
                 flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
             }
             return PendingIntent.getActivity(
@@ -816,6 +834,18 @@ class UNTILWidgetWorker(
                 intent,
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             )
+        }
+
+        /** The screen each time widget opens: Today, This month, This year, Your life. */
+        private fun openAppPendingIntent(context: Context, layoutId: Int): PendingIntent {
+            val (requestCode, route) = when (layoutId) {
+                R.layout.widget_day -> PENDING_INTENT_DAY to "DayDetail"
+                R.layout.widget_month -> PENDING_INTENT_MONTH to "MonthDetail"
+                R.layout.widget_life -> PENDING_INTENT_LIFE to "Life"
+                R.layout.widget_year -> PENDING_INTENT_YEAR to "YearDetail"
+                else -> PENDING_INTENT_DAY to "DayDetail"
+            }
+            return openScreenPendingIntent(context, route, requestCode)
         }
 
         private const val DEFAULT_ACCENT_HEX = "#E87C20"

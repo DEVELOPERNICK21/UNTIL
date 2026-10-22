@@ -17,12 +17,6 @@ import { runMigrations } from '../shared/persistence/migration';
 import { AuthNavigator } from './navigation/AuthNavigator';
 import { SplashScreen } from './splash/SplashScreen';
 import { useOnboardingState } from '../features/onboarding';
-import {
-  useAppUpdateCheck,
-  recordOptionalUpdateDismissed,
-  ForceUpdateModal,
-  OptionalUpdateModal,
-} from '../features/app-update';
 import { useTrialEndingReminder, TrialEndingModal } from '../features/premium';
 import { useAnalyticsBootstrap } from './bootstrap/useAnalyticsBootstrap';
 import { useAuthBootstrap } from '../features/account';
@@ -276,23 +270,11 @@ function PostSplashContent() {
   useAnalyticsBootstrap();
   const theme = useTheme();
   const { hasCompleted, completeOnboarding } = useOnboardingState();
-  const { updateType, storeUrl, latestVersion } = useAppUpdateCheck();
   const {
     visible: trialReminderVisible,
     trialDay,
     dismiss: dismissTrialReminder,
   } = useTrialEndingReminder();
-  const [optionalVisible, setOptionalVisible] = useState(true);
-
-  const showForce = updateType === 'FORCE_UPDATE';
-  const showOptional = updateType === 'OPTIONAL_UPDATE' && optionalVisible;
-
-  const handleDismissOptional = () => {
-    if (latestVersion) {
-      recordOptionalUpdateDismissed(latestVersion);
-    }
-    setOptionalVisible(false);
-  };
 
   return (
     <>
@@ -306,12 +288,6 @@ function PostSplashContent() {
         <AuthNavigator onComplete={completeOnboarding} />
       )}
 
-      <ForceUpdateModal visible={showForce} storeUrl={storeUrl} />
-      <OptionalUpdateModal
-        visible={showOptional && !showForce}
-        storeUrl={storeUrl}
-        onDismiss={handleDismissOptional}
-      />
       {hasCompleted ? (
         <TrialEndingModal
           visible={trialReminderVisible}

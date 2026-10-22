@@ -1,248 +1,115 @@
-import { Platform, Linking } from 'react-native';
+/**
+ * Asks the website which build is current for this platform and turns the answer into a decision
+ * (see domain/updatePolicy). The sheet only draws that decision.
+ */
+
+import { Linking, Platform } from 'react-native';
 import DeviceInfo from 'react-native-device-info';
-import { getNumber, getString, setNumber, setString } from '../../../shared/persistence/mmkv';
+import { getNumber, setNumber } from '../../../shared/persistence/mmkv';
 import { STORAGE_KEYS } from '../../../shared/persistence/schema';
 import { recordCrashError } from '../../../shared/analytics/analytics';
-import { MS_PER_DAY } from '../../../shared/time/constants';
+import { SITE_URL } from '../../../config/storeUrls';
+import { MS_PER_HOUR, MS_PER_SECOND } from '../../../shared/time/constants';
+import { withTimeout } from '../../../shared/utils/withTimeout';
+import {
+  NO_SNOOZE,
+  decideUpdate,
+  isTrustedStoreUrl,
+  parseUpdateConfig,
+  snoozeAfterDismiss,
+  type SnoozeState,
+  type UpdateDecision,
+  type UpdatePlatform,
+} from '../domain/updatePolicy';
 
-export type UpdateType = 'FORCE_UPDATE' | 'OPTIONAL_UPDATE' | 'NO_UPDATE';
+/** Served by the website (website/src/app/api/update-config); the values live in website/src/domain/appUpdate.ts. */
+const UPDATE_CONFIG_URL = `${SITE_URL}/api/update-config`;
+const FETCH_TIMEOUT_MS = 8 * MS_PER_SECOND;
+/** After an answer of "nothing to show", ask again no sooner than this. */
+const QUIET_CHECK_EVERY_MS = 6 * MS_PER_HOUR;
 
-export interface UpdateConfig {
-  latest_version: string;
-  minimum_supported_version: string;
-  force_update?: boolean;
-  store_url_android?: string;
-  store_url_ios?: string;
+function currentPlatform(): UpdatePlatform | null {
+  if (Platform.OS === 'android') return 'android';
+  if (Platform.OS === 'ios') return 'ios';
+  return null;
 }
 
-export interface UpdateCheckResult {
-  type: UpdateType;
-  storeUrl?: string;
-  latestVersion?: string;
-}
-
-// Remote JSON config for app updates. Served from your marketing site.
-// Implement a Next.js (or similar) API route at this path that returns the
-// config in the documented format.
-const UPDATE_CONFIG_URL =
-  'https://developernick1-until.vercel.app/api/update-config';
-
-const LAST_CHECK_KEY = STORAGE_KEYS.UPDATE_LAST_CHECK_AT;
-const DISMISSED_VERSION_KEY = STORAGE_KEYS.UPDATE_DISMISSED_VERSION;
-
-export function parseSemver(version: string): [number, number, number] {
-  const [major, minor, patch] = version.split('.').map(part => {
-    const n = Number(part.replace(/[^\d]/g, ''));
-    return Number.isFinite(n) ? n : 0;
-  });
-
-  return [major ?? 0, minor ?? 0, patch ?? 0] as [number, number, number];
-}
-
-export function compareSemver(a: string, b: string): -1 | 0 | 1 {
-  const [aMaj, aMin, aPatch] = parseSemver(a);
-  const [bMaj, bMin, bPatch] = parseSemver(b);
-
-  if (aMaj !== bMaj) return aMaj < bMaj ? -1 : 1;
-  if (aMin !== bMin) return aMin < bMin ? -1 : 1;
-  if (aPatch !== bPatch) return aPatch < bPatch ? -1 : 1;
-  return 0;
-}
-
-/** Integer versionCode comparison (Play Store version code, e.g. 7 vs 8). */
-export function compareVersionCode(a: string, b: string): -1 | 0 | 1 {
-  const aNum = parseInt(a.replace(/[^\d]/g, ''), 10) || 0;
-  const bNum = parseInt(b.replace(/[^\d]/g, ''), 10) || 0;
-  if (aNum < bNum) return -1;
-  if (aNum > bNum) return 1;
-  return 0;
-}
-
-/**
- * Installed version for update checks. On Android this must be versionCode
- * (build.gradle versionCode), which matches Play Console and update-config.
- */
-export async function getInstalledVersionForUpdateCheck(): Promise<string> {
+/** Android versionCode / iOS build number: the integer the config compares against. 0 when unreadable. */
+export function getInstalledBuild(): number {
   try {
-    const deviceInfo = DeviceInfo as typeof DeviceInfo & {
-      getBuildNumberSync?: () => string;
-    };
-    const syncBuild = deviceInfo.getBuildNumberSync?.();
-    if (typeof syncBuild === 'string' && syncBuild.trim()) {
-      return syncBuild.trim();
-    }
-
-    const build: unknown = deviceInfo.getBuildNumber();
-    if (typeof build === 'string' && build.trim()) {
-      return build.trim();
-    }
-    if (
-      build &&
-      typeof build === 'object' &&
-      'then' in build &&
-      typeof (build as Promise<unknown>).then === 'function'
-    ) {
-      const resolved = await (build as Promise<string>);
-      if (typeof resolved === 'string' && resolved.trim()) {
-        return resolved.trim();
-      }
-    }
-
-    const marketing = DeviceInfo.getVersion();
-    if (typeof marketing === 'string' && marketing.trim()) {
-      return marketing.trim();
-    }
+    const build = Number.parseInt(String(DeviceInfo.getBuildNumber()), 10);
+    return Number.isFinite(build) ? build : 0;
   } catch {
-    // fall through
+    return 0;
   }
-  return '0';
 }
 
-export function wasOptionalUpdateDismissed(latestVersion: string): boolean {
-  return getString(DISMISSED_VERSION_KEY) === latestVersion;
+function readSnooze(): SnoozeState {
+  const build = getNumber(STORAGE_KEYS.UPDATE_SNOOZED_BUILD);
+  if (build == null) return NO_SNOOZE;
+  return {
+    build,
+    count: getNumber(STORAGE_KEYS.UPDATE_SNOOZE_COUNT) ?? 0,
+    at: getNumber(STORAGE_KEYS.UPDATE_SNOOZE_AT) ?? null,
+  };
 }
 
-export function recordOptionalUpdateDismissed(latestVersion: string): void {
-  setString(DISMISSED_VERSION_KEY, latestVersion);
-}
-
-export function getStoreUrl(config: UpdateConfig): string | undefined {
-  if (Platform.OS === 'android') {
-    return config.store_url_android;
-  }
-  if (Platform.OS === 'ios') {
-    return config.store_url_ios;
-  }
-  return undefined;
+/** Remember that the person said "Not now" to this build. */
+export function snoozeUpdate(latestBuild: number, now: number = Date.now()): void {
+  const next = snoozeAfterDismiss(readSnooze(), latestBuild, now);
+  setNumber(STORAGE_KEYS.UPDATE_SNOOZED_BUILD, next.build ?? 0);
+  setNumber(STORAGE_KEYS.UPDATE_SNOOZE_COUNT, next.count);
+  setNumber(STORAGE_KEYS.UPDATE_SNOOZE_AT, next.at ?? now);
 }
 
 export function shouldSkipUpdateCheck(now: number = Date.now()): boolean {
-  // return false; // TEMP: always check for testing
-  const last = getNumber(LAST_CHECK_KEY);
-  if (!last) return false;
-  return now - last < MS_PER_DAY;
+  const last = getNumber(STORAGE_KEYS.UPDATE_LAST_CHECK_AT);
+  return last != null && now - last < QUIET_CHECK_EVERY_MS;
 }
 
-export function recordUpdateCheck(now: number = Date.now()): void {
-  setNumber(LAST_CHECK_KEY, now);
-}
-
-export async function fetchUpdateConfig(): Promise<UpdateConfig | null> {
+async function fetchConfigJson(): Promise<unknown | null> {
   try {
-    const response = await fetch(UPDATE_CONFIG_URL, {
-      method: 'GET',
-      headers: { Accept: 'application/json' },
-    });
-
-    if (!response.ok) {
-      return null;
-    }
-
-    const json = (await response.json()) as UpdateConfig;
-    return json;
+    const response = await withTimeout(
+      fetch(UPDATE_CONFIG_URL, { method: 'GET', headers: { Accept: 'application/json' } }),
+      FETCH_TIMEOUT_MS,
+      'updateConfig',
+    );
+    if (!response.ok) return null;
+    return await response.json();
   } catch (e) {
-    recordCrashError(e, 'updateService.fetchUpdateConfig');
+    recordCrashError(e, 'updateService.fetchConfigJson');
     return null;
   }
 }
 
 /**
- * Kill switch for force / optional update modals on launch.
- * Set to `false` and rebuild when you want the remote update-config prompts back.
+ * The answer for this launch. A "required" or "optional" answer is asked again next launch (so a
+ * required update can never be skipped by the throttle); a quiet answer is cached for a few hours.
  */
-export const APP_UPDATE_PROMPTS_PAUSED = true;
+export async function checkForAppUpdate(now: number = Date.now()): Promise<UpdateDecision> {
+  const platform = currentPlatform();
+  if (!platform) return { kind: 'none' };
 
-export async function checkForAppUpdate(): Promise<UpdateCheckResult> {
-  if (APP_UPDATE_PROMPTS_PAUSED) {
-    return { type: 'NO_UPDATE' };
-  }
+  const json = await fetchConfigJson();
+  if (json == null) return { kind: 'none' };
 
-  const config = await fetchUpdateConfig();
-  if (!config) {
-    return { type: 'NO_UPDATE' };
-  }
-
-  // Compare against versionCode (Android) / build number (iOS) — must match update-config.
-  const currentVersion = await getInstalledVersionForUpdateCheck();
-  const { minimum_supported_version, latest_version } = config;
-  const storeUrl = getStoreUrl(config);
-  const compare = compareVersionCode;
-
-  if (compare(currentVersion, minimum_supported_version) === -1) {
-    return {
-      type: 'FORCE_UPDATE',
-      storeUrl,
-      latestVersion: latest_version,
-    };
-  }
-
-  // Up to date or ahead of store (e.g. internal build) — no prompt.
-  if (compare(currentVersion, latest_version) >= 0) {
-    return { type: 'NO_UPDATE' };
-  }
-
-  if (wasOptionalUpdateDismissed(latest_version)) {
-    return { type: 'NO_UPDATE' };
-  }
-
-  return {
-    type: 'OPTIONAL_UPDATE',
-    storeUrl,
-    latestVersion: latest_version,
-  };
+  const decision = decideUpdate({
+    installedBuild: getInstalledBuild(),
+    config: parseUpdateConfig(json, platform),
+    snooze: readSnooze(),
+    now,
+  });
+  if (decision.kind === 'none') setNumber(STORAGE_KEYS.UPDATE_LAST_CHECK_AT, now);
+  return decision;
 }
 
-export async function openStoreUrl(url?: string): Promise<void> {
-  if (!url) return;
+/** Opens our own store listing. The URL came over the network, so it is checked again here. */
+export async function openStoreListing(url: string): Promise<void> {
+  const platform = currentPlatform();
+  if (!platform || !isTrustedStoreUrl(platform, url)) return;
   try {
-    const supported = await Linking.canOpenURL(url);
-    if (supported) {
-      await Linking.openURL(url);
-    }
-  } catch {
-    // ignore
-  }
-}
-
-// DEBUG / manual testing helper – call from a button to inspect behaviour.
-export async function testUpdateNow(): Promise<void> {
-  try {
-    console.log('[UpdateTest] App version (name):', DeviceInfo.getVersion());
-    console.log(
-      '[UpdateTest] Build / versionCode:',
-      await getInstalledVersionForUpdateCheck(),
-    );
-    console.log('[UpdateTest] URL:', UPDATE_CONFIG_URL);
-
-    const response = await fetch(UPDATE_CONFIG_URL, {
-      method: 'GET',
-      headers: { Accept: 'application/json' },
-    });
-
-    console.log(
-      '[UpdateTest] HTTP status:',
-      response.status,
-      'ok:',
-      response.ok,
-    );
-
-    if (!response.ok) {
-      const text = await response.text().catch(() => '');
-      console.log('[UpdateTest] Non-OK response body:', text);
-      return;
-    }
-
-    const config = (await response.json()) as UpdateConfig;
-    console.log('[UpdateTest] Remote config parsed:', config);
-
-    const result = await checkForAppUpdate();
-    console.log(
-      '[UpdateTest] Result:',
-      result.type,
-      'storeUrl:',
-      result.storeUrl,
-    );
+    await Linking.openURL(url);
   } catch (e) {
-    console.log('[UpdateTest] Error while testing update:', e);
+    recordCrashError(e, 'updateService.openStoreListing');
   }
 }

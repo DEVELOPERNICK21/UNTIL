@@ -124,7 +124,10 @@ export const STORAGE_KEYS = {
   UPDATE_LAST_CHECK_AT: 'update.lastCheckAt',
   /** When the system notification prompt was last shown (shared/platform/notificationPermission). */
   NOTIFICATION_PERMISSION_LAST_ASK_AT: 'notifications.permissionLastAskAt',
-  UPDATE_DISMISSED_VERSION: 'update.dismissedVersion',
+  /** Latest build the person last said "Not now" to, how many times, and when (app-update/services/updateService). */
+  UPDATE_SNOOZED_BUILD: 'update.snoozedBuild',
+  UPDATE_SNOOZE_COUNT: 'update.snoozeCount',
+  UPDATE_SNOOZE_AT: 'update.snoozeAt',
 
   // Play subscription reconcile (expired/canceled)
   PLAY_ENTITLEMENT_RECONCILE_AT: 'billing.reconcileAt',

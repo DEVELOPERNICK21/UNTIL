@@ -16,6 +16,7 @@ import {
   useWidgetSyncActions,
 } from '../../../shared/platform/useWidgetSyncActions';
 import { Spacing, Colors, Radius, Typography } from '../../../shared/theme';
+import { MAX_TITLE_LENGTH } from '../../../config/inputLimits';
 import type { Countdown } from '../../../shared/types';
 
 function toDateString(d: Date): string {
@@ -95,6 +96,7 @@ export function CountdownsScreen() {
               placeholder="Title (e.g. Project, Interview)"
               placeholderTextColor={Colors.textSecondary}
               autoCapitalize="words"
+              maxLength={MAX_TITLE_LENGTH}
               editable={!hasDeadline}
             />
             <TouchableOpacity
@@ -169,6 +171,11 @@ export function CountdownsScreen() {
                       <Text variant="caption" color="secondary">
                         {item.date} · {item.daysLabel}
                       </Text>
+                      {item.daysUntil < 0 && (
+                        <Text variant="caption" color="secondary" style={styles.overdue}>
+                          This deadline has passed. Remove it to set a new one.
+                        </Text>
+                      )}
                     </View>
                     <TouchableOpacity
                       onPress={() => handleRemove(item)}
@@ -244,6 +251,10 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   rowLeft: { flex: 1 },
+  overdue: {
+    marginTop: Spacing[1],
+    fontStyle: 'italic',
+  },
   itemTitle: { marginBottom: 2 },
   deleteBtn: { paddingVertical: Spacing[1], paddingHorizontal: Spacing[2] },
   deleteText: { color: Colors.textSecondary, textDecorationLine: 'underline' },
