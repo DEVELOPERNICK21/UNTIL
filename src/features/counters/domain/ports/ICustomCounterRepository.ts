@@ -15,6 +15,8 @@ export interface ICustomCounterRepository {
   decrement(id: string): void;
   /** Back to zero, keeping the counter and its title. */
   reset(id: string): void;
+  /** Makes this the counter the widgets show: they read the first one. */
+  moveToFront(id: string): void;
   replaceAll(counters: CustomCounter[]): void;
   subscribe(callback: Subscriber): () => void;
 }

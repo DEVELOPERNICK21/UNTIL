@@ -8,7 +8,9 @@ export class AddCountdownUseCase {
     private readonly engagementRepository: ICountdownEngagementSignals
   ) {}
 
-  execute(title: string, date: string): Countdown {
+  /** Returns null, and changes nothing, when the person already holds `limit` deadlines. */
+  execute(title: string, date: string, limit: number): Countdown | null {
+    if (this.countdownRepository.getAll().length >= limit) return null;
     this.engagementRepository.clearCountdownCompletedFired();
     return this.countdownRepository.add(title, date);
   }

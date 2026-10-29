@@ -3,7 +3,10 @@ jest.mock('../src/shared/persistence/mmkv', () => ({
   getString: (key: string) => mockStore.get(key),
   setString: (key: string, value: string) => void mockStore.set(key, value),
 }));
-jest.mock('../src/shared/utils/randomId', () => ({ randomId: () => 'id-1' }));
+let mockId = 0;
+jest.mock('../src/shared/utils/randomId', () => ({
+  randomId: () => `id-${++mockId}`,
+}));
 
 import { MmkvCountdownRepository } from '../src/features/countdowns/data/MmkvCountdownRepository';
 import { MAX_TITLE_LENGTH } from '../src/config/inputLimits';
@@ -14,6 +17,7 @@ describe('MmkvCountdownRepository', () => {
   let repo: MmkvCountdownRepository;
   beforeEach(() => {
     mockStore.clear();
+    mockId = 0;
     repo = new MmkvCountdownRepository();
   });
 
@@ -56,10 +60,9 @@ describe('MmkvCountdownRepository', () => {
     expect(repo.getAll()).toEqual([]);
   });
 
-  it('keeps one deadline: adding replaces it', () => {
+  it('keeps every deadline it is given, in the order they were added', () => {
     repo.add('First', '2026-12-25');
     repo.add('Second', '2026-12-26');
-    expect(repo.getAll()).toHaveLength(1);
-    expect(repo.getAll()[0].title).toBe('Second');
+    expect(repo.getAll().map(c => c.title)).toEqual(['First', 'Second']);
   });
 });

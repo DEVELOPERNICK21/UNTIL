@@ -46,7 +46,8 @@ Store purchases go through **RevenueCat**. Purchase events include `payment_prov
 | `screen_view` | Navigation (auth + main stack) | `screen` |
 | `onboarding_step` | Carousel step | `step`, `step_name` |
 | `onboarding_complete` | User reaches Home | `exit_type`, `step`, `step_name` |
-| `premium_viewed` | Paywall shown | `source` |
+| `premium_viewed` | Paywall shown | `source` (`limit_gate` = opened from the "more deadlines/counters" prompt) |
+| `premium_limit_hit` | Free plan tried to add a second deadline or counter | `feature` (`deadlines` or `counters`) |
 | `premium_purchase_started` | User taps a plan | `plan_id`, `source`, `price_display` |
 | `premium_purchase_completed` | Play purchase applied | `plan_id`, `source`, `price_display`, `payment_provider` |
 | `premium_purchase_failed` / `cancelled` | Billing errors | `error_code`, `error_message`, `payment_provider` |

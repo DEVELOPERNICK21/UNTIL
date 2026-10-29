@@ -87,11 +87,31 @@ describe('MmkvCustomCounterRepository', () => {
     expect(repo.add('   ').title).toBe('Counter');
   });
 
-  it('keeps one counter: adding replaces it', () => {
+  it('keeps every counter it is given, in the order they were added', () => {
     repo.add('First');
     repo.add('Second');
-    expect(read()).toHaveLength(1);
-    expect(read()[0].title).toBe('Second');
+    expect(read().map((c: { title: string }) => c.title)).toEqual(['First', 'Second']);
+  });
+
+  it('moves a counter to the front so the widget shows it, keeping the others in order', () => {
+    const a = repo.add('A');
+    repo.add('B');
+    const c = repo.add('C');
+    repo.moveToFront(c.id);
+    expect(read().map((x: { title: string }) => x.title)).toEqual(['C', 'A', 'B']);
+    repo.moveToFront(a.id);
+    expect(read().map((x: { title: string }) => x.title)).toEqual(['A', 'C', 'B']);
+  });
+
+  it('leaves the order alone for the counter already in front, or one that is not there', () => {
+    const a = repo.add('A');
+    repo.add('B');
+    const listener = jest.fn();
+    repo.subscribe(listener);
+    repo.moveToFront(a.id);
+    repo.moveToFront('nope');
+    expect(read().map((x: { title: string }) => x.title)).toEqual(['A', 'B']);
+    expect(listener).not.toHaveBeenCalled();
   });
 
   it('tells subscribers about every change', () => {

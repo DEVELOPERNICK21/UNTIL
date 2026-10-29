@@ -29,7 +29,7 @@ When changing prices, paywall text, or what is free vs Premium, update **this fi
 - Today / **Day** widget + detail
 - This year / **Year** widget + detail  
 - **Share** snapshots  
-- Custom counters, deadlines, hour calculation screens (app UI; widget variants may be V2)
+- Your **first deadline** and **first counter** (and their widgets), plus the hour calculation screen and tasks
 
 ---
 
@@ -39,10 +39,15 @@ When changing prices, paywall text, or what is free vs Premium, update **this fi
 - **Full Life** progress screen + Life block on Home (after birth date)  
 - **Floating overlay** — month & life modes (Android)  
 - **Dynamic Island / Live Activity** — month & life (iOS)  
+- **Up to 20 deadlines and 20 counters** (free keeps 1 of each). The deadline widget always shows the nearest one; you choose which counter the widget shows. Limits live in `src/config/featureLimits.ts`.
 - **Activity intervention** alerts (nothing-time limits)  
 - **5-day free app preview** (in-app only; server-backed; do not imply a Play billing trial unless Console offers one)
 
 ---
+
+## What happens when Premium ends
+
+Nothing a person made is deleted. Someone who built 5 deadlines on Premium keeps all 5 and can still use them; they just cannot add a 6th. The deadline widget still shows the nearest one. This is on purpose: taking data away from a person who stops paying is the fastest way to a one-star review.
 
 ## Pricing psychology (implemented in app)
 
@@ -53,7 +58,8 @@ When changing prices, paywall text, or what is free vs Premium, update **this fi
 5. **Weekly as try** — ₹49/week for low commitment; not the primary upsell.  
 6. **Emotional paywall** — “Your life is passing. Start watching it.” (not “Unlock Premium”).  
 7. **24h Life preview → paywall** — modal when preview ends (`LifeUnlockEndedModal`).  
-8. **48h paywall cooldown** — after dismissing interstitial (`paywallPrompt.ts`).
+8. **48h paywall cooldown** — after dismissing interstitial (`paywallPrompt.ts`).  
+9. **Their own numbers first** — the paywall opens its feature section with the person's real Today, month and Life percentages and which widget shows each (`PaywallYourNumbers`). Real figures only; no invented counts.
 
 ---
 
@@ -86,6 +92,7 @@ When changing prices, paywall text, or what is free vs Premium, update **this fi
 |------|--------|----------------|
 | 1 | 24h Life unlock ends | `LifeUnlockEndedModal` on Life screen |
 | 2 | Birth date set | Future: inline prompt on Home |
+| 2b | Add a second deadline or counter | `useLimitUpgradePrompt` (event `premium_limit_hit`, then `premium_viewed` with source `limit_gate`) |
 | 3 | Add Life/Month widget | Future: widget picker gate |
 | 4 | Trial day 13 | Future: notification |
 | 5 | After share snapshot | Future: soft prompt |

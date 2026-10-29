@@ -1993,12 +1993,15 @@ struct CountdownWidgetEntry: TimelineEntry {
 }
 
 struct CountdownWidgetProvider: TimelineProvider {
+    /// The deadline the widget shows: the nearest one still to come (today counts), otherwise the
+    /// one that passed most recently. The app list and the Android widget use the same rule.
     private func loadFirstCountdown() -> (CountdownItem, Int)? {
         guard let json = WidgetCacheReader.loadCountdownsJSON(),
               let data = json.data(using: .utf8),
-              let list = try? JSONDecoder().decode([CountdownItem].self, from: data),
-              let first = list.first else { return nil }
-        return (first, daysLeft(from: first.date))
+              let list = try? JSONDecoder().decode([CountdownItem].self, from: data) else { return nil }
+        let dated = list.map { ($0, daysLeft(from: $0.date)) }
+        if let next = dated.filter({ $0.1 >= 0 }).min(by: { $0.1 < $1.1 }) { return next }
+        return dated.max(by: { $0.1 < $1.1 })
     }
 
     func placeholder(in context: Context) -> CountdownWidgetEntry {

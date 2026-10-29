@@ -1,4 +1,5 @@
 import { daysBetween, getSignedDaysUntil } from '../daysLeft';
+import { featuredCountdown } from '../featured';
 import type { ICountdownRepository } from '../ports/ICountdownRepository';
 import type { ICountdownEngagementSignals } from '../ports/ICountdownEngagementSignals';
 
@@ -15,8 +16,8 @@ export class CheckCountdownCompletionUseCase {
   ) {}
 
   execute(): void {
-    const countdowns = this.countdownRepository.getAll();
-    const countdown = countdowns[0];
+    // With several deadlines, the one that matters is the one the widget shows: the nearest.
+    const countdown = featuredCountdown(this.countdownRepository.getAll());
     if (!countdown) return;
 
     // Only on the day itself. An overdue deadline is not "reached today", and the share and review

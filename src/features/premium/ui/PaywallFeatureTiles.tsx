@@ -5,6 +5,7 @@
 import React from 'react';
 import { View, StyleSheet, Pressable, Vibration } from 'react-native';
 import { Text, PeriodGlyph, type PeriodGlyphKind } from '../../../shared/ui';
+import { PaywallYourNumbers } from './PaywallYourNumbers';
 import {
   useTheme,
   Spacing,
@@ -52,6 +53,14 @@ const FEATURES: FeatureTile[] = [
     glyph: 'year',
     progress: 0.33,
   },
+  {
+    id: 'deadlines',
+    label: 'Every deadline and counter',
+    blurb: 'Keep up to 20 of each, not just one. Your widget always shows the nearest deadline.',
+    glyph: 'day',
+    progress: 0.85,
+    featured: true,
+  },
 ];
 
 interface PaywallFeatureTilesProps {
@@ -66,6 +75,7 @@ export function PaywallFeatureTiles({ onSelect }: PaywallFeatureTilesProps) {
 
   return (
     <View style={styles.wrap}>
+      <PaywallYourNumbers />
       <Text
         variant="caption"
         style={[

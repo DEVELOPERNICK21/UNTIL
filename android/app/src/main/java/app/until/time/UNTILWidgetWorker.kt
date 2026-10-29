@@ -248,10 +248,10 @@ class UNTILWidgetWorker(
             }
             val countdownIds = appWidgetManager.getAppWidgetIds(countdownProvider)
             if (countdownIds.isNotEmpty()) {
-                val firstCountdown = countdowns.firstOrNull()
+                val shownCountdown = featuredCountdown(countdowns)
                 for (id in countdownIds) {
                     try {
-                        val views = buildCountdownRemoteViews(context, firstCountdown, id)
+                        val views = buildCountdownRemoteViews(context, shownCountdown, id)
                         appWidgetManager.updateAppWidget(id, views)
                     } catch (e: Exception) {
                         val views = buildCountdownRemoteViews(context, null, id)
@@ -412,6 +412,17 @@ class UNTILWidgetWorker(
             } catch (e: Exception) {
                 emptyList()
             }
+        }
+
+        /**
+         * The deadline the widget shows: the nearest one still to come (today counts), otherwise the
+         * one that passed most recently. The app list and the iOS widget use the same rule, and it is
+         * decided here so it stays right when a date goes by while the app is closed.
+         */
+        private fun featuredCountdown(list: List<CountdownModel>): CountdownModel? {
+            val dated = list.filter { it.date.length >= 10 }.map { it to daysLeft(it.date) }
+            val next = dated.filter { it.second >= 0 }.minByOrNull { it.second }
+            return (next ?: dated.maxByOrNull { it.second })?.first
         }
 
         /**

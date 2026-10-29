@@ -23,13 +23,15 @@ Two premium paths:
 
 ### Free (no license required)
 
-- **Widgets**: Day (today), Year, Counter
+- **Widgets**: Day (today), Year, Counter, Countdown (deadline), Daily Tasks, Hour Calculation
 - **Dynamic Island / Overlay**: Day, Year
+- **Deadlines and counters**: 1 of each
 
 ### Premium (license required)
 
-- **Widgets**: Month, Countdown, Daily Tasks, Hour Calculation
-- **Dynamic Island / Overlay**: Month, Life, Daily Tasks, Hour Timer
+- **Widgets**: Month, Life
+- **Dynamic Island / Overlay**: Month, Life
+- **Deadlines and counters**: up to 20 of each (`src/config/featureLimits.ts`)
 
 ---
 

@@ -62,6 +62,7 @@ export {
   incrementCustomCounterUseCase,
   resetCustomCounterUseCase,
   removeCustomCounterUseCase,
+  showCounterOnWidgetUseCase,
   replaceCustomCountersFromSyncUseCase,
 } from './counters';
 export {

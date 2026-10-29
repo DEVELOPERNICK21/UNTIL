@@ -13,8 +13,8 @@ import {
   getFontFamilyForWeight,
 } from '../../../shared/theme';
 
-const FREE_ITEMS = ['Day widget', 'Year widget', 'Share'];
-const PREMIUM_ITEMS = ['Month widget', 'Life screen', 'Overlay'];
+const FREE_ITEMS = ['Day widget', 'Year widget', 'Share', '1 deadline, 1 counter'];
+const PREMIUM_ITEMS = ['Month widget', 'Life screen', 'Overlay', 'Up to 20 of each'];
 
 export function PaywallCompareStrip() {
   const theme = useTheme();
