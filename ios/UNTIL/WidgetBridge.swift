@@ -20,6 +20,7 @@ private let kindMonth = "UNTILMonthWidget"
 private let kindYear = "UNTILYearWidget"
 private let kindCounter = "UNTILCounterWidget"
 private let kindCountdown = "UNTILCountdownWidget"
+private let kindDeadlines = "UNTILDeadlinesWidget"
 private let kindDailyTasks = "UNTILDailyTasksWidget"
 private let kindHourCalculation = "UNTILHourCalculationWidget"
 
@@ -55,6 +56,7 @@ class WidgetBridge: NSObject {
     defaults.set(json, forKey: countdownsKey)
     defaults.synchronize()
     WidgetCenter.shared.reloadTimelines(ofKind: kindCountdown)
+    WidgetCenter.shared.reloadTimelines(ofKind: kindDeadlines)
   }
 
   @objc func setDailyTasksStats(_ json: String) {
@@ -101,6 +103,7 @@ class WidgetBridge: NSObject {
           "yearWidgetAdded": kinds.contains(kindYear),
           "counterWidgetAdded": kinds.contains(kindCounter),
           "countdownWidgetAdded": kinds.contains(kindCountdown),
+          "deadlinesWidgetAdded": kinds.contains(kindDeadlines),
           "dailyTasksWidgetAdded": kinds.contains(kindDailyTasks),
           "hourCalculationWidgetAdded": kinds.contains(kindHourCalculation),
         ]

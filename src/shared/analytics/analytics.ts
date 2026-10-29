@@ -20,7 +20,7 @@ export type AnalyticsPaywallSource =
   | 'deferred_paywall'
   | 'onboarding_paywall'
   | 'trial_ending_modal'
-  | 'widget_gate'
+  | 'widget_gate' | 'limit_gate'
   | 'unknown';
 
 export type AnalyticsEventName =
@@ -40,7 +40,7 @@ export type AnalyticsEventName =
   | 'widget_pin_confirmed'
   | 'widget_coach_shown'
   | 'widget_coach_dismissed'
-  | 'premium_viewed'
+  | 'premium_viewed' | 'premium_limit_hit'
   | 'deferred_paywall_shown'
   | 'deferred_paywall_dismissed'
   | 'reflection_seen'

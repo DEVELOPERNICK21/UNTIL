@@ -6,6 +6,8 @@
 export { shouldShowDeferredPaywall } from './services/deferredPaywall';
 export { shouldPromptLifeUnlockEnded } from './services/paywallPrompt';
 export { useAccessControl } from './hooks/useAccessControl';
+export { useItemLimit } from './hooks/useItemLimit';
+export { useLimitUpgradePrompt } from './hooks/useLimitUpgradePrompt';
 export { useManageSubscription } from './hooks/useManageSubscription';
 export { useObserveSubscription } from './hooks/useObserveSubscription';
 export { useTrialEndingReminder } from './hooks/useTrialEndingReminder';

@@ -71,6 +71,19 @@ describe('widgetPin', () => {
     });
   });
 
+  it('can place the Next deadlines widget, and notices when it lands', async () => {
+    await requestPinWidget('deadlines', 'widget_screen');
+    expect(mockBridge.requestPinWidget).toHaveBeenCalledWith('deadlines');
+    mockBridge.getWidgetStatus.mockResolvedValue({ deadlinesWidgetAdded: true });
+
+    await jest.advanceTimersByTimeAsync(2000);
+
+    expect(mockLog).toHaveBeenCalledWith(
+      'widget_pin_confirmed',
+      expect.objectContaining({ kind: 'deadlines' }),
+    );
+  });
+
   it('logs a confirmation once the widget shows up in the status', async () => {
     await requestPinWidget('day', 'coach');
     mockBridge.getWidgetStatus.mockResolvedValue({ dayWidgetAdded: true });

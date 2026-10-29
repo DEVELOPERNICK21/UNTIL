@@ -106,6 +106,14 @@ export function AddToHomeScreenSection({
           title="Life"
           detail="Your life in weeks"
           locked={!premium}
+          last={false}
+          onLocked={onLocked}
+        />
+        <PinRow
+          kind="deadlines"
+          title="Next deadlines"
+          detail="Your three nearest"
+          locked={!premium}
           last
           onLocked={onLocked}
         />

@@ -54,7 +54,7 @@ The only feature-to-feature imports allowed (`FEATURE_DEPENDENCIES` in `__tests_
 
 | Tier | Feature | May use |
 |------|---------|---------|
-| 0 | `presence`, `countdowns`, `counters`, `app-update` | — |
+| 0 | `presence`, `app-update` | — |
 | 1 | `time` | presence |
 | 2 | `onboarding` | time |
 | 3 | `account` | onboarding, time |
@@ -62,14 +62,18 @@ The only feature-to-feature imports allowed (`FEATURE_DEPENDENCIES` in `__tests_
 | 4 | `premium` | account, time |
 | 4 | `tasks` | ember |
 | 5 | `activity` | premium, time |
-| 5 | `badges` | countdowns, premium, presence, tasks, time |
-| 5 | `engagement` | countdowns, premium, presence |
+| 5 | `countdowns` | premium |
+| 5 | `counters` | premium |
 | 5 | `life` | premium, presence, time |
 | 5 | `reflections` | onboarding, premium, time |
 | 5 | `share` | premium, time |
-| 5 | `widgets` | countdowns, counters, premium, tasks, time |
-| 6 | `home` | activity, badges, countdowns, premium, presence, reflections, tasks, time |
-| 6 | `settings` | account, activity, app-update, engagement, premium, time |
+| 6 | `badges` | countdowns, premium, presence, tasks, time |
+| 6 | `engagement` | countdowns, premium, presence |
+| 6 | `widgets` | countdowns, counters, premium, tasks, time |
+| 7 | `home` | activity, badges, countdowns, premium, presence, reflections, tasks, time |
+| 7 | `settings` | account, activity, app-update, engagement, premium, time |
+
+`countdowns` and `counters` use `premium` for one thing: how many of each a person can keep (`useItemLimit`, `useLimitUpgradePrompt`). The free plan keeps one; Premium holds more. The limit has to follow the person's plan live, so the screens ask `premium` directly instead of going through a port.
 
 A feature never uses one of a higher tier. Adding an edge is an architectural decision: change the table in the test, here, and say why in the PR. If a new need would create a cycle, **invert the dependency** instead: the lower feature declares the narrow port it needs and `app/di` hands it the implementation (see `IProfileCloudSync`, `ICountdownEngagementSignals`, `IPurchasesLink`, `platform/widgetSync`).
 

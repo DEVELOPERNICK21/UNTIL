@@ -48,8 +48,8 @@ export class MmkvCountdownRepository implements ICountdownRepository {
       date: isValidDateKey(date) ? date : todayIso(),
       createdAt: todayIso(),
     };
-    // Single-item mode: keep exactly one deadline.
-    saveCountdowns([countdown]);
+    // How many a person may hold is decided by the add use case, not here.
+    saveCountdowns([...loadCountdowns(), countdown]);
     this.notifySubscribers();
     return countdown;
   }

@@ -48,10 +48,20 @@ export class MmkvCustomCounterRepository implements ICustomCounterRepository {
       title: trimmed,
       count: 0,
     };
-    // Single-item mode: keep exactly one counter.
-    saveCounters([counter]);
+    // How many a person may hold is decided by the add use case, not here.
+    saveCounters([...loadCounters(), counter]);
     this.notifySubscribers();
     return counter;
+  }
+
+  /** The widgets and the watch show the first counter, so this is how a person picks theirs. */
+  moveToFront(id: string): void {
+    const list = loadCounters();
+    const index = list.findIndex((c) => c.id === id);
+    if (index <= 0) return;
+    const [picked] = list.splice(index, 1);
+    saveCounters([picked, ...list]);
+    this.notifySubscribers();
   }
 
   remove(id: string): void {

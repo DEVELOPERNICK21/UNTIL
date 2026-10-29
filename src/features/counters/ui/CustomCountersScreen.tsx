@@ -9,28 +9,35 @@ import {
   Platform,
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
-import { Text, ScreenGradient, Card } from '../../../shared/ui';
+import { Text, ScreenGradient } from '../../../shared/ui';
 import { useCustomCounters } from '../hooks/useCustomCounters';
+import { useLimitUpgradePrompt } from '../../premium';
+import { CounterCard } from './CounterCard';
 import {
   useWidgetSyncActions,
 } from '../../../shared/platform/useWidgetSyncActions';
 import { Spacing, Colors, Radius, Typography } from '../../../shared/theme';
 import { MAX_TITLE_LENGTH } from '../../../config/inputLimits';
+import { PREMIUM_ITEM_LIMIT } from '../../../config/featureLimits';
 import type { CustomCounter } from '../../../shared/types';
 
 export function CustomCountersScreen() {
   const { syncCustomCounters } = useWidgetSyncActions();
   const {
     counters,
+    atLimit,
+    limit,
+    hasPremium,
     refresh,
     addCounter,
     removeCounter,
     incrementCounter,
     decrementCounter,
     resetCounter,
+    showOnWidget,
   } = useCustomCounters();
+  const promptUpgrade = useLimitUpgradePrompt('counters');
   const [newTitle, setNewTitle] = useState('');
-  const hasCounter = counters.length > 0;
 
   useFocusEffect(
     useCallback(() => {
@@ -39,10 +46,11 @@ export function CustomCountersScreen() {
   );
 
   const handleAdd = () => {
-    if (hasCounter) return;
     const title = newTitle.trim();
     if (!title) return;
-    addCounter(title);
+    // Free plan, second counter: explain Premium. What was typed stays, so nothing is lost.
+    if (atLimit && !hasPremium) return promptUpgrade();
+    if (!addCounter(title)) return;
     setNewTitle('');
     syncCustomCounters();
   };
@@ -69,6 +77,11 @@ export function CustomCountersScreen() {
         },
       ]
     );
+  };
+
+  const handleShowOnWidget = (counter: CustomCounter) => {
+    showOnWidget(counter.id);
+    syncCustomCounters();
   };
 
   const handleRemove = (counter: CustomCounter) => {
@@ -101,7 +114,7 @@ export function CustomCountersScreen() {
             Custom counters
           </Text>
           <Text variant="body" color="secondary" style={styles.subtitle}>
-            Set one counter (e.g. Water), then add the Counter widget to your home screen. Tap the widget to add +1. Use −1 here if you tapped by mistake, or reset it to start again.
+            Add what you want to count (e.g. Water), then add the Counter widget to your home screen. The widget counts one of them: tap it to add +1. Use −1 here if you tapped by mistake, or reset it to start again.
           </Text>
 
           <View style={styles.addRow}>
@@ -115,19 +128,25 @@ export function CustomCountersScreen() {
               maxLength={MAX_TITLE_LENGTH}
               onSubmitEditing={handleAdd}
               returnKeyType="done"
-              editable={!hasCounter}
             />
             <TouchableOpacity
-              style={[styles.addButton, (!newTitle.trim() || hasCounter) && styles.addButtonDisabled]}
+              style={[
+                styles.addButton,
+                (!newTitle.trim() || (atLimit && hasPremium)) && styles.addButtonDisabled,
+              ]}
               onPress={handleAdd}
-              disabled={!newTitle.trim() || hasCounter}
+              disabled={!newTitle.trim() || (atLimit && hasPremium)}
             >
-              <Text variant="caption" style={styles.addButtonText}>Add</Text>
+              <Text variant="caption" style={styles.addButtonText}>
+                {atLimit && !hasPremium ? 'Add with Premium' : 'Add'}
+              </Text>
             </TouchableOpacity>
           </View>
-          {hasCounter && (
+          {atLimit && (
             <Text variant="caption" color="secondary" style={styles.singleLimitHint}>
-              Only one counter is allowed. Remove the current one to create a new counter.
+              {hasPremium
+                ? `That is the most one list holds (${limit}). Remove one to add another.`
+                : `The free plan keeps one counter. Premium holds up to ${PREMIUM_ITEM_LIMIT}.`}
             </Text>
           )}
 
@@ -136,54 +155,17 @@ export function CustomCountersScreen() {
               No counters yet. Add one above, then add the Counter widget from your home screen and choose this counter.
             </Text>
           ) : (
-            counters.map((c) => (
-              <Card key={c.id} style={styles.card}>
-                <View style={styles.row}>
-                  <View style={styles.rowLeft}>
-                    <Text variant="title" color="primary" style={styles.counterTitle}>
-                      {c.title}
-                    </Text>
-                    <Text variant="caption" color="secondary">
-                      Count: {c.count}
-                    </Text>
-                  </View>
-                  <TouchableOpacity
-                    onPress={() => handleRemove(c)}
-                    style={styles.deleteBtn}
-                    hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
-                  >
-                    <Text variant="caption" style={styles.deleteText}>Remove</Text>
-                  </TouchableOpacity>
-                </View>
-                <View style={styles.actions}>
-                  <TouchableOpacity
-                    style={[styles.stepBtn, c.count === 0 && styles.stepBtnDisabled]}
-                    onPress={() => handleStep(c, -1)}
-                    disabled={c.count === 0}
-                    accessibilityRole="button"
-                    accessibilityLabel="Subtract one"
-                  >
-                    <Text variant="sectionTitle" style={styles.stepText}>−1</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={styles.stepBtn}
-                    onPress={() => handleStep(c, 1)}
-                    accessibilityRole="button"
-                    accessibilityLabel="Add one"
-                  >
-                    <Text variant="sectionTitle" style={styles.stepText}>+1</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={[styles.stepBtn, c.count === 0 && styles.stepBtnDisabled]}
-                    onPress={() => handleReset(c)}
-                    disabled={c.count === 0}
-                    accessibilityRole="button"
-                    accessibilityLabel="Reset to zero"
-                  >
-                    <Text variant="sectionTitle" style={styles.stepText}>Reset</Text>
-                  </TouchableOpacity>
-                </View>
-              </Card>
+            counters.map((c, index) => (
+              <CounterCard
+                key={c.id}
+                counter={c}
+                onWidget={index === 0}
+                many={counters.length > 1}
+                onStep={handleStep}
+                onReset={handleReset}
+                onRemove={handleRemove}
+                onShowOnWidget={handleShowOnWidget}
+              />
             ))
           )}
 
@@ -241,46 +223,6 @@ const styles = StyleSheet.create({
   empty: {
     marginBottom: Spacing[4],
     fontStyle: 'italic',
-  },
-  card: {
-    marginBottom: Spacing[3],
-  },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  rowLeft: {
-    flex: 1,
-  },
-  counterTitle: {
-    marginBottom: 2,
-  },
-  actions: {
-    flexDirection: 'row',
-    gap: Spacing[2],
-    marginTop: Spacing[3],
-  },
-  stepBtn: {
-    flex: 1,
-    alignItems: 'center',
-    backgroundColor: Colors.divider,
-    paddingVertical: Spacing[2],
-    borderRadius: Radius.md,
-  },
-  stepBtnDisabled: {
-    opacity: 0.4,
-  },
-  stepText: {
-    color: Colors.textPrimary,
-  },
-  deleteBtn: {
-    paddingVertical: Spacing[1],
-    paddingHorizontal: Spacing[2],
-  },
-  deleteText: {
-    color: Colors.textSecondary,
-    textDecorationLine: 'underline',
   },
   hint: {
     marginTop: Spacing[4],

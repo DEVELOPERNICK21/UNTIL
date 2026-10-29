@@ -92,6 +92,7 @@ class WidgetBridgeModule(reactContext: ReactApplicationContext) :
                 "year" -> ComponentName(ctx, UNTILYearWidgetProvider::class.java)
                 "month" -> ComponentName(ctx, UNTILMonthWidgetProvider::class.java)
                 "life" -> ComponentName(ctx, UNTILLifeWidgetProvider::class.java)
+                "deadlines" -> ComponentName(ctx, UNTILDeadlinesWidgetProvider::class.java)
                 else -> {
                     promise.resolve("unknown_kind")
                     return
@@ -136,6 +137,9 @@ class WidgetBridgeModule(reactContext: ReactApplicationContext) :
             val countdownIds = appWidgetManager.getAppWidgetIds(
                 android.content.ComponentName(ctx, UNTILCountdownWidgetProvider::class.java)
             )
+            val deadlinesIds = appWidgetManager.getAppWidgetIds(
+                android.content.ComponentName(ctx, UNTILDeadlinesWidgetProvider::class.java)
+            )
             val dailyTasksIds = appWidgetManager.getAppWidgetIds(
                 android.content.ComponentName(ctx, UNTILDailyTasksWidgetProvider::class.java)
             )
@@ -149,6 +153,7 @@ class WidgetBridgeModule(reactContext: ReactApplicationContext) :
                 putBoolean("lifeWidgetAdded", lifeIds.isNotEmpty())
                 putBoolean("counterWidgetAdded", counterIds.isNotEmpty())
                 putBoolean("countdownWidgetAdded", countdownIds.isNotEmpty())
+                putBoolean("deadlinesWidgetAdded", deadlinesIds.isNotEmpty())
                 putBoolean("dailyTasksWidgetAdded", dailyTasksIds.isNotEmpty())
                 putBoolean("hourCalculationWidgetAdded", hourCalculationIds.isNotEmpty())
             }

@@ -8,7 +8,7 @@ import { NativeModules, Platform } from 'react-native';
 import { logAnalyticsEvent } from '../analytics/analytics';
 import { MS_PER_SECOND } from '../time/constants';
 
-export type PinWidgetKind = 'day' | 'year' | 'month' | 'life';
+export type PinWidgetKind = 'day' | 'year' | 'month' | 'life' | 'deadlines';
 export type PinWidgetOutcome = 'requested' | 'unsupported' | 'error';
 
 /** Field of the native widget status that flips to true once a widget of that kind exists. */
@@ -17,6 +17,7 @@ const STATUS_FIELD: Record<PinWidgetKind, string> = {
   year: 'yearWidgetAdded',
   month: 'monthWidgetAdded',
   life: 'lifeWidgetAdded',
+  deadlines: 'deadlinesWidgetAdded',
 };
 
 const CONFIRM_POLL_MS = 700;

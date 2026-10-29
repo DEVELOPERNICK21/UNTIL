@@ -16,6 +16,12 @@ import type { ThemePalette } from '../../../shared/theme';
 import type { RootStackParamList } from '../../../shared/navigation/types';
 import { AddToHomeScreenSection } from './AddToHomeScreenSection';
 
+const PREMIUM_WIDGET_TILES = [
+  { title: 'Month widget', description: 'This month progress on your home screen.', route: 'WidgetCustomization' },
+  { title: 'Life widget', description: 'Your life progress at a glance.', route: 'WidgetCustomization' },
+  { title: 'Next deadlines', description: 'Your three nearest deadlines on one widget.', route: 'Countdowns' },
+] as const;
+
 function SectionHeader({ label }: { label: string }) {
   const theme = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
@@ -221,26 +227,19 @@ export function WidgetScreen() {
 
           <SectionHeader label="Premium home screen widgets" />
           <View style={styles.sectionGroup}>
-            <SettingTile
-              title="Month widget"
-              description="This month progress on your home screen."
-              locked={!hasPremiumBundle}
-              onPress={() =>
-                hasPremiumBundle
-                  ? navigation.navigate('WidgetCustomization')
-                  : navigation.navigate('Premium')
-              }
-            />
-            <SettingTile
-              title="Life widget"
-              description="Your life progress at a glance."
-              locked={!hasPremiumBundle}
-              onPress={() =>
-                hasPremiumBundle
-                  ? navigation.navigate('WidgetCustomization')
-                  : navigation.navigate('Premium')
-              }
-            />
+            {PREMIUM_WIDGET_TILES.map(tile => (
+              <SettingTile
+                key={tile.title}
+                title={tile.title}
+                description={tile.description}
+                locked={!hasPremiumBundle}
+                onPress={() =>
+                  hasPremiumBundle
+                    ? navigation.navigate(tile.route)
+                    : navigation.navigate('Premium')
+                }
+              />
+            ))}
           </View>
 
           {/* Section: Quick links */}

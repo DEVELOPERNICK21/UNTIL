@@ -449,6 +449,7 @@ All time logic lives in `core/time`; widgets read cached JSON. Update frequency 
 | **Daily tasks** | On task change + 1 min fallback | Event-driven; minute keeps day time in sync |
 | **Counter** | On tap + on app sync | Event-driven; fallback when app opens |
 | **Countdown** | Every day (midnight) | Days left change at midnight |
+| **Next deadlines** | Every day (midnight) | Days left change at midnight |
 
 **iOS:** Timeline policy per provider (DayWidgetProvider, MonthYearWidgetProvider, etc.).  
 **Android:** DayWidgetTickWorker (1s), StopwatchTickWorker (1s when running), DailyMidnightWorker (midnight), WorkManager (15 min fallback).
@@ -498,11 +499,14 @@ Every widget opens its own screen through `until://open/<Screen>` (the app reads
 | Tasks | Tasks (Today while it shows the day page). The Ember icon and the "left today" text flip the page | Tasks |
 | Hour timer | Tap the title: Hour calculation. Anywhere else: start / stop | Start / stop (the whole small widget is one button). Open Hour calculation in the app to reset |
 | Deadline | Deadlines | Deadlines |
+| Next deadlines (Premium) | Deadlines (Premium screen while locked) | Deadlines (Premium screen while locked) |
 | Counter | +1 (opens Counters when there is no counter yet) | +1 (the link is a fallback) |
 
 Adding a widget? Add its route to `OPENABLE` in `deepLinks.ts`, point the widget at it (Android: `openScreenPendingIntent` in `UNTILWidgetWorker.kt`; iOS: `.widgetURL(widgetOpenURL("<Screen>"))`), and add it to the `widget tap targets` test.
 
 ## Deadlines, counters and the hour timer
+
+- **Several deadlines (Premium).** Free keeps one deadline and one counter; Premium holds up to 20 of each (`src/config/featureLimits.ts`). The small **Deadline** widget shows the nearest deadline still to come, otherwise the one that passed most recently. **Next deadlines** is a Premium widget that lists the nearest three (Android: 4x2; iOS: medium). Both platforms apply the same order as the app (`sortByUrgency` in `src/features/countdowns/domain/featured.ts`, `sortedByUrgency` in `UNTILWidgetWorker.kt`, `sortedCountdowns` in `UNTILWidgets.swift`), decided natively so it stays right when a date passes while the app is closed. When Premium ends the list widget shows the upgrade line; nothing is deleted. With several counters, the one at the front of the list is the one the widget and the watch show ("Show on widget" moves a counter to the front).
 
 - **Deadline days** are counted by calendar date, not by dividing local midnights by 24 hours, so the day the clocks change does not move the count (the app's old formula was a day too high after the clocks went back, and the Android widget a day too low after they went forward). A deadline that has passed shows "Passed" and "N days ago" in the widget and in the app.
 - **Counters** can be counted up, undone (−1, never below 0) and reset in the app; the widget still only adds +1.

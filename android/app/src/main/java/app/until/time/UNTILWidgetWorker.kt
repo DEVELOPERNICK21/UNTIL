@@ -51,6 +51,8 @@ private const val PENDING_INTENT_OPEN_COUNTDOWNS = 301
 private const val PENDING_INTENT_OPEN_COUNTERS = 302
 private const val PENDING_INTENT_OPEN_HOUR_CALCULATION = 303
 private const val PENDING_INTENT_OPEN_TASKS = 304
+private const val PENDING_INTENT_OPEN_DEADLINES = 305
+private const val PENDING_INTENT_OPEN_PREMIUM = 306
 
 class UNTILWidgetWorker(
     context: Context,
@@ -198,6 +200,7 @@ class UNTILWidgetWorker(
             val lifeProvider = ComponentName(context, UNTILLifeWidgetProvider::class.java)
             val counterProvider = ComponentName(context, UNTILCounterWidgetProvider::class.java)
             val countdownProvider = ComponentName(context, UNTILCountdownWidgetProvider::class.java)
+            val deadlinesProvider = ComponentName(context, UNTILDeadlinesWidgetProvider::class.java)
             val dailyTasksProvider = ComponentName(context, UNTILDailyTasksWidgetProvider::class.java)
             val hourCalculationProvider = ComponentName(context, UNTILHourCalculationWidgetProvider::class.java)
             val counters = loadCustomCounters(context)
@@ -248,14 +251,25 @@ class UNTILWidgetWorker(
             }
             val countdownIds = appWidgetManager.getAppWidgetIds(countdownProvider)
             if (countdownIds.isNotEmpty()) {
-                val firstCountdown = countdowns.firstOrNull()
+                val shownCountdown = featuredCountdown(countdowns)
                 for (id in countdownIds) {
                     try {
-                        val views = buildCountdownRemoteViews(context, firstCountdown, id)
+                        val views = buildCountdownRemoteViews(context, shownCountdown, id)
                         appWidgetManager.updateAppWidget(id, views)
                     } catch (e: Exception) {
                         val views = buildCountdownRemoteViews(context, null, id)
                         appWidgetManager.updateAppWidget(id, views)
+                    }
+                }
+            }
+            val deadlinesIds = appWidgetManager.getAppWidgetIds(deadlinesProvider)
+            if (deadlinesIds.isNotEmpty()) {
+                val hasPremiumForList = loadEffectivePremium(context)
+                for (id in deadlinesIds) {
+                    try {
+                        appWidgetManager.updateAppWidget(id, buildDeadlinesRemoteViews(context, countdowns, hasPremiumForList))
+                    } catch (e: Exception) {
+                        appWidgetManager.updateAppWidget(id, buildDeadlinesRemoteViews(context, emptyList(), hasPremiumForList))
                     }
                 }
             }
@@ -412,6 +426,69 @@ class UNTILWidgetWorker(
             } catch (e: Exception) {
                 emptyList()
             }
+        }
+
+        /**
+         * Deadlines in the order a person wants to see them: the ones still to come, nearest first
+         * (today counts), then the ones that have passed, most recent first. The app list and the iOS
+         * widgets use the same rule, and it is decided here so it stays right when a date goes by
+         * while the app is closed. A stable sort keeps the saved order for two on the same day.
+         */
+        private fun sortedByUrgency(list: List<CountdownModel>): List<CountdownModel> {
+            val dated = list.filter { it.date.length >= 10 }.map { it to daysLeft(it.date) }
+            val upcoming = dated.filter { it.second >= 0 }.sortedBy { it.second }
+            val passed = dated.filter { it.second < 0 }.sortedByDescending { it.second }
+            return (upcoming + passed).map { it.first }
+        }
+
+        /** The deadline the small countdown widget shows. */
+        private fun featuredCountdown(list: List<CountdownModel>): CountdownModel? =
+            sortedByUrgency(list).firstOrNull()
+
+        /** "Today", "3 days", "Passed" for one row of the list widget. */
+        private fun deadlineRowDays(context: Context, days: Int): String = when {
+            days < 0 -> context.getString(R.string.widget_countdown_passed)
+            days == 0 -> context.getString(R.string.widget_deadlines_today)
+            else -> context.resources.getQuantityString(R.plurals.widget_deadlines_days, days, days)
+        }
+
+        /** The three nearest deadlines. Locked behind Premium; the lock line says how to unlock. */
+        private fun buildDeadlinesRemoteViews(
+            context: Context,
+            countdowns: List<CountdownModel>,
+            hasPremium: Boolean,
+        ): RemoteViews {
+            val views = RemoteViews(context.packageName, R.layout.widget_deadlines)
+            views.setTextViewText(R.id.widget_deadlines_header, context.getString(R.string.widget_deadlines_header))
+            val titleIds = intArrayOf(R.id.widget_deadlines_title1, R.id.widget_deadlines_title2, R.id.widget_deadlines_title3)
+            val dayIds = intArrayOf(R.id.widget_deadlines_days1, R.id.widget_deadlines_days2, R.id.widget_deadlines_days3)
+            val rowIds = intArrayOf(R.id.widget_deadlines_row1, R.id.widget_deadlines_row2, R.id.widget_deadlines_row3)
+
+            val shown = if (hasPremium) sortedByUrgency(countdowns).take(titleIds.size) else emptyList()
+            for (i in titleIds.indices) {
+                val item = shown.getOrNull(i)
+                val line = when {
+                    item != null -> item.title
+                    i == 0 && !hasPremium -> context.getString(R.string.widget_premium_unlock_line)
+                    i == 0 -> context.getString(R.string.widget_deadlines_empty)
+                    else -> ""
+                }
+                views.setTextViewText(titleIds[i], line)
+                views.setTextViewText(dayIds[i], if (item != null) deadlineRowDays(context, daysLeft(item.date)) else "")
+                views.setViewVisibility(
+                    rowIds[i],
+                    if (i == 0 || item != null) android.view.View.VISIBLE else android.view.View.GONE,
+                )
+            }
+            views.setOnClickPendingIntent(
+                R.id.widget_root,
+                if (hasPremium) {
+                    openScreenPendingIntent(context, "Countdowns", PENDING_INTENT_OPEN_DEADLINES)
+                } else {
+                    openScreenPendingIntent(context, "Premium", PENDING_INTENT_OPEN_PREMIUM)
+                },
+            )
+            return views
         }
 
         /**

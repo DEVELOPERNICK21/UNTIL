@@ -12,11 +12,13 @@ import { useFocusEffect } from '@react-navigation/native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Text, ScreenGradient, Card } from '../../../shared/ui';
 import { useCountdowns } from '../hooks/useCountdowns';
+import { useLimitUpgradePrompt } from '../../premium';
 import {
   useWidgetSyncActions,
 } from '../../../shared/platform/useWidgetSyncActions';
 import { Spacing, Colors, Radius, Typography } from '../../../shared/theme';
 import { MAX_TITLE_LENGTH } from '../../../config/inputLimits';
+import { PREMIUM_ITEM_LIMIT } from '../../../config/featureLimits';
 import type { Countdown } from '../../../shared/types';
 
 function toDateString(d: Date): string {
@@ -28,7 +30,9 @@ function toDateString(d: Date): string {
 
 export function CountdownsScreen() {
   const { syncCountdowns } = useWidgetSyncActions();
-  const { countdowns, refresh, addCountdown, removeCountdown } = useCountdowns();
+  const { countdowns, atLimit, limit, hasPremium, refresh, addCountdown, removeCountdown } =
+    useCountdowns();
+  const promptUpgrade = useLimitUpgradePrompt('deadlines');
   const [newTitle, setNewTitle] = useState('');
   const [newDate, setNewDate] = useState(() => {
     const d = new Date();
@@ -36,7 +40,6 @@ export function CountdownsScreen() {
     return d;
   });
   const [showPicker, setShowPicker] = useState(false);
-  const hasDeadline = countdowns.length > 0;
 
   useFocusEffect(
     useCallback(() => {
@@ -45,10 +48,11 @@ export function CountdownsScreen() {
   );
 
   const handleAdd = () => {
-    if (hasDeadline) return;
+    // Free plan, second deadline: explain Premium. What was typed stays, so nothing is lost.
+    if (atLimit && !hasPremium) return promptUpgrade();
     const title = newTitle.trim() || 'Deadline';
     const dateStr = toDateString(newDate);
-    addCountdown(title, dateStr);
+    if (!addCountdown(title, dateStr)) return;
     setNewTitle('');
     setNewDate(() => {
       const d = new Date();
@@ -84,8 +88,8 @@ export function CountdownsScreen() {
             Deadlines
           </Text>
           <Text variant="body" color="secondary" style={styles.subtitle}>
-            Set one deadline (e.g. Project, Interview) and date. The widget shows
-            how many days are left.
+            Add the dates you are counting down to (e.g. Project, Interview). The
+            widget shows the nearest one and how many days are left.
           </Text>
 
           <View style={styles.addSection}>
@@ -97,14 +101,10 @@ export function CountdownsScreen() {
               placeholderTextColor={Colors.textSecondary}
               autoCapitalize="words"
               maxLength={MAX_TITLE_LENGTH}
-              editable={!hasDeadline}
             />
             <TouchableOpacity
               style={styles.dateButton}
-              onPress={() => {
-                if (!hasDeadline) setShowPicker(true);
-              }}
-              disabled={hasDeadline}
+              onPress={() => setShowPicker(true)}
             >
               <Text variant="body" color="primary">
                 {toDateString(newDate)}
@@ -135,19 +135,21 @@ export function CountdownsScreen() {
             <TouchableOpacity
               style={[
                 styles.addButton,
-                (!newTitle.trim() || hasDeadline) && styles.addButtonDisabled,
+                (!newTitle.trim() || (atLimit && hasPremium)) && styles.addButtonDisabled,
               ]}
               onPress={handleAdd}
-              disabled={!newTitle.trim() || hasDeadline}
+              disabled={!newTitle.trim() || (atLimit && hasPremium)}
             >
               <Text variant="caption" style={styles.addButtonText}>
-                Add
+                {atLimit && !hasPremium ? 'Add with Premium' : 'Add'}
               </Text>
             </TouchableOpacity>
           </View>
-          {hasDeadline && (
+          {atLimit && (
             <Text variant="caption" color="secondary" style={styles.singleLimitHint}>
-              Only one deadline is allowed. Remove the current one to create a new deadline.
+              {hasPremium
+                ? `That is the most one list holds (${limit}). Remove one to add another.`
+                : `The free plan keeps one deadline. Premium holds up to ${PREMIUM_ITEM_LIMIT}.`}
             </Text>
           )}
 
@@ -157,7 +159,7 @@ export function CountdownsScreen() {
               your home screen.
             </Text>
           ) : (
-            countdowns.map(item => (
+            countdowns.map((item, index) => (
                 <Card key={item.id} style={styles.card}>
                   <View style={styles.row}>
                     <View style={styles.rowLeft}>
@@ -171,9 +173,14 @@ export function CountdownsScreen() {
                       <Text variant="caption" color="secondary">
                         {item.date} · {item.daysLabel}
                       </Text>
+                      {index === 0 && countdowns.length > 1 && (
+                        <Text variant="caption" color="secondary" style={styles.overdue}>
+                          Shown on your widget
+                        </Text>
+                      )}
                       {item.daysUntil < 0 && (
                         <Text variant="caption" color="secondary" style={styles.overdue}>
-                          This deadline has passed. Remove it to set a new one.
+                          This deadline has passed. Remove it when you are done with it.
                         </Text>
                       )}
                     </View>
