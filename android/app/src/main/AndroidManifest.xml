@@ -106,6 +106,17 @@
           android:resource="@xml/widget_counter_info" />
       </receiver>
       <receiver
+        android:name=".UNTILDeadlinesWidgetProvider"
+        android:exported="true"
+        android:label="Until Next deadlines">
+        <intent-filter>
+          <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+        </intent-filter>
+        <meta-data
+          android:name="android.appwidget.provider"
+          android:resource="@xml/widget_deadlines_info" />
+      </receiver>
+      <receiver
         android:name=".UNTILCountdownWidgetProvider"
         android:exported="true"
         android:label="Until Countdown">

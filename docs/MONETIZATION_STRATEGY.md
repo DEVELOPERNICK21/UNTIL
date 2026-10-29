@@ -39,7 +39,7 @@ When changing prices, paywall text, or what is free vs Premium, update **this fi
 - **Full Life** progress screen + Life block on Home (after birth date)  
 - **Floating overlay** — month & life modes (Android)  
 - **Dynamic Island / Live Activity** — month & life (iOS)  
-- **Up to 20 deadlines and 20 counters** (free keeps 1 of each). The deadline widget always shows the nearest one; you choose which counter the widget shows. Limits live in `src/config/featureLimits.ts`.
+- **Up to 20 deadlines and 20 counters** (free keeps 1 of each). The deadline widget always shows the nearest one; a **Next deadlines** widget (Android; iOS medium size) lists the nearest three; you choose which counter the widget shows. Limits live in `src/config/featureLimits.ts`.
 - **Activity intervention** alerts (nothing-time limits)  
 - **5-day free app preview** (in-app only; server-backed; do not imply a Play billing trial unless Console offers one)
 

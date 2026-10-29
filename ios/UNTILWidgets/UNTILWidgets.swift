@@ -1980,6 +1980,16 @@ private func daysLeft(from dateString: String) -> Int {
     return cal.dateComponents([.day], from: startOfToday, to: startOfTarget).day ?? 0
 }
 
+/// Deadlines in the order a person wants to see them: the ones still to come, nearest first (today
+/// counts), then the ones that have passed, most recent first. The app list and the Android widgets
+/// use the same rule. The saved order breaks a tie between two on the same day.
+private func sortedCountdowns(_ list: [CountdownItem]) -> [(CountdownItem, Int)] {
+    let dated = list.enumerated().map { (index: $0.offset, item: $0.element, days: daysLeft(from: $0.element.date)) }
+    let upcoming = dated.filter { $0.days >= 0 }.sorted { ($0.days, $0.index) < ($1.days, $1.index) }
+    let passed = dated.filter { $0.days < 0 }.sorted { ($1.days, $0.index) < ($0.days, $1.index) }
+    return (upcoming + passed).map { ($0.item, $0.days) }
+}
+
 private func countdownSubtitle(days: Int) -> String {
     if days == 0 { return "Today" }
     if days == 1 { return "1 day left" }
@@ -1999,9 +2009,7 @@ struct CountdownWidgetProvider: TimelineProvider {
         guard let json = WidgetCacheReader.loadCountdownsJSON(),
               let data = json.data(using: .utf8),
               let list = try? JSONDecoder().decode([CountdownItem].self, from: data) else { return nil }
-        let dated = list.map { ($0, daysLeft(from: $0.date)) }
-        if let next = dated.filter({ $0.1 >= 0 }).min(by: { $0.1 < $1.1 }) { return next }
-        return dated.max(by: { $0.1 < $1.1 })
+        return sortedCountdowns(list).first
     }
 
     func placeholder(in context: Context) -> CountdownWidgetEntry {
@@ -2081,6 +2089,105 @@ struct CountdownWidget: Widget {
         .configurationDisplayName("Countdown")
         .description("Days left until a deadline. Add one in UNTIL.")
         .supportedFamilies([.systemSmall])
+    }
+}
+
+// MARK: - Next deadlines widget (Premium): the three nearest, as a list
+struct DeadlinesWidgetEntry: TimelineEntry {
+    let date: Date
+    let rows: [(item: CountdownItem, days: Int)]
+}
+
+struct DeadlinesWidgetProvider: TimelineProvider {
+    private func loadRows() -> [(item: CountdownItem, days: Int)] {
+        guard let json = WidgetCacheReader.loadCountdownsJSON(),
+              let data = json.data(using: .utf8),
+              let list = try? JSONDecoder().decode([CountdownItem].self, from: data) else { return [] }
+        return sortedCountdowns(list).prefix(3).map { (item: $0.0, days: $0.1) }
+    }
+
+    private var sampleRows: [(item: CountdownItem, days: Int)] {
+        [
+            (item: CountdownItem(id: "s1", title: "Launch day", date: galleryCountdownDate), days: 3),
+            (item: CountdownItem(id: "s2", title: "Interview", date: galleryCountdownDate), days: 12),
+            (item: CountdownItem(id: "s3", title: "Trip", date: galleryCountdownDate), days: 40),
+        ]
+    }
+
+    func placeholder(in context: Context) -> DeadlinesWidgetEntry {
+        DeadlinesWidgetEntry(date: Date(), rows: sampleRows)
+    }
+
+    func getSnapshot(in context: Context, completion: @escaping (DeadlinesWidgetEntry) -> Void) {
+        let rows = loadRows()
+        completion(DeadlinesWidgetEntry(date: Date(), rows: rows.isEmpty && context.isPreview ? sampleRows : rows))
+    }
+
+    func getTimeline(in context: Context, completion: @escaping (Timeline<DeadlinesWidgetEntry>) -> Void) {
+        let entry = DeadlinesWidgetEntry(date: Date(), rows: loadRows())
+        // Days change at midnight.
+        let nextUpdate = Calendar.current.date(byAdding: .day, value: 1, to: Calendar.current.startOfDay(for: Date())) ?? Date()
+        completion(Timeline(entries: [entry], policy: .after(nextUpdate)))
+    }
+}
+
+private func deadlineDaysText(_ days: Int) -> String {
+    if days < 0 { return "Passed" }
+    if days == 0 { return "Today" }
+    return days == 1 ? "1 day" : "\(days) days"
+}
+
+private struct DeadlinesWidgetView: View {
+    let entry: DeadlinesWidgetEntry
+
+    var body: some View {
+        Group {
+            if !WidgetCacheReader.isPremium {
+                PremiumLockedWidgetView(message: "Next deadlines is Premium.\nOpen UNTIL to upgrade.")
+            } else if entry.rows.isEmpty {
+                EmberEmptyStateView(progress: 0.3, message: "Add a deadline in UNTIL.")
+            } else {
+                VStack(alignment: .leading, spacing: 10) {
+                    Text("NEXT DEADLINES")
+                        .font(.system(size: 10, weight: .bold))
+                        .tracking(1.2)
+                        .foregroundColor(Design.grayLabel)
+                        .lineLimit(1)
+                    ForEach(Array(entry.rows.enumerated()), id: \.offset) { _, row in
+                        HStack(spacing: 8) {
+                            Text(row.item.title)
+                                .font(.system(size: 15, weight: .semibold))
+                                .foregroundColor(Design.lightText)
+                                .lineLimit(1)
+                            Spacer(minLength: 8)
+                            Text(deadlineDaysText(row.days))
+                                .font(.system(size: 13, weight: .medium, design: .rounded))
+                                .foregroundColor(row.days <= 0 ? Design.percent : Design.grayLabel)
+                                .lineLimit(1)
+                        }
+                    }
+                    Spacer(minLength: 0)
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+                .padding(16)
+            }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .widgetBackground()
+    }
+}
+
+struct DeadlinesWidget: Widget {
+    let kind: String = "UNTILDeadlinesWidget"
+
+    var body: some WidgetConfiguration {
+        StaticConfiguration(kind: kind, provider: DeadlinesWidgetProvider()) { entry in
+            DeadlinesWidgetView(entry: entry)
+                .widgetURL(widgetOpenURL(WidgetCacheReader.isPremium ? "Countdowns" : "Premium"))
+        }
+        .configurationDisplayName("Next deadlines")
+        .description("Your next three deadlines, nearest first. Premium.")
+        .supportedFamilies([.systemMedium])
     }
 }
 
@@ -3339,6 +3446,7 @@ struct UNTILWidgetsBundle: WidgetBundle {
         LifeWidget()
         CounterWidget()
         CountdownWidget()
+        DeadlinesWidget()
         DailyTasksWidget()
         HourCalculationWidget()
         UNTILLiveActivityWidget()

@@ -56,7 +56,7 @@ const FEATURES: FeatureTile[] = [
   {
     id: 'deadlines',
     label: 'Every deadline and counter',
-    blurb: 'Keep up to 20 of each, not just one. Your widget always shows the nearest deadline.',
+    blurb: 'Keep up to 20 of each, not just one. A widget lists your next three deadlines.',
     glyph: 'day',
     progress: 0.85,
     featured: true,

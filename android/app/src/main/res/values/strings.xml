@@ -4,6 +4,7 @@
     <string name="widget_month_description">See your month progress.</string>
     <string name="widget_year_description">See your year progress.</string>
     <string name="widget_counter_description">Tap to add +1. Create counters in UNTIL.</string>
+    <string name="widget_deadlines_description">Your next three deadlines, nearest first. Premium.</string>
     <string name="widget_countdown_description">Days left until a deadline. Add one in UNTIL.</string>
     <string name="widget_daily_tasks_description">Today\'s tasks. Tap to open them, tap the Ember to switch to the day. Add tasks in UNTIL.</string>
     <string name="widget_hour_calculation_description">Tap to start or stop one timer. Tap its title to open it in UNTIL.</string>
@@ -32,6 +33,13 @@
     <string name="widget_unit_days_left">days left</string>
     <string name="widget_unit_day_left">day left</string>
     <string name="widget_countdown_passed">Passed</string>
+    <string name="widget_deadlines_header">NEXT DEADLINES</string>
+    <string name="widget_deadlines_empty">Add a deadline in UNTIL</string>
+    <string name="widget_deadlines_today">Today</string>
+    <plurals name="widget_deadlines_days">
+        <item quantity="one">%d day</item>
+        <item quantity="other">%d days</item>
+    </plurals>
     <plurals name="widget_countdown_days_ago">
         <item quantity="one">%d day ago</item>
         <item quantity="other">%d days ago</item>

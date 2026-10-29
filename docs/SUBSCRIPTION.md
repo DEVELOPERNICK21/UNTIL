@@ -29,7 +29,7 @@ Two premium paths:
 
 ### Premium (license required)
 
-- **Widgets**: Month, Life
+- **Widgets**: Month, Life, Next deadlines (the three nearest)
 - **Dynamic Island / Overlay**: Month, Life
 - **Deadlines and counters**: up to 20 of each (`src/config/featureLimits.ts`)
 

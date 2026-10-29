@@ -204,7 +204,7 @@ export function formatPaywallLossPreviewFooter(
 export const PREMIUM_BENEFITS = [
   'Month & Life home screen widgets',
   'Full Life progress screen',
-  'Up to 20 deadlines and 20 counters (free keeps 1 of each)',
+  'Up to 20 deadlines and 20 counters, and a next-deadlines widget',
   'Floating overlay and Dynamic Island for month & life',
   'Activity intervention alerts',
   `${MONETIZATION_TRIAL_DAYS}-day free app preview (no payment)`,
