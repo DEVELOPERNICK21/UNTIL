@@ -25,6 +25,9 @@ FONTS = os.path.join(ROOT, 'src', 'assets', 'fonts')
 TOP = (229, 18, 31)
 BOTTOM = (245, 138, 43)
 WHITE = (255, 255, 255)
+# The app's own palette (src/shared/theme): background and the orange used for percentages and widgets.
+APP_BG = (14, 14, 16)
+APP_ORANGE = (232, 124, 32)
 
 W, H = 1080, 1920
 
@@ -141,22 +144,37 @@ SHOTS = [
 ]
 
 
-def feature_graphic():
+def feature_graphic(dark=False):
+    """dark=False: the red-to-orange set. dark=True: the app's own look (near-black with the orange accent).
+    Same words and layout in both, so a Play store listing experiment tests colour and nothing else."""
     gw, gh = 1024, 500
-    canvas = gradient(gw, gh)
-    canvas = glow(canvas, (800, 250), 330)
+    if dark:
+        canvas = glow(Image.new('RGB', (gw, gh), APP_BG), (800, 250), 300, color=APP_ORANGE, alpha=110)
+    else:
+        canvas = glow(gradient(gw, gh), (800, 250), 330)
     draw = ImageDraw.Draw(canvas)
     head, sub, chips = font('bold', 66), font('medium', 28), font('bold', 22)
     y = 92
-    for line in ['How much', 'time is left?']:
-        draw.text((64, y), line, font=head, fill=WHITE)
-        y += 76
-    draw.text((66, y + 14), 'Home screen widgets. Free to start.', font=sub, fill=(255, 255, 255, 235))
+    draw.text((64, y), 'How much', font=head, fill=WHITE)
+    y += 76
+    if dark:
+        lead = 'time is '
+        draw.text((64, y), lead, font=head, fill=WHITE)
+        draw.text((64 + draw.textlength(lead, font=head), y), 'left?', font=head, fill=APP_ORANGE)
+    else:
+        draw.text((64, y), 'time is left?', font=head, fill=WHITE)
+    y += 76
+    draw.text((66, y + 14), 'Home screen widgets. Free to start.', font=sub, fill=(255, 255, 255, 235) if not dark else (190, 190, 194))
     x = 66
     for label in ['Day', 'Month', 'Year', 'Life']:
         tw = draw.textlength(label, font=chips)
-        draw.rounded_rectangle((x, y + 78, x + tw + 36, y + 78 + 44), 22, fill=(14, 14, 16))
-        draw.text((x + 18, y + 78 + 9), label, font=chips, fill=WHITE)
+        box = (x, y + 78, x + tw + 36, y + 78 + 44)
+        if dark:
+            draw.rounded_rectangle(box, 22, fill=APP_ORANGE)
+            draw.text((x + 18, y + 78 + 9), label, font=chips, fill=APP_BG)
+        else:
+            draw.rounded_rectangle(box, 22, fill=(14, 14, 16))
+            draw.text((x + 18, y + 78 + 9), label, font=chips, fill=WHITE)
         x += tw + 36 + 12
 
     # Real widgets, cropped from the home-screen capture. Boxes are set in WIDGET_CROPS.
@@ -168,14 +186,16 @@ def feature_graphic():
             tile = cap.crop(box)
             tile = tile.resize((round(tile.width * scale), round(tile.height * scale)), Image.LANCZOS)
             tile = rounded(tile, 34)
+            if dark:  # dark widgets on a dark ground need an edge, or they melt into it
+                ImageDraw.Draw(tile).rounded_rectangle((0, 0, tile.width - 1, tile.height - 1), 34, outline=(255, 255, 255, 46), width=2)
             shadow = Image.new('RGBA', (tile.width + 120, tile.height + 120), (0, 0, 0, 0))
             ImageDraw.Draw(shadow).rounded_rectangle((60, 72, 60 + tile.width, 72 + tile.height), 34, fill=(0, 0, 0, 120))
             shadow = shadow.filter(ImageFilter.GaussianBlur(22))
             canvas.alpha_composite(shadow, (at[0] - 60, at[1] - 60))
             canvas.alpha_composite(tile, at)
-    out = os.path.join(OUT, 'feature-graphic.png')
-    canvas.convert('RGB').save(out, optimize=True)
-    print('  wrote feature-graphic.png')
+    name = 'feature-graphic-dark.png' if dark else 'feature-graphic.png'
+    canvas.convert('RGB').save(os.path.join(OUT, name), optimize=True)
+    print(f'  wrote {name}')
 
 
 # ((left, top, right, bottom) in the capture, (x, y) on the graphic, scale)
@@ -196,4 +216,5 @@ if __name__ == '__main__':
         screenshot(i, headline, sub, cap, **extra)
     print('Feature graphic')
     feature_graphic()
+    feature_graphic(dark=True)
     sys.exit(0)

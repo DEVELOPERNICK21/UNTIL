@@ -128,6 +128,19 @@ The first two screenshots carry most of the weight: they are the only ones many 
 
 **Feature graphic (1024×500):** one idea, readable at thumbnail size: *"How much time is left?"* with *Day · Month · Year · Life* and real widgets. Same warm background as the screenshots.
 
+### Feature graphic experiment: red vs dark
+
+Two graphics with the same words and the same widgets. Only the colour differs, so the result says something about colour and nothing else.
+
+| | File | Look |
+|---|------|------|
+| A (control) | `feature-graphic.png` | Red-to-orange gradient, white text. Matches the eight screenshots. |
+| B | `feature-graphic-dark.png` | The app's own look: near-black `#0E0E10` with the orange accent `#E87C20`. Matches the app, the icon and the website. |
+
+Run it in Play Console → **Grow users** → **Store listing experiments** → **Graphics** (feature graphic). Run it on its own, not at the same time as the short-description experiment, so you know which change did what. Let it run at least two weeks and wait for Play to say the result is statistically significant (about 90% confidence) before switching.
+
+Two honest limits: with 500+ installs and a small number of daily visitors, a small difference will not reach significance. And it measures taps on Install, not how much people use the app afterwards. If B wins, also keep an eye on day-1 and day-7 retention in Play Console.
+
 ---
 
 ## Search terms to weave in (not stuff)

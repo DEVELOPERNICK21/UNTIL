@@ -9,7 +9,8 @@ python3 scripts/store-listing/build.py     # needs Pillow: pip3 install pillow
 | In | Out |
 |----|-----|
 | `docs/store-listing/captures/*.png` | `docs/store-listing/screenshots/01.png … 08.png` (1080×1920) |
-| | `docs/store-listing/feature-graphic.png` (1024×500) |
+| | `docs/store-listing/feature-graphic.png` (1024×500, red, the control) |
+| | `docs/store-listing/feature-graphic-dark.png` (1024×500, the app's dark look, for the experiment in `docs/PLAY_STORE_ASO.md`) |
 
 Headlines and the line under each are in `SHOTS` at the top of `build.py`. They must match the table in `docs/PLAY_STORE_ASO.md`.
 
