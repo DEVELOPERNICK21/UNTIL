@@ -44,7 +44,7 @@ features/<feature>/
 | **domain** | What the feature can do | No React, no SDKs, no packages, no `data`/`hooks`/`services`/`ui`, no `app`. Talks to the world only through ports it declares. |
 | **data** | Where data lives and which SDK is used | Implements domain ports. Wired in `app/di`. |
 
-`shared/` (the kernel) holds what several features need and nothing feature-specific: `time` (date and progress math, clock), `theme`, `ui` (design-system components), `types` (DTOs), `persistence` (MMKV, schema), `platform` (native bridges, device id, widget-sync port), `analytics`, `navigation` (route param types and the root ref), `hooks`, `featureFlags`, `utils`, `ports`.
+`shared/` (the kernel) holds what several features need and nothing feature-specific: `time` (date and progress math, clock), `theme`, `ui` (design-system components), `types` (DTOs), `persistence` (MMKV, schema), `platform` (native bridges, device id, widget-sync port), `analytics`, `navigation` (route param types and the root ref), `hooks`, `featureFlags`, `utils`, `ports`, `i18n` (languages and translated text, see [LOCALIZATION.md](./LOCALIZATION.md)).
 
 ---
 

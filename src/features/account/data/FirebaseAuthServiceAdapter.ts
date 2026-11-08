@@ -19,8 +19,11 @@ import {
   describeAuthFailure,
   friendlyGoogleSignInMessage,
   isAuthCancelledError,
+  mapAppleAuthError,
+  mapAuthError,
 } from '../domain/authErrors';
 import { recordCrashError } from '../../../shared/analytics/analytics';
+import { t } from '../../../shared/i18n/translate';
 
 const MISSING_GOOGLE_WEB_CLIENT_ID = '<MISSING_GOOGLE_WEB_CLIENT_ID>';
 
@@ -110,7 +113,7 @@ type AppleCredentialResult = {
 async function requestAppleCredential(): Promise<AppleCredentialResult> {
   const appleAuth = getAppleAuth();
   if (!appleAuth.isSupported) {
-    throw new Error('Sign in with Apple is not available on this device.');
+    throw new Error(t('account.error.appleUnavailable'));
   }
   let response: Awaited<ReturnType<AppleAuthModule['performRequest']>>;
   try {
@@ -252,52 +255,6 @@ function normalizeEmail(email: string): string {
   return email.trim().toLowerCase();
 }
 
-function mapAuthError(error: unknown, fallback: string): Error {
-  const code =
-    error && typeof error === 'object' && 'code' in error
-      ? String((error as { code: unknown }).code)
-      : '';
-  switch (code) {
-    case 'auth/invalid-email':
-      return new Error('Enter a valid email address.');
-    case 'auth/user-disabled':
-      return new Error('This account is disabled.');
-    case 'auth/user-not-found':
-    case 'auth/wrong-password':
-    case 'auth/invalid-credential':
-    case 'auth/invalid-login-credentials':
-      return new Error('Email or password is wrong.');
-    case 'auth/email-already-in-use':
-      return new Error('That email already has an account. Sign in instead.');
-    case 'auth/weak-password':
-      return new Error('Use a password with at least 6 characters.');
-    case 'auth/too-many-requests':
-      return new Error('Too many tries. Wait a bit and try again.');
-    case 'auth/network-request-failed':
-      return new Error('Network error. Check your connection.');
-    default:
-      if (error instanceof Error && error.message) {
-        return new Error(error.message);
-      }
-      return new Error(fallback);
-  }
-}
-
-function mapAppleAuthError(error: unknown, fallback: string): Error {
-  const code =
-    error && typeof error === 'object' && 'code' in error
-      ? String((error as { code: unknown }).code)
-      : '';
-  switch (code) {
-    case 'auth/invalid-credential':
-      return new Error('Apple sign-in failed. Try again.');
-    case 'auth/operation-not-allowed':
-      return new Error('Sign in with Apple is not set up yet.');
-    default:
-      return mapAuthError(error, fallback);
-  }
-}
-
 let googleSignInConfigured = false;
 
 function ensureGoogleSignInConfigured(): void {
@@ -337,7 +294,7 @@ export class FirebaseAuthServiceAdapter implements IAuthService {
       }
       return mapped;
     } catch (e) {
-      throw mapAppleAuthError(e, 'Could not sign in with Apple.');
+      throw mapAppleAuthError(e, t('account.error.signInApple'));
     }
   }
 
@@ -384,7 +341,7 @@ export class FirebaseAuthServiceAdapter implements IAuthService {
     const auth = requireAuth();
     const normalized = normalizeEmail(email);
     if (!normalized || !password) {
-      throw new Error('Enter email and password.');
+      throw new Error(t('account.error.emailAndPassword'));
     }
     try {
       const { user } = await auth.signInWithEmailAndPassword(
@@ -398,7 +355,7 @@ export class FirebaseAuthServiceAdapter implements IAuthService {
       }
       return mapped;
     } catch (e) {
-      throw mapAuthError(e, 'Could not sign in with email.');
+      throw mapAuthError(e, t('account.error.signInEmail'));
     }
   }
 
@@ -406,7 +363,7 @@ export class FirebaseAuthServiceAdapter implements IAuthService {
     const auth = requireAuth();
     const normalized = normalizeEmail(email);
     if (!normalized) {
-      throw new Error('Enter your email first.');
+      throw new Error(t('account.error.enterEmail'));
     }
     try {
       await auth.sendPasswordResetEmail(auth.instance, normalized);
@@ -417,7 +374,7 @@ export class FirebaseAuthServiceAdapter implements IAuthService {
           ? String((e as { code: unknown }).code)
           : '';
       if (code === 'auth/user-not-found') return;
-      throw mapAuthError(e, 'Could not send the reset email.');
+      throw mapAuthError(e, t('account.error.sendReset'));
     }
   }
 
@@ -428,10 +385,10 @@ export class FirebaseAuthServiceAdapter implements IAuthService {
     const auth = requireAuth();
     const normalized = normalizeEmail(email);
     if (!normalized || !password) {
-      throw new Error('Enter email and password.');
+      throw new Error(t('account.error.emailAndPassword'));
     }
     if (password.length < 6) {
-      throw new Error('Use a password with at least 6 characters.');
+      throw new Error(t('account.error.passwordMin'));
     }
     try {
       const { user } = await auth.createUserWithEmailAndPassword(
@@ -445,7 +402,7 @@ export class FirebaseAuthServiceAdapter implements IAuthService {
       }
       return mapped;
     } catch (e) {
-      throw mapAuthError(e, 'Could not create account.');
+      throw mapAuthError(e, t('account.error.createAccount'));
     }
   }
 
@@ -464,7 +421,7 @@ export class FirebaseAuthServiceAdapter implements IAuthService {
     const auth = requireAuth();
     const user = auth.currentUser();
     if (!user) {
-      throw new Error('Not signed in');
+      throw new Error(t('account.error.notSignedIn'));
     }
     try {
       await auth.deleteUser(user as MinimalFirebaseUser & object);
@@ -476,7 +433,7 @@ export class FirebaseAuthServiceAdapter implements IAuthService {
       if (code === 'auth/requires-recent-login') {
         throw new AuthRequiresRecentLoginError();
       }
-      throw mapAuthError(e, 'Could not delete account.');
+      throw mapAuthError(e, t('account.error.deleteAccount'));
     }
   }
 
@@ -484,7 +441,7 @@ export class FirebaseAuthServiceAdapter implements IAuthService {
     const auth = requireAuth();
     const user = auth.currentUser();
     if (!user) {
-      throw new Error('Not signed in');
+      throw new Error(t('account.error.notSignedIn'));
     }
     const { identityToken, nonce, authorizationCode } =
       await requestAppleCredential();
@@ -492,7 +449,7 @@ export class FirebaseAuthServiceAdapter implements IAuthService {
       const credential = auth.AppleAuthProvider.credential(identityToken, nonce);
       await auth.reauthenticateWithCredential(user, credential);
     } catch (e) {
-      throw mapAppleAuthError(e, 'Could not verify your Apple account.');
+      throw mapAppleAuthError(e, t('account.error.verifyApple'));
     }
     if (!options.revokeToken) return;
     // A failed revoke (e.g. Apple key not configured in Firebase) must not block account deletion.
@@ -514,7 +471,7 @@ export class FirebaseAuthServiceAdapter implements IAuthService {
     const auth = requireAuth();
     const user = auth.currentUser();
     if (!user) {
-      throw new Error('Not signed in');
+      throw new Error(t('account.error.notSignedIn'));
     }
     ensureGoogleSignInConfigured();
 
@@ -538,7 +495,7 @@ export class FirebaseAuthServiceAdapter implements IAuthService {
       if (isAuthCancelledError(e)) {
         throw new AuthCancelledError();
       }
-      throw mapAuthError(e, 'Could not verify your Google account.');
+      throw mapAuthError(e, t('account.error.verifyGoogle'));
     }
   }
 
@@ -549,7 +506,7 @@ export class FirebaseAuthServiceAdapter implements IAuthService {
       throw new Error('Not signed in with email.');
     }
     if (!password) {
-      throw new Error('Enter your password.');
+      throw new Error(t('account.error.enterPassword'));
     }
     try {
       const credential = auth.EmailAuthProvider.credential(
@@ -558,7 +515,7 @@ export class FirebaseAuthServiceAdapter implements IAuthService {
       );
       await auth.reauthenticateWithCredential(user, credential);
     } catch (e) {
-      throw mapAuthError(e, 'Could not verify password.');
+      throw mapAuthError(e, t('account.error.verifyPassword'));
     }
   }
 

@@ -9,6 +9,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text } from '../../../shared/ui';
 import { Radius, Spacing, Weight, getFontFamilyForWeight, useTheme } from '../../../shared/theme';
 import { appLogoIcon } from '../../../assets/images';
+import { useTranslation } from '../../../shared/i18n/useTranslation';
 import type { UpdateDecision } from '../domain/updatePolicy';
 
 interface UpdateSheetProps {
@@ -20,15 +21,18 @@ interface UpdateSheetProps {
 export function UpdateSheet({ decision, onUpdate, onLater }: UpdateSheetProps) {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
+  const { t } = useTranslation();
   if (decision.kind === 'none') return null;
 
   const required = decision.kind === 'required';
-  const title = required ? 'Please update UNTIL' : 'A new version is ready';
+  const title = required
+    ? t('system.updateSheet.title.required')
+    : t('system.updateSheet.title.optional');
   const body = required
-    ? 'This version is no longer supported. Update to keep your widgets and account working.'
+    ? t('system.updateSheet.body.required')
     : decision.versionName
-      ? `UNTIL ${decision.versionName} is out, with the latest fixes and improvements.`
-      : 'A new version of UNTIL is out, with the latest fixes and improvements.';
+      ? t('system.updateSheet.body.version', { version: decision.versionName })
+      : t('system.updateSheet.body.generic');
 
   return (
     <Modal
@@ -41,7 +45,7 @@ export function UpdateSheet({ decision, onUpdate, onLater }: UpdateSheetProps) {
       <Pressable
         style={styles.backdrop}
         onPress={required ? undefined : onLater}
-        accessibilityLabel="Close"
+        accessibilityLabel={t('common.close')}
         accessibilityRole="button"
         accessibilityElementsHidden
         importantForAccessibility="no"
@@ -78,7 +82,7 @@ export function UpdateSheet({ decision, onUpdate, onLater }: UpdateSheetProps) {
           {decision.notes.length > 0 ? (
             <View style={styles.notes}>
               <Text variant="caption" style={[styles.notesLabel, { color: theme.textMuted }]}>
-                WHAT'S NEW
+                {t('system.updateSheet.whatsNew')}
               </Text>
               {decision.notes.map(note => (
                 <View key={note} style={styles.noteRow}>
@@ -96,10 +100,10 @@ export function UpdateSheet({ decision, onUpdate, onLater }: UpdateSheetProps) {
             onPress={onUpdate}
             activeOpacity={0.9}
             accessibilityRole="button"
-            accessibilityLabel="Update now"
+            accessibilityLabel={t('system.updateSheet.update')}
           >
             <Text variant="sectionTitle" style={styles.primaryLabel}>
-              Update now
+              {t('system.updateSheet.update')}
             </Text>
           </TouchableOpacity>
 
@@ -109,10 +113,10 @@ export function UpdateSheet({ decision, onUpdate, onLater }: UpdateSheetProps) {
               onPress={onLater}
               activeOpacity={0.7}
               accessibilityRole="button"
-              accessibilityLabel="Not now"
+              accessibilityLabel={t('common.notNow')}
             >
               <Text variant="body" style={{ color: theme.textSecondary }}>
-                Not now
+                {t('common.notNow')}
               </Text>
             </TouchableOpacity>
           )}

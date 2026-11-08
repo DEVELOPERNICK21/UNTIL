@@ -6,6 +6,7 @@
 import { useCallback, useRef, useState } from 'react';
 import { AccessibilityInfo, Animated } from 'react-native';
 import { useReduceMotion } from '../../../shared/ui';
+import { t } from '../../../shared/i18n/translate';
 import { MINIMUM_ACCOUNT_AGE_YEARS } from '../domain/ageGate';
 
 const SHAKE_STEPS = [8, -8, 6, -6, 3, 0] as const;
@@ -30,7 +31,7 @@ export function useAgeConfirmation<Source extends string = string>(
       setNudge(true);
       onBlocked?.(source);
       AccessibilityInfo.announceForAccessibility(
-        `Confirm you're ${MINIMUM_ACCOUNT_AGE_YEARS} or older first.`,
+        t('common.age.announce', { age: MINIMUM_ACCOUNT_AGE_YEARS }),
       );
       if (!reduceMotion) {
         shakeX.setValue(0);

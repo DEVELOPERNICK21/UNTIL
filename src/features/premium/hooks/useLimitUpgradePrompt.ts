@@ -9,36 +9,39 @@ import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../../../shared/navigation/types';
 import { logAnalyticsEvent } from '../../../shared/analytics/analytics';
+import { useTranslation } from '../../../shared/i18n/useTranslation';
 import { PREMIUM_ITEM_LIMIT } from '../../../config/featureLimits';
 
 export type LimitedFeature = 'deadlines' | 'counters';
 
-const COPY: Record<LimitedFeature, { title: string; body: string }> = {
-  deadlines: {
-    title: 'More deadlines with Premium',
-    body: `The free plan keeps one deadline. Premium holds up to ${PREMIUM_ITEM_LIMIT}, and your widget always shows the one that is nearest.`,
-  },
-  counters: {
-    title: 'More counters with Premium',
-    body: `The free plan keeps one counter. Premium holds up to ${PREMIUM_ITEM_LIMIT}, and you choose which one your widget shows.`,
-  },
-};
-
 export function useLimitUpgradePrompt(feature: LimitedFeature): () => void {
   const navigation =
     useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const { t } = useTranslation();
 
   return useCallback(() => {
     void logAnalyticsEvent('premium_limit_hit', { feature });
-    Alert.alert(COPY[feature].title, COPY[feature].body, [
-      { text: 'Not now', style: 'cancel' },
-      {
-        text: 'See Premium',
-        onPress: () => {
-          void logAnalyticsEvent('premium_viewed', { source: 'limit_gate', feature });
-          navigation.navigate('Premium');
+    const params = { max: PREMIUM_ITEM_LIMIT };
+    Alert.alert(
+      feature === 'deadlines'
+        ? t('premium.limit.deadlines.title')
+        : t('premium.limit.counters.title'),
+      feature === 'deadlines'
+        ? t('premium.limit.deadlines.body', params)
+        : t('premium.limit.counters.body', params),
+      [
+        { text: t('common.notNow'), style: 'cancel' },
+        {
+          text: t('premium.limit.see'),
+          onPress: () => {
+            void logAnalyticsEvent('premium_viewed', {
+              source: 'limit_gate',
+              feature,
+            });
+            navigation.navigate('Premium');
+          },
         },
-      },
-    ]);
-  }, [feature, navigation]);
+      ],
+    );
+  }, [feature, navigation, t]);
 }

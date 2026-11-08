@@ -1,0 +1,22 @@
+{
+  "counters.subtitle": "数えたいもの（例：水）を追加し、カウンターのウィジェットをホーム画面に追加します。ウィジェットが数えるのはそのうちの1つで、タップすると+1されます。うっかりタップしたときはここで−1するか、リセットしてやり直せます。",
+  "counters.namePlaceholder": "カウンター名（例：水）",
+  "counters.empty": "まだカウンターがありません。上から追加し、ホーム画面からカウンターのウィジェットを追加して、このカウンターを選んでください。",
+  "counters.count": "カウント：{{value}}",
+  "counters.remove.title": "カウンターを削除",
+  "counters.remove.message": "「{{title}}」を削除しますか？カウント（{{value}}）は失われます。",
+  "counters.hint.ios": "ホーム画面を長押し → ＋ → 「Until」を検索 → 「Counter」ウィジェットを追加します。",
+  "counters.hint.android": "ホーム画面を長押し → ウィジェット → Until → Counter",
+  "counters.addWithPremium": "プレミアムで追加",
+  "counters.limit.reached": "1つのリストに入るのはここまでです（{{limit}}件）。別のものを追加するには、1つ削除してください。",
+  "counters.limit.free": "無料プランで保存できるカウンターは1つです。プレミアムなら最大{{max}}件まで保存できます。",
+  "counters.reset.title": "カウンターをリセット",
+  "counters.reset.message": "「{{title}}」を0に戻しますか？現在は{{value}}です。",
+  "counters.reset.confirm": "リセット",
+  "counters.onWidget": "ウィジェットに表示中",
+  "counters.showOnWidget": "ウィジェットに表示",
+  "counters.a11y.showOnWidget": "{{title}}をウィジェットに表示",
+  "counters.a11y.subtract": "1減らす",
+  "counters.a11y.add": "1増やす",
+  "counters.a11y.reset": "0にリセット"
+}

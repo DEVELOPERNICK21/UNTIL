@@ -7,6 +7,7 @@ import React from 'react';
 import { StyleSheet, View } from 'react-native';
 import { GlassCard, PinWidgetButton, Text } from '../../../shared/ui';
 import { Spacing, useTheme } from '../../../shared/theme';
+import { useTranslation } from '../../../shared/i18n/useTranslation';
 import { usePinWidget } from '../../../shared/platform/usePinWidget';
 import type { PinWidgetKind } from '../../../shared/platform/widgetPin';
 
@@ -20,6 +21,7 @@ interface PinRowProps {
 }
 
 function PinRow({ kind, title, detail, locked, last, onLocked }: PinRowProps) {
+  const { t } = useTranslation();
   const theme = useTheme();
   const { available, busy, pin } = usePinWidget(kind, 'widget_screen');
   if (!available) return null;
@@ -38,12 +40,12 @@ function PinRow({ kind, title, detail, locked, last, onLocked }: PinRowProps) {
           {title}
         </Text>
         <Text variant="caption" style={{ color: theme.textSecondary }}>
-          {locked ? 'Premium' : detail}
+          {locked ? t('widgets.tile.premium') : detail}
         </Text>
       </View>
       <PinWidgetButton
         variant="link"
-        label={locked ? 'See Premium' : 'Add'}
+        label={locked ? t('widgets.pin.seePremium') : t('common.add')}
         busy={busy}
         onPress={() => {
           if (locked) {
@@ -64,6 +66,7 @@ export function AddToHomeScreenSection({
   premium: boolean;
   onLocked: () => void;
 }) {
+  const { t } = useTranslation();
   const theme = useTheme();
   const { available } = usePinWidget('day', 'widget_screen');
   if (!available) return null;
@@ -74,45 +77,45 @@ export function AddToHomeScreenSection({
         color="secondary"
         style={[styles.label, { color: theme.textSecondary }]}
       >
-        ADD TO HOME SCREEN
+        {t('widgets.section.addToHome')}
       </Text>
       <GlassCard style={styles.card}>
         <PinRow
           kind="day"
-          title="Day"
-          detail="Today, live"
+          title={t('widgets.pin.day.title')}
+          detail={t('widgets.pin.day.detail')}
           locked={false}
           last={false}
           onLocked={onLocked}
         />
         <PinRow
           kind="year"
-          title="Year"
-          detail="This year so far"
+          title={t('widgets.pin.year.title')}
+          detail={t('widgets.pin.year.detail')}
           locked={false}
           last={false}
           onLocked={onLocked}
         />
         <PinRow
           kind="month"
-          title="Month"
-          detail="This month so far"
+          title={t('widgets.pin.month.title')}
+          detail={t('widgets.pin.month.detail')}
           locked={!premium}
           last={false}
           onLocked={onLocked}
         />
         <PinRow
           kind="life"
-          title="Life"
-          detail="Your life in weeks"
+          title={t('widgets.pin.life.title')}
+          detail={t('widgets.pin.life.detail')}
           locked={!premium}
           last={false}
           onLocked={onLocked}
         />
         <PinRow
           kind="deadlines"
-          title="Next deadlines"
-          detail="Your three nearest"
+          title={t('widgets.pin.deadlines.title')}
+          detail={t('widgets.pin.deadlines.detail')}
           locked={!premium}
           last
           onLocked={onLocked}

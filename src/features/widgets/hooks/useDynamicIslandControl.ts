@@ -14,6 +14,11 @@ import type {
   LiveActivityWidgetType,
 } from '../data/WidgetSync';
 import { useAccessControl } from '../../premium';
+import { useTranslation } from '../../../shared/i18n/useTranslation';
+import type {
+  t as translateFn,
+  TranslationKey,
+} from '../../../shared/i18n/translate';
 
 function isPremiumLiveActivityType(type: LiveActivityWidgetType): boolean {
   return type === 'month' || type === 'life';
@@ -21,38 +26,38 @@ function isPremiumLiveActivityType(type: LiveActivityWidgetType): boolean {
 
 const WIDGET_OPTIONS: {
   type: LiveActivityWidgetType;
-  title: string;
-  description: string;
+  titleKey: TranslationKey;
+  descriptionKey: TranslationKey;
 }[] = [
   {
     type: 'day',
-    title: 'Today',
-    description: 'How much of today is left · hours remaining.',
+    titleKey: 'nav.today',
+    descriptionKey: 'widgets.island.option.day.description',
   },
   {
     type: 'month',
-    title: 'This month',
-    description: 'Days left in the month · Premium.',
+    titleKey: 'nav.thisMonth',
+    descriptionKey: 'widgets.island.option.month.description',
   },
   {
     type: 'year',
-    title: 'This year',
-    description: 'How much of the year is left.',
+    titleKey: 'nav.thisYear',
+    descriptionKey: 'widgets.island.option.year.description',
   },
   {
     type: 'life',
-    title: 'Your life',
-    description: 'Days left in life · set birth date · Premium.',
+    titleKey: 'nav.life',
+    descriptionKey: 'widgets.island.option.life.description',
   },
   {
     type: 'dailyTasks',
-    title: 'Tasks',
-    description: 'Tasks left today.',
+    titleKey: 'widgets.island.option.tasks.title',
+    descriptionKey: 'widgets.island.option.tasks.description',
   },
   {
     type: 'hourCalc',
-    title: 'Hour timer',
-    description: 'A stopwatch you can start and stop from the island.',
+    titleKey: 'widgets.island.option.hour.title',
+    descriptionKey: 'widgets.island.option.hour.description',
   },
 ];
 
@@ -66,21 +71,23 @@ type StartFailure = 'disabled' | 'unsupported' | 'failed';
 function describeProblem(
   status: LiveActivityStatus | null,
   failure: StartFailure | null,
+  translate: typeof translateFn,
 ): string | null {
   if (failure === 'unsupported' || (status && !status.supported)) {
-    return 'The Dynamic Island needs iOS 16.2 or later.';
+    return translate('widgets.island.problem.unsupported');
   }
   if (failure === 'disabled' || (status && status.supported && !status.enabled)) {
-    return 'Live Activities are off for UNTIL. Turn them on in Settings, then come back and press Start.';
+    return translate('widgets.island.problem.disabled');
   }
   if (failure === 'failed') {
-    return 'Could not start it. Keep UNTIL open on this screen and press Start again.';
+    return translate('widgets.island.problem.failed');
   }
   return null;
 }
 
 export function useDynamicIslandControl() {
   const { hasPremiumBundle } = useAccessControl();
+  const { t } = useTranslation();
   const [activeWidget, setActiveWidget] = useState<LiveActivityWidgetType>(
     getLiveActivityWidgetType(),
   );
@@ -139,25 +146,25 @@ export function useDynamicIslandControl() {
     Linking.openSettings().catch(() => {});
   }, []);
 
-  const problem = describeProblem(status, failure);
+  const problem = describeProblem(status, failure, t);
 
   const options = useMemo(
     () =>
-      WIDGET_OPTIONS.map(option => {
-        const comingSoon = isComingSoonType(option.type);
+      WIDGET_OPTIONS.map(({ type, titleKey, descriptionKey }) => {
+        const comingSoon = isComingSoonType(type);
         const lockedPremium =
-          !comingSoon &&
-          isPremiumLiveActivityType(option.type) &&
-          !hasPremiumBundle;
+          !comingSoon && isPremiumLiveActivityType(type) && !hasPremiumBundle;
         return {
-          ...option,
-          selected: activeWidget === option.type,
+          type,
+          title: t(titleKey),
+          description: t(descriptionKey),
+          selected: activeWidget === type,
           comingSoon,
           lockedPremium,
           locked: comingSoon || lockedPremium,
         };
       }),
-    [activeWidget, hasPremiumBundle],
+    [activeWidget, hasPremiumBundle, t],
   );
 
   return {

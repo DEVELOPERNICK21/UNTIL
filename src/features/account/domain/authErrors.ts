@@ -4,6 +4,8 @@
  * a real failure that deserves an error message.
  */
 
+import { t } from '../../../shared/i18n/translate';
+
 export const AUTH_CANCELLED_CODE = 'auth/cancelled';
 
 export class AuthCancelledError extends Error {
@@ -42,7 +44,7 @@ export const AUTH_REQUIRES_PASSWORD_REAUTH_CODE = 'auth/requires-password-reauth
 export class AuthRequiresRecentLoginError extends Error {
   readonly code = AUTH_REQUIRES_RECENT_LOGIN_CODE;
 
-  constructor(message = 'Sign in again to delete your account.') {
+  constructor(message = t('account.error.signInAgain')) {
     super(message);
     this.name = 'AuthRequiresRecentLoginError';
   }
@@ -51,7 +53,7 @@ export class AuthRequiresRecentLoginError extends Error {
 export class AuthRequiresPasswordError extends Error {
   readonly code = AUTH_REQUIRES_PASSWORD_REAUTH_CODE;
 
-  constructor(message = 'Enter your password to delete your account.') {
+  constructor(message = t('account.error.enterPasswordToDelete')) {
     super(message);
     this.name = 'AuthRequiresPasswordError';
   }
@@ -87,16 +89,61 @@ export function friendlyGoogleSignInMessage(error: unknown): string | null {
   const { error_code: code, error_message: message } = describeAuthFailure(error);
   const text = `${code} ${message}`.toUpperCase();
   if (code === '10' || text.includes('DEVELOPER_ERROR')) {
-    return 'Google sign-in is not available in this version yet. Use email to sign in.';
+    return t('account.error.google.unavailable');
   }
   if (code === '7' || text.includes('NETWORK_ERROR')) {
-    return 'Network error. Check your connection and try again.';
+    return t('account.error.google.network');
   }
   if (text.includes('PLAY_SERVICES_NOT_AVAILABLE')) {
-    return 'Google Play services is missing or out of date. Update it and try again.';
+    return t('account.error.google.playServices');
   }
   if (code === '12500' || code === '8' || text.includes('SIGN_IN_FAILED')) {
-    return 'Google sign-in did not finish. Try again, or use email.';
+    return t('account.error.google.notFinished');
   }
   return null;
+}
+
+function authErrorCode(error: unknown): string {
+  return error && typeof error === 'object' && 'code' in error
+    ? String((error as { code: unknown }).code)
+    : '';
+}
+
+/** Firebase's error code → a message the person can act on. Unknown errors keep their own text. */
+export function mapAuthError(error: unknown, fallback: string): Error {
+  switch (authErrorCode(error)) {
+    case 'auth/invalid-email':
+      return new Error(t('account.error.validEmail'));
+    case 'auth/user-disabled':
+      return new Error(t('account.error.disabled'));
+    case 'auth/user-not-found':
+    case 'auth/wrong-password':
+    case 'auth/invalid-credential':
+    case 'auth/invalid-login-credentials':
+      return new Error(t('account.error.wrongCredentials'));
+    case 'auth/email-already-in-use':
+      return new Error(t('account.error.emailInUse'));
+    case 'auth/weak-password':
+      return new Error(t('account.error.passwordMin'));
+    case 'auth/too-many-requests':
+      return new Error(t('account.error.tooMany'));
+    case 'auth/network-request-failed':
+      return new Error(t('account.error.network'));
+    default:
+      if (error instanceof Error && error.message) {
+        return new Error(error.message);
+      }
+      return new Error(fallback);
+  }
+}
+
+export function mapAppleAuthError(error: unknown, fallback: string): Error {
+  switch (authErrorCode(error)) {
+    case 'auth/invalid-credential':
+      return new Error(t('account.error.appleFailed'));
+    case 'auth/operation-not-allowed':
+      return new Error(t('account.error.appleNotSetUp'));
+    default:
+      return mapAuthError(error, fallback);
+  }
 }

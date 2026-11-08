@@ -21,20 +21,12 @@ import { Spacing, Colors, Radius, Typography } from '../../../shared/theme';
 import type { RootStackParamList } from '../../../shared/navigation/types';
 import type { GoalTask, TaskCategory } from '../../../shared/types';
 import { todayIso } from '../../../shared/time/clock';
-
-const TASK_CATEGORIES: { value: TaskCategory; label: string }[] = [
-  { value: 'health', label: 'Health' },
-  { value: 'work', label: 'Work' },
-  { value: 'personal_care', label: 'Personal care' },
-  { value: 'learning', label: 'Learning' },
-  { value: 'other', label: 'Other' },
-];
-
-function categoryLabel(cat: TaskCategory): string {
-  return TASK_CATEGORIES.find((c) => c.value === cat)?.label ?? cat;
-}
+import { useTranslation } from '../../../shared/i18n/useTranslation';
+import { getTaskCategoryOptions, taskCategoryLabel } from './taskCategories';
 
 export function GoalDetailScreen() {
+  const { t } = useTranslation();
+  const categoryOptions = getTaskCategoryOptions();
   const route = useRoute<RouteProp<RootStackParamList, 'GoalDetail'>>();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList, 'GoalDetail'>>();
   const { syncDailyTasksWidget } = useWidgetSyncActions();
@@ -66,12 +58,12 @@ export function GoalDetailScreen() {
 
   const handleRemoveGoal = () => {
     Alert.alert(
-      'Remove goal',
-      `Remove "${goal?.title}" and all its tasks?`,
+      t('tasks.goals.remove'),
+      t('tasks.goal.removeBody', { title: goal?.title ?? '' }),
       [
-        { text: 'Cancel', style: 'cancel' },
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text: 'Remove',
+          text: t('common.remove'),
           style: 'destructive',
           onPress: () => {
             removeGoal();
@@ -83,9 +75,9 @@ export function GoalDetailScreen() {
   };
 
   const handleAddTask = () => {
-    const t = addTitle.trim();
-    if (!t) return;
-    addTask({ title: t, category: addCategory });
+    const trimmedTitle = addTitle.trim();
+    if (!trimmedTitle) return;
+    addTask({ title: trimmedTitle, category: addCategory });
     setAddTitle('');
     setAddModalVisible(false);
   };
@@ -99,21 +91,21 @@ export function GoalDetailScreen() {
 
   const handleSaveEditTask = () => {
     if (!editTask) return;
-    const t = editTitle.trim();
-    if (!t) return;
-    updateTask(editTask.id, { title: t, category: editCategory });
+    const trimmedTitle = editTitle.trim();
+    if (!trimmedTitle) return;
+    updateTask(editTask.id, { title: trimmedTitle, category: editCategory });
     setEditModalVisible(false);
     setEditTask(null);
   };
 
   const handleRemoveTask = (task: GoalTask) => {
     Alert.alert(
-      'Remove task',
-      `Remove "${task.title}" from this goal?`,
+      t('tasks.removeTask'),
+      t('tasks.goal.removeTaskBody', { title: task.title }),
       [
-        { text: 'Cancel', style: 'cancel' },
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text: 'Remove',
+          text: t('common.remove'),
           style: 'destructive',
           onPress: () => {
             removeTask(task.id);
@@ -137,7 +129,7 @@ export function GoalDetailScreen() {
     return (
       <View style={styles.container}>
         <ScreenGradient>
-          <Text variant="body" color="secondary" style={styles.empty}>Goal not found.</Text>
+          <Text variant="body" color="secondary" style={styles.empty}>{t('tasks.goal.notFound')}</Text>
         </ScreenGradient>
       </View>
     );
@@ -161,20 +153,20 @@ export function GoalDetailScreen() {
               </Text>
             ) : null}
             <TouchableOpacity onPress={handleRemoveGoal} style={styles.removeGoalBtn}>
-              <Text variant="caption" style={styles.removeText}>Remove goal</Text>
+              <Text variant="caption" style={styles.removeText}>{t('tasks.goals.remove')}</Text>
             </TouchableOpacity>
           </Card>
 
           <Text variant="sectionTitle" color="secondary" style={styles.sectionTitle}>
-            Tasks for this goal
+            {t('tasks.goal.tasksTitle')}
           </Text>
           <Text variant="caption" color="secondary" style={styles.hint}>
-            Add tasks below. Use &quot;Add to today&quot; for a one-off, or &quot;Repeat daily&quot; to add this task to every day automatically.
+            {t('tasks.goal.hint')}
           </Text>
 
           {goal.tasks.length === 0 ? (
             <Text variant="body" color="secondary" style={styles.empty}>
-              No tasks yet. Add one below.
+              {t('tasks.goal.empty')}
             </Text>
           ) : (
             goal.tasks.map((task) => {
@@ -187,9 +179,9 @@ export function GoalDetailScreen() {
                         {task.title}
                       </Text>
                       <Text variant="caption" color="secondary">
-                        {categoryLabel(task.category)}
+                        {taskCategoryLabel(task.category)}
                         {isRepeat && (
-                          <Text variant="caption" style={styles.repeatBadge}> · Repeats daily</Text>
+                          <Text variant="caption" style={styles.repeatBadge}> · {t('tasks.goal.repeatsDaily')}</Text>
                         )}
                       </Text>
                     </View>
@@ -198,21 +190,21 @@ export function GoalDetailScreen() {
                         onPress={() => handleAddToToday(task)}
                         style={styles.smallBtn}
                       >
-                        <Text variant="caption" style={styles.actionText}>Add to today</Text>
+                        <Text variant="caption" style={styles.actionText}>{t('tasks.goal.addToToday')}</Text>
                       </TouchableOpacity>
                       <TouchableOpacity
                         onPress={() => handleToggleRepeatDaily(task)}
                         style={[styles.smallBtn, isRepeat && styles.smallBtnActive]}
                       >
                         <Text variant="caption" style={[styles.actionText, isRepeat && styles.actionTextActive]}>
-                          {isRepeat ? 'Stop repeat' : 'Repeat daily'}
+                          {isRepeat ? t('tasks.goal.stopRepeat') : t('tasks.goal.repeatDaily')}
                         </Text>
                       </TouchableOpacity>
                       <TouchableOpacity onPress={() => openEditTask(task)} style={styles.smallBtn}>
-                        <Text variant="caption" style={styles.actionText}>Edit</Text>
+                        <Text variant="caption" style={styles.actionText}>{t('common.edit')}</Text>
                       </TouchableOpacity>
                       <TouchableOpacity onPress={() => handleRemoveTask(task)} style={styles.smallBtn}>
-                        <Text variant="caption" style={styles.removeText}>Remove</Text>
+                        <Text variant="caption" style={styles.removeText}>{t('common.remove')}</Text>
                       </TouchableOpacity>
                     </View>
                   </View>
@@ -222,7 +214,7 @@ export function GoalDetailScreen() {
           )}
 
           <TouchableOpacity style={styles.addButton} onPress={() => setAddModalVisible(true)}>
-            <Text variant="caption" style={styles.addButtonText}>Add task to goal</Text>
+            <Text variant="caption" style={styles.addButtonText}>{t('tasks.goal.addTask')}</Text>
           </TouchableOpacity>
         </ScrollView>
       </ScreenGradient>
@@ -231,19 +223,19 @@ export function GoalDetailScreen() {
         <Pressable style={styles.modalOverlay} onPress={() => setAddModalVisible(false)}>
           <Pressable style={styles.modalContent} onPress={(e) => e.stopPropagation()}>
             <Text variant="sectionTitle" color="primary" style={styles.modalTitle}>
-              Add task
+              {t('tasks.addTask')}
             </Text>
             <TextInput
               style={styles.input}
               value={addTitle}
               onChangeText={setAddTitle}
-              placeholder="Task title"
+              placeholder={t('tasks.taskTitle')}
               placeholderTextColor={Colors.textSecondary}
               autoCapitalize="sentences"
             />
-            <Text variant="caption" color="secondary" style={styles.categoryLabel}>Category</Text>
+            <Text variant="caption" color="secondary" style={styles.categoryLabel}>{t('tasks.categoryLabel')}</Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipScroll} contentContainerStyle={styles.chipContainer}>
-              {TASK_CATEGORIES.map(({ value, label }) => (
+              {categoryOptions.map(({ value, label }) => (
                 <TouchableOpacity
                   key={value}
                   style={[styles.chip, addCategory === value && styles.chipSelected]}
@@ -257,14 +249,14 @@ export function GoalDetailScreen() {
             </ScrollView>
             <View style={styles.modalActions}>
               <TouchableOpacity style={styles.modalButton} onPress={() => setAddModalVisible(false)}>
-                <Text variant="body" color="secondary">Cancel</Text>
+                <Text variant="body" color="secondary">{t('common.cancel')}</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.modalButton, styles.modalButtonPrimary]}
                 onPress={handleAddTask}
                 disabled={!addTitle.trim()}
               >
-                <Text variant="body" style={styles.modalButtonPrimaryText}>Add</Text>
+                <Text variant="body" style={styles.modalButtonPrimaryText}>{t('common.add')}</Text>
               </TouchableOpacity>
             </View>
           </Pressable>
@@ -275,19 +267,19 @@ export function GoalDetailScreen() {
         <Pressable style={styles.modalOverlay} onPress={() => setEditModalVisible(false)}>
           <Pressable style={styles.modalContent} onPress={(e) => e.stopPropagation()}>
             <Text variant="sectionTitle" color="primary" style={styles.modalTitle}>
-              Edit task
+              {t('tasks.editTask')}
             </Text>
             <TextInput
               style={styles.input}
               value={editTitle}
               onChangeText={setEditTitle}
-              placeholder="Task title"
+              placeholder={t('tasks.taskTitle')}
               placeholderTextColor={Colors.textSecondary}
               autoCapitalize="sentences"
             />
-            <Text variant="caption" color="secondary" style={styles.categoryLabel}>Category</Text>
+            <Text variant="caption" color="secondary" style={styles.categoryLabel}>{t('tasks.categoryLabel')}</Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipScroll} contentContainerStyle={styles.chipContainer}>
-              {TASK_CATEGORIES.map(({ value, label }) => (
+              {categoryOptions.map(({ value, label }) => (
                 <TouchableOpacity
                   key={value}
                   style={[styles.chip, editCategory === value && styles.chipSelected]}
@@ -301,14 +293,14 @@ export function GoalDetailScreen() {
             </ScrollView>
             <View style={styles.modalActions}>
               <TouchableOpacity style={styles.modalButton} onPress={() => setEditModalVisible(false)}>
-                <Text variant="body" color="secondary">Cancel</Text>
+                <Text variant="body" color="secondary">{t('common.cancel')}</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.modalButton, styles.modalButtonPrimary]}
                 onPress={handleSaveEditTask}
                 disabled={!editTitle.trim()}
               >
-                <Text variant="body" style={styles.modalButtonPrimaryText}>Save</Text>
+                <Text variant="body" style={styles.modalButtonPrimaryText}>{t('common.save')}</Text>
               </TouchableOpacity>
             </View>
           </Pressable>

@@ -28,19 +28,10 @@ import type { DailyTask, TaskCategory } from '../../../shared/types';
 import { addDaysIso, isLastHourOfDay } from '../domain/taskMove';
 import { EmberLocalDock } from '../../ember';
 import { TaskMoveSheet } from './TaskMoveSheet';
+import { getTaskCategoryOptions, taskCategoryLabel } from './taskCategories';
+import { useTranslation } from '../../../shared/i18n/useTranslation';
+import { splitLinkedText } from '../../../shared/i18n/linkedText';
 import { setEmberModalCoveringSource } from '../../../shared/ui/emberSurface';
-
-const TASK_CATEGORIES: { value: TaskCategory; label: string }[] = [
-  { value: 'health', label: 'Health' },
-  { value: 'work', label: 'Work' },
-  { value: 'personal_care', label: 'Personal care' },
-  { value: 'learning', label: 'Learning' },
-  { value: 'other', label: 'Other' },
-];
-
-function categoryLabel(cat: TaskCategory): string {
-  return TASK_CATEGORIES.find(c => c.value === cat)?.label ?? cat;
-}
 
 interface TaskRowProps {
   task: DailyTask;
@@ -59,6 +50,7 @@ function TaskRow({
   onMove,
   onRemove,
 }: TaskRowProps) {
+  const { t } = useTranslation();
   const scaleAnim = useRef(new Animated.Value(1)).current;
   const opacityAnim = useRef(new Animated.Value(1)).current;
 
@@ -134,7 +126,7 @@ function TaskRow({
                 {task.title}
               </Text>
               <Text variant="caption" color="secondary">
-                {categoryLabel(task.category)}
+                {taskCategoryLabel(task.category)}
                 {task.sourceGoalId != null && (
                   <Text
                     variant="caption"
@@ -142,7 +134,7 @@ function TaskRow({
                     style={styles.fromGoal}
                   >
                     {' · '}
-                    {goalTitle ?? 'From goal'}
+                    {goalTitle ?? t('tasks.fromGoal')}
                   </Text>
                 )}
               </Text>
@@ -157,7 +149,7 @@ function TaskRow({
                 hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
               >
                 <Text variant="caption" style={styles.actionText}>
-                  Move
+                  {t('tasks.move')}
                 </Text>
               </TouchableOpacity>
             ) : null}
@@ -170,7 +162,7 @@ function TaskRow({
               hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
             >
               <Text variant="caption" style={styles.actionText}>
-                Edit
+                {t('common.edit')}
               </Text>
             </TouchableOpacity>
             <TouchableOpacity
@@ -182,7 +174,7 @@ function TaskRow({
               hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
             >
               <Text variant="caption" style={styles.removeText}>
-                Remove
+                {t('common.remove')}
               </Text>
             </TouchableOpacity>
           </View>
@@ -197,6 +189,7 @@ export function DailyTasksScreen() {
     useNavigation<
       NativeStackNavigationProp<RootStackParamList, 'DailyTasks'>
     >();
+  const { t } = useTranslation();
   const today = useTodayIso();
   const {
     tasks,
@@ -228,7 +221,7 @@ export function DailyTasksScreen() {
   const [moveTargetIds, setMoveTargetIds] = React.useState<string[] | null>(
     null,
   );
-  const [moveSheetTitle, setMoveSheetTitle] = React.useState('Move task');
+  const [moveSheetTitle, setMoveSheetTitle] = React.useState(t('tasks.moveOne'));
   const [moveShowToday, setMoveShowToday] = React.useState(false);
   const [moveIsCarryover, setMoveIsCarryover] = React.useState(false);
   const [pendingCarryoverMove, setPendingCarryoverMove] = React.useState<{
@@ -289,10 +282,10 @@ export function DailyTasksScreen() {
 
   const openMove = useCallback((task: DailyTask) => {
     setMoveTargetIds([task.id]);
-    setMoveSheetTitle('Move task');
+    setMoveSheetTitle(t('tasks.moveOne'));
     setMoveShowToday(false);
     setMoveIsCarryover(false);
-  }, []);
+  }, [t]);
 
   const closeMove = useCallback(() => {
     setMoveTargetIds(null);
@@ -309,7 +302,7 @@ export function DailyTasksScreen() {
       if (moveIsCarryover) {
         dismissCarryoverNotNow();
         if (movedCount === 0) {
-          Alert.alert('Tasks already moved', 'These tasks are already on that day.');
+          Alert.alert(t('tasks.alreadyMoved.title'), t('tasks.alreadyMoved.body'));
         }
       }
     },
@@ -319,6 +312,7 @@ export function DailyTasksScreen() {
       moveTargetIds,
       moveTasks,
       syncDailyTasksWidget,
+      t,
     ],
   );
 
@@ -336,19 +330,23 @@ export function DailyTasksScreen() {
 
   const handleRemove = useCallback(
     (task: DailyTask) => {
-      Alert.alert('Remove task', `Remove "${task.title}"?`, [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Remove',
-          style: 'destructive',
-          onPress: () => {
-            removeTask(task.id);
-            syncDailyTasksWidget();
+      Alert.alert(
+        t('tasks.removeTask'),
+        t('tasks.removeTaskBody', { title: task.title }),
+        [
+          { text: t('common.cancel'), style: 'cancel' },
+          {
+            text: t('common.remove'),
+            style: 'destructive',
+            onPress: () => {
+              removeTask(task.id);
+              syncDailyTasksWidget();
+            },
           },
-        },
-      ]);
+        ],
+      );
     },
-    [removeTask, syncDailyTasksWidget],
+    [removeTask, syncDailyTasksWidget, t],
   );
 
   const unfinishedTasks = React.useMemo(
@@ -369,25 +367,19 @@ export function DailyTasksScreen() {
 
   const handleChooseBulkMoveDate = useCallback(() => {
     setMoveTargetIds(unfinishedTaskIds);
-    setMoveSheetTitle(
-      `Move ${unfinishedTasks.length} ${
-        unfinishedTasks.length === 1 ? 'task' : 'tasks'
-      }`,
-    );
+    setMoveSheetTitle(t('tasks.moveTitle', { count: unfinishedTasks.length }));
     setMoveShowToday(false);
     setMoveIsCarryover(false);
-  }, [unfinishedTaskIds, unfinishedTasks.length]);
+  }, [t, unfinishedTaskIds, unfinishedTasks.length]);
 
   const handleClearUnfinished = useCallback(() => {
     Alert.alert(
-      `Remove ${unfinishedTasks.length} unfinished ${
-        unfinishedTasks.length === 1 ? 'task' : 'tasks'
-      }?`,
+      t('tasks.removeUnfinished', { count: unfinishedTasks.length }),
       undefined,
       [
-        { text: 'Cancel', style: 'cancel' },
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text: 'Remove',
+          text: t('common.remove'),
           style: 'destructive',
           onPress: () => {
             removeTasks(unfinishedTaskIds);
@@ -399,6 +391,7 @@ export function DailyTasksScreen() {
   }, [
     removeTasks,
     syncDailyTasksWidget,
+    t,
     unfinishedTaskIds,
     unfinishedTasks.length,
   ]);
@@ -414,7 +407,7 @@ export function DailyTasksScreen() {
       syncDailyTasksWidget();
       dismissCarryoverNotNow();
       if (movedCount === 0) {
-        Alert.alert('Tasks already moved', 'These tasks are already on that day.');
+        Alert.alert(t('tasks.alreadyMoved.title'), t('tasks.alreadyMoved.body'));
       }
     },
     [
@@ -422,20 +415,20 @@ export function DailyTasksScreen() {
       dismissCarryoverNotNow,
       moveTasks,
       syncDailyTasksWidget,
+      t,
     ],
   );
 
   const handleCarryoverPickDate = useCallback(() => {
     setPendingCarryoverMove({
       taskIds: carryoverTaskIds,
-      title: `Move ${unfinishedYesterday.length} ${
-        unfinishedYesterday.length === 1 ? 'task' : 'tasks'
-      }`,
+      title: t('tasks.moveTitle', { count: unfinishedYesterday.length }),
     });
     closeCarryoverPrompt();
   }, [
     carryoverTaskIds,
     closeCarryoverPrompt,
+    t,
     unfinishedYesterday.length,
   ]);
 
@@ -457,14 +450,12 @@ export function DailyTasksScreen() {
 
   const handleClearYesterday = useCallback(() => {
     Alert.alert(
-      `Remove ${unfinishedYesterday.length} unfinished ${
-        unfinishedYesterday.length === 1 ? 'task' : 'tasks'
-      }?`,
+      t('tasks.removeUnfinished', { count: unfinishedYesterday.length }),
       undefined,
       [
-        { text: 'Cancel', style: 'cancel' },
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text: 'Remove',
+          text: t('common.remove'),
           style: 'destructive',
           onPress: () => {
             clearYesterday();
@@ -473,9 +464,11 @@ export function DailyTasksScreen() {
         },
       ],
     );
-  }, [clearYesterday, syncDailyTasksWidget, unfinishedYesterday.length]);
+  }, [clearYesterday, syncDailyTasksWidget, t, unfinishedYesterday.length]);
 
   const progress = stats.total > 0 ? stats.completed / stats.total : 0;
+  const categoryOptions = getTaskCategoryOptions();
+  const subtitle = splitLinkedText(t('tasks.today.subtitle'));
 
   return (
     <View style={styles.container}>
@@ -493,20 +486,19 @@ export function DailyTasksScreen() {
           }
         >
           <Text variant="sectionTitle" color="primary" style={styles.title}>
-            Today&apos;s tasks
+            {t('nav.todaysTasks')}
           </Text>
           <Text variant="body" color="secondary" style={styles.subtitle}>
-            Add tasks and tick them when done. Use{' '}
+            {subtitle.before}
             <Text
               variant="body"
               color="primary"
               style={styles.inlineLink}
               onPress={() => navigation.navigate('MonthlyGoals')}
             >
-              monthly goals
-            </Text>{' '}
-            to add tasks that repeat daily. Your progress appears on the home
-            screen and in the Daily tasks widget.
+              {subtitle.link}
+            </Text>
+            {subtitle.after}
           </Text>
 
           <TouchableOpacity
@@ -519,11 +511,14 @@ export function DailyTasksScreen() {
                 color="secondary"
                 style={styles.blockTitle}
               >
-                Report
+                {t('tasks.today.report')}
               </Text>
               <View style={styles.reportRow}>
                 <Text variant="body" color="primary">
-                  {stats.completed} completed · {stats.pending} pending
+                  {t('tasks.today.reportSummary', {
+                    completed: stats.completed,
+                    pending: stats.pending,
+                  })}
                 </Text>
               </View>
               {stats.total > 0 && (
@@ -538,7 +533,7 @@ export function DailyTasksScreen() {
                 color="secondary"
                 style={styles.reportLink}
               >
-                View daily, weekly & monthly report →
+                {t('tasks.today.reportLink')}
               </Text>
             </Card>
           </TouchableOpacity>
@@ -550,8 +545,7 @@ export function DailyTasksScreen() {
                 color="primary"
                 style={styles.lastHourTitle}
               >
-                {unfinishedTasks.length}{' '}
-                {unfinishedTasks.length === 1 ? 'task' : 'tasks'} still open
+                {t('tasks.today.stillOpen', { count: unfinishedTasks.length })}
               </Text>
               <View style={styles.lastHourActions}>
                 <TouchableOpacity
@@ -559,7 +553,7 @@ export function DailyTasksScreen() {
                   onPress={handleMoveAllTomorrow}
                 >
                   <Text variant="body" style={styles.lastHourPrimaryText}>
-                    Move all to tomorrow
+                    {t('tasks.today.moveAllTomorrow')}
                   </Text>
                 </TouchableOpacity>
                 <TouchableOpacity
@@ -567,7 +561,7 @@ export function DailyTasksScreen() {
                   onPress={handleChooseBulkMoveDate}
                 >
                   <Text variant="body" color="primary">
-                    Choose date
+                    {t('tasks.today.chooseDate')}
                   </Text>
                 </TouchableOpacity>
                 <TouchableOpacity
@@ -575,7 +569,7 @@ export function DailyTasksScreen() {
                   onPress={handleClearUnfinished}
                 >
                   <Text variant="body" style={styles.lastHourClearText}>
-                    Clear unfinished
+                    {t('tasks.today.clearUnfinished')}
                   </Text>
                 </TouchableOpacity>
               </View>
@@ -588,13 +582,13 @@ export function DailyTasksScreen() {
               color="secondary"
               style={styles.addSectionLabel}
             >
-              New task
+              {t('tasks.today.newTask')}
             </Text>
             <TextInput
               style={styles.input}
               value={newTitle}
               onChangeText={setNewTitle}
-              placeholder="What do you want to do?"
+              placeholder={t('tasks.titlePlaceholder')}
               placeholderTextColor={Colors.textSecondary}
               autoCapitalize="sentences"
               returnKeyType="done"
@@ -608,7 +602,7 @@ export function DailyTasksScreen() {
               color="secondary"
               style={styles.categorySectionLabel}
             >
-              Category
+              {t('tasks.categoryLabel')}
             </Text>
             <ScrollView
               horizontal
@@ -616,7 +610,7 @@ export function DailyTasksScreen() {
               style={styles.chipScroll}
               contentContainerStyle={styles.chipContainer}
             >
-              {TASK_CATEGORIES.map(({ value, label }) => (
+              {categoryOptions.map(({ value, label }) => (
                 <TouchableOpacity
                   key={value}
                   style={[
@@ -646,14 +640,14 @@ export function DailyTasksScreen() {
               disabled={!newTitle.trim()}
             >
               <Text variant="body" style={styles.addButtonText}>
-                Add task
+                {t('tasks.addTask')}
               </Text>
             </TouchableOpacity>
           </View>
 
           {tasks.length === 0 ? (
             <Text variant="body" color="secondary" style={styles.empty}>
-              No tasks for today. Add one above.
+              {t('tasks.today.empty')}
             </Text>
           ) : (
             tasks.map(task => (
@@ -689,20 +683,20 @@ export function DailyTasksScreen() {
                   color="primary"
                   style={styles.modalTitle}
                 >
-                  Edit task
+                  {t('tasks.editTask')}
                 </Text>
                 <Text
                   variant="caption"
                   color="secondary"
                   style={styles.modalInputLabel}
                 >
-                  Task title
+                  {t('tasks.taskTitle')}
                 </Text>
                 <TextInput
                   style={styles.modalInput}
                   value={editTitle}
                   onChangeText={setEditTitle}
-                  placeholder="What do you want to do?"
+                  placeholder={t('tasks.titlePlaceholder')}
                   placeholderTextColor={Colors.textSecondary}
                   autoCapitalize="sentences"
                   returnKeyType="done"
@@ -716,7 +710,7 @@ export function DailyTasksScreen() {
                   color="secondary"
                   style={styles.categoryLabel}
                 >
-                  Category
+                  {t('tasks.categoryLabel')}
                 </Text>
                 <ScrollView
                   horizontal
@@ -724,7 +718,7 @@ export function DailyTasksScreen() {
                   style={styles.chipScroll}
                   contentContainerStyle={styles.chipContainer}
                 >
-                  {TASK_CATEGORIES.map(({ value, label }) => (
+                  {categoryOptions.map(({ value, label }) => (
                     <TouchableOpacity
                       key={value}
                       style={[
@@ -751,7 +745,7 @@ export function DailyTasksScreen() {
                     onPress={closeEdit}
                   >
                     <Text variant="body" color="secondary">
-                      Cancel
+                      {t('common.cancel')}
                     </Text>
                   </TouchableOpacity>
                   <TouchableOpacity
@@ -760,7 +754,7 @@ export function DailyTasksScreen() {
                     disabled={!editTitle.trim()}
                   >
                     <Text variant="body" style={styles.modalButtonPrimaryText}>
-                      Save
+                      {t('common.save')}
                     </Text>
                   </TouchableOpacity>
                 </View>
@@ -775,7 +769,7 @@ export function DailyTasksScreen() {
               color="secondary"
               style={styles.celebration}
             >
-              All done for today.
+              {t('tasks.today.allDone')}
             </Text>
           )}
         </ScrollView>
@@ -805,15 +799,16 @@ export function DailyTasksScreen() {
               color="primary"
               style={styles.modalTitle}
             >
-              Yesterday&apos;s unfinished tasks
+              {t('tasks.carryover.title')}
             </Text>
             <Text
               variant="body"
               color="secondary"
               style={styles.carryoverDescription}
             >
-              Move or remove {unfinishedYesterday.length} open{' '}
-              {unfinishedYesterday.length === 1 ? 'task' : 'tasks'}.
+              {t('tasks.carryover.description', {
+                count: unfinishedYesterday.length,
+              })}
             </Text>
             <TouchableOpacity
               style={[styles.carryoverButton, styles.carryoverPrimaryButton]}
@@ -821,7 +816,7 @@ export function DailyTasksScreen() {
               accessibilityRole="button"
             >
               <Text variant="body" style={styles.carryoverPrimaryText}>
-                Today
+                {t('common.today')}
               </Text>
             </TouchableOpacity>
             <TouchableOpacity
@@ -830,7 +825,7 @@ export function DailyTasksScreen() {
               accessibilityRole="button"
             >
               <Text variant="body" color="primary">
-                Tomorrow
+                {t('common.tomorrow')}
               </Text>
             </TouchableOpacity>
             <TouchableOpacity
@@ -839,7 +834,7 @@ export function DailyTasksScreen() {
               accessibilityRole="button"
             >
               <Text variant="body" color="primary">
-                Pick a date
+                {t('tasks.pickDate')}
               </Text>
             </TouchableOpacity>
             <TouchableOpacity
@@ -848,7 +843,7 @@ export function DailyTasksScreen() {
               accessibilityRole="button"
             >
               <Text variant="body" style={styles.carryoverClearText}>
-                Clear them
+                {t('tasks.carryover.clear')}
               </Text>
             </TouchableOpacity>
             <TouchableOpacity
@@ -857,7 +852,7 @@ export function DailyTasksScreen() {
               accessibilityRole="button"
             >
               <Text variant="body" color="secondary">
-                Not now
+                {t('common.notNow')}
               </Text>
             </TouchableOpacity>
           </Pressable>

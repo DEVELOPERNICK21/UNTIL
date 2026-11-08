@@ -1,0 +1,22 @@
+{
+  "counters.subtitle": "Add what you want to count (e.g. Water), then add the Counter widget to your home screen. The widget counts one of them: tap it to add +1. Use −1 here if you tapped by mistake, or reset it to start again.",
+  "counters.namePlaceholder": "Counter name (e.g. Water)",
+  "counters.empty": "No counters yet. Add one above, then add the Counter widget from your home screen and choose this counter.",
+  "counters.count": "Count: {{value}}",
+  "counters.remove.title": "Remove counter",
+  "counters.remove.message": "Remove \"{{title}}\"? The count ({{value}}) will be lost.",
+  "counters.hint.ios": "Long-press home screen → + → search Until → add \"Counter\" widget.",
+  "counters.hint.android": "Long-press home screen → Widgets → Until → Counter.",
+  "counters.addWithPremium": "Add with Premium",
+  "counters.limit.reached": "That is the most one list holds ({{limit}}). Remove one to add another.",
+  "counters.limit.free": "The free plan keeps one counter. Premium holds up to {{max}}.",
+  "counters.reset.title": "Reset counter",
+  "counters.reset.message": "Set \"{{title}}\" back to 0? It is at {{value}}.",
+  "counters.reset.confirm": "Reset",
+  "counters.onWidget": "Shown on your widget",
+  "counters.showOnWidget": "Show on widget",
+  "counters.a11y.showOnWidget": "Show {{title}} on the widget",
+  "counters.a11y.subtract": "Subtract one",
+  "counters.a11y.add": "Add one",
+  "counters.a11y.reset": "Reset to zero"
+}

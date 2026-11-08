@@ -1,0 +1,19 @@
+{
+  "activity.locked.eyebrow": "Kayıp zaman uyarıları",
+  "activity.locked.unlock": "Aç",
+  "activity.locked.hint": "Boşa giden saatleri kaydet. Günlük sınırını aştığında bir hatırlatma al.",
+  "activity.today.eyebrow": "Bugünün kayıp zamanı",
+  "activity.hint.tracking": "Şimdi kaydediliyor. Yeniden odaklandığında durdur.",
+  "activity.hint.remaining": "Uyarıya {{time}} kaldı.",
+  "activity.hint.idle": "Gün bitmeden kaydırma süresini kaydet.",
+  "activity.track.start": "Kaydet",
+  "activity.track.stop": "Durdur",
+  "activity.track.startLabel": "Boşa giden zamanı kaydet",
+  "activity.track.stopLabel": "Boşa giden zamanı kaydetmeyi durdur",
+  "activity.add30": "+30dk",
+  "activity.add60": "+1sa",
+  "activity.duration.minutes": "{{m}}dk",
+  "activity.duration.hours": "{{h}}sa",
+  "activity.duration.both": "{{h}}sa {{m}}dk",
+  "activity.limitCrossed": "Bu gün bir daha tekrarlanmayacak."
+}

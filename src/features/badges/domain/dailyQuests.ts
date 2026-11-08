@@ -4,6 +4,8 @@
  * ring again.
  */
 
+import { t } from '../../../shared/i18n/translate';
+
 export type QuestId = 'checkin' | 'plan' | 'finish';
 
 export interface DailyQuest {
@@ -30,13 +32,17 @@ export interface DailyQuests {
   allDone: boolean;
 }
 
-export function buildDailyQuests(input: DailyQuestsInput): DailyQuests {
+/** `translate` lets a screen pass its own `t`, so the labels follow the language it renders in. */
+export function buildDailyQuests(
+  input: DailyQuestsInput,
+  translate: typeof t = t,
+): DailyQuests {
   const total = Math.max(0, input.tasksTotal);
   const completed = Math.min(total, Math.max(0, input.tasksCompleted));
 
   const checkin: DailyQuest = {
     id: 'checkin',
-    label: 'Open UNTIL',
+    label: translate('badges.quests.checkin'),
     detail: '',
     ratio: input.noticedToday ? 1 : 0,
     done: input.noticedToday,
@@ -44,8 +50,11 @@ export function buildDailyQuests(input: DailyQuestsInput): DailyQuests {
 
   const plan: DailyQuest = {
     id: 'plan',
-    label: 'Plan your day',
-    detail: total > 0 ? `${total} ${total === 1 ? 'task' : 'tasks'}` : 'Add a task',
+    label: translate('badges.quests.plan'),
+    detail:
+      total > 0
+        ? translate('badges.quests.tasks', { count: total })
+        : translate('badges.quests.addTask'),
     ratio: total > 0 ? 1 : 0,
     done: total > 0,
   };
@@ -53,7 +62,7 @@ export function buildDailyQuests(input: DailyQuestsInput): DailyQuests {
   const finishDone = total > 0 && completed === total;
   const finish: DailyQuest = {
     id: 'finish',
-    label: 'Finish your tasks',
+    label: translate('badges.quests.finish'),
     detail: total > 0 ? `${completed}/${total}` : '',
     ratio: total > 0 ? completed / total : 0,
     done: finishDone,

@@ -1,5 +1,6 @@
 /**
  * Onboarding quiz question copy (UI layer).
+ * Functions, not constants, so the text follows the language that is active when a screen renders.
  */
 
 import type {
@@ -9,62 +10,74 @@ import type {
   OnboardingReadiness,
   OnboardingValues,
 } from '../../../shared/types';
+import { t } from '../../../shared/i18n/translate';
 
 export interface QuizOption<T extends string> {
   value: T;
   label: string;
 }
 
-export const GOAL_OPTIONS: QuizOption<OnboardingGoal>[] = [
-  { value: 'people', label: 'Time with people' },
-  { value: 'focus', label: 'Focus / deep work' },
-  { value: 'health', label: 'Health & energy' },
-  { value: 'calm', label: 'Calm / less doomscroll' },
-  { value: 'other', label: 'Something else' },
-];
+export function getGoalOptions(): QuizOption<OnboardingGoal>[] {
+  return [
+    { value: 'people', label: t('onboarding.goal.people') },
+    { value: 'focus', label: t('onboarding.goal.focus') },
+    { value: 'health', label: t('onboarding.goal.health') },
+    { value: 'calm', label: t('onboarding.goal.calm') },
+    { value: 'other', label: t('onboarding.goal.other') },
+  ];
+}
 
-export const DRAIN_OPTIONS: QuizOption<OnboardingDrain>[] = [
-  { value: 'social', label: 'Social / phone' },
-  { value: 'work', label: 'Work overflow' },
-  { value: 'busywork', label: 'Decisions & busywork' },
-  { value: 'priorities', label: 'Unclear priorities' },
-  { value: 'unsure', label: 'Not sure' },
-];
+export function getDrainOptions(): QuizOption<OnboardingDrain>[] {
+  return [
+    { value: 'social', label: t('onboarding.drain.social') },
+    { value: 'work', label: t('onboarding.drain.work') },
+    { value: 'busywork', label: t('onboarding.drain.busywork') },
+    { value: 'priorities', label: t('onboarding.drain.priorities') },
+    { value: 'unsure', label: t('onboarding.drain.unsure') },
+  ];
+}
 
-export const VALUES_OPTIONS: QuizOption<OnboardingValues>[] = [
-  { value: 'people', label: 'Time with people' },
-  { value: 'focus', label: 'Focus / deep work' },
-  { value: 'health', label: 'Health & energy' },
-  { value: 'calm', label: 'Calm / less doomscroll' },
-  { value: 'rest', label: 'Protect rest' },
-  { value: 'other', label: 'Something else' },
-];
+export function getValuesOptions(): QuizOption<OnboardingValues>[] {
+  return [
+    { value: 'people', label: t('onboarding.values.people') },
+    { value: 'focus', label: t('onboarding.values.focus') },
+    { value: 'health', label: t('onboarding.values.health') },
+    { value: 'calm', label: t('onboarding.values.calm') },
+    { value: 'rest', label: t('onboarding.values.rest') },
+    { value: 'other', label: t('onboarding.values.other') },
+  ];
+}
 
-export const CADENCE_OPTIONS: QuizOption<OnboardingCadence>[] = [
-  { value: 'checkins', label: 'Daily check-in' },
-  { value: 'widgets', label: 'Widgets only' },
-  { value: 'both', label: 'Both' },
-  { value: 'unsure', label: 'Not sure yet' },
-];
+export function getCadenceOptions(): QuizOption<OnboardingCadence>[] {
+  return [
+    { value: 'checkins', label: t('onboarding.cadence.checkins') },
+    { value: 'widgets', label: t('onboarding.cadence.widgets') },
+    { value: 'both', label: t('onboarding.cadence.both') },
+    { value: 'unsure', label: t('onboarding.cadence.unsure') },
+  ];
+}
 
-export const READINESS_OPTIONS: QuizOption<OnboardingReadiness>[] = [
-  { value: 'ready', label: 'Yes, build my map' },
-  { value: 'gentle', label: 'I want a gentle start' },
-  { value: 'exploring', label: 'Just exploring' },
-];
+export function getReadinessOptions(): QuizOption<OnboardingReadiness>[] {
+  return [
+    { value: 'ready', label: t('onboarding.readiness.ready') },
+    { value: 'gentle', label: t('onboarding.readiness.gentle') },
+    { value: 'exploring', label: t('onboarding.readiness.exploring') },
+  ];
+}
 
-export const QUIZ_PROMPTS = {
-  q_goal: 'What do you want more of?',
-  q_drain: 'Where does most of your time leak?',
-  interstitial:
-    'Most people underestimate lost hours. Small daily leaks add up to about 15–25 hrs/week.',
-  q_values: 'If you reclaimed 10 hrs/week, what comes first?',
-  q_cadence: 'How do you want UNTIL to show up?',
-  q_readiness: 'Ready to watch your time on purpose?',
-  brandTitle: 'Your time is limited.',
-  brandSub:
-    'UNTIL makes that visible so you spend it on purpose. Day, month, year, and life on screen and as home widgets.',
-  loaderTitle: 'Building your time map…',
-  resultsTitle: 'Your time map is ready',
-  resultsSub: 'Based on your 5 answers',
-} as const;
+export function getQuizPrompts() {
+  return {
+    q_goal: t('onboarding.prompt.goal'),
+    q_drain: t('onboarding.prompt.drain'),
+    interstitial: t('onboarding.prompt.interstitial'),
+    q_values: t('onboarding.prompt.values'),
+    q_cadence: t('onboarding.prompt.cadence'),
+    q_readiness: t('onboarding.prompt.readiness'),
+    brandTitle: t('onboarding.prompt.brandTitle'),
+    brandSub: t('onboarding.prompt.brandSub'),
+    loaderTitle: t('onboarding.prompt.loaderTitle'),
+    loaderSub: t('onboarding.prompt.loaderSub'),
+    resultsTitle: t('onboarding.prompt.resultsTitle'),
+    resultsSub: t('onboarding.prompt.resultsSub'),
+  };
+}

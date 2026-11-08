@@ -5,13 +5,13 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Text } from '../../../shared/ui';
 import { PeriodDetailScreen } from './PeriodDetailScreen';
 import { useObserveTimeState } from '../hooks/useObserveTimeState';
-import {
-  useGoalsFeatureEnabled,
-} from '../../../shared/featureFlags/useGoalsFeatureEnabled';
+import { useGoalsFeatureEnabled } from '../../../shared/featureFlags/useGoalsFeatureEnabled';
+import { useTranslation } from '../../../shared/i18n/useTranslation';
+import type { t as translateFn } from '../../../shared/i18n/translate';
 import { Spacing } from '../../../shared/theme';
 import type { RootStackParamList } from '../../../shared/navigation/types';
 
-function formatTime(date: Date) {
+function formatTime(date: Date, t: typeof translateFn) {
   const startDate = new Date(date);
   startDate.setHours(0, 0, 0, 0);
   const endDate = new Date(startDate);
@@ -23,12 +23,15 @@ function formatTime(date: Date) {
   const totalMs = Math.max(1, end - start);
   const passedS = Math.floor(passedMs / 1000);
   const remainingS = Math.floor(remainingMs / 1000);
-  const h = (n: number) => Math.floor(n / 3600);
-  const m = (n: number) => Math.floor((n % 3600) / 60);
-  const s = (n: number) => n % 60;
+  const clock = (n: number) =>
+    t('detail.clock', {
+      h: Math.floor(n / 3600),
+      m: Math.floor((n % 3600) / 60),
+      s: n % 60,
+    });
   return {
-    passed: `${h(passedS)}h ${m(passedS)}m ${s(passedS)}s`,
-    left: `${h(remainingS)}h ${m(remainingS)}m ${s(remainingS)}s`,
+    passed: clock(passedS),
+    left: clock(remainingS),
     progress: Math.min(1, Math.max(0, passedMs / totalMs)),
   };
 }
@@ -36,30 +39,31 @@ function formatTime(date: Date) {
 export function DayDetailScreen() {
   const navigation =
     useNavigation<NativeStackNavigationProp<RootStackParamList, 'DayDetail'>>();
+  const { t } = useTranslation();
   const [live, setLive] = useState(() => new Date());
   const goalsFeatureEnabled = useGoalsFeatureEnabled();
   useObserveTimeState();
 
   useEffect(() => {
-    const t = setInterval(() => setLive(new Date()), 1000);
-    return () => clearInterval(t);
+    const timer = setInterval(() => setLive(new Date()), 1000);
+    return () => clearInterval(timer);
   }, []);
 
-  const { passed, left, progress } = formatTime(live);
+  const { passed, left, progress } = formatTime(live, t);
   const pctDone = Math.round(progress * 100);
   const pctLeft = 100 - pctDone;
 
   return (
     <PeriodDetailScreen
       kind="day"
-      title="Today"
+      title={t('nav.today')}
       progress={progress}
       passedLabel={passed}
       leftLabel={left}
-      passedCaption="Passed"
-      leftCaption="Left"
-      summary={`${pctDone}% of the day passed · ${pctLeft}% left`}
-      liveHint="Updates every second"
+      passedCaption={t('detail.passed')}
+      leftCaption={t('detail.left')}
+      summary={t('detail.day.summary', { done: pctDone, left: pctLeft })}
+      liveHint={t('detail.day.liveHint')}
       footer={
         <TouchableOpacity
           style={styles.cta}
@@ -68,17 +72,17 @@ export function DayDetailScreen() {
               navigation.navigate('DailyTasks');
             } else {
               Alert.alert(
-                'Coming soon',
-                'Daily tasks will be available in a future update.',
+                t('detail.comingSoon'),
+                t('detail.day.comingSoonMessage'),
               );
             }
           }}
         >
           <Text variant="sectionTitle" color="primary">
-            Today&apos;s tasks
+            {t('nav.todaysTasks')}
           </Text>
           <Text variant="caption" color="secondary">
-            Add and tick off your daily tasks →
+            {t('detail.day.tasksCta')}
           </Text>
         </TouchableOpacity>
       }

@@ -4,6 +4,10 @@ export type PurchasesPackageDTO = {
   title: string;
   description: string;
   priceString: string;
+  /** Store price as a number, in `currencyCode`. */
+  price: number;
+  /** ISO 4217 code of the store's price, e.g. USD, INR. */
+  currencyCode: string;
 };
 
 export type PurchasesOfferingDTO = {

@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import { GlassCard, Text } from '../../../shared/ui';
 import { Radius, Spacing, useTheme } from '../../../shared/theme';
+import { useTranslation } from '../../../shared/i18n/useTranslation';
 import type {
   DailyReflection,
   ReflectionTone,
@@ -26,6 +27,7 @@ export function TimeCoachCard({
   onBirthDatePress,
 }: TimeCoachCardProps) {
   const theme = useTheme();
+  const { t } = useTranslation();
 
   useEffect(() => {
     logAnalyticsEvent('reflection_seen', {
@@ -57,11 +59,13 @@ export function TimeCoachCard({
     <GlassCard style={styles.card}>
       <View style={styles.headerRow}>
         <Text variant="caption" color="secondary" style={styles.overline}>
-          {reflection.category === 'weekly' ? 'Weekly' : 'Time coach'}
+          {reflection.category === 'weekly'
+            ? t('reflections.weekly.eyebrow')
+            : t('reflections.coach.eyebrow')}
         </Text>
         <TouchableOpacity onPress={handleDismiss} hitSlop={10}>
           <Text variant="caption" color="secondary">
-            Not today
+            {t('reflections.dismiss')}
           </Text>
         </TouchableOpacity>
       </View>
@@ -109,7 +113,9 @@ export function TimeCoachCard({
                       color: active ? theme.percent : theme.textSecondary,
                     }}
                   >
-                    {option === 'quiet' ? 'Quiet' : 'Radical'}
+                    {option === 'quiet'
+                      ? t('reflections.tone.quiet')
+                      : t('reflections.tone.radical')}
                   </Text>
                 </TouchableOpacity>
               );
@@ -117,7 +123,7 @@ export function TimeCoachCard({
           </View>
         ) : (
           <Text variant="caption" color="secondary" style={styles.lockHint}>
-            Life reflections unlock during preview or Premium.
+            {t('reflections.lockHint')}
           </Text>
         )}
 
@@ -128,7 +134,7 @@ export function TimeCoachCard({
             activeOpacity={0.8}
           >
             <Text variant="caption" style={{ color: theme.percent }}>
-              Set birth date
+              {t('reflections.setBirthDate')}
             </Text>
           </TouchableOpacity>
         ) : null}

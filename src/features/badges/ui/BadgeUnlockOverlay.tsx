@@ -12,8 +12,15 @@ import {
 import { BadgeMedal, TIER_CONFETTI } from './BadgeMedal';
 import { ConfettiBurst, Text, useReduceMotion } from '../../../shared/ui';
 import { FontFamily, Radius, Spacing, useTheme } from '../../../shared/theme';
+import { useTranslation } from '../../../shared/i18n/useTranslation';
+import { overlayStyles } from './badgeOverlayMotion';
 import type { BadgeView } from '../domain/useCases/GetBadgesUseCase';
-import { formatEarnedDate, progressLabel } from './badgeLabels';
+import {
+  badgeDescription,
+  badgeTitle,
+  formatEarnedDate,
+  progressLabel,
+} from './badgeLabels';
 
 const MEDAL_SIZE = 132;
 
@@ -42,6 +49,7 @@ export function BadgeUnlockOverlay({
   total,
   onClose,
 }: BadgeUnlockOverlayProps) {
+  const { t, formatDate } = useTranslation();
   const theme = useTheme();
   const reduceMotion = useReduceMotion();
   const backdrop = useRef(new Animated.Value(0)).current;
@@ -56,8 +64,11 @@ export function BadgeUnlockOverlay({
     if (!badge) return;
     AccessibilityInfo.announceForAccessibility(
       celebrate
-        ? `New badge. ${badge.definition.title}. ${badge.definition.description}`
-        : badge.definition.title,
+        ? t('badges.overlay.announce', {
+            title: badgeTitle(badge.definition, t),
+            description: badgeDescription(badge.definition, t),
+          })
+        : badgeTitle(badge.definition, t),
     );
     if (reduceMotion) {
       backdrop.setValue(1);
@@ -118,69 +129,23 @@ export function BadgeUnlockOverlay({
   if (!badge) return null;
 
   const { definition } = badge;
-  const earnedOn = formatEarnedDate(badge.earnedOn);
+  const earnedOn = formatEarnedDate(badge.earnedOn, formatDate);
+  const title = badgeTitle(definition, t);
+  const description = badgeDescription(definition, t);
 
-  const backdropStyle = { opacity: backdrop };
-  const cardStyle = {
-    backgroundColor: theme.cardBase,
-    borderColor: theme.glassBorder,
-    opacity: card,
-    transform: [
-      {
-        translateY: card.interpolate({
-          inputRange: [0, 1],
-          outputRange: [36, 0],
-        }),
-      },
-      {
-        scale: card.interpolate({
-          inputRange: [0, 1],
-          outputRange: [0.9, 1],
-        }),
-      },
-    ],
-  };
-  const medalStyle = {
-    opacity: flip.interpolate({ inputRange: [0, 0.25, 1], outputRange: [0, 1, 1] }),
-    transform: [
-      { perspective: 700 },
-      {
-        rotateY: flip.interpolate({
-          inputRange: [0, 1],
-          outputRange: ['-100deg', '0deg'],
-        }),
-      },
-      {
-        scale: flip.interpolate({
-          inputRange: [0, 1],
-          outputRange: [0.6, 1],
-        }),
-      },
-    ],
-  };
-  const textStyle = {
-    opacity: reveal,
-    transform: [
-      {
-        translateY: reveal.interpolate({
-          inputRange: [0, 1],
-          outputRange: [10, 0],
-        }),
-      },
-    ],
-  };
-  const buttonStyle = { backgroundColor: theme.percent };
+  const { backdropStyle, cardStyle, medalStyle, textStyle, buttonStyle } =
+    overlayStyles({ backdrop, card, flip, reveal }, theme);
 
   const headline = celebrate
-    ? 'New badge'
+    ? t('badges.overlay.newBadge')
     : badge.earned
-    ? `Earned ${earnedOn}`
-    : progressLabel(badge);
+    ? t('badges.overlay.earnedOn', { date: earnedOn })
+    : progressLabel(badge, t);
   const detailLine = celebrate
-    ? `${earnedCount} of ${total} earned`
+    ? t('badges.overlay.earnedCount', { earned: earnedCount, total })
     : badge.earned
     ? ''
-    : definition.description;
+    : description;
 
   return (
     <View
@@ -193,7 +158,7 @@ export function BadgeUnlockOverlay({
           style={styles.backdropHit}
           onPress={onClose}
           accessibilityRole="button"
-          accessibilityLabel="Close"
+          accessibilityLabel={t('badges.overlay.close')}
         />
       </Animated.View>
       <Animated.View style={[styles.card, cardStyle]}>
@@ -222,10 +187,10 @@ export function BadgeUnlockOverlay({
         </View>
         <Animated.View style={[styles.textBlock, textStyle]}>
           <Text variant="title" color="primary" style={styles.title}>
-            {definition.title}
+            {title}
           </Text>
           <Text variant="body" color="secondary" style={styles.body}>
-            {celebrate || badge.earned ? definition.description : detailLine}
+            {celebrate || badge.earned ? description : detailLine}
           </Text>
           {celebrate ? (
             <Text variant="caption" color="secondary">
@@ -237,12 +202,18 @@ export function BadgeUnlockOverlay({
           onPress={onClose}
           accessibilityRole="button"
           accessibilityLabel={
-            remaining > 0 ? `Next badge, ${remaining} more` : 'Close'
+            remaining > 0
+              ? t('badges.overlay.nextA11y', { remaining })
+              : t('badges.overlay.close')
           }
           style={[styles.button, buttonStyle]}
         >
           <Text variant="body" style={styles.buttonText}>
-            {celebrate ? (remaining > 0 ? `Next (${remaining} more)` : 'Nice') : 'Close'}
+            {celebrate
+              ? remaining > 0
+                ? t('badges.overlay.next', { remaining })
+                : t('badges.overlay.nice')
+              : t('badges.overlay.close')}
           </Text>
         </Pressable>
       </Animated.View>

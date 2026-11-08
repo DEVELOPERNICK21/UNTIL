@@ -1,0 +1,22 @@
+{
+  "counters.subtitle": "Füge hinzu, was du zählen möchtest (z. B. Wasser), und lege dann das Zähler-Widget auf deinen Startbildschirm. Das Widget zählt einen davon: Tippe darauf, um +1 zu zählen. Mit −1 hier korrigierst du einen versehentlichen Tipp, oder setze zurück, um neu zu beginnen.",
+  "counters.namePlaceholder": "Name des Zählers (z. B. Wasser)",
+  "counters.empty": "Noch keine Zähler. Füge oben einen hinzu, lege dann das Zähler-Widget auf deinen Startbildschirm und wähle diesen Zähler aus.",
+  "counters.count": "Stand: {{value}}",
+  "counters.remove.title": "Zähler entfernen",
+  "counters.remove.message": "„{{title}}“ entfernen? Der Zählerstand ({{value}}) geht verloren.",
+  "counters.hint.ios": "Startbildschirm lange drücken → + → „Until“ suchen → Widget „Counter“ hinzufügen.",
+  "counters.hint.android": "Startbildschirm lange drücken → Widgets → Until → Counter.",
+  "counters.addWithPremium": "Mit Premium hinzufügen",
+  "counters.limit.reached": "Mehr passt in eine Liste nicht ({{limit}}). Entferne einen, um einen weiteren hinzuzufügen.",
+  "counters.limit.free": "Der kostenlose Tarif speichert einen Zähler. Premium fasst bis zu {{max}}.",
+  "counters.reset.title": "Zähler zurücksetzen",
+  "counters.reset.message": "„{{title}}“ auf 0 zurücksetzen? Aktuell steht er bei {{value}}.",
+  "counters.reset.confirm": "Zurücksetzen",
+  "counters.onWidget": "Wird in deinem Widget angezeigt",
+  "counters.showOnWidget": "Im Widget zeigen",
+  "counters.a11y.showOnWidget": "{{title}} im Widget zeigen",
+  "counters.a11y.subtract": "Eins abziehen",
+  "counters.a11y.add": "Eins addieren",
+  "counters.a11y.reset": "Auf null zurücksetzen"
+}

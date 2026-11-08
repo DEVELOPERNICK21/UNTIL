@@ -1,0 +1,19 @@
+{
+  "activity.locked.eyebrow": "Alertas de tiempo perdido",
+  "activity.locked.unlock": "Desbloquear",
+  "activity.locked.hint": "Registra las horas desperdiciadas. Recibe un aviso al superar tu límite diario.",
+  "activity.today.eyebrow": "Tiempo perdido de hoy",
+  "activity.hint.tracking": "Registrando ahora. Detén cuando te vuelvas a concentrar.",
+  "activity.hint.remaining": "Quedan {{time}} antes de la alerta.",
+  "activity.hint.idle": "Registra el tiempo de scroll antes de que se acabe el día.",
+  "activity.track.start": "Registrar",
+  "activity.track.stop": "Detener",
+  "activity.track.startLabel": "Registrar tiempo desperdiciado",
+  "activity.track.stopLabel": "Dejar de registrar el tiempo desperdiciado",
+  "activity.add30": "+30m",
+  "activity.add60": "+1h",
+  "activity.duration.minutes": "{{m}}m",
+  "activity.duration.hours": "{{h}}h",
+  "activity.duration.both": "{{h}}h {{m}}m",
+  "activity.limitCrossed": "Este día no se repetirá."
+}

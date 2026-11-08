@@ -4,6 +4,7 @@
  */
 
 import type { IAuthService } from '../ports/IAuthService';
+import { t } from '../../../../shared/i18n/translate';
 import type { IAccountCloudStore } from '../ports/IAccountCloudStore';
 import type { IPurchasesReset } from '../ports/IPurchasesLink';
 import type { SignOutUseCase } from './SignOutUseCase';
@@ -29,7 +30,7 @@ export class DeleteAccountUseCase {
   async execute(options: DeleteAccountOptions = {}): Promise<void> {
     const user = this.auth.getCurrentUser();
     if (!user) {
-      throw new Error('Not signed in');
+      throw new Error(t('account.error.notSignedIn'));
     }
     const uid = user.uid;
 

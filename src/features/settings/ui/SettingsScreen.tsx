@@ -8,7 +8,6 @@ import {
   View,
   StyleSheet,
   TextInput,
-  Switch,
   TouchableOpacity,
   KeyboardAvoidingView,
   Platform,
@@ -47,6 +46,18 @@ import {
 import type { RootStackParamList } from '../../../shared/navigation/types';
 import { logAnalyticsEvent } from '../../../shared/analytics/analytics';
 import { promptDesktopDownload } from '../../../shared/desktopDownload';
+import { useTranslation } from '../../../shared/i18n/useTranslation';
+import { useLanguage } from '../../../shared/i18n/useLanguage';
+import { getDeviceLanguage } from '../../../shared/i18n/i18nService';
+import {
+  SettingsRow,
+  SettingsSwitchRow,
+  settingsRowStyles,
+} from './SettingsRow';
+import {
+  LanguagePickerModal,
+  nativeLanguageName,
+} from './LanguagePickerModal';
 
 function parseBirthDate(str: string): Date {
   if (!str || str.length < 10) return new Date(1990, 0, 1);
@@ -64,34 +75,12 @@ function toBirthDateString(d: Date): string {
   return `${y}-${m}-${day}`;
 }
 
-const MONTHS = [
-  'Jan',
-  'Feb',
-  'Mar',
-  'Apr',
-  'May',
-  'Jun',
-  'Jul',
-  'Aug',
-  'Sep',
-  'Oct',
-  'Nov',
-  'Dec',
-];
-
-function formatBornExpected(
-  birthDate: string | null,
-  deathAge: number,
-): string {
-  if (!birthDate || birthDate.length < 10) return `Expected: ${deathAge} years`;
-  const [y, m] = birthDate.split('-').map(Number);
-  const month = MONTHS[(m ?? 1) - 1] ?? '';
-  return `Born: ${month} ${y}  ·  Expected: ${deathAge} years`;
-}
-
 type IntentionalityMode = 'quiet' | 'radical';
 
 export function SettingsScreen() {
+  const { t, formatDate } = useTranslation();
+  const { language, preference, setPreference } = useLanguage();
+  const [showLanguagePicker, setShowLanguagePicker] = useState(false);
   const navigation =
     useNavigation<NativeStackNavigationProp<RootStackParamList, 'Settings'>>();
   const { userProfile, timeState } = useObserveTimeState();
@@ -128,10 +117,20 @@ export function SettingsScreen() {
   );
 
   const lifePercent = Math.round((timeState?.life ?? 0) * 100);
-  const bornExpectedLine = formatBornExpected(
-    userProfile.birthDate,
-    userProfile.deathAge,
-  );
+  const expectedYears = t('common.years', { count: userProfile.deathAge });
+  const [bornYear, bornMonth] = (userProfile.birthDate ?? '')
+    .split('-')
+    .map(Number);
+  const bornExpectedLine =
+    userProfile.birthDate && userProfile.birthDate.length >= 10
+      ? t('settings.profile.bornAndExpected', {
+          month: formatDate(new Date(bornYear, (bornMonth ?? 1) - 1, 1), {
+            month: 'short',
+          }),
+          year: bornYear,
+          years: expectedYears,
+        })
+      : t('settings.profile.expectedOnly', { years: expectedYears });
 
   useEffect(() => {
     setBirthInput(userProfile.birthDate ?? '');
@@ -199,7 +198,7 @@ export function SettingsScreen() {
                 variant="title"
                 style={[styles.profileName, { color: theme.textPrimary }]}
               >
-                Profile
+                {t('settings.profile.name')}
               </Text>
               <Text
                 variant="caption"
@@ -211,7 +210,7 @@ export function SettingsScreen() {
                 variant="caption"
                 style={[styles.profileMeta, { color: theme.textSecondary }]}
               >
-                {lifePercent}% of life complete
+                {t('settings.profile.lifeComplete', { percent: lifePercent })}
               </Text>
             </View>
 
@@ -221,115 +220,46 @@ export function SettingsScreen() {
                 variant="caption"
                 style={[styles.sectionLabel, { color: theme.textSecondary }]}
               >
-                Account
+                {t('settings.section.account')}
               </Text>
               <GlassCard style={styles.sectionCard}>
-                <TouchableOpacity
-                  style={[styles.row, { borderBottomColor: theme.glassBorder }]}
+                <SettingsRow
+                  title={t('settings.birth.title')}
+                  subtitle={
+                    userProfile.birthDate
+                      ? t('settings.birth.summary', {
+                          birthDate: userProfile.birthDate,
+                          years: expectedYears,
+                        })
+                      : t('settings.birth.tapToSet')
+                  }
                   onPress={() => setShowEditProfile(!showEditProfile)}
-                  activeOpacity={0.7}
-                >
-                  <View style={styles.rowContent}>
-                    <Text variant="body" style={{ color: theme.textPrimary }}>
-                      Birth & lifespan
-                    </Text>
-                    <Text
-                      variant="caption"
-                      style={[
-                        styles.rowSubtitle,
-                        { color: theme.textSecondary },
-                      ]}
-                    >
-                      {userProfile.birthDate
-                        ? `${userProfile.birthDate} · ${userProfile.deathAge} years`
-                        : 'Tap to set'}
-                    </Text>
-                  </View>
-                  <Text
-                    style={[styles.chevron, { color: theme.textSecondary }]}
-                  >
-                    ›
-                  </Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[styles.row, { borderBottomColor: theme.glassBorder }]}
+                />
+                <SettingsRow
+                  title={t('settings.premium.title')}
+                  subtitle={
+                    isPremium
+                      ? t('settings.premium.active')
+                      : t('settings.premium.offer')
+                  }
                   onPress={() => navigation.navigate('Premium')}
-                  activeOpacity={0.7}
-                >
-                  <View style={styles.rowContent}>
-                    <Text variant="body" style={{ color: theme.textPrimary }}>
-                      Premium
-                    </Text>
-                    <Text
-                      variant="caption"
-                      style={[
-                        styles.rowSubtitle,
-                        { color: theme.textSecondary },
-                      ]}
-                    >
-                      {isPremium
-                        ? 'Active'
-                        : 'Yearly subscription or lifetime'}
-                    </Text>
-                  </View>
-                  <Text
-                    style={[styles.chevron, { color: theme.textSecondary }]}
-                  >
-                    ›
-                  </Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[styles.row, { borderBottomColor: theme.glassBorder }]}
+                />
+                <SettingsRow
+                  title={t('settings.manage.title')}
+                  subtitle={t('settings.manage.subtitle')}
                   onPress={() => openManageSubscription('settings')}
-                  activeOpacity={0.7}
-                  accessibilityRole="button"
-                  accessibilityLabel="Manage or cancel subscription"
-                >
-                  <View style={styles.rowContent}>
-                    <Text variant="body" style={{ color: theme.textPrimary }}>
-                      Manage subscription
-                    </Text>
-                    <Text
-                      variant="caption"
-                      style={[
-                        styles.rowSubtitle,
-                        { color: theme.textSecondary },
-                      ]}
-                    >
-                      Cancel or change your plan
-                    </Text>
-                  </View>
-                  <Text
-                    style={[styles.chevron, { color: theme.textSecondary }]}
-                  >
-                    ›
-                  </Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[styles.row, styles.rowLast]}
+                  accessibilityLabel={t('settings.manage.a11y')}
+                />
+                <SettingsRow
+                  last
+                  title={t('settings.account.title')}
+                  subtitle={
+                    signedIn
+                      ? email ?? t('settings.account.signedIn')
+                      : t('settings.account.signedOut')
+                  }
                   onPress={() => navigation.navigate('Account')}
-                  activeOpacity={0.7}
-                >
-                  <View style={styles.rowContent}>
-                    <Text variant="body" style={{ color: theme.textPrimary }}>
-                      Account
-                    </Text>
-                    <Text
-                      variant="caption"
-                      style={[
-                        styles.rowSubtitle,
-                        { color: theme.textSecondary },
-                      ]}
-                    >
-                      {signedIn ? email ?? 'Signed in' : 'Sign in to sync across devices'}
-                    </Text>
-                  </View>
-                  <Text
-                    style={[styles.chevron, { color: theme.textSecondary }]}
-                  >
-                    ›
-                  </Text>
-                </TouchableOpacity>
+                />
               </GlassCard>
             </View>
 
@@ -341,7 +271,7 @@ export function SettingsScreen() {
                   color="secondary"
                   style={styles.editLabel}
                 >
-                  Birth date
+                  {t('settings.edit.birthDate')}
                 </Text>
                 <TouchableOpacity
                   style={[styles.input, { borderColor: theme.glassBorder }]}
@@ -352,7 +282,7 @@ export function SettingsScreen() {
                     color={birthInput ? 'primary' : 'secondary'}
                     style={styles.inputText}
                   >
-                    {birthInput || 'Tap to pick date'}
+                    {birthInput || t('settings.edit.pickDate')}
                   </Text>
                 </TouchableOpacity>
                 {showBirthPicker && (
@@ -373,7 +303,7 @@ export function SettingsScreen() {
                     onPress={() => setShowBirthPicker(false)}
                   >
                     <Text variant="caption" color="primary">
-                      Done
+                      {t('common.done')}
                     </Text>
                   </TouchableOpacity>
                 )}
@@ -382,7 +312,7 @@ export function SettingsScreen() {
                   color="secondary"
                   style={styles.editLabel}
                 >
-                  Expected lifespan (years)
+                  {t('settings.edit.lifespan')}
                 </Text>
                 <TextInput
                   style={[
@@ -404,7 +334,7 @@ export function SettingsScreen() {
                   onPress={handleSave}
                 >
                   <Text variant="sectionTitle" style={styles.saveBtnLabel}>
-                    Save
+                    {t('common.save')}
                   </Text>
                 </TouchableOpacity>
               </GlassCard>
@@ -416,105 +346,58 @@ export function SettingsScreen() {
                 variant="caption"
                 style={[styles.sectionLabel, { color: theme.textSecondary }]}
               >
-                Configuration
+                {t('settings.section.configuration')}
               </Text>
               <GlassCard style={styles.sectionCard}>
-                <TouchableOpacity
-                  style={[styles.row, { borderBottomColor: theme.glassBorder }]}
+                <SettingsRow
+                  title={t('settings.widgetDesign.title')}
+                  subtitle={t('settings.widgetDesign.subtitle')}
                   onPress={() => navigation.navigate('Widget')}
-                  activeOpacity={0.7}
-                >
-                  <View style={styles.rowContent}>
-                    <Text variant="body" style={{ color: theme.textPrimary }}>
-                      Widget Design
-                    </Text>
-                    <Text
-                      variant="caption"
-                      style={[
-                        styles.rowSubtitle,
-                        { color: theme.textSecondary },
-                      ]}
-                    >
-                      Lockscreen & Home aesthetics
-                    </Text>
-                  </View>
-                  <Text
-                    style={[styles.chevron, { color: theme.textSecondary }]}
-                  >
-                    ›
-                  </Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[styles.row, { borderBottomColor: theme.glassBorder }]}
+                />
+                <SettingsRow
+                  title={t('settings.language.title')}
+                  subtitle={
+                    preference === 'system'
+                      ? t('settings.language.systemCurrent', {
+                          language: nativeLanguageName(language),
+                        })
+                      : nativeLanguageName(language)
+                  }
+                  onPress={() => setShowLanguagePicker(true)}
+                  accessibilityLabel={t('settings.language.pickerA11y')}
+                />
+                <SettingsRow
+                  title={t('settings.rate.title')}
+                  subtitle={
+                    Platform.OS === 'ios'
+                      ? t('settings.rate.ios')
+                      : t('settings.rate.android')
+                  }
                   onPress={() => rateApp()}
-                  activeOpacity={0.7}
-                >
-                  <View style={styles.rowContent}>
-                    <Text variant="body" style={{ color: theme.textPrimary }}>
-                      Rate UNTIL
-                    </Text>
-                    <Text
-                      variant="caption"
-                      style={[
-                        styles.rowSubtitle,
-                        { color: theme.textSecondary },
-                      ]}
-                    >
-                      {Platform.OS === 'ios'
-                        ? 'Leave an App Store review'
-                        : 'Leave a Play Store review'}
-                    </Text>
-                  </View>
-                  <Text
-                    style={[styles.chevron, { color: theme.textSecondary }]}
-                  >
-                    ›
-                  </Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[styles.row, { borderBottomColor: theme.glassBorder }]}
+                />
+                <SettingsRow
+                  title={t('settings.desktop.title')}
+                  subtitle={t('settings.desktop.subtitle')}
                   onPress={promptDesktopDownload}
-                  activeOpacity={0.7}
-                  accessibilityRole="button"
-                  accessibilityLabel="Download UNTIL for Mac or Windows"
-                >
-                  <View style={styles.rowContent}>
-                    <Text variant="body" style={{ color: theme.textPrimary }}>
-                      UNTIL on Mac & Windows
-                    </Text>
-                    <Text
-                      variant="caption"
-                      style={[
-                        styles.rowSubtitle,
-                        { color: theme.textSecondary },
-                      ]}
-                    >
-                      Menu bar or tray. Same account.
-                    </Text>
-                  </View>
-                  <Text
-                    style={[styles.chevron, { color: theme.textSecondary }]}
-                  >
-                    ›
-                  </Text>
-                </TouchableOpacity>
+                  accessibilityLabel={t('settings.desktop.a11y')}
+                />
                 <View
-                  style={[styles.row, { borderBottomColor: theme.glassBorder }]}
+                  style={[settingsRowStyles.row, { borderBottomColor: theme.glassBorder }]}
                 >
-                  <View style={styles.rowContent}>
+                  <View style={settingsRowStyles.rowContent}>
                     <Text variant="body" style={{ color: theme.textPrimary }}>
-                      Lost-time alert limit
+                      {t('settings.lostTime.title')}
                     </Text>
                     <Text
                       variant="caption"
                       style={[
-                        styles.rowSubtitle,
+                        settingsRowStyles.rowSubtitle,
                         { color: theme.textSecondary },
                       ]}
                     >
                       {hasPremiumBundle
-                        ? 'Red alert when wasted hours hit this daily cap.'
-                        : 'Premium. Nudge when you lose too much of today.'}
+                        ? t('settings.lostTime.premiumOn')
+                        : t('settings.lostTime.premiumOff')}
                     </Text>
                     {hasPremiumBundle ? (
                       <View style={styles.limitChips}>
@@ -554,7 +437,7 @@ export function SettingsScreen() {
                                     : theme.textSecondary,
                               }}
                             >
-                              {h}h
+                              {t('settings.lostTime.hours', { hours: h })}
                             </Text>
                           </TouchableOpacity>
                         ))}
@@ -568,7 +451,7 @@ export function SettingsScreen() {
                     >
                       <Text
                         style={[
-                          styles.chevron,
+                          settingsRowStyles.chevron,
                           { color: theme.textSecondary },
                         ]}
                       >
@@ -577,97 +460,31 @@ export function SettingsScreen() {
                     </TouchableOpacity>
                   ) : null}
                 </View>
-                <View style={styles.row}>
-                  <View style={styles.rowContent}>
-                    <Text variant="body" style={{ color: theme.textPrimary }}>
-                      Daily Time Reminders
-                    </Text>
-                    <Text
-                      variant="caption"
-                      style={[
-                        styles.rowSubtitle,
-                        { color: theme.textSecondary },
-                      ]}
-                    >
-                      One useful reminder per day. Uses your real progress. No
-                      spam.
-                    </Text>
-                  </View>
-                  <Switch
-                    value={retentionRemindersEnabled}
-                    onValueChange={handleRetentionReminderToggle}
-                    trackColor={{
-                      false: theme.divider,
-                      true: 'rgba(232, 124, 32, 0.45)',
-                    }}
-                    thumbColor={
-                      retentionRemindersEnabled
-                        ? theme.percent
-                        : theme.textSecondary
-                    }
-                  />
-                </View>
-                <View style={styles.row}>
-                  <View style={styles.rowContent}>
-                    <Text variant="body" style={{ color: theme.textPrimary }}>
-                      Task and deadline reminders
-                    </Text>
-                    <Text
-                      variant="caption"
-                      style={[
-                        styles.rowSubtitle,
-                        { color: theme.textSecondary },
-                      ]}
-                    >
-                      Reminder at 11 PM if tasks are open. Alerts on deadline
-                      days.
-                    </Text>
-                  </View>
-                  <Switch
-                    value={taskDeadlineRemindersEnabled}
-                    onValueChange={setTaskDeadlineRemindersEnabled}
-                    trackColor={{
-                      false: theme.divider,
-                      true: 'rgba(232, 124, 32, 0.45)',
-                    }}
-                    thumbColor={
-                      taskDeadlineRemindersEnabled
-                        ? theme.percent
-                        : theme.textSecondary
-                    }
-                  />
-                </View>
-                <View style={[styles.row, styles.rowLast]}>
-                  <View style={styles.rowContent}>
-                    <Text variant="body" style={{ color: theme.textPrimary }}>
-                      Share usage stats
-                    </Text>
-                    <Text
-                      variant="caption"
-                      style={[
-                        styles.rowSubtitle,
-                        { color: theme.textSecondary },
-                      ]}
-                    >
-                      {analyticsLocked
-                        ? 'Off for users under 13.'
-                        : 'App events like screens opened. No screen recording. Turn off anytime.'}
-                    </Text>
-                  </View>
-                  <Switch
-                    value={analyticsEnabled}
-                    onValueChange={setAnalyticsEnabled}
-                    disabled={analyticsLocked}
-                    accessibilityLabel="Share usage stats"
-                    trackColor={{
-                      false: theme.divider,
-                      true: 'rgba(232, 124, 32, 0.45)',
-                    }}
-                    thumbColor={
-                      analyticsEnabled ? theme.percent : theme.textSecondary
-                    }
-                  />
-                </View>
+                <SettingsSwitchRow
+                  title={t('settings.reminders.daily.title')}
+                  subtitle={t('settings.reminders.daily.body')}
+                  value={retentionRemindersEnabled}
+                  onValueChange={handleRetentionReminderToggle}
+                />
+                <SettingsSwitchRow
+                  title={t('settings.reminders.tasks.title')}
+                  subtitle={t('settings.reminders.tasks.body')}
+                  value={taskDeadlineRemindersEnabled}
+                  onValueChange={setTaskDeadlineRemindersEnabled}
+                />
+                <SettingsSwitchRow
+                  last
+                  title={t('settings.analytics.title')}
+                  subtitle={
+                    analyticsLocked
+                      ? t('settings.analytics.locked')
+                      : t('settings.analytics.body')
+                  }
+                  value={analyticsEnabled}
+                  onValueChange={setAnalyticsEnabled}
+                  disabled={analyticsLocked}
+                  switchAccessibilityLabel={t('settings.analytics.title')}
+                />
               </GlassCard>
             </View>
 
@@ -677,14 +494,13 @@ export function SettingsScreen() {
                 variant="title"
                 style={[styles.intentTitle, { color: theme.textPrimary }]}
               >
-                Intentionality Focus
+                {t('settings.intent.title')}
               </Text>
               <Text
                 variant="body"
                 style={[styles.intentDesc, { color: theme.textSecondary }]}
               >
-                Define the core essence of your current life stage. This will
-                influence the tone of your Until insights.
+                {t('settings.intent.body')}
               </Text>
               <View style={styles.radioGroup}>
                 <TouchableOpacity
@@ -711,7 +527,7 @@ export function SettingsScreen() {
                     variant="sectionTitle"
                     style={[styles.radioLabel, { color: theme.textPrimary }]}
                   >
-                    QUIET CONTEMPLATION
+                    {t('settings.intent.quiet')}
                   </Text>
                 </TouchableOpacity>
                 <TouchableOpacity
@@ -738,7 +554,7 @@ export function SettingsScreen() {
                     variant="sectionTitle"
                     style={[styles.radioLabel, { color: theme.textPrimary }]}
                   >
-                    RADICAL ACTION
+                    {t('settings.intent.radical')}
                   </Text>
                 </TouchableOpacity>
               </View>
@@ -748,7 +564,7 @@ export function SettingsScreen() {
               style={[styles.versionRow, { borderTopColor: theme.divider }]}
             >
               <Text variant="caption" color="secondary">
-                App version
+                {t('settings.version')}
               </Text>
               <Text variant="body" color="primary" style={styles.versionValue}>
                 {appVersion}
@@ -756,6 +572,16 @@ export function SettingsScreen() {
             </View>
           </ScrollView>
         </KeyboardAvoidingView>
+        <LanguagePickerModal
+          visible={showLanguagePicker}
+          preference={preference}
+          deviceLanguage={getDeviceLanguage()}
+          onSelect={choice => {
+            setPreference(choice);
+            setShowLanguagePicker(false);
+          }}
+          onClose={() => setShowLanguagePicker(false)}
+        />
       </ScreenGradient>
     </View>
   );
@@ -822,22 +648,6 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing[1],
     paddingHorizontal: Spacing[3],
   },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: Spacing[3],
-    borderBottomWidth: StyleSheet.hairlineWidth,
-  },
-  rowLast: {
-    borderBottomWidth: 0,
-  },
-  rowContent: {
-    flex: 1,
-  },
-  rowSubtitle: {
-    marginTop: 2,
-  },
   limitChips: {
     flexDirection: 'row',
     gap: Spacing[2],
@@ -848,10 +658,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing[3],
     borderRadius: Radius.md,
     borderWidth: 1,
-  },
-  chevron: {
-    fontSize: Typography.title,
-    marginLeft: Spacing[2],
   },
   editCard: {
     marginBottom: Spacing[4],

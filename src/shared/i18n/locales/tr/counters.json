@@ -1,0 +1,22 @@
+{
+  "counters.subtitle": "Saymak istediğin şeyi ekle (ör. Su), sonra Sayaç widget’ını ana ekranına ekle. Widget bunlardan birini sayar: +1 eklemek için dokun. Yanlışlıkla dokunduysan burada −1 kullan ya da baştan başlamak için sıfırla.",
+  "counters.namePlaceholder": "Sayaç adı (ör. Su)",
+  "counters.empty": "Henüz sayaç yok. Yukarıdan bir tane ekle, sonra Sayaç widget'ını ana ekranından ekleyip bu sayacı seç.",
+  "counters.count": "Sayı: {{value}}",
+  "counters.remove.title": "Sayacı kaldır",
+  "counters.remove.message": "“{{title}}” kaldırılsın mı? Sayı ({{value}}) kaybolacak.",
+  "counters.hint.ios": "Ana ekrana uzun bas → + → Until'i ara → “Counter” widget'ını ekle.",
+  "counters.hint.android": "Ana ekrana uzun bas → Widget'lar → Until → Counter.",
+  "counters.addWithPremium": "Premium ile ekle",
+  "counters.limit.reached": "Bir liste en fazla bu kadar tutar ({{limit}}). Yenisini eklemek için birini kaldır.",
+  "counters.limit.free": "Ücretsiz plan tek bir sayaç tutar. Premium {{max}} adede kadar tutar.",
+  "counters.reset.title": "Sayacı sıfırla",
+  "counters.reset.message": "“{{title}}” 0’a döndürülsün mü? Şu an {{value}}.",
+  "counters.reset.confirm": "Sıfırla",
+  "counters.onWidget": "Widget’ında gösteriliyor",
+  "counters.showOnWidget": "Widget’ta göster",
+  "counters.a11y.showOnWidget": "{{title}} sayacını widget’ta göster",
+  "counters.a11y.subtract": "Bir azalt",
+  "counters.a11y.add": "Bir ekle",
+  "counters.a11y.reset": "Sıfıra döndür"
+}

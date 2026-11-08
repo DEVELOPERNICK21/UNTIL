@@ -1,0 +1,22 @@
+{
+  "countdowns.subtitle": "ज्या तारखांसाठी उलटी गिनती करायची आहे त्या जोडा (उदा. प्रोजेक्ट, मुलाखत). विजेट सर्वात जवळची तारीख आणि किती दिवस उरले आहेत ते दाखवतो.",
+  "countdowns.titlePlaceholder": "शीर्षक (उदा. प्रोजेक्ट, मुलाखत)",
+  "countdowns.defaultTitle": "अंतिम मुदत",
+  "countdowns.empty": "अजून कोणतीही अंतिम मुदत नाही. वर एक जोडा, मग अंतिम मुदत विजेट तुमच्या होम स्क्रीनवर जोडा.",
+  "countdowns.widgetHint": "अंतिम मुदत विजेट तुमच्या होम स्क्रीनवरून जोडा.",
+  "countdowns.remove.title": "काउंटडाउन काढा",
+  "countdowns.remove.message": "“{{title}}” काढायचे?",
+  "countdowns.daysLeft_one": "{{count}} दिवस उरला",
+  "countdowns.daysLeft_other": "{{count}} दिवस उरले",
+  "countdowns.daysAgo_one": "{{count}} दिवसांपूर्वी",
+  "countdowns.daysAgo_other": "{{count}} दिवसांपूर्वी",
+  "countdowns.home.eyebrowNext": "पुढील काउंटडाउन",
+  "countdowns.home.eyebrowEmpty": "काउंटडाउन",
+  "countdowns.home.emptyTitle": "एखाद्या दिवसाचे काउंटडाउन सुरू करा",
+  "countdowns.home.emptyBody": "परीक्षा, प्रवास, वाढदिवस किंवा एखादी अंतिम मुदत.",
+  "countdowns.addWithPremium": "प्रीमियमसह जोडा",
+  "countdowns.limit.reached": "एका यादीत यापेक्षा जास्त मावत नाहीत ({{limit}}). नवीन जोडण्यासाठी एक काढा.",
+  "countdowns.limit.free": "फ्री प्लॅनमध्ये एक अंतिम मुदत राहते. प्रीमियममध्ये {{max}} पर्यंत ठेवता येतात.",
+  "countdowns.onWidget": "तुमच्या विजेटवर दिसत आहे",
+  "countdowns.passed": "ही अंतिम मुदत उलटून गेली आहे. काम झाल्यावर ती काढा."
+}

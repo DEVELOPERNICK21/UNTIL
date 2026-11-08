@@ -17,6 +17,7 @@ import { Spacing, Typography, useTheme } from '../../../shared/theme';
 import type { ThemePalette } from '../../../shared/theme';
 import { useDynamicIslandControl } from '../hooks/useDynamicIslandControl';
 import { useOverlayControl } from '../hooks/useOverlayControl';
+import { useTranslation } from '../../../shared/i18n/useTranslation';
 import type { RootStackParamList } from '../../../shared/navigation/types';
 
 export function DynamicIslandScreen() {
@@ -27,6 +28,7 @@ export function DynamicIslandScreen() {
 }
 
 function IosDynamicIslandScreen() {
+  const { t } = useTranslation();
   const navigation =
     useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const {
@@ -42,21 +44,15 @@ function IosDynamicIslandScreen() {
 
   return (
     <LiveIslandLayout
-      title="Dynamic Island"
-      subtitle="Time left ticks on the Dynamic Island and Lock Screen by itself. Long-press the island to open it, tap the icons to switch views, and tap the sticker to change it. iPhone 14 Pro or later for Dynamic Island."
-      sectionTitle="What to show"
-      sectionSubtitle="Pick what it opens on. You can also switch from the island itself."
-      hint="The first time, iOS asks “Allow Live Activities?” under the card on your Lock Screen. Lock your phone once and tap Allow. Countdowns and the timer keep running with the app closed. Day counts and tasks update when you open UNTIL. iOS ends a Live Activity after about 8 hours, and UNTIL starts it again the next time you open the app."
+      title={t('widgets.island.ios.name')}
+      subtitle={t('widgets.island.ios.subtitle')}
+      sectionTitle={t('widgets.island.sectionTitle')}
+      sectionSubtitle={t('widgets.island.ios.sectionSubtitle')}
+      hint={t('widgets.island.ios.hint')}
       active={liveActivityActive}
       options={options}
-      onSelect={type => {
-        const option = options.find(o => o.type === type);
-        if (option?.lockedPremium) {
-          navigation.navigate('Premium');
-          return;
-        }
-        handleSelectWidget(type);
-      }}
+      onSelect={handleSelectWidget}
+      onPremium={() => navigation.navigate('Premium')}
       onStart={handleStart}
       onStop={handleStop}
       startDisabled={liveActivityActive}
@@ -65,7 +61,9 @@ function IosDynamicIslandScreen() {
         problem
           ? {
               text: problem,
-              actionLabel: showSettingsAction ? 'Open settings' : undefined,
+              actionLabel: showSettingsAction
+                ? t('widgets.island.openSettings')
+                : undefined,
               onAction: showSettingsAction ? handleOpenSettings : undefined,
             }
           : null
@@ -75,6 +73,7 @@ function IosDynamicIslandScreen() {
 }
 
 function AndroidLiveIslandScreen() {
+  const { t } = useTranslation();
   const navigation =
     useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const {
@@ -90,21 +89,15 @@ function AndroidLiveIslandScreen() {
 
   return (
     <LiveIslandLayout
-      title="Live Island"
-      subtitle="Lock-screen progress notification, plus a floating pill over other apps when you allow “Display over other apps.” On Android 16, the system can promote this to a status-bar chip."
-      sectionTitle="What to show"
-      sectionSubtitle="Pick one. Compact pill and notification update together."
-      hint="Lock-screen progress works without overlay permission. Grant “Display over other apps” for the floating pill. Drag to move · long-press to open Until."
+      title={t('widgets.island.android.name')}
+      subtitle={t('widgets.island.android.subtitle')}
+      sectionTitle={t('widgets.island.sectionTitle')}
+      sectionSubtitle={t('widgets.island.android.sectionSubtitle')}
+      hint={t('widgets.island.android.hint')}
       active={overlayActive}
       options={options}
-      onSelect={type => {
-        const option = options.find(o => o.type === type);
-        if (option?.lockedPremium) {
-          navigation.navigate('Premium');
-          return;
-        }
-        handleSelectWidget(type);
-      }}
+      onSelect={handleSelectWidget}
+      onPremium={() => navigation.navigate('Premium')}
       onStart={handleStart}
       onStop={handleStop}
       startDisabled={overlayActive}
@@ -112,10 +105,8 @@ function AndroidLiveIslandScreen() {
       permissionBanner={
         error || hasPermission === false
           ? {
-              text:
-                error ??
-                'Optional: allow “Display over other apps” for the floating pill. Lock-screen progress still works after Start.',
-              actionLabel: 'Open settings',
+              text: error ?? t('widgets.island.android.banner'),
+              actionLabel: t('widgets.island.openSettings'),
               onAction: handleOpenSettings,
             }
           : null
@@ -143,6 +134,7 @@ function LiveIslandLayout({
   active,
   options,
   onSelect,
+  onPremium,
   onStart,
   onStop,
   startDisabled,
@@ -157,6 +149,8 @@ function LiveIslandLayout({
   active: boolean;
   options: IslandOption[];
   onSelect: (type: any) => void;
+  /** Called instead of `onSelect` for an option that needs Premium. */
+  onPremium: () => void;
   onStart: () => void;
   onStop: () => void;
   startDisabled: boolean;
@@ -167,6 +161,7 @@ function LiveIslandLayout({
     onAction?: () => void;
   } | null;
 }) {
+  const { t } = useTranslation();
   const theme = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
   return (
@@ -208,7 +203,7 @@ function LiveIslandLayout({
           <View style={styles.statusCard}>
             <View style={styles.statusRow}>
               <Text variant="title" color="primary">
-                Status
+                {t('widgets.island.status')}
               </Text>
               <View
                 style={[
@@ -217,7 +212,7 @@ function LiveIslandLayout({
                 ]}
               >
                 <Text variant="caption" style={styles.badgeText}>
-                  {active ? 'Active' : 'Inactive'}
+                  {active ? t('widgets.status.active') : t('widgets.status.inactive')}
                 </Text>
               </View>
             </View>
@@ -228,7 +223,7 @@ function LiveIslandLayout({
                 disabled={startDisabled}
               >
                 <Text variant="body" color="primary">
-                  Start
+                  {t('widgets.island.start')}
                 </Text>
               </TouchableOpacity>
               <TouchableOpacity
@@ -237,7 +232,7 @@ function LiveIslandLayout({
                 disabled={stopDisabled}
               >
                 <Text variant="body" color="primary">
-                  Stop
+                  {t('widgets.island.stop')}
                 </Text>
               </TouchableOpacity>
             </View>
@@ -262,7 +257,9 @@ function LiveIslandLayout({
                 option.selected && styles.optionCardSelected,
                 option.locked && styles.optionCardLocked,
               ]}
-              onPress={() => onSelect(option.type)}
+              onPress={() =>
+                option.lockedPremium ? onPremium() : onSelect(option.type)
+              }
               activeOpacity={option.locked && !option.lockedPremium ? 1 : 0.7}
             >
               <View style={styles.optionHeader}>
@@ -272,14 +269,14 @@ function LiveIslandLayout({
                 {option.comingSoon && (
                   <View style={[styles.premiumBadge, styles.soonBadge]}>
                     <Text variant="caption" style={styles.premiumBadgeText}>
-                      Soon
+                      {t('widgets.tile.soon')}
                     </Text>
                   </View>
                 )}
                 {option.lockedPremium && (
                   <View style={styles.premiumBadge}>
                     <Text variant="caption" style={styles.premiumBadgeText}>
-                      Premium
+                      {t('widgets.tile.premium')}
                     </Text>
                   </View>
                 )}
@@ -293,9 +290,9 @@ function LiveIslandLayout({
                 style={styles.optionDescription}
               >
                 {option.comingSoon
-                  ? 'Coming in a future update.'
+                  ? t('widgets.tile.comingSoon')
                   : option.lockedPremium
-                  ? 'Upgrade to Premium to use this'
+                  ? t('widgets.island.upgradeToUse')
                   : option.description}
               </Text>
             </TouchableOpacity>

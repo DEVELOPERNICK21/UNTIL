@@ -12,6 +12,7 @@ import {
 import { usePresenceStreak } from '../../presence';
 import { useLifeWeeks } from '../../../shared/hooks/useLifeWeeks';
 import { Spacing, useTheme } from '../../../shared/theme';
+import { useTranslation } from '../../../shared/i18n/useTranslation';
 import type { RootStackParamList } from '../../../shared/navigation/types';
 
 export function LifeScreen() {
@@ -22,6 +23,7 @@ export function LifeScreen() {
   const { canAccessLife } = useAccessControl();
   const { streak } = usePresenceStreak();
   const theme = useTheme();
+  const { t, formatNumber } = useTranslation();
   const { totalWeeks, livedWeeks, renderWeeks, renderLivedWeeks } = useLifeWeeks(
     userProfile.deathAge,
     timeState.remainingDaysLife,
@@ -50,8 +52,6 @@ export function LifeScreen() {
   const deathAge = userProfile.deathAge ?? 80;
   const totalLifeDays = Math.round(deathAge * 365.25);
   const passedDays = totalLifeDays - remainingDays;
-  const livedWeeksLabel = livedWeeks.toLocaleString();
-  const totalWeeksLabel = totalWeeks.toLocaleString();
 
   if (!hasBirthDate || !canAccessLife) {
     return (
@@ -67,22 +67,22 @@ export function LifeScreen() {
               color="secondary"
               style={styles.overhead}
             >
-              Your life
+              {t('nav.life')}
             </Text>
             {streak.count > 0 ? (
               <Text variant="caption" color="secondary" style={styles.streakHint}>
-                {streak.count}-day presence · Ember is with you
+                {t('detail.life.streakHint', { days: streak.count })}
               </Text>
             ) : (
               <Text variant="caption" color="secondary" style={styles.streakHint}>
-                Ember has a tip for you below
+                {t('detail.life.tipHint')}
               </Text>
             )}
             <GlassCard style={styles.card}>
               <Text variant="body" color="secondary" style={styles.cardText}>
                 {!hasBirthDate
-                  ? 'Set your birth date in Settings to see how much of your life has passed and how much is left.'
-                  : 'Life details are part of Premium (or your free app preview). Visiting this screen can unlock Life for 24 hours after enough app opens. Pull to leave and return if you just unlocked.'}
+                  ? t('detail.life.needBirthDate')
+                  : t('detail.life.locked')}
               </Text>
               <TouchableOpacity
                 style={styles.settingsCta}
@@ -91,7 +91,9 @@ export function LifeScreen() {
                 }
               >
                 <Text variant="sectionTitle" color="primary">
-                  {!hasBirthDate ? 'Open Settings →' : 'Unlock Premium →'}
+                  {!hasBirthDate
+                    ? t('detail.life.openSettings')
+                    : t('detail.life.unlockPremium')}
                 </Text>
               </TouchableOpacity>
             </GlassCard>
@@ -109,20 +111,27 @@ export function LifeScreen() {
       />
       <PeriodDetailScreen
         kind="life"
-        title="Your life"
+        title={t('nav.life')}
         progress={progress}
-        passedLabel={passedDays.toLocaleString()}
-        leftLabel={remainingDays.toLocaleString()}
-        passedCaption="Days lived"
-        leftCaption="Days left"
-        summary={`Based on ${deathAge} years. ${percentUsed}% used · ${100 - percentUsed}% remaining.`}
+        passedLabel={formatNumber(passedDays)}
+        leftLabel={formatNumber(remainingDays)}
+        passedCaption={t('detail.daysLived')}
+        leftCaption={t('detail.daysLeft')}
+        summary={t('detail.life.summary', {
+          years: deathAge,
+          used: percentUsed,
+          left: 100 - percentUsed,
+        })}
         hero={
           <View style={styles.hero}>
             <Text variant="body" color="primary" style={styles.heroIntro}>
-              You have lived
+              {t('detail.life.intro')}
             </Text>
             <Text style={[styles.heroWeeks, { color: theme.percent }]}>
-              {livedWeeksLabel} weeks / {totalWeeksLabel} weeks
+              {t('detail.life.weeks', {
+                lived: formatNumber(livedWeeks),
+                total: formatNumber(totalWeeks),
+              })}
             </Text>
             {gridReady ? (
               <LifeWeeksGrid

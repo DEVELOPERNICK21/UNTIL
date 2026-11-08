@@ -33,23 +33,19 @@ import type { EmailAuthMode } from './EmailPasswordAuthForm';
 import { SignInOptions } from './SignInOptions';
 import { AccountDevicesSection } from './AccountDevicesSection';
 import {
-  DESKTOP_SLOT_NOTE,
-  DEVICE_LIMIT_BANNER_COPY,
-  PREMIUM_DEVICES_BENEFIT,
+  desktopSlotNote,
+  deviceLimitBannerCopy,
   formatAccountDeviceLabel,
+  signInBenefits,
 } from '../domain/accountCopy';
+import { useTranslation } from '../../../shared/i18n/useTranslation';
 
 /** Keeps the last line clear of the Ember companion that floats over the bottom-right corner. */
 const EMBER_CLEARANCE = 72;
 
-const SIGN_IN_BENEFITS = [
-  'Birth date and life settings',
-  PREMIUM_DEVICES_BENEFIT,
-  'Restore after reinstall',
-] as const;
-
 export function AccountScreen() {
   const theme = useTheme();
+  const { t } = useTranslation();
   const { signedIn, email, devicePremiumAllowed } = useAuthSession();
   const {
     appleSignInAvailable,
@@ -194,10 +190,10 @@ export function AccountScreen() {
   };
 
   const handleSignOut = () => {
-    Alert.alert('Sign out?', 'Your data on this device stays put.', [
-      { text: 'Cancel', style: 'cancel' },
+    Alert.alert(t('account.signOutTitle'), t('account.signOutBody'), [
+      { text: t('common.cancel'), style: 'cancel' },
       {
-        text: 'Sign out',
+        text: t('account.signOut'),
         style: 'destructive',
         onPress: () => {
           void logAnalyticsEvent('account_screen_signout_confirmed');
@@ -219,12 +215,12 @@ export function AccountScreen() {
       if (isAuthRequiresPasswordError(e)) {
         if (Platform.OS === 'ios') {
           Alert.prompt(
-            'Confirm password',
-            'Enter your password to delete your account.',
+            t('account.passwordConfirm.title'),
+            t('account.error.enterPasswordToDelete'),
             [
-              { text: 'Cancel', style: 'cancel' },
+              { text: t('common.cancel'), style: 'cancel' },
               {
-                text: 'Delete',
+                text: t('account.delete'),
                 style: 'destructive',
                 onPress: (password?: string) => {
                   if (!password) return;
@@ -247,24 +243,29 @@ export function AccountScreen() {
         setPasswordForDeleteError(
           e instanceof Error && e.message
             ? e.message
-            : 'Account not deleted. Try again.',
+            : t('account.deleteFailed.inline'),
         );
         return;
       }
-      Alert.alert('Account not deleted', 'Try again.');
+      Alert.alert(
+        t('account.deleteFailed.title'),
+        t('account.deleteFailed.body'),
+      );
     }
   };
 
   const handleDeleteAccount = () => {
     Alert.alert(
-      'Delete account?',
-      `This removes your UNTIL account and cloud data. Progress on this phone stays. Purchases stay with your ${
-        Platform.OS === 'ios' ? 'Apple ID' : 'Google Play account'
-      }.`,
+      t('account.deleteTitle'),
+      t(
+        Platform.OS === 'ios'
+          ? 'account.deleteBody.ios'
+          : 'account.deleteBody.android',
+      ),
       [
-        { text: 'Cancel', style: 'cancel' },
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text: 'Delete',
+          text: t('account.delete'),
           style: 'destructive',
           onPress: () => {
             void logAnalyticsEvent('account_delete_started');
@@ -284,14 +285,12 @@ export function AccountScreen() {
 
   const handleRemoveDevice = (device: AccountDevice) => {
     Alert.alert(
-      'Remove device',
-      `Remove ${formatAccountDeviceLabel(
-        device,
-      )}? It will need to sign in again to use premium.`,
+      t('account.removeDevice.title'),
+      t('account.removeDevice.body', { device: formatAccountDeviceLabel(device) }),
       [
-        { text: 'Cancel', style: 'cancel' },
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text: 'Remove',
+          text: t('common.remove'),
           style: 'destructive',
           onPress: async () => {
             setRemovingId(device.id);
@@ -330,17 +329,17 @@ export function AccountScreen() {
                 variant="display"
                 style={[styles.introTitle, { color: theme.textPrimary }]}
               >
-                Keep your data with you
+                {t('account.intro.title')}
               </Text>
               <Text
                 variant="body"
                 style={[styles.introBody, { color: theme.textSecondary }]}
               >
-                Sync birth date, premium, and settings across phones.
+                {t('account.intro.body')}
               </Text>
 
               <View style={styles.benefitList}>
-                {SIGN_IN_BENEFITS.map(line => (
+                {signInBenefits().map(line => (
                   <View key={line} style={styles.benefitRow}>
                     <View
                       style={[
@@ -381,13 +380,13 @@ export function AccountScreen() {
                   variant="caption"
                   style={[styles.sectionLabel, { color: theme.textSecondary }]}
                 >
-                  Account
+                  {t('account.sectionTitle')}
                 </Text>
                 <GlassCard style={styles.sectionCard}>
                   <View style={[styles.row, styles.rowLast]}>
                     <View style={styles.rowContent}>
                       <Text variant="body" style={{ color: theme.textPrimary }}>
-                        {email ?? 'Signed in'}
+                        {email ?? t('account.signedIn')}
                       </Text>
                       <Text
                         variant="caption"
@@ -396,7 +395,7 @@ export function AccountScreen() {
                           { color: theme.textSecondary },
                         ]}
                       >
-                        UNTIL account
+                        {t('account.untilAccount')}
                       </Text>
                     </View>
                   </View>
@@ -409,7 +408,7 @@ export function AccountScreen() {
                     variant="caption"
                     style={{ color: theme.textSecondary }}
                   >
-                    {DEVICE_LIMIT_BANNER_COPY}
+                    {deviceLimitBannerCopy()}
                   </Text>
                 </GlassCard>
               )}
@@ -431,11 +430,11 @@ export function AccountScreen() {
                 onPress={promptDesktopDownload}
                 activeOpacity={0.7}
                 accessibilityRole="button"
-                accessibilityLabel="Download UNTIL for Mac or Windows"
+                accessibilityLabel={t('account.desktop.a11y')}
               >
                 <View style={styles.rowContent}>
                   <Text variant="body" style={{ color: theme.textPrimary }}>
-                    Get Mac or Windows
+                    {t('account.desktop.title')}
                   </Text>
                   <Text
                     variant="caption"
@@ -444,7 +443,7 @@ export function AccountScreen() {
                       { color: theme.textSecondary },
                     ]}
                   >
-                    {DESKTOP_SLOT_NOTE}
+                    {desktopSlotNote()}
                   </Text>
                 </View>
                 <Text style={[styles.chevron, { color: theme.textSecondary }]}>
@@ -471,7 +470,7 @@ export function AccountScreen() {
                 disabled={busy}
               >
                 <Text variant="body" style={{ color: theme.textSecondary }}>
-                  Sign out
+                  {t('account.signOut')}
                 </Text>
               </TouchableOpacity>
               <TouchableOpacity
@@ -483,13 +482,13 @@ export function AccountScreen() {
                 activeOpacity={0.7}
                 disabled={busy}
                 accessibilityRole="button"
-                accessibilityLabel="Delete account"
+                accessibilityLabel={t('account.deleteAccount')}
               >
                 {busy ? (
                   <ActivityIndicator color="#C62828" />
                 ) : (
                   <Text variant="body" style={{ color: '#C62828' }}>
-                    Delete account
+                    {t('account.deleteAccount')}
                   </Text>
                 )}
               </TouchableOpacity>
@@ -515,18 +514,18 @@ export function AccountScreen() {
             ]}
           >
             <Text variant="title" style={{ color: theme.textPrimary }}>
-              Confirm password
+              {t('account.passwordConfirm.title')}
             </Text>
             <Text
               variant="body"
               style={[styles.passwordModalBody, { color: theme.textSecondary }]}
             >
-              Enter your password to delete your account.
+              {t('account.error.enterPasswordToDelete')}
             </Text>
             <TextInput
               value={passwordForDelete}
               onChangeText={setPasswordForDelete}
-              placeholder="Password"
+              placeholder={t('account.password')}
               placeholderTextColor={theme.textMuted}
               secureTextEntry
               textContentType="password"
@@ -540,7 +539,7 @@ export function AccountScreen() {
                   borderColor: theme.glassBorder,
                 },
               ]}
-              accessibilityLabel="Password"
+              accessibilityLabel={t('account.password')}
               onSubmitEditing={() => {
                 if (passwordForDelete) {
                   void runDeleteAccount(passwordForDelete);
@@ -561,10 +560,10 @@ export function AccountScreen() {
                 onPress={dismissPasswordForDelete}
                 disabled={busy}
                 accessibilityRole="button"
-                accessibilityLabel="Cancel"
+                accessibilityLabel={t('common.cancel')}
               >
                 <Text variant="body" style={{ color: theme.textSecondary }}>
-                  Cancel
+                  {t('common.cancel')}
                 </Text>
               </TouchableOpacity>
               <TouchableOpacity
@@ -574,10 +573,10 @@ export function AccountScreen() {
                 }}
                 disabled={busy || !passwordForDelete}
                 accessibilityRole="button"
-                accessibilityLabel="Delete"
+                accessibilityLabel={t('account.delete')}
               >
                 <Text variant="body" style={{ color: '#C62828' }}>
-                  Delete
+                  {t('account.delete')}
                 </Text>
               </TouchableOpacity>
             </View>

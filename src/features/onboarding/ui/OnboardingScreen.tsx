@@ -21,12 +21,12 @@ import { Text, ScreenGradient, Ember } from '../../../shared/ui';
 import {
   useTheme,
   Spacing,
-  Typography,
   Weight,
   getFontFamilyForWeight,
   Radius,
 } from '../../../shared/theme';
 import { useAnalytics } from '../../../shared/analytics/useAnalytics';
+import { useTranslation } from '../../../shared/i18n/useTranslation';
 import { useOnboardingFunnel } from '../hooks/useOnboardingFunnel';
 import type { AuthStackParamList } from '../../../shared/navigation/types';
 import type {
@@ -43,14 +43,20 @@ import { QuizOptionList } from './QuizOptionList';
 import { InteractiveWelcome } from './InteractiveWelcome';
 import { InteractiveDayDemo } from './InteractiveDayDemo';
 import { InteractiveWidgets } from './InteractiveWidgets';
-import { useCtaPressScale, useEnter } from './onboardingMotion';
+import { useCtaPressScale } from './onboardingMotion';
 import {
-  CADENCE_OPTIONS,
-  DRAIN_OPTIONS,
-  GOAL_OPTIONS,
-  QUIZ_PROMPTS,
-  READINESS_OPTIONS,
-  VALUES_OPTIONS,
+  InterstitialBeat,
+  LoaderBeat,
+  QuestionLayout,
+} from './OnboardingBeats';
+import { ResultsBeat } from './OnboardingResults';
+import {
+  getCadenceOptions,
+  getDrainOptions,
+  getGoalOptions,
+  getQuizPrompts,
+  getReadinessOptions,
+  getValuesOptions,
 } from './quizContent';
 import { onboardingStepViewProps } from '../domain/analyticsFunnels';
 
@@ -77,7 +83,10 @@ const DEMO_STEPS: OnboardingFunnelStep[] = [
   'widgets_demo',
 ];
 
+const LOADER_BEAT_MS = 700; // computes nothing: a short beat before the results
 export function OnboardingScreen() {
+  const { t } = useTranslation();
+  const prompts = getQuizPrompts();
   const navigation = useNavigation<AuthNav>();
   const insets = useSafeAreaInsets();
   const theme = useTheme();
@@ -131,7 +140,7 @@ export function OnboardingScreen() {
     loaderStarted.current = true;
     const id = setTimeout(() => {
       setStep('results');
-    }, 2600);
+    }, LOADER_BEAT_MS);
     return () => clearTimeout(id);
   }, [step, setStep]);
 
@@ -177,8 +186,8 @@ export function OnboardingScreen() {
         return (
           <InteractiveWelcome
             active
-            title={QUIZ_PROMPTS.brandTitle}
-            subtitle={QUIZ_PROMPTS.brandSub}
+            title={prompts.brandTitle}
+            subtitle={prompts.brandSub}
           />
         );
 
@@ -190,9 +199,9 @@ export function OnboardingScreen() {
 
       case 'q_goal':
         return (
-          <QuestionLayout title={QUIZ_PROMPTS.q_goal} emberProgress={0.28}>
+          <QuestionLayout title={prompts.q_goal} emberProgress={0.28}>
             <QuizOptionList
-              options={GOAL_OPTIONS}
+              options={getGoalOptions()}
               selected={answers.goal}
               onSelect={(value: OnboardingGoal) =>
                 selectAndAdvance('goal', value, 'q_goal')
@@ -203,9 +212,9 @@ export function OnboardingScreen() {
 
       case 'q_drain':
         return (
-          <QuestionLayout title={QUIZ_PROMPTS.q_drain} emberProgress={0.42}>
+          <QuestionLayout title={prompts.q_drain} emberProgress={0.42}>
             <QuizOptionList
-              options={DRAIN_OPTIONS}
+              options={getDrainOptions()}
               selected={answers.timeDrain}
               onSelect={(value: OnboardingDrain) =>
                 selectAndAdvance('timeDrain', value, 'q_drain')
@@ -219,9 +228,9 @@ export function OnboardingScreen() {
 
       case 'q_values':
         return (
-          <QuestionLayout title={QUIZ_PROMPTS.q_values} emberProgress={0.55}>
+          <QuestionLayout title={prompts.q_values} emberProgress={0.55}>
             <QuizOptionList
-              options={VALUES_OPTIONS}
+              options={getValuesOptions()}
               selected={answers.valuesPriority}
               onSelect={(value: OnboardingValues) =>
                 selectAndAdvance('valuesPriority', value, 'q_values')
@@ -232,9 +241,9 @@ export function OnboardingScreen() {
 
       case 'q_cadence':
         return (
-          <QuestionLayout title={QUIZ_PROMPTS.q_cadence} emberProgress={0.68}>
+          <QuestionLayout title={prompts.q_cadence} emberProgress={0.68}>
             <QuizOptionList
-              options={CADENCE_OPTIONS}
+              options={getCadenceOptions()}
               selected={answers.cadence}
               onSelect={(value: OnboardingCadence) =>
                 selectAndAdvance('cadence', value, 'q_cadence')
@@ -245,9 +254,9 @@ export function OnboardingScreen() {
 
       case 'q_readiness':
         return (
-          <QuestionLayout title={QUIZ_PROMPTS.q_readiness} emberProgress={0.8}>
+          <QuestionLayout title={prompts.q_readiness} emberProgress={0.8}>
             <QuizOptionList
-              options={READINESS_OPTIONS}
+              options={getReadinessOptions()}
               selected={answers.readiness}
               onSelect={(value: OnboardingReadiness) =>
                 selectAndAdvance('readiness', value, 'q_readiness')
@@ -348,12 +357,12 @@ export function OnboardingScreen() {
                 >
                   <Text variant="sectionTitle" style={styles.ctaFullLabel}>
                     {step === 'brand'
-                      ? 'Show me how it works'
+                      ? t('onboarding.cta.showMe')
                       : step === 'day_demo'
-                        ? 'Next'
+                        ? t('onboarding.cta.next')
                         : step === 'widgets_demo'
-                          ? 'Build my time map'
-                          : 'Continue'}
+                          ? t('onboarding.cta.buildMap')
+                          : t('onboarding.cta.continue')}
                   </Text>
                 </TouchableOpacity>
               </Animated.View>
@@ -362,243 +371,6 @@ export function OnboardingScreen() {
         </SafeAreaView>
       </ScreenGradient>
     </View>
-  );
-}
-
-function QuestionLayout({
-  title,
-  emberProgress,
-  children,
-}: {
-  title: string;
-  emberProgress: number;
-  children: React.ReactNode;
-}) {
-  const theme = useTheme();
-  const titleEnter = useEnter(true, 40);
-  const emberEnter = useEnter(true, 0);
-  const bodyEnter = useEnter(true, 120);
-
-  return (
-    <View style={styles.questionBlock}>
-      <Animated.View style={[styles.emberCenter, emberEnter]}>
-        <Ember progress={emberProgress} size={48} />
-      </Animated.View>
-      <Animated.View style={titleEnter}>
-        <Text
-          variant="sectionTitle"
-          style={[
-            styles.questionTitle,
-            {
-              color: theme.textPrimary,
-              fontFamily: getFontFamilyForWeight(Weight.semibold),
-            },
-          ]}
-        >
-          {title}
-        </Text>
-      </Animated.View>
-      <Animated.View style={bodyEnter}>{children}</Animated.View>
-    </View>
-  );
-}
-
-function InterstitialBeat() {
-  const theme = useTheme();
-  const title = useEnter(true, 60);
-  const ember = useEnter(true, 0);
-
-  return (
-    <View style={styles.centerBlock}>
-      <Animated.View style={ember}>
-        <Ember progress={0.48} size={72} />
-      </Animated.View>
-      <Animated.View style={title}>
-        <Text
-          variant="sectionTitle"
-          style={[
-            styles.title,
-            {
-              color: theme.textPrimary,
-              fontFamily: getFontFamilyForWeight(Weight.semibold),
-              fontSize: Typography.sectionTitle,
-            },
-          ]}
-        >
-          {QUIZ_PROMPTS.interstitial}
-        </Text>
-      </Animated.View>
-    </View>
-  );
-}
-
-function LoaderBeat() {
-  const theme = useTheme();
-  const title = useEnter(true, 80);
-  const pulse = useRef(new Animated.Value(1)).current;
-
-  useEffect(() => {
-    const loop = Animated.loop(
-      Animated.sequence([
-        Animated.timing(pulse, {
-          toValue: 1.06,
-          duration: 700,
-          useNativeDriver: true,
-        }),
-        Animated.timing(pulse, {
-          toValue: 1,
-          duration: 700,
-          useNativeDriver: true,
-        }),
-      ])
-    );
-    loop.start();
-    return () => loop.stop();
-  }, [pulse]);
-
-  return (
-    <View style={styles.centerBlock}>
-      <Animated.View style={{ transform: [{ scale: pulse }] }}>
-        <Ember progress={0.62} size={80} />
-      </Animated.View>
-      <Animated.View style={title}>
-        <Text
-          variant="sectionTitle"
-          style={[
-            styles.title,
-            {
-              color: theme.textPrimary,
-              marginTop: Spacing[4],
-              fontFamily: getFontFamilyForWeight(Weight.semibold),
-            },
-          ]}
-        >
-          {QUIZ_PROMPTS.loaderTitle}
-        </Text>
-        <Text
-          variant="caption"
-          style={{
-            color: theme.textSecondary,
-            textAlign: 'center',
-            marginTop: Spacing[2],
-          }}
-        >
-          Matching your answers to a weekly plan…
-        </Text>
-      </Animated.View>
-    </View>
-  );
-}
-
-function ResultsBeat({
-  cards,
-  onBack,
-  onContinue,
-}: {
-  cards: { id: string; text: string }[];
-  onBack: () => void;
-  onContinue: () => void;
-}) {
-  const theme = useTheme();
-  const header = useEnter(true, 40);
-  const { scale, bounce } = useCtaPressScale();
-
-  return (
-    <View style={styles.resultsBlock}>
-      <Animated.View style={header}>
-        <Ember progress={0.88} size={64} />
-        <Text
-          variant="display"
-          style={[
-            styles.title,
-            {
-              color: theme.textPrimary,
-              marginTop: Spacing[3],
-              fontFamily: getFontFamilyForWeight(Weight.bold),
-            },
-          ]}
-        >
-          {QUIZ_PROMPTS.resultsTitle}
-        </Text>
-        <Text
-          variant="body"
-          style={[styles.subtitle, { color: theme.textSecondary }]}
-        >
-          {QUIZ_PROMPTS.resultsSub}
-        </Text>
-      </Animated.View>
-
-      <View style={styles.cards}>
-        {cards.map((card, index) => (
-          <ResultCard key={card.id} text={card.text} index={index} />
-        ))}
-      </View>
-
-      <View style={styles.resultsFooter}>
-        <TouchableOpacity
-          style={[styles.halfBtn, { borderColor: theme.divider }]}
-          onPress={onBack}
-          activeOpacity={0.75}
-        >
-          <Text style={{ color: theme.textPrimary }}>Back</Text>
-        </TouchableOpacity>
-        <Animated.View style={[{ flex: 1 }, { transform: [{ scale }] }]}>
-          <TouchableOpacity
-            style={[
-              styles.halfBtnFill,
-              {
-                backgroundColor: theme.percent,
-                borderColor: theme.percent,
-              },
-            ]}
-            onPress={() => {
-              bounce();
-              onContinue();
-            }}
-            activeOpacity={0.9}
-          >
-            <Text
-              style={{
-                color: '#0E0E10',
-                fontFamily: getFontFamilyForWeight(Weight.semibold),
-              }}
-            >
-              Continue
-            </Text>
-          </TouchableOpacity>
-        </Animated.View>
-      </View>
-    </View>
-  );
-}
-
-function ResultCard({ text, index }: { text: string; index: number }) {
-  const theme = useTheme();
-  const enter = useEnter(true, 120 + index * 90);
-
-  return (
-    <Animated.View
-      style={[
-        styles.resultCard,
-        enter,
-        {
-          backgroundColor: theme.cardBase,
-          borderColor: theme.divider,
-        },
-      ]}
-    >
-      <Text style={{ color: theme.percent, marginRight: Spacing[2] }}>✓</Text>
-      <Text
-        variant="body"
-        style={{
-          color: theme.textPrimary,
-          flex: 1,
-          fontFamily: getFontFamilyForWeight(Weight.medium),
-        }}
-      >
-        {text}
-      </Text>
-    </Animated.View>
   );
 }
 
@@ -629,25 +401,6 @@ const styles = StyleSheet.create({
     gap: Spacing[3],
     paddingVertical: Spacing[6],
   },
-  questionBlock: {
-    gap: Spacing[3],
-    paddingVertical: Spacing[4],
-  },
-  emberCenter: {
-    alignItems: 'center',
-    marginBottom: Spacing[1],
-  },
-  questionTitle: {
-    textAlign: 'center',
-    marginBottom: Spacing[2],
-  },
-  title: {
-    textAlign: 'center',
-  },
-  subtitle: {
-    textAlign: 'center',
-    marginBottom: Spacing[2],
-  },
   footer: {
     paddingHorizontal: Spacing[4],
     paddingTop: Spacing[2],
@@ -660,44 +413,6 @@ const styles = StyleSheet.create({
   ctaFullLabel: {
     color: '#0E0E10',
     fontFamily: getFontFamilyForWeight(Weight.semibold),
-  },
-  resultsBlock: {
-    alignItems: 'center',
-    gap: Spacing[3],
-    paddingVertical: Spacing[4],
-  },
-  cards: {
-    width: '100%',
-    gap: Spacing[2],
-    marginTop: Spacing[2],
-  },
-  resultCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderRadius: Radius.lg,
-    paddingVertical: Spacing[3],
-    paddingHorizontal: Spacing[3],
-  },
-  resultsFooter: {
-    flexDirection: 'row',
-    gap: Spacing[2],
-    width: '100%',
-    marginTop: Spacing[4],
-    alignItems: 'center',
-  },
-  halfBtn: {
-    flex: 1,
-    borderWidth: 1,
-    borderRadius: Radius.lg,
-    paddingVertical: Spacing[3],
-    alignItems: 'center',
-  },
-  halfBtnFill: {
-    borderWidth: 1,
-    borderRadius: Radius.lg,
-    paddingVertical: Spacing[3],
-    alignItems: 'center',
   },
 });
 

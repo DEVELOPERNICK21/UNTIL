@@ -1,0 +1,19 @@
+{
+  "activity.locked.eyebrow": "Peringatan waktu terbuang",
+  "activity.locked.unlock": "Buka",
+  "activity.locked.hint": "Catat jam yang terbuang. Dapatkan pengingat saat melewati batas hariannya.",
+  "activity.today.eyebrow": "Waktu terbuang hari ini",
+  "activity.hint.tracking": "Sedang mencatat. Hentikan saat kamu fokus lagi.",
+  "activity.hint.remaining": "Sisa {{time}} sebelum peringatan.",
+  "activity.hint.idle": "Catat waktu scrolling sebelum hari berakhir.",
+  "activity.track.start": "Catat",
+  "activity.track.stop": "Berhenti",
+  "activity.track.startLabel": "Catat waktu terbuang",
+  "activity.track.stopLabel": "Berhenti mencatat waktu terbuang",
+  "activity.add30": "+30m",
+  "activity.add60": "+1j",
+  "activity.duration.minutes": "{{m}}m",
+  "activity.duration.hours": "{{h}}j",
+  "activity.duration.both": "{{h}}j {{m}}m",
+  "activity.limitCrossed": "Hari ini tidak akan terulang."
+}

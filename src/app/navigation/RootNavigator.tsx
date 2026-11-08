@@ -49,23 +49,20 @@ import {
   getFontFamilyForWeight,
 } from '../../shared/theme';
 import { useThemeStore } from '../../shared/theme/themeStore';
-import { ProfileIcon, SettingsIcon, ShareIcon } from '../../assets/icons';
+import {
+  HomeHeaderActions,
+  getGlassIconButtonStyle,
+  headerButtonStyles,
+} from './headerButtons';
+import { useTranslation } from '../../shared/i18n/useTranslation';
 import { ThemeModeGlyph } from '../../shared/ui';
 
 import type { RootStackParamList } from '../../shared/navigation/types';
 export type { RootStackParamList };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
-const HEADER_ICON_SIZE = 19;
 const THEME_ICON_SIZE = 22;
 const THEME_WIPE_DURATION_MS = 760;
-
-function getGlassIconButtonStyle(theme: ReturnType<typeof useTheme>) {
-  return {
-    backgroundColor: theme.glassBg,
-    borderColor: theme.glassBorder,
-  };
-}
 
 function ThemeToggleHeaderButton({
   resolvedTheme,
@@ -133,7 +130,7 @@ function ThemeToggleHeaderButton({
   return (
     <TouchableOpacity
       style={[
-        styles.headerIconButton,
+        headerButtonStyles.headerIconButton,
         getGlassIconButtonStyle(theme),
         resolvedTheme === 'dark'
           ? styles.themeToggleDarkBg
@@ -178,6 +175,7 @@ function ThemeToggleHeaderButton({
 }
 
 export function RootNavigator() {
+  const { t } = useTranslation();
   const theme = useTheme();
   const { width: screenWidth, height: screenHeight } = useWindowDimensions();
   const resolvedTheme = useThemeStore(s => s.resolvedTheme);
@@ -272,6 +270,7 @@ export function RootNavigator() {
       fontFamily: getFontFamilyForWeight(Weight.medium),
     },
     headerShadowVisible: false,
+    headerBackTitle: t('common.back'),
   };
   return (
     <NavigationContainer
@@ -285,52 +284,7 @@ export function RootNavigator() {
           options={({ navigation }) => ({
             title: 'UNTIL',
             headerRight: () => (
-              <View style={styles.headerActions}>
-                <TouchableOpacity
-                  onPress={() => navigation.navigate('ShareSnapshot')}
-                  style={[
-                    styles.headerIconButton,
-                    getGlassIconButtonStyle(theme),
-                  ]}
-                  activeOpacity={0.78}
-                >
-                  <ShareIcon
-                    width={HEADER_ICON_SIZE}
-                    height={HEADER_ICON_SIZE}
-                    color={theme.textSecondary}
-                  />
-                </TouchableOpacity>
-                <TouchableOpacity
-                  onPress={() => navigation.navigate('Widget')}
-                  style={[
-                    styles.headerIconButton,
-                    styles.headerIconButtonSpacing,
-                    getGlassIconButtonStyle(theme),
-                  ]}
-                  activeOpacity={0.78}
-                >
-                  <SettingsIcon
-                    width={HEADER_ICON_SIZE}
-                    height={HEADER_ICON_SIZE}
-                    color={theme.textSecondary}
-                  />
-                </TouchableOpacity>
-                <TouchableOpacity
-                  onPress={() => navigation.navigate('Settings')}
-                  style={[
-                    styles.headerIconButton,
-                    styles.headerIconButtonSpacing,
-                    getGlassIconButtonStyle(theme),
-                  ]}
-                  activeOpacity={0.78}
-                >
-                  <ProfileIcon
-                    width={HEADER_ICON_SIZE}
-                    height={HEADER_ICON_SIZE}
-                    color={theme.textSecondary}
-                  />
-                </TouchableOpacity>
-              </View>
+              <HomeHeaderActions navigation={navigation} theme={theme} />
             ),
           })}
         />
@@ -338,8 +292,7 @@ export function RootNavigator() {
           name="Settings"
           component={SettingsScreen}
           options={() => ({
-            title: 'Settings',
-            headerBackTitle: 'Back',
+            title: t('nav.settings'),
             headerRight: () => (
               <ThemeToggleHeaderButton
                 resolvedTheme={resolvedTheme}
@@ -352,105 +305,104 @@ export function RootNavigator() {
         <Stack.Screen
           name="Life"
           component={LifeScreen}
-          options={{ title: 'Your life', headerBackTitle: 'Back' }}
+          options={{ title: t('nav.life') }}
         />
         <Stack.Screen
           name="Widget"
           component={WidgetScreen}
-          options={{ title: 'Widgets', headerBackTitle: 'Back' }}
+          options={{ title: t('nav.widgets') }}
         />
         <Stack.Screen
           name="WidgetCustomization"
           component={WidgetCustomizationScreen}
-          options={{ title: 'Customize widget', headerBackTitle: 'Back' }}
+          options={{ title: t('nav.customizeWidget') }}
         />
         <Stack.Screen
           name="CustomCounters"
           component={CustomCountersScreen}
-          options={{ title: 'Custom counters', headerBackTitle: 'Back' }}
+          options={{ title: t('nav.customCounters') }}
         />
         <Stack.Screen
           name="Countdowns"
           component={CountdownsScreen}
-          options={{ title: 'Deadlines', headerBackTitle: 'Back' }}
+          options={{ title: t('nav.deadlines') }}
         />
         <Stack.Screen
           name="DailyTasks"
           component={DailyTasksScreen}
-          options={{ title: "Today's tasks", headerBackTitle: 'Back' }}
+          options={{ title: t('nav.todaysTasks') }}
         />
         <Stack.Screen
           name="TaskReport"
           component={TaskReportScreen}
-          options={{ title: 'Task report', headerBackTitle: 'Back' }}
+          options={{ title: t('nav.taskReport') }}
         />
         <Stack.Screen
           name="DayDetail"
           component={DayDetailScreen}
-          options={{ title: 'Today', headerBackTitle: 'Back' }}
+          options={{ title: t('nav.today') }}
         />
         <Stack.Screen
           name="MonthDetail"
           component={MonthDetailScreen}
-          options={{ title: 'This month', headerBackTitle: 'Back' }}
+          options={{ title: t('nav.thisMonth') }}
         />
         <Stack.Screen
           name="YearDetail"
           component={YearDetailScreen}
-          options={{ title: 'This year', headerBackTitle: 'Back' }}
+          options={{ title: t('nav.thisYear') }}
         />
         <Stack.Screen
           name="MonthlyGoals"
           component={MonthlyGoalsScreen}
-          options={{ title: 'Monthly goals', headerBackTitle: 'Back' }}
+          options={{ title: t('nav.monthlyGoals') }}
         />
         <Stack.Screen
           name="GoalDetail"
           component={GoalDetailScreen}
-          options={{ title: 'Goal', headerBackTitle: 'Back' }}
+          options={{ title: t('nav.goal') }}
         />
         <Stack.Screen
           name="HourCalculation"
           component={HourCalculationScreen}
-          options={{ title: 'Hour calculation', headerBackTitle: 'Back' }}
+          options={{ title: t('nav.hourCalculation') }}
         />
         <Stack.Screen
           name="DynamicIsland"
           component={DynamicIslandScreen}
           options={{
             title: Platform.OS === 'android' ? 'Live Island' : 'Dynamic Island',
-            headerBackTitle: 'Back',
           }}
         />
         <Stack.Screen
           name="Overlay"
           component={OverlayScreen}
-          options={{ title: 'Live Island', headerBackTitle: 'Back' }}
+          options={{ title: 'Live Island' }}
         />
         <Stack.Screen
           name="ShareSnapshot"
           component={ShareSnapshotScreen}
-          options={{ title: 'Share snapshot', headerBackTitle: 'Back' }}
+          options={{ title: t('nav.shareSnapshot') }}
         />
         <Stack.Screen
           name="Badges"
           component={BadgesScreen}
-          options={{ title: 'Badges', headerBackTitle: 'Back' }}
+          options={{ title: t('nav.badges') }}
         />
         <Stack.Screen
           name="Premium"
           component={PremiumScreen}
-          options={{ title: 'Premium', headerBackTitle: 'Back' }}
+          options={{ title: t('nav.premium') }}
         />
         <Stack.Screen
           name="TasksComingSoon"
           component={TasksComingSoonScreen}
-          options={{ title: 'Tasks & goals', headerBackTitle: 'Back' }}
+          options={{ title: t('nav.tasksAndGoals') }}
         />
         <Stack.Screen
           name="Account"
           component={AccountScreen}
-          options={{ title: 'Account', headerBackTitle: 'Back' }}
+          options={{ title: t('nav.account') }}
         />
       </Stack.Navigator>
       {themeTransition?.visible && themeTransitionCircleStyle ? (
@@ -465,21 +417,6 @@ export function RootNavigator() {
 }
 
 const styles = StyleSheet.create({
-  headerActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  headerIconButton: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    borderWidth: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  headerIconButtonSpacing: {
-    marginLeft: 8,
-  },
   themeToggleDarkBg: {
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
     borderColor: 'rgba(255, 255, 255, 0.32)',

@@ -2,6 +2,7 @@ import React from 'react';
 import { Modal, View, StyleSheet, TouchableOpacity } from 'react-native';
 import { Text } from '../../../shared/ui';
 import { Spacing, Radius, useTheme } from '../../../shared/theme';
+import { useTranslation } from '../../../shared/i18n/useTranslation';
 import { rootNavigationRef } from '../../../shared/navigation/rootNavigationRef';
 import {
   useGoalsFeatureEnabled,
@@ -22,6 +23,7 @@ export function FeatureDiscoveryModal({
   const theme = useTheme();
   const goalsFeatureEnabled = useGoalsFeatureEnabled();
   const { logEvent } = useAnalytics();
+  const { t } = useTranslation();
 
   if (!visible) return null;
 
@@ -48,11 +50,10 @@ export function FeatureDiscoveryModal({
       <View style={styles.backdrop}>
         <View style={[styles.card, { backgroundColor: theme.cardBaseAlpha }]}>
           <Text variant="title" color="primary" style={styles.title}>
-            Go deeper with UNTIL
+            {t('engagement.discovery.title')}
           </Text>
           <Text variant="body" color="secondary" style={styles.body}>
-            Tap into today&apos;s detail or try daily tasks to build a rhythm around
-            your time.
+            {t('engagement.discovery.body')}
           </Text>
           <TouchableOpacity
             style={[styles.primary, { backgroundColor: theme.percent }]}
@@ -60,7 +61,7 @@ export function FeatureDiscoveryModal({
             activeOpacity={0.9}
           >
             <Text variant="sectionTitle" style={styles.primaryLabel}>
-              Explore today&apos;s detail
+              {t('engagement.discovery.explore')}
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
@@ -69,7 +70,7 @@ export function FeatureDiscoveryModal({
             activeOpacity={0.9}
           >
             <Text variant="sectionTitle" style={{ color: theme.textPrimary }}>
-              Try daily tasks
+              {t('engagement.discovery.tasks')}
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
@@ -78,7 +79,7 @@ export function FeatureDiscoveryModal({
             activeOpacity={0.7}
           >
             <Text variant="body" color="secondary">
-              Not now
+              {t('common.notNow')}
             </Text>
           </TouchableOpacity>
         </View>

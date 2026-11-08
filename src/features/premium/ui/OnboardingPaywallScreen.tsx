@@ -23,12 +23,13 @@ import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Text, ScreenGradient } from '../../../shared/ui';
 import { PremiumPaywallBody } from './PremiumPaywallBody';
+import { markDeferredPaywallShown } from '../services/deferredPaywall';
 import { useObserveTimeState } from '../../time';
 import {
   usePresentRevenueCatPaywall,
 } from '../hooks/usePresentRevenueCatPaywall';
 import { Spacing, useTheme } from '../../../shared/theme';
-import { MONETIZATION_PAYWALL_COPY } from '../../../config/monetization';
+import { useTranslation } from '../../../shared/i18n/useTranslation';
 import { logAnalyticsEvent } from '../../../shared/analytics/analytics';
 import type { AuthStackParamList } from '../../../shared/navigation/types';
 
@@ -38,12 +39,13 @@ const SPINNER_ESCAPE_AFTER_MS = 10_000;
 export function OnboardingPaywallScreen() {
   const insets = useSafeAreaInsets();
   const theme = useTheme();
+  const { t } = useTranslation();
   const navigation =
     useNavigation<
       NativeStackNavigationProp<AuthStackParamList, 'OnboardingPaywall'>
     >();
   const { timeState } = useObserveTimeState();
-  const { present, presenting } = usePresentRevenueCatPaywall();
+  const { present, presenting } = usePresentRevenueCatPaywall('onboarding_paywall');
   const [showCustomPaywall, setShowCustomPaywall] = useState(false);
   const presentedOnce = useRef(false);
   const [canSkipSpinner, setCanSkipSpinner] = useState(false);
@@ -65,6 +67,8 @@ export function OnboardingPaywallScreen() {
     if (presentedOnce.current) return;
     presentedOnce.current = true;
 
+    // This is the first paywall; the deferred one must not follow it on the next open.
+    markDeferredPaywallShown();
     void (async () => {
       void logAnalyticsEvent('onboarding_paywall_seen', { deferred: false });
       void logAnalyticsEvent('premium_viewed', { source: 'onboarding_paywall' });
@@ -102,7 +106,7 @@ export function OnboardingPaywallScreen() {
                   activeOpacity={0.7}
                 >
                   <Text variant="body" style={{ color: theme.textSecondary }}>
-                    Skip for now
+                    {t('common.skipForNow')}
                   </Text>
                 </TouchableOpacity>
               ) : null}
@@ -119,8 +123,8 @@ export function OnboardingPaywallScreen() {
                 showsVerticalScrollIndicator={false}
               >
                 <PremiumPaywallBody
-                  headline={MONETIZATION_PAYWALL_COPY.onboardingPaywallTitle}
-                  subheadline={MONETIZATION_PAYWALL_COPY.onboardingPaywallSub}
+                  headline={t('premium.paywall.onboardingTitle')}
+                  subheadline={t('premium.paywall.onboardingSub')}
                   lifeProgress={lifeProgress}
                   onPurchaseSuccess={goNext}
                   showRestore
@@ -149,7 +153,7 @@ export function OnboardingPaywallScreen() {
                       textAlign: 'center',
                     }}
                   >
-                    Maybe later
+                    {t('common.maybeLater')}
                   </Text>
                 </TouchableOpacity>
               </View>

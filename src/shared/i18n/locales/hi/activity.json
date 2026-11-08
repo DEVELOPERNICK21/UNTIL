@@ -1,0 +1,19 @@
+{
+  "activity.locked.eyebrow": "खोए समय के अलर्ट",
+  "activity.locked.unlock": "अनलॉक करें",
+  "activity.locked.hint": "बर्बाद घंटे दर्ज करें। दैनिक सीमा पार होने पर एक याद दिलाना पाएँ।",
+  "activity.today.eyebrow": "आज का खोया समय",
+  "activity.hint.tracking": "ट्रैक हो रहा है। फिर से ध्यान लगाएँ तो रोक दें।",
+  "activity.hint.remaining": "अलर्ट से पहले {{time}} बाकी।",
+  "activity.hint.idle": "दिन खत्म होने से पहले स्क्रॉल का समय दर्ज करें।",
+  "activity.track.start": "ट्रैक करें",
+  "activity.track.stop": "रोकें",
+  "activity.track.startLabel": "बर्बाद समय ट्रैक करें",
+  "activity.track.stopLabel": "बर्बाद समय ट्रैक करना रोकें",
+  "activity.add30": "+30मि",
+  "activity.add60": "+1घं",
+  "activity.duration.minutes": "{{m}}मि",
+  "activity.duration.hours": "{{h}}घं",
+  "activity.duration.both": "{{h}}घं {{m}}मि",
+  "activity.limitCrossed": "यह दिन फिर कभी नहीं लौटेगा।"
+}

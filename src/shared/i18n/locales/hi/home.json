@@ -1,0 +1,22 @@
+{
+  "home.headline": "समय की हक़ीक़त",
+  "home.swipeHint": "कार्य रिपोर्ट के लिए बाएँ स्वाइप करें →",
+  "home.tile.today": "आज",
+  "home.tile.month": "महीना",
+  "home.tile.year": "साल",
+  "home.tile.life": "जीवन",
+  "home.percentLeft": "{{percent}}% बाकी",
+  "home.tileA11y": "{{title}}: {{left}} बाकी, {{passed}} बीत चुके। विवरण के लिए टैप करें।",
+  "home.unlock": "अनलॉक करें",
+  "home.lifeLockedA11y": "जीवन लॉक है। अनलॉक करने के लिए प्रीमियम खोलें।",
+  "home.setBirthDate": "जन्म तिथि सेट करें",
+  "home.setBirthDateA11y": "जीवन की प्रगति देखने के लिए सेटिंग्स में जन्म तिथि सेट करें।",
+  "home.comingSoon.title": "जल्द आ रहा है",
+  "home.comingSoon.body": "मासिक लक्ष्य और आज के कार्य आगामी अपडेट में यहाँ दिखेंगे।",
+  "home.fab.label": "कार्य",
+  "home.fab.a11y": "आज के कार्य",
+  "home.cards.showMoreA11y": "और कार्ड दिखाएँ",
+  "home.cards.showFewerA11y": "कम कार्ड दिखाएँ",
+  "home.cards.showLess": "कम दिखाएँ",
+  "home.cards.more": "और ({{count}})"
+}

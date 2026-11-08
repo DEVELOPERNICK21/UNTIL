@@ -13,9 +13,8 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { Text, ScreenGradient, Card } from '../../../shared/ui';
 import { useCountdowns } from '../hooks/useCountdowns';
 import { useLimitUpgradePrompt } from '../../premium';
-import {
-  useWidgetSyncActions,
-} from '../../../shared/platform/useWidgetSyncActions';
+import { useTranslation } from '../../../shared/i18n/useTranslation';
+import { useWidgetSyncActions } from '../../../shared/platform/useWidgetSyncActions';
 import { Spacing, Colors, Radius, Typography } from '../../../shared/theme';
 import { MAX_TITLE_LENGTH } from '../../../config/inputLimits';
 import { PREMIUM_ITEM_LIMIT } from '../../../config/featureLimits';
@@ -28,7 +27,14 @@ function toDateString(d: Date): string {
   return `${y}-${m}-${day}`;
 }
 
+const DATE_FORMAT: Intl.DateTimeFormatOptions = {
+  day: 'numeric',
+  month: 'short',
+  year: 'numeric',
+};
+
 export function CountdownsScreen() {
+  const { t, language, formatDate } = useTranslation();
   const { syncCountdowns } = useWidgetSyncActions();
   const { countdowns, atLimit, limit, hasPremium, refresh, addCountdown, removeCountdown } =
     useCountdowns();
@@ -50,7 +56,7 @@ export function CountdownsScreen() {
   const handleAdd = () => {
     // Free plan, second deadline: explain Premium. What was typed stays, so nothing is lost.
     if (atLimit && !hasPremium) return promptUpgrade();
-    const title = newTitle.trim() || 'Deadline';
+    const title = newTitle.trim() || t('countdowns.defaultTitle');
     const dateStr = toDateString(newDate);
     if (!addCountdown(title, dateStr)) return;
     setNewTitle('');
@@ -63,17 +69,21 @@ export function CountdownsScreen() {
   };
 
   const handleRemove = (item: Countdown) => {
-    Alert.alert('Remove countdown', `Remove "${item.title}"?`, [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Remove',
-        style: 'destructive',
-        onPress: () => {
-          removeCountdown(item.id);
-          syncCountdowns();
+    Alert.alert(
+      t('countdowns.remove.title'),
+      t('countdowns.remove.message', { title: item.title }),
+      [
+        { text: t('common.cancel'), style: 'cancel' },
+        {
+          text: t('common.remove'),
+          style: 'destructive',
+          onPress: () => {
+            removeCountdown(item.id);
+            syncCountdowns();
+          },
         },
-      },
-    ]);
+      ],
+    );
   };
 
   return (
@@ -85,11 +95,10 @@ export function CountdownsScreen() {
           keyboardShouldPersistTaps="handled"
         >
           <Text variant="sectionTitle" color="primary" style={styles.title}>
-            Deadlines
+            {t('nav.deadlines')}
           </Text>
           <Text variant="body" color="secondary" style={styles.subtitle}>
-            Add the dates you are counting down to (e.g. Project, Interview). The
-            widget shows the nearest one and how many days are left.
+            {t('countdowns.subtitle')}
           </Text>
 
           <View style={styles.addSection}>
@@ -97,7 +106,7 @@ export function CountdownsScreen() {
               style={styles.input}
               value={newTitle}
               onChangeText={setNewTitle}
-              placeholder="Title (e.g. Project, Interview)"
+              placeholder={t('countdowns.titlePlaceholder')}
               placeholderTextColor={Colors.textSecondary}
               autoCapitalize="words"
               maxLength={MAX_TITLE_LENGTH}
@@ -107,7 +116,7 @@ export function CountdownsScreen() {
               onPress={() => setShowPicker(true)}
             >
               <Text variant="body" color="primary">
-                {toDateString(newDate)}
+                {formatDate(newDate, DATE_FORMAT)}
               </Text>
             </TouchableOpacity>
             {showPicker && (
@@ -115,6 +124,7 @@ export function CountdownsScreen() {
                 value={newDate}
                 mode="date"
                 display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                locale={language}
                 minimumDate={new Date()}
                 onChange={(_, d) => {
                   if (Platform.OS === 'android') setShowPicker(false);
@@ -128,7 +138,7 @@ export function CountdownsScreen() {
                 onPress={() => setShowPicker(false)}
               >
                 <Text variant="caption" color="primary">
-                  Done
+                  {t('common.done')}
                 </Text>
               </TouchableOpacity>
             )}
@@ -141,65 +151,79 @@ export function CountdownsScreen() {
               disabled={!newTitle.trim() || (atLimit && hasPremium)}
             >
               <Text variant="caption" style={styles.addButtonText}>
-                {atLimit && !hasPremium ? 'Add with Premium' : 'Add'}
+                {atLimit && !hasPremium
+                  ? t('countdowns.addWithPremium')
+                  : t('common.add')}
               </Text>
             </TouchableOpacity>
           </View>
           {atLimit && (
-            <Text variant="caption" color="secondary" style={styles.singleLimitHint}>
+            <Text
+              variant="caption"
+              color="secondary"
+              style={styles.singleLimitHint}
+            >
               {hasPremium
-                ? `That is the most one list holds (${limit}). Remove one to add another.`
-                : `The free plan keeps one deadline. Premium holds up to ${PREMIUM_ITEM_LIMIT}.`}
+                ? t('countdowns.limit.reached', { limit })
+                : t('countdowns.limit.free', { max: PREMIUM_ITEM_LIMIT })}
             </Text>
           )}
 
           {countdowns.length === 0 ? (
             <Text variant="body" color="secondary" style={styles.empty}>
-              No deadlines yet. Add one above, then add the Deadline widget to
-              your home screen.
+              {t('countdowns.empty')}
             </Text>
           ) : (
             countdowns.map((item, index) => (
-                <Card key={item.id} style={styles.card}>
-                  <View style={styles.row}>
-                    <View style={styles.rowLeft}>
-                      <Text
-                        variant="title"
-                        color="primary"
-                        style={styles.itemTitle}
-                      >
-                        {item.title}
-                      </Text>
-                      <Text variant="caption" color="secondary">
-                        {item.date} · {item.daysLabel}
-                      </Text>
-                      {index === 0 && countdowns.length > 1 && (
-                        <Text variant="caption" color="secondary" style={styles.overdue}>
-                          Shown on your widget
-                        </Text>
-                      )}
-                      {item.daysUntil < 0 && (
-                        <Text variant="caption" color="secondary" style={styles.overdue}>
-                          This deadline has passed. Remove it when you are done with it.
-                        </Text>
-                      )}
-                    </View>
-                    <TouchableOpacity
-                      onPress={() => handleRemove(item)}
-                      style={styles.deleteBtn}
-                      hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+              <Card key={item.id} style={styles.card}>
+                <View style={styles.row}>
+                  <View style={styles.rowLeft}>
+                    <Text
+                      variant="title"
+                      color="primary"
+                      style={styles.itemTitle}
                     >
-                      <Text variant="caption" style={styles.deleteText}>
-                        Remove
+                      {item.title}
+                    </Text>
+                    <Text variant="caption" color="secondary">
+                      {formatDate(item.localDate, DATE_FORMAT)} ·{' '}
+                      {item.daysLabel}
+                    </Text>
+                    {index === 0 && countdowns.length > 1 && (
+                      <Text
+                        variant="caption"
+                        color="secondary"
+                        style={styles.overdue}
+                      >
+                        {t('countdowns.onWidget')}
                       </Text>
-                    </TouchableOpacity>
+                    )}
+                    {item.daysUntil < 0 && (
+                      <Text
+                        variant="caption"
+                        color="secondary"
+                        style={styles.overdue}
+                      >
+                        {t('countdowns.passed')}
+                      </Text>
+                    )}
                   </View>
-                </Card>
-              ))
+                  <TouchableOpacity
+                    onPress={() => handleRemove(item)}
+                    style={styles.deleteBtn}
+                    hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+                  >
+                    <Text variant="caption" style={styles.deleteText}>
+                      {t('common.remove')}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </Card>
+            ))
           )}
 
           <Text variant="caption" color="secondary" style={styles.hint}>
-            Add the Deadline widget from your home screen.
+            {t('countdowns.widgetHint')}
           </Text>
         </ScrollView>
       </ScreenGradient>

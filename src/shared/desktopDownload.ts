@@ -1,6 +1,7 @@
 import { Alert, Linking } from 'react-native';
 import { DESKTOP_DOWNLOAD_URLS } from '../config/monetization';
 import { logAnalyticsEvent } from './analytics/analytics';
+import { t } from './i18n/translate';
 
 export type DesktopDownloadPlatform = 'mac' | 'windows' | 'page';
 
@@ -17,13 +18,12 @@ export function openDesktopDownload(platform: DesktopDownloadPlatform) {
 
 /** Mac / Windows / Cancel. Opens the installer URL (finish download on that computer). */
 export function promptDesktopDownload() {
-  Alert.alert(
-    'UNTIL on Mac & Windows',
-    'Day % in your menu bar or tray. Same account as this phone. Opens the installer. Finish the download on that computer.',
-    [
-      { text: 'Mac', onPress: () => openDesktopDownload('mac') },
-      { text: 'Windows', onPress: () => openDesktopDownload('windows') },
-      { text: 'Cancel', style: 'cancel' },
-    ],
-  );
+  Alert.alert(t('system.desktop.title'), t('system.desktop.message'), [
+    { text: t('system.desktop.mac'), onPress: () => openDesktopDownload('mac') },
+    {
+      text: t('system.desktop.windows'),
+      onPress: () => openDesktopDownload('windows'),
+    },
+    { text: t('common.cancel'), style: 'cancel' },
+  ]);
 }

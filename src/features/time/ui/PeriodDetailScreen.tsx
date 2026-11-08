@@ -26,37 +26,13 @@ import {
   feelForPeriod,
 } from '../../../shared/theme';
 import { useReduceMotion } from '../../../shared/ui/useReduceMotion';
+import { useTranslation } from '../../../shared/i18n/useTranslation';
+import { PERIOD_PERSONALITY } from './periodPersonality';
 
 const RING_SIZE = Math.min(
   220,
   Dimensions.get('window').width - Spacing[4] * 2 - 32,
 );
-
-const PERSONALITY: Record<
-  PeriodGlyphKind,
-  { tagline: string; cue: string; accentHint: string }
-> = {
-  day: {
-    tagline: 'Every second counts',
-    cue: 'Live clock. Tap the ring to feel the pulse',
-    accentHint: 'Seconds',
-  },
-  month: {
-    tagline: 'Days of this month',
-    cue: 'Tap stats to flip passed ↔ left',
-    accentHint: 'Calendar',
-  },
-  year: {
-    tagline: 'Orbit of the year',
-    cue: 'A slow circle around 365 days',
-    accentHint: 'Season',
-  },
-  life: {
-    tagline: 'Your one run of days',
-    cue: 'Heart-pace reminder of what you still have',
-    accentHint: 'Heartbeat',
-  },
-};
 
 export type PeriodDetailProps = {
   kind: PeriodGlyphKind;
@@ -90,10 +66,11 @@ export function PeriodDetailScreen({
   hero,
 }: PeriodDetailProps) {
   const theme = useTheme();
+  const { t } = useTranslation();
   const reduceMotion = useReduceMotion();
   const progressColor = getProgressColor(progress);
   const pct = Math.round(Math.min(1, Math.max(0, progress)) * 100);
-  const personality = PERSONALITY[kind];
+  const personality = PERIOD_PERSONALITY[kind];
   const [glyphPressed, setGlyphPressed] = useState(false);
   const [flipped, setFlipped] = useState(false);
 
@@ -259,7 +236,7 @@ export function PeriodDetailScreen({
                   variant="caption"
                   style={{ color: theme.percent }}
                 >
-                  {personality.tagline}
+                  {t(personality.tagline)}
                 </Text>
               </Animated.View>
             </View>
@@ -275,7 +252,7 @@ export function PeriodDetailScreen({
             ]}
           >
             <Text variant="micro" color="secondary">
-              {personality.accentHint}
+              {t(personality.accentHint)}
             </Text>
           </View>
 
@@ -303,7 +280,7 @@ export function PeriodDetailScreen({
                   color="secondary"
                   style={styles.tapRingCue}
                 >
-                  {personality.cue}
+                  {t(personality.cue)}
                 </Text>
               </Animated.View>
             </Pressable>

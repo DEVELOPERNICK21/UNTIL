@@ -1,3 +1,4 @@
+import { t } from '../../../shared/i18n/translate';
 import { MINIMUM_ACCOUNT_AGE_YEARS } from './ageGate';
 
 export type AgeGateFailure = 'confirmation_required' | 'under_minimum_age';
@@ -6,8 +7,8 @@ export class AgeGateError extends Error {
   constructor(readonly reason: AgeGateFailure) {
     super(
       reason === 'under_minimum_age'
-        ? `You need to be ${MINIMUM_ACCOUNT_AGE_YEARS} or older to create an account. You can keep using UNTIL on this device without one.`
-        : `Confirm you are ${MINIMUM_ACCOUNT_AGE_YEARS} or older to continue.`
+        ? t('account.error.underAge', { age: MINIMUM_ACCOUNT_AGE_YEARS })
+        : t('account.error.ageRequired', { age: MINIMUM_ACCOUNT_AGE_YEARS })
     );
     this.name = 'AgeGateError';
   }

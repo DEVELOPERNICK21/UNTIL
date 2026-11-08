@@ -1,0 +1,21 @@
+{
+  "nav.settings": "設定",
+  "nav.life": "あなたの人生",
+  "nav.widgets": "ウィジェット",
+  "nav.customizeWidget": "ウィジェットをカスタマイズ",
+  "nav.customCounters": "カスタムカウンター",
+  "nav.deadlines": "期限",
+  "nav.todaysTasks": "今日のタスク",
+  "nav.taskReport": "タスクレポート",
+  "nav.today": "今日",
+  "nav.thisMonth": "今月",
+  "nav.thisYear": "今年",
+  "nav.monthlyGoals": "月間目標",
+  "nav.goal": "目標",
+  "nav.hourCalculation": "時間の計算",
+  "nav.shareSnapshot": "スナップショットを共有",
+  "nav.badges": "バッジ",
+  "nav.premium": "プレミアム",
+  "nav.tasksAndGoals": "タスクと目標",
+  "nav.account": "アカウント"
+}

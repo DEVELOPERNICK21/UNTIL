@@ -1,0 +1,22 @@
+{
+  "counters.subtitle": "Ajoutez ce que vous voulez compter (p. ex. Eau), puis ajoutez le widget Compteur à votre écran d’accueil. Le widget compte l’un d’eux : touchez-le pour ajouter +1. Utilisez −1 ici si vous avez touché par erreur, ou réinitialisez pour repartir de zéro.",
+  "counters.namePlaceholder": "Nom du compteur (p. ex. Eau)",
+  "counters.empty": "Aucun compteur pour le moment. Ajoutez-en un ci-dessus, puis ajoutez le widget Compteur depuis votre écran d’accueil et choisissez ce compteur.",
+  "counters.count": "Total : {{value}}",
+  "counters.remove.title": "Supprimer le compteur",
+  "counters.remove.message": "Supprimer « {{title}} » ? Le total ({{value}}) sera perdu.",
+  "counters.hint.ios": "Appuyez longuement sur l’écran d’accueil → + → recherchez Until → ajoutez le widget « Counter ».",
+  "counters.hint.android": "Appuyez longuement sur l’écran d’accueil → Widgets → Until → Counter.",
+  "counters.addWithPremium": "Ajouter avec Premium",
+  "counters.limit.reached": "C’est le maximum qu’une liste peut contenir ({{limit}}). Supprimez-en un pour en ajouter un autre.",
+  "counters.limit.free": "L’offre gratuite garde un compteur. Premium en accepte jusqu’à {{max}}.",
+  "counters.reset.title": "Réinitialiser le compteur",
+  "counters.reset.message": "Remettre « {{title}} » à 0 ? Il est à {{value}}.",
+  "counters.reset.confirm": "Réinitialiser",
+  "counters.onWidget": "Affiché sur votre widget",
+  "counters.showOnWidget": "Afficher sur le widget",
+  "counters.a11y.showOnWidget": "Afficher {{title}} sur le widget",
+  "counters.a11y.subtract": "Retirer un",
+  "counters.a11y.add": "Ajouter un",
+  "counters.a11y.reset": "Remettre à zéro"
+}

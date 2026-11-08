@@ -24,9 +24,9 @@ export type AnalyticsPaywallSource =
   | 'unknown';
 
 export type AnalyticsEventName =
+  | import('./paywallEvents').PaywallEventName
   | 'app_open'
   | 'manage_subscription_opened'
-  | 'onboarding_step'
   | 'onboarding_step_view'
   | 'onboarding_answer'
   | 'onboarding_life_aha'

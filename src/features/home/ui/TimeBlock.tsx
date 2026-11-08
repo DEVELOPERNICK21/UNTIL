@@ -8,7 +8,7 @@ import {
 } from '../../../shared/ui';
 import type { PeriodGlyphKind } from '../../../shared/ui';
 import { Spacing, FontFamily, getProgressColor } from '../../../shared/theme';
-import { formatDayPassedLeftWithSeconds } from '../../../shared/time/homeFormatters';
+import { useTranslation } from '../../../shared/i18n/useTranslation';
 
 /**
  * The period tiles on Home. Today is wide, Month, Year and Life share a row of three, so all four
@@ -66,6 +66,7 @@ export const TimeBlock = React.memo(function TimeBlock({
   size = 'normal',
   onPress,
 }: BlockProps) {
+  const { t } = useTranslation();
   const compact = size === 'compact';
   const wide = size === 'wide';
   const progressColor = getProgressColor(progress);
@@ -145,7 +146,7 @@ export const TimeBlock = React.memo(function TimeBlock({
         {leftLabel}
       </Text>
       <Text variant="micro" color="secondary">
-        {leftPct}% left
+        {t('home.percentLeft', { percent: leftPct })}
       </Text>
     </GlassCard>
   );
@@ -165,7 +166,11 @@ export const TimeBlock = React.memo(function TimeBlock({
               springTo(1);
             }}
             accessibilityRole="button"
-            accessibilityLabel={`${title}: ${leftLabel} left, ${passedLabel} passed. Tap for details.`}
+            accessibilityLabel={t('home.tileA11y', {
+              title,
+              left: leftLabel,
+              passed: passedLabel,
+            })}
           >
             <Animated.View style={{ transform: [{ scale: pressScale }] }}>
               {content}
@@ -178,51 +183,6 @@ export const TimeBlock = React.memo(function TimeBlock({
     </Animated.View>
   );
 });
-
-/**
- * TodayTimeBlock isolates the 1-second timer to prevent the entire HomeScreen
- * from re-rendering every second.
- */
-export function TodayTimeBlock({
-  index,
-  scrollY,
-  reduceMotion,
-  size,
-  onPress,
-}: {
-  index: number;
-  scrollY: Animated.Value;
-  reduceMotion: boolean;
-  size?: TileSize;
-  onPress: () => void;
-}) {
-  const [liveNow, setLiveNow] = useState(() => new Date());
-
-  useEffect(() => {
-    const tick = () => setLiveNow(new Date());
-    const id = setInterval(tick, 1000);
-    return () => clearInterval(id);
-  }, []);
-
-  const day = formatDayPassedLeftWithSeconds(liveNow);
-
-  return (
-    <TimeBlock
-      index={index}
-      scrollY={scrollY}
-      reduceMotion={reduceMotion}
-      size={size}
-      glyph="day"
-      title="Today"
-      passedLabel={day.passedStr}
-      leftLabel={day.leftStr}
-      progress={day.progress}
-      passedPct={day.passedPct}
-      leftPct={day.leftPct}
-      onPress={onPress}
-    />
-  );
-}
 
 /** The Life tile when it cannot show a number yet: no birth date, or Life is a premium feature. */
 export function LockedLifeTile({
@@ -238,6 +198,7 @@ export function LockedLifeTile({
   size?: TileSize;
   onPress: () => void;
 }) {
+  const { t } = useTranslation();
   const compact = size === 'compact';
   return (
     <Pressable
@@ -250,7 +211,7 @@ export function LockedLifeTile({
         <View style={styles.tileTop}>
           <PeriodGlyph kind="life" size={compact ? 22 : 28} animated={!reduceMotion} />
           <Text variant="caption" color="secondary" style={styles.tileTitle}>
-            Life
+            {t('home.tile.life')}
           </Text>
         </View>
         <Text variant="caption" color="primary" numberOfLines={compact ? 2 : 1}>

@@ -1,10 +1,6 @@
 import { getSignedDaysUntil } from '../../../countdowns/domain';
-import {
-  countCompletedTasks,
-  countPerfectDays,
-  findNewlyEarned,
-  type BadgeSnapshot,
-} from '../badgeCatalog';
+import { findNewlyEarned, type BadgeSnapshot } from '../badgeCatalog';
+import { countCompletedTasks, countPerfectDays } from '../badgeStats';
 import { localDateKey } from '../../../presence/domain';
 import type { IBadgeRepository } from '../ports/IBadgeRepository';
 import type { ICountdownRepository } from '../../../countdowns/domain';

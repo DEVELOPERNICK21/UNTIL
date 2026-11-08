@@ -3,7 +3,7 @@
  * Honest claims only (real features + real preview expiry).
  */
 
-import React, { useMemo } from 'react';
+import React from 'react';
 import { View, StyleSheet } from 'react-native';
 import { Text } from '../../../shared/ui';
 import {
@@ -14,10 +14,12 @@ import {
   getFontFamilyForWeight,
 } from '../../../shared/theme';
 import {
-  PAYWALL_LOSS_FRAME,
   formatPaywallLossHeadline,
   formatPaywallLossPreviewFooter,
-} from '../../../config/monetization';
+  paywallLossLines,
+} from '../../../config/paywallCopy';
+import { useTranslation } from '../../../shared/i18n/useTranslation';
+
 
 interface PaywallLossFrameProps {
   lifeProgress?: number;
@@ -32,13 +34,11 @@ export function PaywallLossFrame({
 }: PaywallLossFrameProps) {
   const theme = useTheme();
 
-  const headline = useMemo(
-    () => formatPaywallLossHeadline(lifeProgress),
-    [lifeProgress]
-  );
-  const previewFooter = useMemo(
-    () => formatPaywallLossPreviewFooter(trialEndsAtMs, trialActive),
-    [trialEndsAtMs, trialActive]
+  const { t } = useTranslation();
+  const headline = formatPaywallLossHeadline(lifeProgress);
+  const previewFooter = formatPaywallLossPreviewFooter(
+    trialEndsAtMs,
+    trialActive,
   );
 
   return (
@@ -61,7 +61,7 @@ export function PaywallLossFrame({
           },
         ]}
       >
-        {PAYWALL_LOSS_FRAME.eyebrow}
+        {t('premium.loss.eyebrow')}
       </Text>
 
       <Text
@@ -78,7 +78,7 @@ export function PaywallLossFrame({
       </Text>
 
       <View style={styles.lossList}>
-        {PAYWALL_LOSS_FRAME.losses.map(line => (
+        {paywallLossLines().map(line => (
           <View key={line} style={styles.lossRow}>
             <Text
               variant="caption"

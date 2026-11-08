@@ -1,0 +1,21 @@
+{
+  "nav.settings": "Ayarlar",
+  "nav.life": "Hayatın",
+  "nav.widgets": "Widget'lar",
+  "nav.customizeWidget": "Widget'ı özelleştir",
+  "nav.customCounters": "Özel sayaçlar",
+  "nav.deadlines": "Son tarihler",
+  "nav.todaysTasks": "Bugünün görevleri",
+  "nav.taskReport": "Görev raporu",
+  "nav.today": "Bugün",
+  "nav.thisMonth": "Bu ay",
+  "nav.thisYear": "Bu yıl",
+  "nav.monthlyGoals": "Aylık hedefler",
+  "nav.goal": "Hedef",
+  "nav.hourCalculation": "Saat hesabı",
+  "nav.shareSnapshot": "Anlık görüntüyü paylaş",
+  "nav.badges": "Rozetler",
+  "nav.premium": "Premium",
+  "nav.tasksAndGoals": "Görevler ve hedefler",
+  "nav.account": "Hesap"
+}

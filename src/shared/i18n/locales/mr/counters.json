@@ -1,0 +1,22 @@
+{
+  "counters.subtitle": "जे मोजायचे आहे ते जोडा (उदा. पाणी), मग काउंटर विजेट तुमच्या होम स्क्रीनवर जोडा. विजेट त्यापैकी एक मोजतो: +1 जोडण्यासाठी त्यावर टॅप करा. चुकून टॅप झाले तर इथे −1 करा, किंवा पुन्हा सुरू करण्यासाठी रीसेट करा.",
+  "counters.namePlaceholder": "काउंटरचे नाव (उदा. पाणी)",
+  "counters.empty": "अजून कोणताही काउंटर नाही. वर एक जोडा, मग होम स्क्रीनवरून काउंटर विजेट जोडा आणि हा काउंटर निवडा.",
+  "counters.count": "गणना: {{value}}",
+  "counters.remove.title": "काउंटर काढा",
+  "counters.remove.message": "“{{title}}” काढायचे? गणना ({{value}}) नष्ट होईल.",
+  "counters.hint.ios": "होम स्क्रीन दाबून धरा → + → Until शोधा → “Counter” विजेट जोडा.",
+  "counters.hint.android": "होम स्क्रीन दाबून धरा → विजेट → Until → Counter.",
+  "counters.addWithPremium": "प्रीमियमसह जोडा",
+  "counters.limit.reached": "एका यादीत यापेक्षा जास्त मावत नाहीत ({{limit}}). नवीन जोडण्यासाठी एक काढा.",
+  "counters.limit.free": "फ्री प्लॅनमध्ये एक काउंटर राहतो. प्रीमियममध्ये {{max}} पर्यंत ठेवता येतात.",
+  "counters.reset.title": "काउंटर रीसेट करा",
+  "counters.reset.message": "“{{title}}” पुन्हा 0 वर आणायचे? सध्या ते {{value}} वर आहे.",
+  "counters.reset.confirm": "रीसेट करा",
+  "counters.onWidget": "तुमच्या विजेटवर दिसत आहे",
+  "counters.showOnWidget": "विजेटवर दाखवा",
+  "counters.a11y.showOnWidget": "{{title}} विजेटवर दाखवा",
+  "counters.a11y.subtract": "एक कमी करा",
+  "counters.a11y.add": "एक जोडा",
+  "counters.a11y.reset": "शून्यावर रीसेट करा"
+}

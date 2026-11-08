@@ -17,6 +17,8 @@ import {
   getFontFamilyForWeight,
 } from '../../../shared/theme';
 import { MINIMUM_ACCOUNT_AGE_YEARS } from '../../account';
+import { t as translate } from '../../../shared/i18n/translate';
+import { useTranslation } from '../../../shared/i18n/useTranslation';
 
 type StudentVerifyFailure =
   | 'invalid'
@@ -33,11 +35,20 @@ interface StudentVerifyModalProps {
   ) => { ok: true } | { ok: false; reason: StudentVerifyFailure };
 }
 
-const FAILURE_COPY: Record<StudentVerifyFailure, string> = {
-  invalid: 'Use a school email (.edu, .ac.in, .edu.in, etc.).',
-  confirmation_required: `Confirm you are ${MINIMUM_ACCOUNT_AGE_YEARS} or older.`,
-  under_minimum_age: `Student pricing needs you to be ${MINIMUM_ACCOUNT_AGE_YEARS} or older.`,
-};
+function failureCopy(reason: StudentVerifyFailure): string {
+  switch (reason) {
+    case 'invalid':
+      return translate('premium.student.error.invalid');
+    case 'confirmation_required':
+      return translate('premium.student.error.confirm', {
+        age: MINIMUM_ACCOUNT_AGE_YEARS,
+      });
+    case 'under_minimum_age':
+      return translate('premium.student.error.underAge', {
+        age: MINIMUM_ACCOUNT_AGE_YEARS,
+      });
+  }
+}
 
 export function StudentVerifyModal({
   visible,
@@ -46,6 +57,7 @@ export function StudentVerifyModal({
   verify,
 }: StudentVerifyModalProps) {
   const theme = useTheme();
+  const { t } = useTranslation();
   const [email, setEmail] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [ageConfirmed, setAgeConfirmed] = useState(false);
@@ -53,7 +65,7 @@ export function StudentVerifyModal({
   const handleSubmit = () => {
     const result = verify(email, ageConfirmed);
     if (!result.ok) {
-      setError(FAILURE_COPY[result.reason]);
+      setError(failureCopy(result.reason));
       if (result.reason === 'under_minimum_age') setEmail('');
       return;
     }
@@ -80,11 +92,10 @@ export function StudentVerifyModal({
           ]}
         >
           <Text variant="title" color="primary" style={styles.title}>
-            Verify student email
+            {t('premium.student.title')}
           </Text>
           <Text variant="body" color="secondary" style={styles.body}>
-            Enter a school email to unlock the student yearly price. Same Premium
-            features. Soft check only (no document upload).
+            {t('premium.student.body')}
           </Text>
           <TextInput
             value={email}
@@ -126,7 +137,7 @@ export function StudentVerifyModal({
               activeOpacity={0.8}
             >
               <Text variant="body" color="secondary">
-                Cancel
+                {t('common.cancel')}
               </Text>
             </TouchableOpacity>
             <TouchableOpacity
@@ -141,7 +152,7 @@ export function StudentVerifyModal({
                   fontFamily: getFontFamilyForWeight(Weight.semibold),
                 }}
               >
-                Continue
+                {t('common.continue')}
               </Text>
             </TouchableOpacity>
           </View>

@@ -1,7 +1,5 @@
-import {
-  formatPaywallSocialProof,
-  MONETIZATION_PRICING,
-} from '../src/config/monetization';
+import { MONETIZATION_PRICING } from '../src/config/monetization';
+import { formatPaywallSocialProof } from '../src/config/paywallCopy';
 
 describe('monetization pricing', () => {
   it('matches approved INR ladder', () => {
@@ -10,7 +8,6 @@ describe('monetization pricing', () => {
     expect(MONETIZATION_PRICING.yearlyInr).toBe(499);
     expect(MONETIZATION_PRICING.lifetimeInr).toBe(1999);
     expect(MONETIZATION_PRICING.yearlyStudentInr).toBe(249);
-    expect(MONETIZATION_PRICING.yearlySavingsVsMonthlyDisplay).toBe('₹1,289');
   });
 
   it('hides social proof when count is unverified', () => {

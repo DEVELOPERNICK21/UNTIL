@@ -16,6 +16,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Text } from '../../shared/ui';
 import { SplashColors, Spacing, Typography, FontFamily, Radius } from '../../shared/theme';
 import { appLogoIcon } from '../../assets/images';
+import { useTranslation } from '../../shared/i18n/useTranslation';
 
 const PROGRESS_TARGET = 0.38;
 const APP_ICON_SIZE = 96;
@@ -27,6 +28,7 @@ interface SplashScreenProps {
 
 export function SplashScreen({ durationMs = 1000 }: SplashScreenProps) {
   const progress = useRef(new Animated.Value(0)).current;
+  const { t } = useTranslation();
   const { width } = useWindowDimensions();
   const barWidth = Math.min(280, width - Spacing.lg * 2);
 
@@ -56,16 +58,16 @@ export function SplashScreen({ durationMs = 1000 }: SplashScreenProps) {
           UNTIL
         </Text>
         <Text style={[styles.tagline, { color: SplashColors.textSecondary }]}>
-          THE FUTURE IS NOW
+          {t('system.splash.tagline')}
         </Text>
         <Text style={[styles.keywords, { color: SplashColors.textMuted }]}>
-          PREMIUM · MINIMAL · TIMELESS
+          {t('system.splash.keywords')}
         </Text>
       </View>
 
       <View style={[styles.footerSection, { width: barWidth }]}>
         <Text style={[styles.initializing, { color: SplashColors.textMuted }]}>
-          INITIALIZING
+          {t('system.splash.initializing')}
         </Text>
         <View style={styles.progressTrack}>
           <Animated.View
@@ -79,7 +81,7 @@ export function SplashScreen({ durationMs = 1000 }: SplashScreenProps) {
         </View>
         <Text style={styles.percent}>38%</Text>
         <Text style={[styles.footerLine, { color: SplashColors.footer }]}>
-          DESIGNED FOR EXCELLENCE
+          {t('system.splash.footer')}
         </Text>
         <View style={styles.dots}>
           <View

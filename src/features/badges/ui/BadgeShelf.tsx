@@ -3,11 +3,12 @@ import { Animated, Easing, Pressable, StyleSheet, View } from 'react-native';
 import { BadgeMedal } from './BadgeMedal';
 import { GlassCard, Text, useReduceMotion } from '../../../shared/ui';
 import { FontFamily, Spacing, useTheme } from '../../../shared/theme';
+import { useTranslation } from '../../../shared/i18n/useTranslation';
 import type {
   BadgeOverview,
   BadgeView,
 } from '../domain/useCases/GetBadgesUseCase';
-import { progressLabel } from './badgeLabels';
+import { badgeTitle, progressLabel } from './badgeLabels';
 
 const SLOTS = 5;
 const MEDAL_SIZE = 52;
@@ -24,6 +25,7 @@ function pickShelf(badges: BadgeView[]): BadgeView[] {
 }
 
 function UpNextBar({ view }: { view: BadgeView }) {
+  const { t } = useTranslation();
   const theme = useTheme();
   const reduceMotion = useReduceMotion();
   const grow = useRef(new Animated.Value(reduceMotion ? view.progress.ratio : 0)).current;
@@ -55,10 +57,10 @@ function UpNextBar({ view }: { view: BadgeView }) {
     <View style={styles.upNext}>
       <View style={styles.upNextText}>
         <Text variant="caption" color="secondary" numberOfLines={1} style={styles.upNextTitle}>
-          Up next: {view.definition.title}
+          {t('badges.shelf.upNext', { title: badgeTitle(view.definition, t) })}
         </Text>
         <Text variant="caption" color="secondary">
-          {progressLabel(view)}
+          {progressLabel(view, t)}
         </Text>
       </View>
       <View style={[styles.track, trackStyle]}>
@@ -75,21 +77,28 @@ interface BadgeShelfProps {
 
 /** Compact badge row for Home. Tapping anywhere opens the full list. */
 export function BadgeShelf({ overview, onOpen }: BadgeShelfProps) {
+  const { t } = useTranslation();
   const items = useMemo(() => pickShelf(overview.badges), [overview.badges]);
 
   return (
     <Pressable
       onPress={onOpen}
       accessibilityRole="button"
-      accessibilityLabel={`Badges. ${overview.earnedCount} of ${overview.total} earned. Open all badges.`}
+      accessibilityLabel={t('badges.shelf.a11y', {
+        earned: overview.earnedCount,
+        total: overview.total,
+      })}
     >
       <GlassCard style={styles.card}>
         <View style={styles.head}>
           <Text variant="sectionTitle" color="primary">
-            Badges
+            {t('nav.badges')}
           </Text>
           <Text variant="caption" color="secondary">
-            {overview.earnedCount} of {overview.total}  ›
+            {t('badges.shelf.count', {
+              earned: overview.earnedCount,
+              total: overview.total,
+            })}
           </Text>
         </View>
         <View style={styles.row}>
@@ -111,7 +120,7 @@ export function BadgeShelf({ overview, onOpen }: BadgeShelfProps) {
                 numberOfLines={2}
                 style={styles.slotLabel}
               >
-                {b.definition.title}
+                {badgeTitle(b.definition, t)}
               </Text>
             </View>
           ))}

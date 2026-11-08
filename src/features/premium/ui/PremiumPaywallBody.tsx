@@ -17,6 +17,7 @@ import {
 } from 'react-native';
 import { Text } from '../../../shared/ui';
 import { usePurchase } from '../hooks/usePurchase';
+import { priceLabel, usePaywallPrices } from '../hooks/usePaywallPrices';
 import { useObserveSubscription } from '../hooks/useObserveSubscription';
 import { useAccessControl } from '../hooks/useAccessControl';
 import { useObserveTimeState } from '../../time';
@@ -28,22 +29,17 @@ import {
   getFontFamilyForWeight,
 } from '../../../shared/theme';
 import {
-  FALLBACK_LIFETIME_PRICE,
-  FALLBACK_MONTHLY_PRICE,
-  FALLBACK_STUDENT_YEARLY_PRICE,
-  FALLBACK_WEEKLY_PRICE,
-  FALLBACK_YEARLY_PRICE,
   MONETIZATION_FEATURE_FLAGS,
-  MONETIZATION_PAYWALL_COPY,
-  MONETIZATION_PRICING,
   LEGAL_URLS,
+} from '../../../config/monetization';
+import {
   buildSubscriptionDisclosure,
-  formatInr,
   formatPaywallSocialProof,
   formatPreviewActiveBody,
   formatRenewalTerms,
   formatSubscribeCta,
-} from '../../../config/monetization';
+} from '../../../config/paywallCopy';
+import { useTranslation } from '../../../shared/i18n/useTranslation';
 import {
   logAnalyticsEvent,
   recordCrashError,
@@ -57,28 +53,25 @@ import { PaywallVisualHero } from './PaywallVisualHero';
 import { PaywallLossFrame } from './PaywallLossFrame';
 import { PaywallFeatureTiles } from './PaywallFeatureTiles';
 import { PaywallCompareStrip } from './PaywallCompareStrip';
-import {
-  PaywallPlanCards,
-  type PaywallPlanOption,
-} from './PaywallPlanCards';
+import { PaywallPlanCards } from './PaywallPlanCards';
 import { StudentVerifyModal } from './StudentVerifyModal';
 import { useStudentVerification } from '../hooks/useStudentVerification';
 import { useManageSubscription } from '../hooks/useManageSubscription';
+import { usePaywallVisit } from '../hooks/usePaywallVisit';
+import {
+  logPlanSelected,
+  logPurchaseFailed,
+  logRestoreEmpty,
+  logRestoreFailed,
+  purchaseRevenueParams,
+} from '../services/paywallTelemetry';
+import { buildPaywallPlans } from './paywallPlans';
 
 if (
   Platform.OS === 'android' &&
   UIManager.setLayoutAnimationEnabledExperimental
 ) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
-}
-
-function priceLabel(
-  products: Array<{ productId: string; price: string }>,
-  productId: string,
-  fallback: string
-): string {
-  const p = products.find(x => x.productId === productId);
-  return p?.price ?? fallback;
 }
 
 export interface PremiumPaywallBodyProps {
@@ -92,15 +85,19 @@ export interface PremiumPaywallBodyProps {
 }
 
 export function PremiumPaywallBody({
-  headline = MONETIZATION_PAYWALL_COPY.headline,
-  subheadline = MONETIZATION_PAYWALL_COPY.subheadline,
+  headline: headlineProp,
+  subheadline: subheadlineProp,
   onPurchaseSuccess,
   showRestore = true,
   source = 'unknown',
   lifeProgress: lifeProgressProp,
 }: PremiumPaywallBodyProps) {
   const theme = useTheme();
+  const { t } = useTranslation();
+  const headline = headlineProp ?? t('premium.paywall.headline');
+  const subheadline = subheadlineProp ?? t('premium.paywall.subheadline');
   const { isPremium } = useObserveSubscription();
+  const markVisitConverted = usePaywallVisit(source, isPremium);
   const { access } = useAccessControl();
   const { timeState } = useObserveTimeState();
   const {
@@ -116,7 +113,7 @@ export function PremiumPaywallBody({
   const [restoring, setRestoring] = useState(false);
   const [purchasing, setPurchasing] = useState(false);
   const [termsOpen, setTermsOpen] = useState(false);
-  const [selectedPlanId, setSelectedPlanId] = useState(productIds.yearly);
+  const [selectedPlanId, setSelectedPlanId] = useState<string>(productIds.yearly);
   const [studentModalOpen, setStudentModalOpen] = useState(false);
   const { isVerified, verify, checkVerified } =
     useStudentVerification();
@@ -129,120 +126,45 @@ export function PremiumPaywallBody({
     void getProducts().catch(() => {});
   }, [getProducts]);
 
-  const yearlyPrice = useMemo(
-    () => priceLabel(products, productIds.yearly, FALLBACK_YEARLY_PRICE),
-    [products, productIds.yearly]
-  );
-  const monthlyPrice = useMemo(
-    () => priceLabel(products, productIds.monthly, FALLBACK_MONTHLY_PRICE),
-    [products, productIds.monthly]
-  );
-  const weeklyPrice = useMemo(
-    () =>
-      priceLabel(
-        products,
-        productIds.weekly ?? 'weekly_subscription',
-        FALLBACK_WEEKLY_PRICE
-      ),
-    [products, productIds.weekly]
-  );
-  const lifetimePrice = useMemo(
-    () => priceLabel(products, productIds.lifetime, FALLBACK_LIFETIME_PRICE),
-    [products, productIds.lifetime]
-  );
-  const studentPrice = useMemo(
-    () =>
-      priceLabel(
-        products,
-        productIds.yearlyStudent ?? 'yearly_subscription_student',
-        FALLBACK_STUDENT_YEARLY_PRICE
-      ),
-    [products, productIds.yearlyStudent]
-  );
-
-  const monthlyAnchorYearly = useMemo(
-    () => formatInr(MONETIZATION_PRICING.monthlyInr * 12),
-    []
-  );
+  const prices = usePaywallPrices(products, productIds);
+  const {
+    yearly: yearlyPrice,
+    monthly: monthlyPrice,
+    weekly: weeklyPrice,
+    lifetime: lifetimePrice,
+    student: studentPrice,
+  } = prices;
 
   /** Three cards only: yearly (primary), monthly, weekly. */
-  const planOptions = useMemo((): PaywallPlanOption[] => {
-    const plans: PaywallPlanOption[] = [
-      {
-        productId: productIds.yearly,
-        title: 'Yearly',
-        subtitle: `Less than ${MONETIZATION_PRICING.yearlyPerDayDisplay}/day`,
-        price: yearlyPrice,
-        periodLabel: '/year',
-        renewalInterval: 'year',
-        comparePrice: `${monthlyAnchorYearly}/year`,
-        badge: `Save ${MONETIZATION_PRICING.yearlySavingsVsMonthlyDisplay}`,
-      },
-      {
-        productId: productIds.monthly,
-        title: 'Monthly',
-        subtitle: 'Flexible month to month',
-        price: monthlyPrice,
-        periodLabel: '/month',
-        renewalInterval: 'month',
-      },
-    ];
-
-    if (productIds.weekly) {
-      plans.push({
-        productId: productIds.weekly,
-        title: 'Weekly',
-        subtitle: 'Try Premium for a week',
-        price: weeklyPrice,
-        periodLabel: '/week',
-        renewalInterval: 'week',
-      });
-    }
-
-    return plans;
-  }, [
-    productIds.yearly,
-    productIds.monthly,
-    productIds.weekly,
-    yearlyPrice,
-    monthlyPrice,
-    weeklyPrice,
-    monthlyAnchorYearly,
-  ]);
+  const planOptions = useMemo(
+    () => buildPaywallPlans(productIds, prices, t),
+    [productIds, prices, t],
+  );
 
   const selectedPlan =
     planOptions.find(p => p.productId === selectedPlanId) ?? planOptions[0];
 
-  const socialProofLine = useMemo(() => formatPaywallSocialProof(), []);
+  const socialProofLine = formatPaywallSocialProof();
 
-  const subscriptionDisclosure = useMemo(
-    () =>
-      buildSubscriptionDisclosure({
+  // Built on demand: the lines are translated and only shown once the terms are opened.
+  const subscriptionDisclosure = termsOpen
+    ? buildSubscriptionDisclosure({
         yearlyPrice,
         monthlyPrice,
         weeklyPrice,
         lifetimePrice,
         trialActive: !isPremium && access.trialActive,
         trialEndsAtMs: access.trialEndsAt,
-      }),
-    [
-      yearlyPrice,
-      monthlyPrice,
-      weeklyPrice,
-      lifetimePrice,
-      isPremium,
-      access.trialActive,
-      access.trialEndsAt,
-    ]
-  );
+      })
+    : [];
 
   const { openManageSubscription } = useManageSubscription();
 
   const openLegalUrl = useCallback((url: string) => {
     void Linking.openURL(url).catch(() => {
-      Alert.alert('Could not open link', url);
+      Alert.alert(t('premium.alert.linkTitle'), url);
     });
-  }, []);
+  }, [t]);
 
   const onBuy = useCallback(
     async (productId: string) => {
@@ -253,7 +175,7 @@ export function PremiumPaywallBody({
         const list = await getProducts();
         if (list.length === 0) {
           Alert.alert(
-            'Plans not ready',
+            t('premium.alert.plansNotReady'),
             productsError ??
               'Could not load subscription plans from RevenueCat. Rebuild the app after setting REVENUECAT_API_KEY_* in .env, then check your network and the RevenueCat dashboard.'
           );
@@ -294,22 +216,20 @@ export function PremiumPaywallBody({
         }
         if (result.status === 'error') {
           clearPendingPurchase();
-          void logAnalyticsEvent('premium_purchase_failed', {
-            plan_id: productId,
+          logPurchaseFailed({
+            planId: productId,
             source,
-            price_display: priceDisplay,
-            error_code: result.code,
-            error_message: result.message.slice(0, 100),
-            payment_provider: 'revenuecat',
+            priceDisplay,
+            code: result.code,
+            message: result.message,
           });
           recordCrashError(
             new Error(result.message),
             'PremiumPaywallBody.requestPurchase'
           );
           Alert.alert(
-            'Purchase failed',
-            result.message ||
-              'Something went wrong. Check your connection and try again.'
+            t('premium.alert.purchaseFailed'),
+            result.message || t('premium.alert.genericError')
           );
           return;
         }
@@ -319,6 +239,7 @@ export function PremiumPaywallBody({
           source,
           price_display: priceDisplay,
           payment_provider: 'revenuecat',
+          ...purchaseRevenueParams(products, productId),
         });
         if (wasTrialActive) {
           void logAnalyticsEvent('trial_preview_ended', {
@@ -326,23 +247,22 @@ export function PremiumPaywallBody({
             plan_id: productId,
           });
         }
+        markVisitConverted();
         onPurchaseSuccess?.();
       } catch (e: unknown) {
         const err = e as { code?: string; message?: string };
         clearPendingPurchase();
-        void logAnalyticsEvent('premium_purchase_failed', {
-          plan_id: productId,
+        logPurchaseFailed({
+          planId: productId,
           source,
-          price_display: priceDisplay,
-          error_code: err?.code ?? 'unknown',
-          error_message: (err?.message ?? 'Unknown error').slice(0, 100),
-          payment_provider: 'revenuecat',
+          priceDisplay,
+          code: err?.code,
+          message: err?.message,
         });
         recordCrashError(e, 'PremiumPaywallBody.requestPurchase');
         Alert.alert(
-          'Purchase failed',
-          err?.message ??
-            'Something went wrong. Check your connection and try again.'
+          t('premium.alert.purchaseFailed'),
+          err?.message ?? t('premium.alert.genericError')
         );
       } finally {
         setPurchasing(false);
@@ -361,6 +281,8 @@ export function PremiumPaywallBody({
       checkVerified,
       access.trialActive,
       onPurchaseSuccess,
+      markVisitConverted,
+      t,
     ]
   );
 
@@ -369,23 +291,32 @@ export function PremiumPaywallBody({
     try {
       const { restored } = await restorePurchases();
       Alert.alert(
-        restored ? 'Restored' : 'Nothing to restore',
         restored
-          ? 'Your purchase has been restored.'
-          : 'No active purchase found for this account.'
+          ? t('premium.alert.restored')
+          : t('premium.alert.nothingToRestore'),
+        restored
+          ? t('premium.alert.restoredBody')
+          : t('premium.alert.nothingToRestoreBody')
       );
       if (restored) {
         void logAnalyticsEvent('premium_restore_completed', { source });
+        markVisitConverted();
         onPurchaseSuccess?.();
+      } else {
+        logRestoreEmpty(source);
       }
     } catch (e: unknown) {
       const err = e as { message?: string };
+      logRestoreFailed(source, e);
       recordCrashError(e, 'PremiumPaywallBody.restorePurchases');
-      Alert.alert('Restore failed', err?.message ?? 'Try again later.');
+      Alert.alert(
+        t('premium.alert.restoreFailed'),
+        err?.message ?? t('premium.alert.tryLater')
+      );
     } finally {
       setRestoring(false);
     }
-  }, [restorePurchases, onPurchaseSuccess, source]);
+  }, [restorePurchases, onPurchaseSuccess, markVisitConverted, source, t]);
 
   const continueDisabled = purchasing || loading;
 
@@ -413,7 +344,7 @@ export function PremiumPaywallBody({
           ]}
         >
           <Text variant="body" color="primary">
-            You have Premium active.
+            {t('premium.paywall.active')}
           </Text>
         </View>
       )}
@@ -436,7 +367,7 @@ export function PremiumPaywallBody({
               fontFamily: getFontFamilyForWeight(Weight.semibold),
             }}
           >
-            {MONETIZATION_PAYWALL_COPY.previewActiveTitle}
+            {t('premium.preview.activeTitle')}
           </Text>
           <Text variant="caption" color="secondary" style={styles.previewBody}>
             {formatPreviewActiveBody(access.trialEndsAt)}
@@ -462,7 +393,10 @@ export function PremiumPaywallBody({
           <PaywallPlanCards
             plans={planOptions}
             selectedId={selectedPlan.productId}
-            onSelect={setSelectedPlanId}
+            onSelect={id => {
+              setSelectedPlanId(id);
+              logPlanSelected(source, id);
+            }}
           />
 
           {selectedPlan.comparePrice ? (
@@ -505,8 +439,9 @@ export function PremiumPaywallBody({
               {formatSubscribeCta(selectedPlan.renewalInterval)}
             </Text>
             <Text variant="micro" style={styles.continueSub}>
-              {selectedPlan.price}
-              {selectedPlan.periodLabel ?? ''} · cancel anytime
+              {t('premium.cta.priceLine', {
+                price: `${selectedPlan.price}${selectedPlan.periodLabel ?? ''}`,
+              })}
             </Text>
           </TouchableOpacity>
 
@@ -522,13 +457,13 @@ export function PremiumPaywallBody({
             disabled={continueDisabled}
             style={styles.secondaryPlanHit}
             accessibilityRole="button"
-            accessibilityLabel={`${MONETIZATION_PAYWALL_COPY.lifetimeSecondaryCta}, ${lifetimePrice}`}
+            accessibilityLabel={t('premium.cta.lifetime', { price: lifetimePrice })}
           >
             <Text
               variant="caption"
               style={{ color: theme.textSecondary, textAlign: 'center' }}
             >
-              {MONETIZATION_PAYWALL_COPY.lifetimeSecondaryCta} · {lifetimePrice}
+              {t('premium.cta.lifetime', { price: lifetimePrice })}
             </Text>
           </TouchableOpacity>
 
@@ -546,15 +481,18 @@ export function PremiumPaywallBody({
               disabled={continueDisabled}
               style={styles.secondaryPlanHit}
               accessibilityRole="button"
-              accessibilityLabel={`${MONETIZATION_PAYWALL_COPY.studentCta}, ${studentPrice}`}
+              accessibilityLabel={t('premium.student.a11y', { price: studentPrice })}
             >
               <Text
                 variant="caption"
                 style={{ color: theme.textMuted, textAlign: 'center' }}
               >
-                {isVerified
-                  ? `Student yearly · ${studentPrice}/year, renews yearly`
-                  : `Student discount · ${studentPrice}/year, renews yearly`}
+                {t(
+                  isVerified
+                    ? 'premium.student.verified'
+                    : 'premium.student.unverified',
+                  { price: studentPrice },
+                )}
               </Text>
             </TouchableOpacity>
           ) : null}
@@ -582,9 +520,9 @@ export function PremiumPaywallBody({
       {/* Compact trust chips */}
       <View style={styles.trustRow}>
         {[
-          'Cancel anytime',
-          'Day + Year stay free',
-          'Secure in-app purchase',
+          t('premium.trust.cancel'),
+          t('premium.trust.free'),
+          t('premium.trust.secure'),
         ].map(signal => (
           <View
             key={signal}
@@ -613,13 +551,13 @@ export function PremiumPaywallBody({
           disabled={restoring}
           activeOpacity={0.7}
           accessibilityRole="button"
-          accessibilityLabel="Restore purchases"
+          accessibilityLabel={t('premium.restore')}
         >
           {restoring ? (
             <ActivityIndicator color={theme.textPrimary} />
           ) : (
             <Text variant="body" color="primary">
-              Restore purchases
+              {t('premium.restore')}
             </Text>
           )}
         </TouchableOpacity>
@@ -634,7 +572,7 @@ export function PremiumPaywallBody({
         activeOpacity={0.7}
       >
         <Text variant="caption" color="secondary">
-          {termsOpen ? 'Hide subscription terms ▴' : 'Subscription & preview terms ▾'}
+          {t(termsOpen ? 'premium.terms.hide' : 'premium.terms.show')}
         </Text>
       </TouchableOpacity>
 
@@ -659,7 +597,7 @@ export function PremiumPaywallBody({
       )}
 
       <Text variant="caption" color="secondary" style={styles.legal}>
-        {MONETIZATION_PAYWALL_COPY.freeForeverLine}
+        {t('premium.paywall.freeForever')}
       </Text>
       <View style={styles.legalLinks}>
         <TouchableOpacity
@@ -667,7 +605,7 @@ export function PremiumPaywallBody({
           activeOpacity={0.7}
         >
           <Text variant="caption" color="secondary" style={styles.legalLink}>
-            Terms
+            {t('premium.legal.terms')}
           </Text>
         </TouchableOpacity>
         <Text variant="caption" color="secondary">
@@ -678,7 +616,7 @@ export function PremiumPaywallBody({
           activeOpacity={0.7}
         >
           <Text variant="caption" color="secondary" style={styles.legalLink}>
-            Privacy
+            {t('premium.legal.privacy')}
           </Text>
         </TouchableOpacity>
         <Text variant="caption" color="secondary">
@@ -688,10 +626,10 @@ export function PremiumPaywallBody({
           onPress={() => openManageSubscription(source)}
           activeOpacity={0.7}
           accessibilityRole="button"
-          accessibilityLabel="Manage or cancel subscription"
+          accessibilityLabel={t('premium.manage.a11y')}
         >
           <Text variant="caption" color="secondary" style={styles.legalLink}>
-            Manage subscription
+            {t('premium.manage.link')}
           </Text>
         </TouchableOpacity>
       </View>

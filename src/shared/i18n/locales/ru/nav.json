@@ -1,0 +1,21 @@
+{
+  "nav.settings": "Настройки",
+  "nav.life": "Ваша жизнь",
+  "nav.widgets": "Виджеты",
+  "nav.customizeWidget": "Настроить виджет",
+  "nav.customCounters": "Свои счётчики",
+  "nav.deadlines": "Сроки",
+  "nav.todaysTasks": "Задачи на сегодня",
+  "nav.taskReport": "Отчёт по задачам",
+  "nav.today": "Сегодня",
+  "nav.thisMonth": "Этот месяц",
+  "nav.thisYear": "Этот год",
+  "nav.monthlyGoals": "Цели на месяц",
+  "nav.goal": "Цель",
+  "nav.hourCalculation": "Подсчёт часов",
+  "nav.shareSnapshot": "Поделиться снимком",
+  "nav.badges": "Значки",
+  "nav.premium": "Премиум",
+  "nav.tasksAndGoals": "Задачи и цели",
+  "nav.account": "Аккаунт"
+}

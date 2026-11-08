@@ -1,0 +1,19 @@
+{
+  "activity.locked.eyebrow": "Lost-time alerts",
+  "activity.locked.unlock": "Unlock",
+  "activity.locked.hint": "Log wasted hours. Get a nudge when you cross your daily limit.",
+  "activity.today.eyebrow": "Today's lost time",
+  "activity.hint.tracking": "Tracking now. Stop when you refocus.",
+  "activity.hint.remaining": "{{time}} left before the alert.",
+  "activity.hint.idle": "Log scroll time before the day is gone.",
+  "activity.track.start": "Track",
+  "activity.track.stop": "Stop",
+  "activity.track.startLabel": "Track wasted time",
+  "activity.track.stopLabel": "Stop tracking wasted time",
+  "activity.add30": "+30m",
+  "activity.add60": "+1h",
+  "activity.duration.minutes": "{{m}}m",
+  "activity.duration.hours": "{{h}}h",
+  "activity.duration.both": "{{h}}h {{m}}m",
+  "activity.limitCrossed": "This day will never repeat."
+}

@@ -1,7 +1,10 @@
 /**
  * The person's own numbers for the paywall: what each widget would show on their home screen
  * right now. Real figures only — nothing here is invented or exaggerated.
+ * Names come back in the active language; the caller passes the month name already formatted.
  */
+
+import { t } from '../../../shared/i18n/translate';
 
 export interface YourNumberRow {
   id: 'day' | 'month' | 'life';
@@ -28,21 +31,28 @@ export function buildYourNumbers(
   progress: Progress,
   hasBirthDate: boolean,
   monthName: string,
+  translate: typeof t = t,
 ): YourNumberRow[] {
   return [
-    { id: 'day', label: 'Today', percent: toPercent(progress.day), widget: 'Day widget', premium: false },
+    {
+      id: 'day',
+      label: translate('common.today'),
+      percent: toPercent(progress.day),
+      widget: translate('premium.compare.dayWidget'),
+      premium: false,
+    },
     {
       id: 'month',
       label: monthName,
       percent: toPercent(progress.month),
-      widget: 'Month widget',
+      widget: translate('premium.compare.monthWidget'),
       premium: true,
     },
     {
       id: 'life',
-      label: 'Your life',
+      label: translate('premium.numbers.life'),
       percent: hasBirthDate ? toPercent(progress.life) : null,
-      widget: 'Life widget',
+      widget: translate('premium.numbers.lifeWidget'),
       premium: true,
     },
   ];

@@ -5,6 +5,7 @@ import { usePinWidget } from '../../../shared/platform/usePinWidget';
 import { Spacing, Radius, useTheme } from '../../../shared/theme';
 import { rootNavigationRef } from '../../../shared/navigation/rootNavigationRef';
 import { useAnalytics } from '../../../shared/analytics/useAnalytics';
+import { useTranslation } from '../../../shared/i18n/useTranslation';
 
 interface WidgetCoachModalProps {
   visible: boolean;
@@ -13,6 +14,7 @@ interface WidgetCoachModalProps {
 
 export function WidgetCoachModal({ visible, onDismiss }: WidgetCoachModalProps) {
   const theme = useTheme();
+  const { t } = useTranslation();
   const { logEvent } = useAnalytics();
   const dayWidget = usePinWidget('day', 'coach');
 
@@ -42,15 +44,14 @@ export function WidgetCoachModal({ visible, onDismiss }: WidgetCoachModalProps) 
       <View style={styles.backdrop}>
         <View style={[styles.card, { backgroundColor: theme.cardBaseAlpha }]}>
           <Text variant="title" color="primary" style={styles.title}>
-            Add the Day widget
+            {t('widgets.coach.title')}
           </Text>
           <Text variant="body" color="secondary" style={styles.body}>
-            Pin UNTIL to your home screen to see how much of today and this month
-            is left, without opening the app.
+            {t('widgets.coach.body')}
           </Text>
           {dayWidget.available ? (
             <PinWidgetButton
-              label="Add the Day widget"
+              label={t('widgets.coach.pinButton')}
               onPress={() => {
                 void handlePinDayWidget();
               }}
@@ -64,18 +65,18 @@ export function WidgetCoachModal({ visible, onDismiss }: WidgetCoachModalProps) 
               activeOpacity={0.9}
             >
               <Text variant="sectionTitle" style={styles.primaryLabel}>
-                Set up widgets
+                {t('widgets.coach.setup')}
               </Text>
             </TouchableOpacity>
           )}
           <TouchableOpacity style={styles.secondary} onPress={handleLater} activeOpacity={0.7}>
             <Text variant="body" color="secondary">
-              Not now
+              {t('common.notNow')}
             </Text>
           </TouchableOpacity>
           {Platform.OS === 'android' && !dayWidget.available ? (
             <Text variant="caption" color="secondary" style={styles.hint}>
-              Long-press home screen → Widgets → UNTIL → Day
+              {t('widgets.coach.hintAndroid')}
             </Text>
           ) : null}
         </View>

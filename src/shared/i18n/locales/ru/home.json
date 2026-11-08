@@ -1,0 +1,22 @@
+{
+  "home.headline": "Реальность времени",
+  "home.swipeHint": "Проведите влево, чтобы открыть отчёт по задачам →",
+  "home.tile.today": "Сегодня",
+  "home.tile.month": "Месяц",
+  "home.tile.year": "Год",
+  "home.tile.life": "Жизнь",
+  "home.percentLeft": "Осталось {{percent}}%",
+  "home.tileA11y": "{{title}}: осталось {{left}}, прошло {{passed}}. Нажмите, чтобы узнать подробности.",
+  "home.unlock": "Открыть",
+  "home.lifeLockedA11y": "Раздел «Жизнь» заблокирован. Откройте Премиум, чтобы разблокировать.",
+  "home.setBirthDate": "Указать дату рождения",
+  "home.setBirthDateA11y": "Укажите дату рождения в настройках, чтобы увидеть прогресс жизни.",
+  "home.comingSoon.title": "Скоро",
+  "home.comingSoon.body": "Цели на месяц и задачи на сегодня появятся здесь в одном из следующих обновлений.",
+  "home.fab.label": "Задачи",
+  "home.fab.a11y": "Задачи на сегодня",
+  "home.cards.showMoreA11y": "Показать больше карточек",
+  "home.cards.showFewerA11y": "Показать меньше карточек",
+  "home.cards.showLess": "Показать меньше",
+  "home.cards.more": "Ещё ({{count}})"
+}

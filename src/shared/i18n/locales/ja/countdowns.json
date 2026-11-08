@@ -1,0 +1,20 @@
+{
+  "countdowns.subtitle": "カウントダウンしたい日付を追加します（例：プロジェクト、面接）。ウィジェットには、いちばん近い日付と残り日数が表示されます。",
+  "countdowns.titlePlaceholder": "タイトル（例：プロジェクト、面接）",
+  "countdowns.defaultTitle": "期限",
+  "countdowns.empty": "まだ期限がありません。上から追加して、「期限」ウィジェットをホーム画面に追加しましょう。",
+  "countdowns.widgetHint": "ホーム画面から「期限」ウィジェットを追加してください。",
+  "countdowns.remove.title": "カウントダウンを削除",
+  "countdowns.remove.message": "「{{title}}」を削除しますか？",
+  "countdowns.daysLeft_other": "あと{{count}}日",
+  "countdowns.daysAgo_other": "{{count}}日前",
+  "countdowns.home.eyebrowNext": "次のカウントダウン",
+  "countdowns.home.eyebrowEmpty": "カウントダウン",
+  "countdowns.home.emptyTitle": "何かに向けてカウントダウン",
+  "countdowns.home.emptyBody": "試験、旅行、誕生日、期限など。",
+  "countdowns.addWithPremium": "プレミアムで追加",
+  "countdowns.limit.reached": "1つのリストに入るのはここまでです（{{limit}}件）。別のものを追加するには、1つ削除してください。",
+  "countdowns.limit.free": "無料プランで保存できる期限は1つです。プレミアムなら最大{{max}}件まで保存できます。",
+  "countdowns.onWidget": "ウィジェットに表示中",
+  "countdowns.passed": "この期限は過ぎました。不要になったら削除してください。"
+}

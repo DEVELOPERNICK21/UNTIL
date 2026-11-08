@@ -1,0 +1,20 @@
+{
+  "countdowns.subtitle": "Tambahkan tanggal yang kamu hitung mundur (mis. Proyek, Wawancara). Widget menampilkan yang terdekat dan sisa harinya.",
+  "countdowns.titlePlaceholder": "Judul (mis. Proyek, Wawancara)",
+  "countdowns.defaultTitle": "Tenggat",
+  "countdowns.empty": "Belum ada tenggat. Tambahkan di atas, lalu pasang widget Tenggat di layar utama.",
+  "countdowns.widgetHint": "Pasang widget Tenggat dari layar utama.",
+  "countdowns.remove.title": "Hapus hitung mundur",
+  "countdowns.remove.message": "Hapus “{{title}}”?",
+  "countdowns.daysLeft_other": "Sisa {{count}} hari",
+  "countdowns.daysAgo_other": "{{count}} hari lalu",
+  "countdowns.home.eyebrowNext": "HITUNG MUNDUR BERIKUTNYA",
+  "countdowns.home.eyebrowEmpty": "HITUNG MUNDUR",
+  "countdowns.home.emptyTitle": "Hitung mundur menuju sesuatu",
+  "countdowns.home.emptyBody": "Ujian, perjalanan, ulang tahun, tenggat.",
+  "countdowns.addWithPremium": "Tambah dengan Premium",
+  "countdowns.limit.reached": "Itu jumlah terbanyak yang muat dalam satu daftar ({{limit}}). Hapus satu untuk menambah yang lain.",
+  "countdowns.limit.free": "Paket gratis menyimpan satu tenggat. Premium menampung hingga {{max}}.",
+  "countdowns.onWidget": "Tampil di widget-mu",
+  "countdowns.passed": "Tenggat ini sudah lewat. Hapus kalau kamu sudah selesai dengannya."
+}

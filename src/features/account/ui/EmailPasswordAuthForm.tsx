@@ -12,6 +12,11 @@ import {
 } from 'react-native';
 import { Text } from '../../../shared/ui';
 import {
+  stripLinkMarkers,
+  parseLinkedText,
+} from '../../../shared/i18n/linkedText';
+import { useTranslation } from '../../../shared/i18n/useTranslation';
+import {
   useTheme,
   Spacing,
   Radius,
@@ -55,10 +60,16 @@ export function EmailPasswordAuthForm({
   submitting = busy,
 }: EmailPasswordAuthFormProps) {
   const theme = useTheme();
+  const { t } = useTranslation();
   const passwordRef = useRef<TextInput>(null);
   const [showPassword, setShowPassword] = useState(false);
   const isCreate = mode === 'create';
-  const submitLabel = isCreate ? 'Create account' : 'Sign in';
+  const submitLabel = isCreate
+    ? t('account.form.create')
+    : t('account.form.signIn');
+  const switchMessage = t(
+    isCreate ? 'account.form.haveAccount' : 'account.form.newHere',
+  );
 
   const fieldStyle = [
     styles.field,
@@ -75,7 +86,7 @@ export function EmailPasswordAuthForm({
         variant="caption"
         style={[styles.label, { color: theme.textSecondary }]}
       >
-        Email
+        {t('account.form.email')}
       </Text>
       <TextInput
         value={email}
@@ -93,25 +104,31 @@ export function EmailPasswordAuthForm({
         onSubmitEditing={() => passwordRef.current?.focus()}
         editable={!busy}
         style={fieldStyle}
-        accessibilityLabel="Email"
+        accessibilityLabel={t('account.form.email')}
       />
 
       <View style={styles.passwordLabelRow}>
         <Text
           variant="caption"
-          style={[styles.label, styles.passwordLabel, { color: theme.textSecondary }]}
+          style={[
+            styles.label,
+            styles.passwordLabel,
+            { color: theme.textSecondary },
+          ]}
         >
-          Password
+          {t('account.password')}
         </Text>
         <TouchableOpacity
           onPress={() => setShowPassword(v => !v)}
           disabled={busy}
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           accessibilityRole="button"
-          accessibilityLabel={showPassword ? 'Hide password' : 'Show password'}
+          accessibilityLabel={t(
+            showPassword ? 'account.form.hideA11y' : 'account.form.showA11y',
+          )}
         >
           <Text variant="caption" style={{ color: theme.textSecondary }}>
-            {showPassword ? 'Hide' : 'Show'}
+            {t(showPassword ? 'account.form.hide' : 'account.form.show')}
           </Text>
         </TouchableOpacity>
       </View>
@@ -119,7 +136,11 @@ export function EmailPasswordAuthForm({
         ref={passwordRef}
         value={password}
         onChangeText={onPasswordChange}
-        placeholder={isCreate ? 'At least 6 characters' : 'Your password'}
+        placeholder={t(
+          isCreate
+            ? 'account.form.passwordPlaceholderCreate'
+            : 'account.form.passwordPlaceholder',
+        )}
         placeholderTextColor={theme.textMuted}
         secureTextEntry={!showPassword}
         autoCapitalize="none"
@@ -129,7 +150,7 @@ export function EmailPasswordAuthForm({
         returnKeyType="go"
         editable={!busy}
         style={fieldStyle}
-        accessibilityLabel="Password"
+        accessibilityLabel={t('account.password')}
         onSubmitEditing={onSubmit}
       />
 
@@ -140,10 +161,10 @@ export function EmailPasswordAuthForm({
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           style={styles.forgotHit}
           accessibilityRole="button"
-          accessibilityLabel="Forgot password"
+          accessibilityLabel={t('account.form.forgotA11y')}
         >
           <Text variant="caption" style={{ color: theme.percent }}>
-            Forgot password?
+            {t('account.form.forgot')}
           </Text>
         </TouchableOpacity>
       ) : null}
@@ -181,18 +202,22 @@ export function EmailPasswordAuthForm({
         disabled={busy}
         style={styles.switchHit}
         accessibilityRole="button"
-        accessibilityLabel={
-          isCreate ? 'Have an account? Sign in' : 'New here? Create an account'
-        }
+        accessibilityLabel={stripLinkMarkers(switchMessage)}
       >
         <Text variant="caption" style={{ color: theme.textSecondary }}>
-          {isCreate ? 'Have an account? ' : 'New here? '}
-          <Text
-            variant="caption"
-            style={[styles.switchAction, { color: theme.percent }]}
-          >
-            {isCreate ? 'Sign in' : 'Create an account'}
-          </Text>
+          {parseLinkedText(switchMessage).map((segment, index) =>
+            segment.link ? (
+              <Text
+                key={index}
+                variant="caption"
+                style={[styles.switchAction, { color: theme.percent }]}
+              >
+                {segment.text}
+              </Text>
+            ) : (
+              segment.text
+            ),
+          )}
         </Text>
       </TouchableOpacity>
     </View>

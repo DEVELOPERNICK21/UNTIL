@@ -1,0 +1,22 @@
+{
+  "countdowns.subtitle": "Adicione as datas para as quais você faz a contagem regressiva (ex.: Projeto, Entrevista). O widget mostra a mais próxima e quantos dias faltam.",
+  "countdowns.titlePlaceholder": "Título (ex.: Projeto, Entrevista)",
+  "countdowns.defaultTitle": "Prazo",
+  "countdowns.empty": "Nenhum prazo ainda. Adicione um acima e depois coloque o widget Prazo na tela inicial.",
+  "countdowns.widgetHint": "Adicione o widget Prazo pela tela inicial.",
+  "countdowns.remove.title": "Remover contagem regressiva",
+  "countdowns.remove.message": "Remover “{{title}}”?",
+  "countdowns.daysLeft_one": "Falta {{count}} dia",
+  "countdowns.daysLeft_other": "Faltam {{count}} dias",
+  "countdowns.daysAgo_one": "Há {{count}} dia",
+  "countdowns.daysAgo_other": "Há {{count}} dias",
+  "countdowns.home.eyebrowNext": "PRÓXIMA CONTAGEM REGRESSIVA",
+  "countdowns.home.eyebrowEmpty": "CONTAGENS REGRESSIVAS",
+  "countdowns.home.emptyTitle": "Faça uma contagem regressiva",
+  "countdowns.home.emptyBody": "Uma prova, uma viagem, um aniversário, um prazo.",
+  "countdowns.addWithPremium": "Adicionar com Premium",
+  "countdowns.limit.reached": "Esse é o máximo que uma lista comporta ({{limit}}). Remova um para adicionar outro.",
+  "countdowns.limit.free": "O plano grátis guarda um prazo. O Premium comporta até {{max}}.",
+  "countdowns.onWidget": "Mostrado no seu widget",
+  "countdowns.passed": "Este prazo já passou. Remova-o quando terminar com ele."
+}

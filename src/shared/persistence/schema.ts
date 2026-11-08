@@ -10,6 +10,8 @@ export const STORAGE_KEYS = {
 
   // Settings
   SETTINGS_THEME: 'settings.theme',
+  /** App language: 'system' or a code from shared/i18n/languages. */
+  SETTINGS_LANGUAGE: 'settings.language',
 
   // Premium / Subscription (one device, web purchase)
   PREMIUM_IS_ACTIVE: 'premium.isActive',

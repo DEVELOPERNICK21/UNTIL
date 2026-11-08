@@ -13,8 +13,10 @@ import { Text, ScreenGradient, Card } from '../../../shared/ui';
 import { useHourCalculationWidget } from '../hooks/useHourCalculationWidget';
 import { Spacing, Colors, Radius, Typography } from '../../../shared/theme';
 import { MAX_TITLE_LENGTH } from '../../../config/inputLimits';
+import { useTranslation } from '../../../shared/i18n/useTranslation';
 
 export function HourCalculationScreen() {
+  const { t } = useTranslation();
   const { getHourCalculationState, syncHourCalculationWidget, elapsedLabel, hasTime } =
     useHourCalculationWidget();
   const [state, setState] = useState(() => getHourCalculationState());
@@ -40,7 +42,7 @@ export function HourCalculationScreen() {
   }, [state.isRunning, getHourCalculationState]);
 
   const handleSaveTitle = () => {
-    const title = titleInput.trim() || 'Hour timer';
+    const title = titleInput.trim() || t('widgets.hour.defaultTitle');
     syncHourCalculationWidget({ title });
     refresh();
   };
@@ -58,13 +60,17 @@ export function HourCalculationScreen() {
     };
     // Nothing banked and not running: there is nothing to lose, so no question.
     Alert.alert(
-      'Reset timer',
+      t('widgets.hour.reset.title'),
       state.isRunning
-        ? 'Stop the timer and set it back to 0:00:00?'
-        : 'Set the timer back to 0:00:00? The widget will show 0:00:00.',
+        ? t('widgets.hour.reset.messageRunning')
+        : t('widgets.hour.reset.messageIdle'),
       [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Reset', style: 'destructive', onPress: reset },
+        { text: t('common.cancel'), style: 'cancel' },
+        {
+          text: t('widgets.hour.reset.confirm'),
+          style: 'destructive',
+          onPress: reset,
+        },
       ],
     );
   };
@@ -80,22 +86,22 @@ export function HourCalculationScreen() {
           keyboardShouldPersistTaps="handled"
         >
           <Text variant="sectionTitle" color="primary" style={styles.title}>
-            Hour calculation
+            {t('nav.hourCalculation')}
           </Text>
           <Text variant="body" color="secondary" style={styles.subtitle}>
-            Set a title (e.g. Office hour), then add the Hour calculation widget. Tap the widget to start, tap again to stop. You can also start, stop and reset it here. One timer only.
+            {t('widgets.hour.subtitle')}
           </Text>
 
           <Card style={styles.card}>
             <Text variant="caption" color="secondary" style={styles.label}>
-              Widget title
+              {t('widgets.hour.titleLabel')}
             </Text>
             <View style={styles.row}>
               <TextInput
                 style={styles.input}
                 value={titleInput}
                 onChangeText={setTitleInput}
-                placeholder="e.g. Office hour"
+                placeholder={t('widgets.hour.placeholder')}
                 placeholderTextColor={Colors.textSecondary}
                 autoCapitalize="words"
                 maxLength={MAX_TITLE_LENGTH}
@@ -103,21 +109,21 @@ export function HourCalculationScreen() {
                 returnKeyType="done"
               />
               <TouchableOpacity style={styles.primaryButton} onPress={handleSaveTitle}>
-                <Text variant="caption" style={styles.primaryButtonText}>Save</Text>
+                <Text variant="caption" style={styles.primaryButtonText}>{t('common.save')}</Text>
               </TouchableOpacity>
             </View>
           </Card>
 
           <Card style={styles.card}>
             <Text variant="caption" color="secondary" style={styles.label}>
-              Current time
+              {t('widgets.hour.currentTime')}
             </Text>
             <Text variant="title" color="primary" style={styles.elapsed}>
               {elapsedDisplay}
             </Text>
             {state.isRunning && (
               <Text variant="caption" color="secondary" style={styles.runningHint}>
-                Running
+                {t('widgets.hour.running')}
               </Text>
             )}
             <View style={styles.timerActions}>
@@ -125,10 +131,18 @@ export function HourCalculationScreen() {
                 style={[styles.timerButton, styles.timerPrimary]}
                 onPress={handleToggle}
                 accessibilityRole="button"
-                accessibilityLabel={state.isRunning ? 'Stop the timer' : 'Start the timer'}
+                accessibilityLabel={
+                  state.isRunning
+                    ? t('widgets.hour.a11y.stop')
+                    : t('widgets.hour.a11y.start')
+                }
               >
                 <Text variant="sectionTitle" style={styles.timerPrimaryText}>
-                  {state.isRunning ? 'Stop' : state.totalElapsedMs > 0 ? 'Resume' : 'Start'}
+                  {state.isRunning
+                    ? t('widgets.hour.stop')
+                    : state.totalElapsedMs > 0
+                      ? t('widgets.hour.resume')
+                      : t('widgets.hour.start')}
                 </Text>
               </TouchableOpacity>
               <TouchableOpacity
@@ -136,19 +150,17 @@ export function HourCalculationScreen() {
                 onPress={handleReset}
                 disabled={!hasTime(state)}
                 accessibilityRole="button"
-                accessibilityLabel="Reset the timer to zero"
+                accessibilityLabel={t('widgets.hour.a11y.reset')}
               >
                 <Text variant="sectionTitle" style={styles.timerSecondaryText}>
-                  Reset
+                  {t('widgets.hour.reset.confirm')}
                 </Text>
               </TouchableOpacity>
             </View>
           </Card>
 
           <Text variant="caption" color="secondary" style={styles.hint}>
-            {Platform.OS === 'ios'
-              ? 'Long-press home screen → + → search Until → add "Hour calculation" widget.'
-              : 'Long-press home screen → Widgets → Until → Hour calculation.'}
+            {Platform.OS === 'ios' ? t('widgets.hour.hint.ios') : t('widgets.hour.hint.android')}
           </Text>
         </ScrollView>
       </ScreenGradient>

@@ -1,0 +1,22 @@
+{
+  "countdowns.subtitle": "जिन तारीख़ों की आप उलटी गिनती कर रहे हैं उन्हें जोड़ें (जैसे प्रोजेक्ट, इंटरव्यू)। विजेट सबसे नज़दीकी तारीख़ और बचे हुए दिन दिखाता है।",
+  "countdowns.titlePlaceholder": "शीर्षक (जैसे प्रोजेक्ट, इंटरव्यू)",
+  "countdowns.defaultTitle": "समय-सीमा",
+  "countdowns.empty": "अभी कोई समय-सीमा नहीं है। ऊपर से एक जोड़ें, फिर समय-सीमा विजेट को अपनी होम स्क्रीन पर जोड़ें।",
+  "countdowns.widgetHint": "समय-सीमा विजेट को अपनी होम स्क्रीन से जोड़ें।",
+  "countdowns.remove.title": "काउंटडाउन हटाएँ",
+  "countdowns.remove.message": "“{{title}}” हटाएँ?",
+  "countdowns.daysLeft_one": "{{count}} दिन बचा",
+  "countdowns.daysLeft_other": "{{count}} दिन बचे",
+  "countdowns.daysAgo_one": "{{count}} दिन पहले",
+  "countdowns.daysAgo_other": "{{count}} दिन पहले",
+  "countdowns.home.eyebrowNext": "अगला काउंटडाउन",
+  "countdowns.home.eyebrowEmpty": "काउंटडाउन",
+  "countdowns.home.emptyTitle": "किसी खास दिन का काउंटडाउन शुरू करें",
+  "countdowns.home.emptyBody": "परीक्षा, यात्रा, जन्मदिन या कोई समय-सीमा।",
+  "countdowns.addWithPremium": "प्रीमियम के साथ जोड़ें",
+  "countdowns.limit.reached": "एक सूची में इससे ज़्यादा नहीं आ सकते ({{limit}})। नया जोड़ने के लिए एक हटाएँ।",
+  "countdowns.limit.free": "फ़्री प्लान में एक समय-सीमा रहती है। प्रीमियम में {{max}} तक रख सकते हैं।",
+  "countdowns.onWidget": "आपके विजेट पर दिख रही है",
+  "countdowns.passed": "यह समय-सीमा बीत चुकी है। काम पूरा होने पर इसे हटा दें।"
+}

@@ -21,28 +21,16 @@ import {
   getFontFamilyForWeight,
   Shadows,
 } from '../../../shared/theme';
+import { useTranslation } from '../../../shared/i18n/useTranslation';
 import { useEnter } from './onboardingMotion';
 import { useReduceMotion } from '../../../shared/ui/useReduceMotion';
 
-const FEATURES = [
-  {
-    id: 'day',
-    label: 'Day %',
-    glyph: 'day' as const,
-    blurb: 'Live ring of today’s passed and left time.',
-  },
-  {
-    id: 'widgets',
-    label: 'Widgets',
-    glyph: 'month' as const,
-    blurb: 'Home screen glances. No app open needed.',
-  },
-  {
-    id: 'life',
-    label: 'Life view',
-    glyph: 'life' as const,
-    blurb: 'Your life progress, once you set a birth date.',
-  },
+type FeatureId = 'day' | 'widgets' | 'life';
+
+const FEATURES: { id: FeatureId; glyph: 'day' | 'month' | 'life' }[] = [
+  { id: 'day', glyph: 'day' },
+  { id: 'widgets', glyph: 'month' },
+  { id: 'life', glyph: 'life' },
 ];
 
 interface InteractiveWelcomeProps {
@@ -56,9 +44,10 @@ export function InteractiveWelcome({
   title,
   subtitle,
 }: InteractiveWelcomeProps) {
+  const { t } = useTranslation();
   const theme = useTheme();
   const reduceMotion = useReduceMotion();
-  const [selected, setSelected] = useState<string | null>(null);
+  const [selected, setSelected] = useState<FeatureId | null>(null);
   const glow = useRef(new Animated.Value(0)).current;
   const brandScale = useRef(new Animated.Value(0.92)).current;
   const brandOpacity = useRef(new Animated.Value(0)).current;
@@ -144,7 +133,7 @@ export function InteractiveWelcome({
           <Ember progress={0.32} size={64} />
         </View>
         <Text variant="micro" style={[styles.eyebrow, { color: theme.percent }]}>
-          Welcome
+          {t('onboarding.welcome.eyebrow')}
         </Text>
         <Text
           variant="display"
@@ -215,7 +204,7 @@ export function InteractiveWelcome({
                   fontFamily: getFontFamilyForWeight(Weight.medium),
                 }}
               >
-                {f.label}
+                {t(`onboarding.welcome.${f.id}.label`)}
               </Text>
             </Pressable>
           );
@@ -233,7 +222,7 @@ export function InteractiveWelcome({
           ]}
         >
           <Text variant="body" style={{ color: theme.textSecondary }}>
-            {FEATURES.find(f => f.id === selected)?.blurb}
+            {t(`onboarding.welcome.${selected}.blurb`)}
           </Text>
         </View>
       ) : (
@@ -241,7 +230,7 @@ export function InteractiveWelcome({
           variant="caption"
           style={[styles.tapCue, { color: theme.textMuted }]}
         >
-          Tap a chip to explore · then tap Ember
+          {t('onboarding.welcome.tapCue')}
         </Text>
       )}
     </View>

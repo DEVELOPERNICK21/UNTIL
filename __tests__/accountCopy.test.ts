@@ -1,28 +1,30 @@
 import { MAX_ACTIVE_DEVICES } from '../src/features/account/domain/deviceLimit';
 import {
-  DESKTOP_SLOT_NOTE,
-  DEVICE_RULES_NOTE,
-  DEVICE_LIMIT_BANNER_COPY,
-  PREMIUM_DEVICES_BENEFIT,
+  desktopSlotNote,
+  deviceLimitBannerCopy,
+  deviceRulesNote,
   formatAccountDeviceLabel,
+  premiumDevicesBenefit,
   replaceDesktopBody,
 } from '../src/features/account/domain/accountCopy';
 
 describe('accountCopy', () => {
   it('says devices, not phones, in the sign-in benefit', () => {
-    expect(PREMIUM_DEVICES_BENEFIT).toBe(`Premium on up to ${MAX_ACTIVE_DEVICES} devices`);
-    expect(PREMIUM_DEVICES_BENEFIT).not.toMatch(/phones/);
+    expect(premiumDevicesBenefit()).toBe(
+      `Premium on up to ${MAX_ACTIVE_DEVICES} devices`,
+    );
+    expect(premiumDevicesBenefit()).not.toMatch(/phones/);
   });
 
   it('keeps the existing device-cap banner', () => {
-    expect(DEVICE_LIMIT_BANNER_COPY).toBe(
+    expect(deviceLimitBannerCopy()).toBe(
       `This account is already used on ${MAX_ACTIVE_DEVICES} devices. Remove one to unlock premium here.`,
     );
   });
 
   it('quotes the same cap everywhere it is mentioned', () => {
-    expect(DESKTOP_SLOT_NOTE).toContain(`${MAX_ACTIVE_DEVICES} devices`);
-    expect(DEVICE_RULES_NOTE).toMatch(/One Mac or Windows PC at a time/);
+    expect(desktopSlotNote()).toContain(`${MAX_ACTIVE_DEVICES} devices`);
+    expect(deviceRulesNote()).toMatch(/One Mac or Windows PC at a time/);
   });
 
   it('labels Mac and Windows instead of swallowing them as Android', () => {

@@ -3,10 +3,12 @@
  *
  * Every badge is a threshold on one number from a BadgeSnapshot. Keeping the
  * rule that uniform means progress bars, unlock checks and tests all share the
- * same code path, and a new badge is one line in BADGES.
+ * same code path, and a new badge is one line in BADGES plus its title and
+ * description in locales/<code>/badges.json (`badges.items.<id>.title`).
  */
 
-import type { DailyTask } from '../../../shared/types';
+import type { TranslationKey } from '../../../shared/i18n/translate';
+import { PERFECT_DAY_MIN_TASKS } from './badgeStats';
 
 export type BadgeFamily = 'presence' | 'tasks' | 'time';
 
@@ -61,15 +63,13 @@ export interface BadgeDefinition {
   family: BadgeFamily;
   tier: BadgeTier;
   glyph: BadgeGlyphKind;
-  title: string;
+  titleKey: TranslationKey;
   /** What to do to earn it. Shown on locked and earned badges. */
-  description: string;
+  descriptionKey: TranslationKey;
+  descriptionParams?: Record<string, number>;
   metric: BadgeMetric;
   target: number;
 }
-
-/** A day only counts as "clean" with at least this many tasks. */
-export const PERFECT_DAY_MIN_TASKS = 3;
 
 export const BADGES: readonly BadgeDefinition[] = [
   // Presence: open UNTIL on consecutive days.
@@ -78,8 +78,8 @@ export const BADGES: readonly BadgeDefinition[] = [
     family: 'presence',
     tier: 'bronze',
     glyph: 'spark',
-    title: 'Day one',
-    description: 'Open UNTIL. The count starts here.',
+    titleKey: 'badges.items.streak_1.title',
+    descriptionKey: 'badges.items.streak_1.description',
     metric: 'longestStreak',
     target: 1,
   },
@@ -88,8 +88,8 @@ export const BADGES: readonly BadgeDefinition[] = [
     family: 'presence',
     tier: 'bronze',
     glyph: 'flame',
-    title: 'Three in a row',
-    description: 'Open UNTIL 3 days in a row.',
+    titleKey: 'badges.items.streak_3.title',
+    descriptionKey: 'badges.items.streak_3.description',
     metric: 'longestStreak',
     target: 3,
   },
@@ -98,8 +98,8 @@ export const BADGES: readonly BadgeDefinition[] = [
     family: 'presence',
     tier: 'silver',
     glyph: 'flame',
-    title: 'One full week',
-    description: 'Open UNTIL 7 days in a row.',
+    titleKey: 'badges.items.streak_7.title',
+    descriptionKey: 'badges.items.streak_7.description',
     metric: 'longestStreak',
     target: 7,
   },
@@ -108,8 +108,8 @@ export const BADGES: readonly BadgeDefinition[] = [
     family: 'presence',
     tier: 'gold',
     glyph: 'flame',
-    title: '30 days',
-    description: 'Open UNTIL 30 days in a row.',
+    titleKey: 'badges.items.streak_30.title',
+    descriptionKey: 'badges.items.streak_30.description',
     metric: 'longestStreak',
     target: 30,
   },
@@ -118,8 +118,8 @@ export const BADGES: readonly BadgeDefinition[] = [
     family: 'presence',
     tier: 'ember',
     glyph: 'flame',
-    title: '100 days',
-    description: 'Open UNTIL 100 days in a row.',
+    titleKey: 'badges.items.streak_100.title',
+    descriptionKey: 'badges.items.streak_100.description',
     metric: 'longestStreak',
     target: 100,
   },
@@ -130,8 +130,8 @@ export const BADGES: readonly BadgeDefinition[] = [
     family: 'tasks',
     tier: 'bronze',
     glyph: 'check',
-    title: 'First one done',
-    description: 'Finish your first task.',
+    titleKey: 'badges.items.task_1.title',
+    descriptionKey: 'badges.items.task_1.description',
     metric: 'tasksCompleted',
     target: 1,
   },
@@ -140,8 +140,8 @@ export const BADGES: readonly BadgeDefinition[] = [
     family: 'tasks',
     tier: 'bronze',
     glyph: 'check',
-    title: 'Ten down',
-    description: 'Finish 10 tasks.',
+    titleKey: 'badges.items.task_10.title',
+    descriptionKey: 'badges.items.task_10.description',
     metric: 'tasksCompleted',
     target: 10,
   },
@@ -150,8 +150,8 @@ export const BADGES: readonly BadgeDefinition[] = [
     family: 'tasks',
     tier: 'silver',
     glyph: 'check',
-    title: 'Fifty finished',
-    description: 'Finish 50 tasks.',
+    titleKey: 'badges.items.task_50.title',
+    descriptionKey: 'badges.items.task_50.description',
     metric: 'tasksCompleted',
     target: 50,
   },
@@ -160,8 +160,8 @@ export const BADGES: readonly BadgeDefinition[] = [
     family: 'tasks',
     tier: 'gold',
     glyph: 'check',
-    title: 'Two hundred',
-    description: 'Finish 200 tasks.',
+    titleKey: 'badges.items.task_200.title',
+    descriptionKey: 'badges.items.task_200.description',
     metric: 'tasksCompleted',
     target: 200,
   },
@@ -170,8 +170,9 @@ export const BADGES: readonly BadgeDefinition[] = [
     family: 'tasks',
     tier: 'silver',
     glyph: 'sun',
-    title: 'Clean day',
-    description: `Finish every task on a day with ${PERFECT_DAY_MIN_TASKS} or more.`,
+    titleKey: 'badges.items.perfect_1.title',
+    descriptionKey: 'badges.items.perfect_1.description',
+    descriptionParams: { min: PERFECT_DAY_MIN_TASKS },
     metric: 'perfectDays',
     target: 1,
   },
@@ -180,8 +181,8 @@ export const BADGES: readonly BadgeDefinition[] = [
     family: 'tasks',
     tier: 'gold',
     glyph: 'sun',
-    title: 'Seven clean days',
-    description: 'Have 7 clean days.',
+    titleKey: 'badges.items.perfect_7.title',
+    descriptionKey: 'badges.items.perfect_7.description',
     metric: 'perfectDays',
     target: 7,
   },
@@ -192,8 +193,8 @@ export const BADGES: readonly BadgeDefinition[] = [
     family: 'time',
     tier: 'bronze',
     glyph: 'hourglass',
-    title: 'Your number',
-    description: 'Save your birth date in Settings.',
+    titleKey: 'badges.items.life_set.title',
+    descriptionKey: 'badges.items.life_set.description',
     metric: 'birthDateSet',
     target: 1,
   },
@@ -202,8 +203,8 @@ export const BADGES: readonly BadgeDefinition[] = [
     family: 'time',
     tier: 'bronze',
     glyph: 'globe',
-    title: 'The big picture',
-    description: 'Open the Life screen.',
+    titleKey: 'badges.items.life_viewed.title',
+    descriptionKey: 'badges.items.life_viewed.description',
     metric: 'lifeViewed',
     target: 1,
   },
@@ -212,8 +213,8 @@ export const BADGES: readonly BadgeDefinition[] = [
     family: 'time',
     tier: 'bronze',
     glyph: 'flag',
-    title: 'Deadline set',
-    description: 'Add a countdown.',
+    titleKey: 'badges.items.deadline_set.title',
+    descriptionKey: 'badges.items.deadline_set.description',
     metric: 'countdownsCreated',
     target: 1,
   },
@@ -222,8 +223,8 @@ export const BADGES: readonly BadgeDefinition[] = [
     family: 'time',
     tier: 'silver',
     glyph: 'flag',
-    title: 'Made it',
-    description: 'Reach the date of a countdown.',
+    titleKey: 'badges.items.deadline_reached.title',
+    descriptionKey: 'badges.items.deadline_reached.description',
     metric: 'countdownsReached',
     target: 1,
   },
@@ -232,8 +233,8 @@ export const BADGES: readonly BadgeDefinition[] = [
     family: 'time',
     tier: 'bronze',
     glyph: 'target',
-    title: 'Goal set',
-    description: 'Create a monthly goal.',
+    titleKey: 'badges.items.goal_set.title',
+    descriptionKey: 'badges.items.goal_set.description',
     metric: 'goalsCreated',
     target: 1,
   },
@@ -242,8 +243,8 @@ export const BADGES: readonly BadgeDefinition[] = [
     family: 'time',
     tier: 'silver',
     glyph: 'star',
-    title: 'Regular',
-    description: 'Open UNTIL 50 times.',
+    titleKey: 'badges.items.opens_50.title',
+    descriptionKey: 'badges.items.opens_50.description',
     metric: 'appOpens',
     target: 50,
   },
@@ -284,31 +285,6 @@ export function findNewlyEarned(
   return BADGES.filter(
     b => !alreadyEarned.has(b.id) && getBadgeProgress(b, snapshot).reached,
   ).map(b => b.id);
-}
-
-type TaskDayRow = Pick<DailyTask, 'date' | 'completed'>;
-
-export function countCompletedTasks(tasks: readonly TaskDayRow[]): number {
-  return tasks.reduce((sum, t) => sum + (t.completed ? 1 : 0), 0);
-}
-
-/** Days with at least `minTasks` tasks where every task is done. */
-export function countPerfectDays(
-  tasks: readonly TaskDayRow[],
-  minTasks: number = PERFECT_DAY_MIN_TASKS,
-): number {
-  const byDay = new Map<string, { total: number; done: number }>();
-  for (const t of tasks) {
-    const day = byDay.get(t.date) ?? { total: 0, done: 0 };
-    day.total += 1;
-    if (t.completed) day.done += 1;
-    byDay.set(t.date, day);
-  }
-  let perfect = 0;
-  byDay.forEach(day => {
-    if (day.total >= minTasks && day.done === day.total) perfect += 1;
-  });
-  return perfect;
 }
 
 /** Next badge in a family the user is closest to, for the "up next" hint. */

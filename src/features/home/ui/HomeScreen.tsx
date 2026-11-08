@@ -8,7 +8,6 @@ import {
   NativeSyntheticEvent,
   NativeScrollEvent,
 } from 'react-native';
-import Svg, { Line, Rect } from 'react-native-svg';
 import {
   useNavigation,
   useFocusEffect,
@@ -50,6 +49,7 @@ import {
 } from '../../../shared/theme';
 import type { RootStackParamList } from '../../../shared/navigation/types';
 import { logAnalyticsEvent } from '../../../shared/analytics/analytics';
+import { useTranslation } from '../../../shared/i18n/useTranslation';
 import { setEmberRouteOverride } from '../../../shared/ui/emberSurface';
 import { TaskReportContent } from '../../tasks';
 import { InterventionHomeCard } from '../../activity';
@@ -57,7 +57,9 @@ import { CountdownHomeCard, useNextCountdownDays } from '../../countdowns';
 import { orderHomeCards, scrollDepthBucket } from '../domain/homeCardOrder';
 import { useSwipeHint } from '../hooks/useSwipeHint';
 import { HomeCardStack } from './HomeCardStack';
-import { LockedLifeTile, TimeBlock, TodayTimeBlock } from './TimeBlock';
+import { TasksFabIcon } from './TasksFabIcon';
+import { LockedLifeTile, TimeBlock } from './TimeBlock';
+import { TodayTimeBlock } from './TodayTimeBlock';
 import {
   formatLifePassedLeft,
   formatMonthPassedLeft,
@@ -65,6 +67,7 @@ import {
 } from '../../../shared/time/homeFormatters';
 
 export function HomeScreen() {
+  const { t } = useTranslation();
   const navigation =
     useNavigation<NativeStackNavigationProp<RootStackParamList, 'Home'>>();
   const insets = useSafeAreaInsets();
@@ -128,9 +131,9 @@ export function HomeScreen() {
 
   useEffect(() => {
     navigation.setOptions({
-      title: pageIndex === 0 ? 'UNTIL' : 'Task report',
+      title: pageIndex === 0 ? 'UNTIL' : t('nav.taskReport'),
     });
-  }, [navigation, pageIndex]);
+  }, [navigation, pageIndex, t]);
 
   useFocusEffect(
     React.useCallback(() => {
@@ -271,7 +274,7 @@ export function HomeScreen() {
                       {timeOfDayLabel()}
                     </Text>
                     <Text variant="title" color="primary" style={styles.headline}>
-                      Time reality
+                      {t('home.headline')}
                     </Text>
                   </View>
                   {streak.count > 0 ? (
@@ -294,7 +297,7 @@ export function HomeScreen() {
                 </Text>
                 {swipeHint.visible ? (
                   <Text variant="micro" color="secondary" style={styles.swipeHint}>
-                    Swipe left for task report →
+                    {t('home.swipeHint')}
                   </Text>
                 ) : null}
               </Animated.View>
@@ -316,9 +319,9 @@ export function HomeScreen() {
                     reduceMotion={reduceMotion}
                     size="compact"
                     glyph="month"
-                    title="Month"
-                    passedLabel={`${month.passedDays} days`}
-                    leftLabel={`${month.leftDays} days`}
+                    title={t('home.tile.month')}
+                    passedLabel={t('common.days', { count: month.passedDays })}
+                    leftLabel={t('common.days', { count: month.leftDays })}
                     progress={timeState.month}
                     passedPct={month.passedPct}
                     leftPct={month.leftPct}
@@ -332,9 +335,9 @@ export function HomeScreen() {
                     reduceMotion={reduceMotion}
                     size="compact"
                     glyph="year"
-                    title="Year"
-                    passedLabel={`${year.passedDays} days`}
-                    leftLabel={`${year.leftDays} days`}
+                    title={t('home.tile.year')}
+                    passedLabel={t('common.days', { count: year.passedDays })}
+                    leftLabel={t('common.days', { count: year.leftDays })}
                     progress={timeState.year}
                     passedPct={year.passedPct}
                     leftPct={year.leftPct}
@@ -349,9 +352,9 @@ export function HomeScreen() {
                       reduceMotion={reduceMotion}
                       size="compact"
                       glyph="life"
-                      title="Life"
-                      passedLabel={`${life.passedDays.toLocaleString()} days`}
-                      leftLabel={`${life.leftDays.toLocaleString()} days`}
+                      title={t('home.tile.life')}
+                      passedLabel={t('common.days', { count: life.passedDays })}
+                      leftLabel={t('common.days', { count: life.leftDays })}
                       progress={timeState.life}
                       passedPct={life.passedPct}
                       leftPct={life.leftPct}
@@ -361,16 +364,16 @@ export function HomeScreen() {
                     <LockedLifeTile
                       size="compact"
                       reduceMotion={reduceMotion}
-                      label="Unlock"
-                      accessibilityLabel="Life is locked. Open Premium to unlock."
+                      label={t('home.unlock')}
+                      accessibilityLabel={t('home.lifeLockedA11y')}
                       onPress={handlePremiumPress}
                     />
                   ) : (
                     <LockedLifeTile
                       size="compact"
                       reduceMotion={reduceMotion}
-                      label="Set birth date"
-                      accessibilityLabel="Set birth date in Settings to see life progress."
+                      label={t('home.setBirthDate')}
+                      accessibilityLabel={t('home.setBirthDateA11y')}
                       onPress={handleSettingsPress}
                     />
                   )}
@@ -408,11 +411,10 @@ export function HomeScreen() {
                     color="secondary"
                     style={styles.blockTitleAlone}
                   >
-                    Coming soon
+                    {t('home.comingSoon.title')}
                   </Text>
                   <Text variant="body" color="secondary">
-                    Monthly goals and today&apos;s tasks will appear here in a
-                    future update.
+                    {t('home.comingSoon.body')}
                   </Text>
                 </GlassCard>
               ) : null}
@@ -454,53 +456,15 @@ export function HomeScreen() {
         {pageIndex === 0 ? (
           <FAB
             onPress={handleFabPress}
-            label="Tasks"
-            accessibilityLabel="Today's tasks"
+            label={t('home.fab.label')}
+            accessibilityLabel={t('home.fab.a11y')}
             style={{
               position: 'absolute',
               right: Spacing[4],
               bottom: Math.max(insets.bottom, Spacing[3]) + Spacing[2],
             }}
           >
-            <Svg width={24} height={24} viewBox="0 0 24 24" fill="none">
-              <Rect
-                x={5}
-                y={3}
-                width={14}
-                height={18}
-                rx={2}
-                stroke="#FFFFFF"
-                strokeWidth={2}
-                fill="none"
-              />
-              <Line
-                x1={8}
-                y1={8}
-                x2={16}
-                y2={8}
-                stroke="#FFFFFF"
-                strokeWidth={1.5}
-                strokeLinecap="round"
-              />
-              <Line
-                x1={8}
-                y1={12}
-                x2={16}
-                y2={12}
-                stroke="#FFFFFF"
-                strokeWidth={1.5}
-                strokeLinecap="round"
-              />
-              <Line
-                x1={8}
-                y1={16}
-                x2={14}
-                y2={16}
-                stroke="#FFFFFF"
-                strokeWidth={1.5}
-                strokeLinecap="round"
-              />
-            </Svg>
+            <TasksFabIcon />
           </FAB>
         ) : null}
       </ScreenGradient>

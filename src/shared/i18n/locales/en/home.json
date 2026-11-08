@@ -1,0 +1,22 @@
+{
+  "home.headline": "Time reality",
+  "home.swipeHint": "Swipe left for task report →",
+  "home.tile.today": "Today",
+  "home.tile.month": "Month",
+  "home.tile.year": "Year",
+  "home.tile.life": "Life",
+  "home.percentLeft": "{{percent}}% left",
+  "home.tileA11y": "{{title}}: {{left}} left, {{passed}} passed. Tap for details.",
+  "home.unlock": "Unlock",
+  "home.lifeLockedA11y": "Life is locked. Open Premium to unlock.",
+  "home.setBirthDate": "Set birth date",
+  "home.setBirthDateA11y": "Set birth date in Settings to see life progress.",
+  "home.comingSoon.title": "Coming soon",
+  "home.comingSoon.body": "Monthly goals and today's tasks will appear here in a future update.",
+  "home.fab.label": "Tasks",
+  "home.fab.a11y": "Today's tasks",
+  "home.cards.showMoreA11y": "Show more cards",
+  "home.cards.showFewerA11y": "Show fewer cards",
+  "home.cards.showLess": "Show less",
+  "home.cards.more": "More ({{count}})"
+}

@@ -1,0 +1,22 @@
+{
+  "countdowns.subtitle": "Ajoutez les dates vers lesquelles vous comptez à rebours (p. ex. Projet, Entretien). Le widget affiche la plus proche et le nombre de jours restants.",
+  "countdowns.titlePlaceholder": "Titre (p. ex. Projet, Entretien)",
+  "countdowns.defaultTitle": "Échéance",
+  "countdowns.empty": "Aucune échéance pour le moment. Ajoutez-en une ci-dessus, puis ajoutez le widget Échéance à votre écran d’accueil.",
+  "countdowns.widgetHint": "Ajoutez le widget Échéance depuis votre écran d’accueil.",
+  "countdowns.remove.title": "Supprimer le compte à rebours",
+  "countdowns.remove.message": "Supprimer « {{title}} » ?",
+  "countdowns.daysLeft_one": "Il reste {{count}} jour",
+  "countdowns.daysLeft_other": "Il reste {{count}} jours",
+  "countdowns.daysAgo_one": "Il y a {{count}} jour",
+  "countdowns.daysAgo_other": "Il y a {{count}} jours",
+  "countdowns.home.eyebrowNext": "PROCHAIN COMPTE À REBOURS",
+  "countdowns.home.eyebrowEmpty": "COMPTES À REBOURS",
+  "countdowns.home.emptyTitle": "Comptez à rebours jusqu’à quelque chose",
+  "countdowns.home.emptyBody": "Un examen, un voyage, un anniversaire, une échéance.",
+  "countdowns.addWithPremium": "Ajouter avec Premium",
+  "countdowns.limit.reached": "C’est le maximum qu’une liste peut contenir ({{limit}}). Supprimez-en une pour en ajouter une autre.",
+  "countdowns.limit.free": "L’offre gratuite garde une échéance. Premium en accepte jusqu’à {{max}}.",
+  "countdowns.onWidget": "Affichée sur votre widget",
+  "countdowns.passed": "Cette échéance est passée. Supprimez-la quand vous en avez fini avec elle."
+}

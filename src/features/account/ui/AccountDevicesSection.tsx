@@ -13,7 +13,8 @@ import {
 import { GlassCard, Text } from '../../../shared/ui';
 import { Radius, Spacing, useTheme } from '../../../shared/theme';
 import type { AccountDevice } from '../../../shared/types';
-import { DEVICE_RULES_NOTE } from '../domain/accountCopy';
+import { deviceRulesNote } from '../domain/accountCopy';
+import { useTranslation } from '../../../shared/i18n/useTranslation';
 import { describeDevices } from '../domain/deviceList';
 import { DeviceGlyph } from './DeviceGlyph';
 
@@ -35,9 +36,12 @@ export function AccountDevicesSection({
   onRemove,
 }: AccountDevicesSectionProps) {
   const theme = useTheme();
+  const { t, language } = useTranslation();
   const view = useMemo(
     () => describeDevices(devices, currentDeviceId, now),
-    [devices, currentDeviceId, now],
+    // `language`: the rows hold translated text.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [devices, currentDeviceId, now, language],
   );
 
   return (
@@ -47,14 +51,17 @@ export function AccountDevicesSection({
           variant="caption"
           style={[styles.label, { color: theme.textSecondary }]}
         >
-          Devices
+          {t('account.devices.title')}
         </Text>
         <Text
           variant="caption"
-          accessibilityLabel={`${view.used} of ${view.max} device slots in use`}
+          accessibilityLabel={t('account.devices.slotsA11y', {
+            used: view.used,
+            max: view.max,
+          })}
           style={{ color: theme.textSecondary }}
         >
-          {view.used} of {view.max} in use
+          {t('account.devices.slots', { used: view.used, max: view.max })}
         </Text>
       </View>
 
@@ -83,7 +90,7 @@ export function AccountDevicesSection({
             variant="caption"
             style={[styles.empty, { color: theme.textSecondary }]}
           >
-            No devices yet.
+            {t('account.devices.empty')}
           </Text>
         ) : (
           view.rows.map((row, index) => {
@@ -125,7 +132,7 @@ export function AccountDevicesSection({
                         ]}
                       >
                         <Text variant="caption" style={styles.badgeLabel}>
-                          This device
+                          {t('account.devices.thisDevice')}
                         </Text>
                       </View>
                     ) : null}
@@ -143,13 +150,15 @@ export function AccountDevicesSection({
                     disabled={removingId === row.id}
                     hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                     accessibilityRole="button"
-                    accessibilityLabel={`Remove ${row.title}`}
+                    accessibilityLabel={t('account.devices.removeA11y', {
+                      device: row.title,
+                    })}
                   >
                     {removingId === row.id ? (
                       <ActivityIndicator color={theme.textSecondary} />
                     ) : (
                       <Text variant="caption" style={styles.removeLabel}>
-                        Remove
+                        {t('common.remove')}
                       </Text>
                     )}
                   </TouchableOpacity>
@@ -161,7 +170,7 @@ export function AccountDevicesSection({
       </GlassCard>
 
       <Text variant="caption" style={[styles.note, { color: theme.textMuted }]}>
-        {DEVICE_RULES_NOTE}
+        {deviceRulesNote()}
       </Text>
     </View>
   );

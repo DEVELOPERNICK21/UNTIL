@@ -3,6 +3,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import { Radius, Spacing, useTheme } from '../theme';
 import { Text } from './Text';
+import { useTranslation } from '../i18n/useTranslation';
 
 interface AgeConfirmationCheckProps {
   checked: boolean;
@@ -21,7 +22,8 @@ export function AgeConfirmationCheck({
   attention = false,
 }: AgeConfirmationCheckProps) {
   const theme = useTheme();
-  const label = `I'm ${minimumAge} or older`;
+  const { t } = useTranslation();
+  const label = t('common.age.label', { age: minimumAge });
   const needsTick = attention && !checked;
   const borderColor = checked || attention ? theme.percent : theme.textMuted;
   return (
@@ -64,7 +66,7 @@ export function AgeConfirmationCheck({
       </Pressable>
       {needsTick ? (
         <Text variant="caption" style={[styles.hint, { color: theme.percent }]}>
-          Tick this to continue.
+          {t('common.age.hint')}
         </Text>
       ) : null}
     </View>
