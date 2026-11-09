@@ -95,6 +95,7 @@ export {
   getAccessStateUseCase,
   getOfferingsUseCase,
   identifyPurchasesUserUseCase,
+  observePlanUseCase,
   observeSubscriptionUseCase,
   presentRevenueCatPaywallUseCase,
   purchasePackageUseCase,

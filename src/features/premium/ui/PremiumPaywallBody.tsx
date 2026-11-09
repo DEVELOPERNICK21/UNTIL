@@ -53,6 +53,7 @@ import { PaywallVisualHero } from './PaywallVisualHero';
 import { PaywallLossFrame } from './PaywallLossFrame';
 import { PaywallFeatureTiles } from './PaywallFeatureTiles';
 import { PaywallCompareStrip } from './PaywallCompareStrip';
+import { PlanCard } from './PlanCard';
 import { PaywallPlanCards } from './PaywallPlanCards';
 import { StudentVerifyModal } from './StudentVerifyModal';
 import { useStudentVerification } from '../hooks/useStudentVerification';
@@ -336,18 +337,7 @@ export function PremiumPaywallBody({
         />
       )}
 
-      {isPremium && (
-        <View
-          style={[
-            styles.statusCard,
-            { borderColor: theme.percent, backgroundColor: theme.glassBg },
-          ]}
-        >
-          <Text variant="body" color="primary">
-            {t('premium.paywall.active')}
-          </Text>
-        </View>
-      )}
+      {isPremium && <PlanCard />}
 
       {!isPremium && access.trialActive && (
         <View

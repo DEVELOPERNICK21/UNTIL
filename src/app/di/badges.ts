@@ -9,6 +9,7 @@ import {
   badgeRepository,
   countdownRepository,
   monthlyGoalRepository,
+  planRecordStore,
   presenceRepository,
   subscriptionRepository,
   taskRepository,
@@ -23,6 +24,7 @@ export const evaluateBadgesUseCase = new EvaluateBadgesUseCase(
   monthlyGoalRepository,
   timeRepository,
   subscriptionRepository,
+  planRecordStore,
 );
 
 export const getBadgesUseCase = new GetBadgesUseCase(

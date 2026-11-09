@@ -70,5 +70,16 @@
   "badges.quests.finish": "Görevlerini tamamla",
   "badges.quests.tasks_one": "{{count}} görev",
   "badges.quests.tasks_other": "{{count}} görev",
-  "badges.quests.addTask": "Bir görev ekle"
+  "badges.quests.addTask": "Bir görev ekle",
+  "badges.section.premium": "Premium",
+  "badges.items.plan_weekly.title": "Haftalık destekçi",
+  "badges.items.plan_weekly.description": "Haftalık bir Premium planı başlat.",
+  "badges.items.plan_monthly.title": "Aylık destekçi",
+  "badges.items.plan_monthly.description": "Aylık bir Premium planı başlat.",
+  "badges.items.plan_yearly.title": "Yıllık destekçi",
+  "badges.items.plan_yearly.description": "Yıllık bir Premium planı başlat.",
+  "badges.items.plan_student.title": "Öğrenci destekçi",
+  "badges.items.plan_student.description": "Öğrenci yıllık Premium planını başlat.",
+  "badges.items.plan_lifetime.title": "Ömür boyu kurucu",
+  "badges.items.plan_lifetime.description": "Ömür boyu Premium’a sahip ol."
 }

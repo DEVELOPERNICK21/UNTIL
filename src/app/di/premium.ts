@@ -10,6 +10,7 @@ import { UpdateSubscriptionUseCase } from '../../features/premium/domain/useCase
 import { GetAccessStateUseCase } from '../../features/premium/domain/useCases/GetAccessStateUseCase';
 import { VerifyStudentEmailUseCase } from '../../features/premium/domain/useCases/VerifyStudentEmailUseCase';
 import { SyncCustomerInfoUseCase } from '../../features/premium/domain/useCases/SyncCustomerInfoUseCase';
+import { ObservePlanUseCase } from '../../features/premium/domain/useCases/ObservePlanUseCase';
 import { PresentRevenueCatPaywallUseCase } from '../../features/premium/domain/useCases/PresentRevenueCatPaywallUseCase';
 import { ConfigurePurchasesUseCase } from '../../features/premium/domain/useCases/ConfigurePurchasesUseCase';
 import { GetOfferingsUseCase } from '../../features/premium/domain/useCases/GetOfferingsUseCase';
@@ -24,6 +25,7 @@ import {
   deviceIdProvider,
   licenseVerificationService,
   paywallPresenter,
+  planRecordStore,
   purchasesRepository,
   studentVerificationRepository,
   subscriptionRepository,
@@ -61,8 +63,11 @@ export const verifyStudentEmailUseCase = new VerifyStudentEmailUseCase(
 
 export const syncCustomerInfoUseCase = new SyncCustomerInfoUseCase(
   subscriptionRepository,
-  syncPremiumAfterEntitlementChange
+  syncPremiumAfterEntitlementChange,
+  planRecordStore
 );
+
+export const observePlanUseCase = new ObservePlanUseCase(planRecordStore);
 
 export const presentRevenueCatPaywallUseCase = new PresentRevenueCatPaywallUseCase(
   paywallPresenter,

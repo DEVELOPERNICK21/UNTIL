@@ -70,5 +70,16 @@
   "badges.quests.finish": "Erledige deine Aufgaben",
   "badges.quests.tasks_one": "{{count}} Aufgabe",
   "badges.quests.tasks_other": "{{count}} Aufgaben",
-  "badges.quests.addTask": "Aufgabe hinzufügen"
+  "badges.quests.addTask": "Aufgabe hinzufügen",
+  "badges.section.premium": "Premium",
+  "badges.items.plan_weekly.title": "Wöchentlicher Unterstützer",
+  "badges.items.plan_weekly.description": "Starte einen wöchentlichen Premium-Tarif.",
+  "badges.items.plan_monthly.title": "Monatlicher Unterstützer",
+  "badges.items.plan_monthly.description": "Starte einen monatlichen Premium-Tarif.",
+  "badges.items.plan_yearly.title": "Jährlicher Unterstützer",
+  "badges.items.plan_yearly.description": "Starte einen jährlichen Premium-Tarif.",
+  "badges.items.plan_student.title": "Studierenden-Unterstützer",
+  "badges.items.plan_student.description": "Starte den Premium-Jahrestarif für Studierende.",
+  "badges.items.plan_lifetime.title": "Gründer auf Lebenszeit",
+  "badges.items.plan_lifetime.description": "Hol dir Premium für immer."
 }

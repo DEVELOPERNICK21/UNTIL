@@ -5,6 +5,7 @@
  */
 
 export { hasPremiumBundle } from './accessControl';
+export type { IPlanRecordStore } from './ports/IPlanRecordStore';
 export type { ISubscriptionRepository } from './ports/ISubscriptionRepository';
 export { getTrialDayIndex } from './trialDay';
 export type { GetAccessStateUseCase } from './useCases/GetAccessStateUseCase';

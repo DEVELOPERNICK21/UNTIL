@@ -19,6 +19,28 @@ Two premium paths:
 
 ---
 
+## After a purchase
+
+What the app keeps and shows once RevenueCat says a plan is active (`SyncCustomerInfoUseCase`, `premium/domain/plan.ts`).
+
+| Piece | What it does |
+|-------|--------------|
+| Plan record | `premium.plan` in MMKV: kind (weekly, monthly, yearly, student, lifetime), store, start, end or renewal date, whether it will renew, free trial, billing problem. Read through `usePlan`. |
+| Welcome popup | `PurchaseWelcomeSheet`, driven by `usePurchaseWelcome`. Queued the first time a plan becomes active (a purchase, a restore, or Premium arriving from another device), shown once after a short pause so it never opens under the store sheet or the RevenueCat paywall. It greets by time of day, names the plan, says when it renews or ends, and lists what is unlocked. A renewal never queues one, and neither does a subscriber from before this existed. |
+| Plan card | `PlanCard` on the Premium screen: the plan, when it renews or ends, since when, who bills it, and Manage subscription. Lifetime reads "yours for good". |
+| Profile chip | `PlanChip` in the Settings profile: "Premium · Yearly plan". Tap opens the Premium screen. |
+| Badges | One per plan (`plan_weekly`, `plan_monthly`, `plan_yearly`, `plan_student`, `plan_lifetime`, family `premium`), earned the moment that plan is active and kept after it lapses. Backed by `premium.plansBought`, which never shrinks. |
+
+### When Premium ends
+
+RevenueCat lists entitlements that are no longer active (`entitlements.all`). When it says `premium` has ended (expired, refunded), the app turns Premium off, clears the plan record and the purchase type, and keeps the badges. An answer that is merely empty (offline, a fresh sign-in) does not take Premium away: only an explicit "ended" does. A web license key keeps Premium on whatever the store says.
+
+### Dashboard checklist
+
+All five products attached to the `premium` entitlement; offering `default` current, with packages `$rc_weekly`, `$rc_monthly`, `$rc_annual`, `$rc_lifetime` and `student_yearly`; products Active in Play Console and App Store Connect; release builds use the `appl_` and `goog_` keys, never `test_`.
+
+---
+
 ## Free vs Premium
 
 ### Free (no license required)

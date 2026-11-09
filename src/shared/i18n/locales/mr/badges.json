@@ -70,5 +70,16 @@
   "badges.quests.finish": "तुमची कामे पूर्ण करा",
   "badges.quests.tasks_one": "{{count}} काम",
   "badges.quests.tasks_other": "{{count}} कामे",
-  "badges.quests.addTask": "काम जोडा"
+  "badges.quests.addTask": "काम जोडा",
+  "badges.section.premium": "प्रीमियम",
+  "badges.items.plan_weekly.title": "साप्ताहिक समर्थक",
+  "badges.items.plan_weekly.description": "साप्ताहिक प्रीमियम प्लॅन सुरू करा.",
+  "badges.items.plan_monthly.title": "मासिक समर्थक",
+  "badges.items.plan_monthly.description": "मासिक प्रीमियम प्लॅन सुरू करा.",
+  "badges.items.plan_yearly.title": "वार्षिक समर्थक",
+  "badges.items.plan_yearly.description": "वार्षिक प्रीमियम प्लॅन सुरू करा.",
+  "badges.items.plan_student.title": "विद्यार्थी समर्थक",
+  "badges.items.plan_student.description": "विद्यार्थी वार्षिक प्रीमियम प्लॅन सुरू करा.",
+  "badges.items.plan_lifetime.title": "आजीवन संस्थापक",
+  "badges.items.plan_lifetime.description": "आयुष्यभरासाठी प्रीमियम मिळवा."
 }

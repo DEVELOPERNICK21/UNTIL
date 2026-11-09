@@ -23,6 +23,7 @@ const SECTIONS: Array<{ family: BadgeFamily; titleKey: TranslationKey }> = [
   { family: 'presence', titleKey: 'badges.section.presence' },
   { family: 'tasks', titleKey: 'badges.section.tasks' },
   { family: 'time', titleKey: 'badges.section.time' },
+  { family: 'premium', titleKey: 'badges.section.premium' },
 ];
 
 const MEDAL_SIZE = 68;

@@ -8,10 +8,14 @@
  * - paywall_dismissed      { surface, kind, method, seconds_open }   Closed without buying.
  * - premium_restore_empty  { source }   Restore succeeded but found nothing.
  * - premium_restore_failed { source, error_code }   Restore threw.
+ * - premium_welcome_shown  { plan }   The "Welcome to Premium" popup was on screen.
+ * - premium_welcome_see_plan { plan }   They tapped "See my plan" on it.
  */
 export type PaywallEventName =
   | 'paywall_shown'
   | 'paywall_plan_selected'
   | 'paywall_dismissed'
   | 'premium_restore_empty'
-  | 'premium_restore_failed';
+  | 'premium_restore_failed'
+  | 'premium_welcome_shown'
+  | 'premium_welcome_see_plan';

@@ -70,5 +70,16 @@
   "badges.quests.finish": "Finish your tasks",
   "badges.quests.tasks_one": "{{count}} task",
   "badges.quests.tasks_other": "{{count}} tasks",
-  "badges.quests.addTask": "Add a task"
+  "badges.quests.addTask": "Add a task",
+  "badges.section.premium": "Premium",
+  "badges.items.plan_weekly.title": "Weekly Supporter",
+  "badges.items.plan_weekly.description": "Start a weekly Premium plan.",
+  "badges.items.plan_monthly.title": "Monthly Supporter",
+  "badges.items.plan_monthly.description": "Start a monthly Premium plan.",
+  "badges.items.plan_yearly.title": "Yearly Supporter",
+  "badges.items.plan_yearly.description": "Start a yearly Premium plan.",
+  "badges.items.plan_student.title": "Student Supporter",
+  "badges.items.plan_student.description": "Start the student yearly Premium plan.",
+  "badges.items.plan_lifetime.title": "Lifetime Founder",
+  "badges.items.plan_lifetime.description": "Get Premium for life."
 }

@@ -49,7 +49,7 @@ const mockOverview: {
   badges: BadgeView[];
   earnedCount: number;
   total: number;
-} = { badges: [], earnedCount: 0, total: 17 };
+} = { badges: [], earnedCount: 0, total: 22 };
 const mockLiveStatus = {
   supported: true,
   enabled: false,
@@ -405,7 +405,7 @@ describe('badges screen', () => {
       expect.arrayContaining([
         'Streaks',
         'Tasks',
-        '1 of 17 badges',
+        '1 of 22 badges',
         'Streak: 5 days. Best: 8.',
         'One missed day is forgiven. Ready now.',
         'Day one',
@@ -420,7 +420,7 @@ describe('badges screen', () => {
       expect.arrayContaining([
         'Серии',
         'Задачи',
-        '1 из 17 значков',
+        '1 из 22 значков',
         'Серия: 5 дней. Лучшая: 8.',
         'Один пропущенный день прощается. Готово.',
         'День первый',
@@ -441,7 +441,7 @@ describe('badges screen', () => {
     expect(texts(tree)).toEqual(
       expect.arrayContaining([
         '連続記録',
-        '17個中1個のバッジ',
+        '22個中1個のバッジ',
         '連続記録：5日。最高：8日。',
         '初日',
         '獲得済み',
@@ -485,7 +485,7 @@ describe('badge shelf', () => {
     expect(texts(tree)).toEqual(
       expect.arrayContaining([
         'Badges',
-        '1 of 17  ›',
+        '1 of 22  ›',
         'Up next: Ten down',
         '4 of 10 tasks',
       ]),
@@ -495,7 +495,7 @@ describe('badge shelf', () => {
     expect(texts(tree)).toEqual(
       expect.arrayContaining([
         'Abzeichen',
-        '1 von 17  ›',
+        '1 von 22  ›',
         'Als Nächstes: Zehn geschafft',
         '4 von 10 Aufgaben',
       ]),
@@ -504,7 +504,7 @@ describe('badge shelf', () => {
       tree.root.findAll(
         n =>
           n.props.accessibilityLabel ===
-          'Abzeichen. 1 von 17 erhalten. Alle Abzeichen öffnen.',
+          'Abzeichen. 1 von 22 erhalten. Alle Abzeichen öffnen.',
       ).length,
     ).toBeGreaterThan(0);
   });

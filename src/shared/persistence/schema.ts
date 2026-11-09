@@ -36,6 +36,10 @@ export const STORAGE_KEYS = {
   PURCHASE_TYPE: 'purchase.type',
   PURCHASE_DATE: 'purchase.date',
   PURCHASE_TOKEN: 'purchase.token',
+  // The plan the store reports, the kinds ever bought (for badges) and the welcome still to show.
+  PREMIUM_PLAN: 'premium.plan',
+  PREMIUM_PLANS_BOUGHT: 'premium.plansBought',
+  PREMIUM_WELCOME_PENDING: 'premium.welcomePending',
 
   // Activity (Layer 3)
   ACTIVITY_BLOCKS_PREFIX: 'activity.blocks.',
