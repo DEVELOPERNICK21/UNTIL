@@ -32,9 +32,11 @@ import type { ProgressBand } from '../theme/emotionalCopy';
 import { getFontFamilyForWeight, Weight } from '../theme';
 import { subscribeEmberReactions } from './emberReactions';
 import { useReduceMotion } from './useReduceMotion';
+import { useTranslation } from '../i18n/useTranslation';
 import {
   MAX_SPARKS,
   dayRingAngle,
+  emberAccessibility,
   emberVitals,
   nextAngle,
   phaseKeyframes,
@@ -171,6 +173,7 @@ export function Ember({
   onLongPress,
 }: EmberProps) {
   const reduceMotion = useReduceMotion();
+  const { t } = useTranslation();
   const appActive = useAppActive();
   const vitals = useMemo(
     () => emberVitals(progress, moodProp),
@@ -242,7 +245,7 @@ export function Ember({
       mounted.current = false;
       active.forEach(a => a.stop());
       active.clear();
-      timers.forEach(t => clearTimeout(t));
+      timers.forEach(timer => clearTimeout(timer));
       timers.clear();
       if (exprTimer.current) clearTimeout(exprTimer.current);
       if (bubbleTimer.current) clearTimeout(bubbleTimer.current);
@@ -617,11 +620,11 @@ export function Ember({
   const handlePress = useCallback(() => {
     if (!interactive) return;
     onInteract?.();
-    void AccessibilityInfo.announceForAccessibility('Ember smiles');
+    void AccessibilityInfo.announceForAccessibility(t('ember.a11y.smile'));
     markBusy(1500);
 
     const now = Date.now();
-    tapTimes.current = [...tapTimes.current.filter(t => now - t < 3000), now];
+    tapTimes.current = [...tapTimes.current.filter(stamp => now - stamp < 3000), now];
     const excited =
       tapTimes.current.length >= 5 && now - lastExcited.current > 4000;
     if (excited) {
@@ -662,6 +665,7 @@ export function Ember({
   }, [
     interactive,
     onInteract,
+    t,
     markBusy,
     showExpression,
     motionOk,
@@ -684,10 +688,10 @@ export function Ember({
   }, [bubbleOpacity, motionOk, play, to]);
 
   const announceTimeLeft = useCallback(() => {
-    const label = timeLeftLabel(progress);
+    const label = timeLeftLabel(progress, t);
     void AccessibilityInfo.announceForAccessibility(label);
     return label;
-  }, [progress]);
+  }, [progress, t]);
 
   const handleLongPress = useCallback(() => {
     if (!interactive) return;
@@ -743,8 +747,8 @@ export function Ember({
       lastTouch.current = { x: pageX, y: pageY };
       stageRef.current?.measureInWindow((x, y, w, h) => {
         center.current = { x: x + w / 2, y: y + h / 2 };
-        const t = lastTouch.current;
-        if (t && touching.current) follow(t.x, t.y);
+        const touch = lastTouch.current;
+        if (touch && touching.current) follow(touch.x, touch.y);
       });
     },
     [interactive, motionOk, follow],
@@ -1021,12 +1025,7 @@ export function Ember({
       onTouchCancel={handleTouchEnd}
       disabled={!interactive}
       accessibilityRole={interactive ? 'button' : undefined}
-      accessibilityLabel={`Ember companion, ${mood} mood. ${timeLeftLabel(
-        progress,
-      )}${interactive ? '. Tap to say hello' : ''}`}
-      accessibilityActions={
-        interactive ? [{ name: 'timeLeft', label: 'Hear time left today' }] : []
-      }
+      {...emberAccessibility(t, mood, progress, interactive)}
       onAccessibilityAction={handleAccessibilityAction}
       hitSlop={8}
     >

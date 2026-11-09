@@ -13,11 +13,13 @@ import {
   Weight,
   getFontFamilyForWeight,
 } from '../../../shared/theme';
+import { PREMIUM_ITEM_LIMIT } from '../../../config/featureLimits';
+import { useTranslation } from '../../../shared/i18n/useTranslation';
+
+type TileId = 'life' | 'month' | 'overlay' | 'alerts' | 'deadlines';
 
 type FeatureTile = {
-  id: string;
-  label: string;
-  blurb: string;
+  id: TileId;
   glyph: PeriodGlyphKind;
   progress: number;
   featured?: boolean;
@@ -26,37 +28,27 @@ type FeatureTile = {
 const FEATURES: FeatureTile[] = [
   {
     id: 'life',
-    label: 'Life view',
-    blurb: 'Full life % and weeks. Always visible.',
     glyph: 'life',
     progress: 0.58,
     featured: true,
   },
   {
     id: 'month',
-    label: 'Month widget',
-    blurb: 'See the month pass on your home screen.',
     glyph: 'month',
     progress: 0.42,
   },
   {
     id: 'overlay',
-    label: 'Overlay',
-    blurb: 'Month & life float above other apps.',
     glyph: 'day',
     progress: 0.7,
   },
   {
     id: 'alerts',
-    label: 'Lost-time alerts',
-    blurb: 'A nudge when wasted hours cross your limit.',
     glyph: 'year',
     progress: 0.33,
   },
   {
     id: 'deadlines',
-    label: 'Every deadline and counter',
-    blurb: 'Keep up to 20 of each, not just one. A widget lists your next three deadlines.',
     glyph: 'day',
     progress: 0.85,
     featured: true,
@@ -69,6 +61,7 @@ interface PaywallFeatureTilesProps {
 
 export function PaywallFeatureTiles({ onSelect }: PaywallFeatureTilesProps) {
   const theme = useTheme();
+  const { t } = useTranslation();
   const [selected, setSelected] = React.useState<string | null>('life');
 
   const active = FEATURES.find(f => f.id === selected) ?? FEATURES[0];
@@ -86,7 +79,7 @@ export function PaywallFeatureTiles({ onSelect }: PaywallFeatureTilesProps) {
           },
         ]}
       >
-        What you keep with Premium
+        {t('premium.tiles.heading')}
       </Text>
 
       <View style={styles.grid}>
@@ -97,7 +90,9 @@ export function PaywallFeatureTiles({ onSelect }: PaywallFeatureTilesProps) {
               key={f.id}
               accessibilityRole="button"
               accessibilityState={{ selected: on }}
-              accessibilityLabel={`${f.label}. ${f.blurb}`}
+              accessibilityLabel={`${t(`premium.tiles.${f.id}.label`)}. ${t(
+                `premium.tiles.${f.id}.blurb`,
+              )}`}
               onPress={() => {
                 Vibration.vibrate(8);
                 setSelected(f.id);
@@ -132,7 +127,7 @@ export function PaywallFeatureTiles({ onSelect }: PaywallFeatureTilesProps) {
                   fontFamily: getFontFamilyForWeight(Weight.medium),
                 }}
               >
-                {f.label}
+                {t(`premium.tiles.${f.id}.label`)}
               </Text>
             </Pressable>
           );
@@ -151,7 +146,7 @@ export function PaywallFeatureTiles({ onSelect }: PaywallFeatureTilesProps) {
           accessibilityLiveRegion="polite"
         >
           <Text variant="body" style={{ color: theme.textSecondary }}>
-            {active.blurb}
+            {t(`premium.tiles.${active.id}.blurb`, { max: PREMIUM_ITEM_LIMIT })}
           </Text>
         </View>
       ) : null}

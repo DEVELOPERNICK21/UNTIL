@@ -4,6 +4,7 @@
  */
 
 import { progressBand, type ProgressBand } from '../theme/emotionalCopy';
+import { t } from '../i18n/translate';
 
 const clamp01 = (n: number) => (Number.isFinite(n) ? Math.min(1, Math.max(0, n)) : 0);
 
@@ -53,15 +54,42 @@ export function nextAngle(previous: number, target: number): number {
 }
 
 /** What Ember tells you when you hold it. */
-export function timeLeftLabel(progress: number): string {
-  const minutes = Math.round((1 - clamp01(progress)) * 24 * 60);
-  if (minutes <= 0) return 'Today is done';
-  if (minutes >= 1440) return 'A whole new day';
-  const h = Math.floor(minutes / 60);
-  const m = minutes % 60;
-  if (h === 0) return `${m}m left today`;
-  if (m === 0) return `${h}h left today`;
-  return `${h}h ${m}m left today`;
+export function timeLeftLabel(progress: number, translate: typeof t = t): string {
+  const total = Math.round((1 - clamp01(progress)) * 24 * 60);
+  if (total <= 0) return translate('ember.time.done');
+  if (total >= 1440) return translate('ember.time.newDay');
+  const hours = Math.floor(total / 60);
+  const minutes = total % 60;
+  if (hours === 0) return translate('ember.time.minutesLeft', { minutes });
+  if (minutes === 0) return translate('ember.time.hoursLeft', { hours });
+  return translate('ember.time.hoursMinutesLeft', { hours, minutes });
+}
+
+/**
+ * What a screen reader gets for Ember: a label with its mood, the time left and (when it can be
+ * tapped) the hint, plus the action that reads out the time left.
+ */
+export function emberAccessibility(
+  translate: typeof t,
+  mood: ProgressBand,
+  progress: number,
+  interactive: boolean,
+): {
+  accessibilityLabel: string;
+  accessibilityActions: { name: string; label: string }[];
+} {
+  return {
+    accessibilityLabel: translate(
+      interactive ? 'ember.a11y.labelInteractive' : 'ember.a11y.label',
+      {
+        mood: translate(`ember.mood.${mood}`),
+        timeLeft: timeLeftLabel(progress, translate),
+      },
+    ),
+    accessibilityActions: interactive
+      ? [{ name: 'timeLeft', label: translate('ember.a11y.timeLeftAction') }]
+      : [],
+  };
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -137,6 +165,6 @@ export function phaseKeyframes(phase: number, stops: number[], values: number[])
 }
 
 /** Evaluates keyframes the way Animated.interpolate would. Exported for tests. */
-export function evaluateKeyframes(frames: Keyframes, t: number): number {
-  return sampleKeyframes(frames.inputRange, frames.outputRange, t);
+export function evaluateKeyframes(frames: Keyframes, at: number): number {
+  return sampleKeyframes(frames.inputRange, frames.outputRange, at);
 }

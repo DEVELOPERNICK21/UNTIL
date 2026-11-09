@@ -5,6 +5,8 @@ export type OfferingProductRow = {
   title: string;
   description?: string;
   price: string;
+  /** Numeric store price and its ISO currency, when the store reports them. */
+  amount?: number;
   currency?: string;
 };
 
@@ -19,6 +21,8 @@ export function mapOfferingPackagesToRows(
       productId: pkg.productId,
       title: pkg.title,
       price: pkg.priceString,
+      amount: pkg.price,
+      currency: pkg.currencyCode,
     };
     if (pkg.description) {
       row.description = pkg.description;

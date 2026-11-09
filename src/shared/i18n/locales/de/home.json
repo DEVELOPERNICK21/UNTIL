@@ -1,0 +1,22 @@
+{
+  "home.headline": "Zeit-Realität",
+  "home.swipeHint": "Nach links wischen für den Aufgabenbericht →",
+  "home.tile.today": "Heute",
+  "home.tile.month": "Monat",
+  "home.tile.year": "Jahr",
+  "home.tile.life": "Leben",
+  "home.percentLeft": "{{percent}}% übrig",
+  "home.tileA11y": "{{title}}: {{left}} übrig, {{passed}} vergangen. Tippen für Details.",
+  "home.unlock": "Freischalten",
+  "home.lifeLockedA11y": "Leben ist gesperrt. Öffne Premium zum Freischalten.",
+  "home.setBirthDate": "Geburtsdatum festlegen",
+  "home.setBirthDateA11y": "Lege dein Geburtsdatum in den Einstellungen fest, um den Lebensfortschritt zu sehen.",
+  "home.comingSoon.title": "Demnächst",
+  "home.comingSoon.body": "Monatsziele und die Aufgaben für heute erscheinen hier in einem kommenden Update.",
+  "home.fab.label": "Aufgaben",
+  "home.fab.a11y": "Aufgaben für heute",
+  "home.cards.showMoreA11y": "Mehr Karten anzeigen",
+  "home.cards.showFewerA11y": "Weniger Karten anzeigen",
+  "home.cards.showLess": "Weniger anzeigen",
+  "home.cards.more": "Mehr ({{count}})"
+}

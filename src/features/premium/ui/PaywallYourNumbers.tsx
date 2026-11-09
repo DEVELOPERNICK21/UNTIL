@@ -14,10 +14,12 @@ import {
   Weight,
   getFontFamilyForWeight,
 } from '../../../shared/theme';
+import { useTranslation } from '../../../shared/i18n/useTranslation';
 import { buildYourNumbers } from '../domain/yourNumbers';
 
 export function PaywallYourNumbers() {
   const theme = useTheme();
+  const { t, formatDate } = useTranslation();
   const { timeState, userProfile } = useObserveTimeState();
 
   const rows = useMemo(
@@ -25,15 +27,16 @@ export function PaywallYourNumbers() {
       buildYourNumbers(
         timeState,
         !!userProfile.birthDate,
-        new Date().toLocaleString(undefined, { month: 'long' }),
+        formatDate(new Date(), { month: 'long' }),
+        t,
       ),
-    [timeState, userProfile.birthDate],
+    [timeState, userProfile.birthDate, formatDate, t],
   );
 
   return (
     <View
       style={[styles.card, { borderColor: theme.glassBorder, backgroundColor: theme.glassBg }]}
-      accessibilityLabel="Your numbers right now"
+      accessibilityLabel={t('premium.numbers.a11y')}
     >
       <Text
         variant="caption"
@@ -42,7 +45,7 @@ export function PaywallYourNumbers() {
           { color: theme.textSecondary, fontFamily: getFontFamilyForWeight(Weight.medium) },
         ]}
       >
-        YOUR NUMBERS RIGHT NOW
+        {t('premium.numbers.heading')}
       </Text>
       {rows.map(row => (
         <View key={row.id} style={styles.row}>
@@ -53,9 +56,9 @@ export function PaywallYourNumbers() {
             <Text variant="caption" style={{ color: theme.textSecondary }}>
               {row.premium
                 ? row.percent == null
-                  ? `${row.widget} · add your birth date to see it`
-                  : `${row.widget} · Premium`
-                : `${row.widget} · free`}
+                  ? t('premium.numbers.needsBirth', { widget: row.widget })
+                  : t('premium.numbers.premium', { widget: row.widget })
+                : t('premium.numbers.free', { widget: row.widget })}
             </Text>
           </View>
           <Text

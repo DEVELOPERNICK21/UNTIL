@@ -3,10 +3,16 @@ import { View, StyleSheet, TouchableOpacity } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Text, GlassCard } from '../../../shared/ui';
-import { Spacing, useTheme, getFontFamilyForWeight, Weight } from '../../../shared/theme';
+import {
+  Spacing,
+  useTheme,
+  getFontFamilyForWeight,
+  Weight,
+} from '../../../shared/theme';
 import type { RootStackParamList } from '../../../shared/navigation/types';
 import { logAnalyticsEvent } from '../../../shared/analytics/analytics';
 import { useCountdowns } from '../hooks/useCountdowns';
+import { useTranslation } from '../../../shared/i18n/useTranslation';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 
@@ -17,6 +23,7 @@ type Nav = NativeStackNavigationProp<RootStackParamList>;
 export function CountdownHomeCard() {
   const theme = useTheme();
   const navigation = useNavigation<Nav>();
+  const { t } = useTranslation();
   const { countdowns, refresh } = useCountdowns();
 
   // Coming back from the countdowns screen should show what was just added.
@@ -31,17 +38,25 @@ export function CountdownHomeCard() {
     .sort((a, b) => a.daysUntil - b.daysUntil)[0];
 
   const open = useCallback(() => {
-    void logAnalyticsEvent('countdown_home_card_tapped', { has_countdown: next != null });
+    void logAnalyticsEvent('countdown_home_card_tapped', {
+      has_countdown: next != null,
+    });
     navigation.navigate('Countdowns');
   }, [navigation, next]);
 
   return (
-    <TouchableOpacity activeOpacity={0.85} onPress={open} accessibilityRole="button">
+    <TouchableOpacity
+      activeOpacity={0.85}
+      onPress={open}
+      accessibilityRole="button"
+    >
       <GlassCard style={styles.card}>
         <View style={styles.row}>
           <View style={styles.text}>
             <Text variant="micro" color="secondary" style={styles.eyebrow}>
-              {next ? 'NEXT COUNTDOWN' : 'COUNTDOWNS'}
+              {next
+                ? t('countdowns.home.eyebrowNext')
+                : t('countdowns.home.eyebrowEmpty')}
             </Text>
             <Text
               variant="body"
@@ -51,11 +66,11 @@ export function CountdownHomeCard() {
                 fontFamily: getFontFamilyForWeight(Weight.semibold),
               }}
             >
-              {next ? next.title : 'Count down to something'}
+              {next ? next.title : t('countdowns.home.emptyTitle')}
             </Text>
             {!next ? (
               <Text variant="caption" color="secondary" numberOfLines={1}>
-                An exam, a trip, a birthday, a deadline.
+                {t('countdowns.home.emptyBody')}
               </Text>
             ) : null}
           </View>
@@ -67,7 +82,7 @@ export function CountdownHomeCard() {
                 fontFamily: getFontFamilyForWeight(Weight.semibold),
               }}
             >
-              {next ? next.daysLabel : 'Add'}
+              {next ? next.daysLabel : t('common.add')}
             </Text>
           </View>
         </View>

@@ -1,0 +1,22 @@
+{
+  "countdowns.subtitle": "Añade las fechas hacia las que cuentas atrás (p. ej., Proyecto, Entrevista). El widget muestra la más cercana y cuántos días faltan.",
+  "countdowns.titlePlaceholder": "Título (p. ej., Proyecto, Entrevista)",
+  "countdowns.defaultTitle": "Fecha límite",
+  "countdowns.empty": "Aún no hay fechas límite. Añade una arriba y luego agrega el widget de fecha límite a tu pantalla de inicio.",
+  "countdowns.widgetHint": "Agrega el widget de fecha límite desde tu pantalla de inicio.",
+  "countdowns.remove.title": "Eliminar cuenta regresiva",
+  "countdowns.remove.message": "¿Eliminar «{{title}}»?",
+  "countdowns.daysLeft_one": "Falta {{count}} día",
+  "countdowns.daysLeft_other": "Faltan {{count}} días",
+  "countdowns.daysAgo_one": "Hace {{count}} día",
+  "countdowns.daysAgo_other": "Hace {{count}} días",
+  "countdowns.home.eyebrowNext": "PRÓXIMA CUENTA REGRESIVA",
+  "countdowns.home.eyebrowEmpty": "CUENTAS REGRESIVAS",
+  "countdowns.home.emptyTitle": "Cuenta regresiva hacia algo",
+  "countdowns.home.emptyBody": "Un examen, un viaje, un cumpleaños, una fecha límite.",
+  "countdowns.addWithPremium": "Añadir con Premium",
+  "countdowns.limit.reached": "Es el máximo que admite una lista ({{limit}}). Elimina uno para añadir otro.",
+  "countdowns.limit.free": "El plan gratuito guarda una fecha límite. Premium admite hasta {{max}}.",
+  "countdowns.onWidget": "Se muestra en tu widget",
+  "countdowns.passed": "Esta fecha límite ya pasó. Elimínala cuando termines con ella."
+}

@@ -1,4 +1,8 @@
-import { generateDailyReflection, getDateKey } from '../reflectionEngine';
+import {
+  generateDailyReflection,
+  getDateKey,
+  localizeReflection,
+} from '../reflectionEngine';
 import type {
   DailyReflection,
   DailyReflectionState,
@@ -50,7 +54,8 @@ export class GetDailyReflectionUseCase {
         : this.generateAndCache(date, tone, canUsePremiumReflections);
 
     return {
-      reflection,
+      // The saved text is in the language it was made in; write it again in the active one.
+      reflection: localizeReflection(reflection),
       visible: this.persistence.getDailyReflectionDismissedDate() !== dateKey,
       tone,
       canUsePremiumReflections,

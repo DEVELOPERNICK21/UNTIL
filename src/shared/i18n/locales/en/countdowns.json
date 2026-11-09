@@ -1,0 +1,22 @@
+{
+  "countdowns.subtitle": "Add the dates you are counting down to (e.g. Project, Interview). The widget shows the nearest one and how many days are left.",
+  "countdowns.titlePlaceholder": "Title (e.g. Project, Interview)",
+  "countdowns.defaultTitle": "Deadline",
+  "countdowns.empty": "No deadlines yet. Add one above, then add the Deadline widget to your home screen.",
+  "countdowns.widgetHint": "Add the Deadline widget from your home screen.",
+  "countdowns.remove.title": "Remove countdown",
+  "countdowns.remove.message": "Remove \"{{title}}\"?",
+  "countdowns.daysLeft_one": "{{count}} day left",
+  "countdowns.daysLeft_other": "{{count}} days left",
+  "countdowns.daysAgo_one": "{{count}} day ago",
+  "countdowns.daysAgo_other": "{{count}} days ago",
+  "countdowns.home.eyebrowNext": "NEXT COUNTDOWN",
+  "countdowns.home.eyebrowEmpty": "COUNTDOWNS",
+  "countdowns.home.emptyTitle": "Count down to something",
+  "countdowns.home.emptyBody": "An exam, a trip, a birthday, a deadline.",
+  "countdowns.addWithPremium": "Add with Premium",
+  "countdowns.limit.reached": "That is the most one list holds ({{limit}}). Remove one to add another.",
+  "countdowns.limit.free": "The free plan keeps one deadline. Premium holds up to {{max}}.",
+  "countdowns.onWidget": "Shown on your widget",
+  "countdowns.passed": "This deadline has passed. Remove it when you are done with it."
+}

@@ -13,6 +13,8 @@ import {
 } from '../data/WidgetSync';
 import type { OverlayWidgetType } from '../data/WidgetSync';
 import { useAccessControl } from '../../premium';
+import { useTranslation } from '../../../shared/i18n/useTranslation';
+import type { TranslationKey } from '../../../shared/i18n/translate';
 
 function isPremiumOverlayType(type: OverlayWidgetType): boolean {
   return type === 'month' || type === 'life';
@@ -20,33 +22,33 @@ function isPremiumOverlayType(type: OverlayWidgetType): boolean {
 
 const WIDGET_OPTIONS: {
   type: OverlayWidgetType;
-  title: string;
-  description: string;
+  titleKey: TranslationKey;
+  descriptionKey: TranslationKey;
 }[] = [
   {
     type: 'day',
-    title: 'Today',
-    description: 'How much of today is left · hours remaining.',
+    titleKey: 'nav.today',
+    descriptionKey: 'widgets.island.option.day.description',
   },
   {
     type: 'month',
-    title: 'This month',
-    description: 'Days left in the month · Premium.',
+    titleKey: 'nav.thisMonth',
+    descriptionKey: 'widgets.island.option.month.description',
   },
   {
     type: 'year',
-    title: 'This year',
-    description: 'How much of the year is left.',
+    titleKey: 'nav.thisYear',
+    descriptionKey: 'widgets.island.option.year.description',
   },
   {
     type: 'life',
-    title: 'Your life',
-    description: 'Days left in life · set birth date · Premium.',
+    titleKey: 'nav.life',
+    descriptionKey: 'widgets.island.option.life.description',
   },
   {
     type: 'hourCalc',
-    title: 'Hour timer',
-    description: 'Coming in a future update.',
+    titleKey: 'widgets.island.option.hour.title',
+    descriptionKey: 'widgets.tile.comingSoon',
   },
 ];
 
@@ -56,16 +58,18 @@ function isComingSoonType(type: OverlayWidgetType): boolean {
 
 export function useOverlayControl() {
   const { hasPremiumBundle } = useAccessControl();
+  const { t } = useTranslation();
   const [activeWidget, setActiveWidget] = useState<OverlayWidgetType>(
     getOverlayWidgetType(),
   );
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
   const [overlayActive, setOverlayActive] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  // A flag, not the text, so the message follows the language when it changes.
+  const [startFailed, setStartFailed] = useState(false);
 
   const refreshStatus = useCallback(() => {
     setActiveWidget(getOverlayWidgetType());
-    setError(null);
+    setStartFailed(false);
     canDrawOverlays()
       .then(setHasPermission)
       .catch(() => setHasPermission(false));
@@ -102,14 +106,12 @@ export function useOverlayControl() {
     try {
       startOverlay();
       setOverlayActive(true);
-      setError(null);
+      setStartFailed(false);
       if (hasPermission === false) {
         // Notification-only mode still runs; offer overlay permission separately.
       }
     } catch {
-      setError(
-        'Could not start Live Island. Check notification permission, then try again.',
-      );
+      setStartFailed(true);
     }
   }, [hasPermission]);
 
@@ -124,26 +126,28 @@ export function useOverlayControl() {
 
   const options = useMemo(
     () =>
-      WIDGET_OPTIONS.map(option => {
-        const comingSoon = isComingSoonType(option.type);
+      WIDGET_OPTIONS.map(({ type, titleKey, descriptionKey }) => {
+        const comingSoon = isComingSoonType(type);
         const lockedPremium =
-          !comingSoon && isPremiumOverlayType(option.type) && !hasPremiumBundle;
+          !comingSoon && isPremiumOverlayType(type) && !hasPremiumBundle;
         return {
-          ...option,
-          selected: activeWidget === option.type,
+          type,
+          title: t(titleKey),
+          description: t(descriptionKey),
+          selected: activeWidget === type,
           comingSoon,
           lockedPremium,
           locked: comingSoon || lockedPremium,
         };
       }),
-    [activeWidget, hasPremiumBundle],
+    [activeWidget, hasPremiumBundle, t],
   );
 
   return {
     options,
     hasPermission,
     overlayActive,
-    error,
+    error: startFailed ? t('widgets.island.problem.androidStart') : null,
     handleSelectWidget,
     handleStart,
     handleStop,

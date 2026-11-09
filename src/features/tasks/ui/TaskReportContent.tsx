@@ -18,16 +18,17 @@ import {
   type PieSegment,
   type BarDataPoint,
 } from '../../../shared/ui';
-import { Spacing, Colors, Typography, FontFamily, useTheme } from '../../../shared/theme';
+import {
+  Spacing,
+  Colors,
+  Typography,
+  FontFamily,
+  useTheme,
+} from '../../../shared/theme';
 import type { TaskCategory } from '../../../shared/types';
-
-const CATEGORY_LABELS: Record<TaskCategory, string> = {
-  health: 'Health',
-  work: 'Work',
-  personal_care: 'Personal care',
-  learning: 'Learning',
-  other: 'Other',
-};
+import type { formatDate as FormatDate } from '../../../shared/i18n/translate';
+import { useTranslation } from '../../../shared/i18n/useTranslation';
+import { taskCategoryLabel } from './taskCategories';
 
 const CATEGORY_COLORS: Record<TaskCategory, string> = {
   health: '#34C759',
@@ -37,13 +38,15 @@ const CATEGORY_COLORS: Record<TaskCategory, string> = {
   other: '#8E8E93',
 };
 
-const CHART_SIZE = Math.min(200, Dimensions.get('window').width - Spacing[4] * 2 - 32);
+const CHART_SIZE = Math.min(
+  200,
+  Dimensions.get('window').width - Spacing[4] * 2 - 32,
+);
 const BAR_CHART_WIDTH = Dimensions.get('window').width - Spacing[4] * 2 - 8;
 
-function shortDayLabel(dateStr: string): string {
+function shortDayLabel(dateStr: string, formatDate: typeof FormatDate): string {
   const d = new Date(dateStr + 'Z');
-  const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-  return days[d.getUTCDay()] ?? dateStr.slice(5);
+  return formatDate(d, { weekday: 'short', timeZone: 'UTC' });
 }
 
 type ReportPeriod = 'daily' | 'weekly' | 'monthly';
@@ -53,7 +56,10 @@ type TaskReportContentProps = {
   embedded?: boolean;
 };
 
-export function TaskReportContent({ embedded = false }: TaskReportContentProps) {
+export function TaskReportContent({
+  embedded = false,
+}: TaskReportContentProps) {
+  const { t, formatDate } = useTranslation();
   const theme = useTheme();
   const [period, setPeriod] = useState<ReportPeriod>('daily');
   const [refreshKey, setRefreshKey] = useState(0);
@@ -88,16 +94,16 @@ export function TaskReportContent({ embedded = false }: TaskReportContentProps) 
       segments.push({
         value: dailyStats.completed,
         color: '#34C759',
-        label: 'Done',
+        label: t('tasks.report.legendDone'),
       });
     if (dailyStats.pending > 0)
       segments.push({
         value: dailyStats.pending,
         color: '#E9A23A',
-        label: 'Pending',
+        label: t('tasks.report.legendPending'),
       });
     return segments.length ? segments : [{ value: 1, color: Colors.divider }];
-  }, [dailyStats]);
+  }, [dailyStats, t]);
 
   const dailyCategoryPie: PieSegment[] = useMemo(() => {
     const entries = Object.entries(dailyStats.byCategory);
@@ -105,18 +111,18 @@ export function TaskReportContent({ embedded = false }: TaskReportContentProps) 
     return entries.map(([cat, s]) => ({
       value: s.total,
       color: CATEGORY_COLORS[cat as TaskCategory] ?? Colors.divider,
-      label: CATEGORY_LABELS[cat as TaskCategory],
+      label: taskCategoryLabel(cat as TaskCategory, t),
     }));
-  }, [dailyStats.byCategory]);
+  }, [dailyStats.byCategory, t]);
 
   const weeklyBarData: BarDataPoint[] = useMemo(
     () =>
       weeklyStats.byDay.map(d => ({
-        label: shortDayLabel(d.date),
+        label: shortDayLabel(d.date, formatDate),
         value: d.completed,
         value2: d.total - d.completed,
       })),
-    [weeklyStats.byDay],
+    [weeklyStats.byDay, formatDate],
   );
 
   const weeklyCategoryPie: PieSegment[] = useMemo(() => {
@@ -125,9 +131,9 @@ export function TaskReportContent({ embedded = false }: TaskReportContentProps) 
     return entries.map(([cat, s]) => ({
       value: s.total,
       color: CATEGORY_COLORS[cat as TaskCategory] ?? Colors.divider,
-      label: CATEGORY_LABELS[cat as TaskCategory],
+      label: taskCategoryLabel(cat as TaskCategory, t),
     }));
-  }, [weeklyStats.byCategory]);
+  }, [weeklyStats.byCategory, t]);
 
   const monthlyBarData: BarDataPoint[] = useMemo(() => {
     const byWeek: BarDataPoint[] = [];
@@ -137,13 +143,13 @@ export function TaskReportContent({ embedded = false }: TaskReportContentProps) 
       const completed = weekDays.reduce((s, d) => s + d.completed, 0);
       const total = weekDays.reduce((s, d) => s + d.total, 0);
       byWeek.push({
-        label: `W${w + 1}`,
+        label: t('tasks.report.weekShort', { number: w + 1 }),
         value: completed,
         value2: total - completed,
       });
     }
     return byWeek.length ? byWeek : [{ label: '—', value: 0 }];
-  }, [monthlyStats.byDay]);
+  }, [monthlyStats.byDay, t]);
 
   const monthlyCategoryPie: PieSegment[] = useMemo(() => {
     const entries = Object.entries(monthlyStats.byCategory);
@@ -151,16 +157,16 @@ export function TaskReportContent({ embedded = false }: TaskReportContentProps) 
     return entries.map(([cat, s]) => ({
       value: s.total,
       color: CATEGORY_COLORS[cat as TaskCategory] ?? Colors.divider,
-      label: CATEGORY_LABELS[cat as TaskCategory],
+      label: taskCategoryLabel(cat as TaskCategory, t),
     }));
-  }, [monthlyStats.byCategory]);
+  }, [monthlyStats.byCategory, t]);
 
   const stats =
     period === 'daily'
       ? dailyStats
       : period === 'weekly'
-        ? weeklyStats
-        : monthlyStats;
+      ? weeklyStats
+      : monthlyStats;
   const completionPct =
     stats.total > 0 ? Math.round((stats.completed / stats.total) * 100) : 0;
 
@@ -180,20 +186,15 @@ export function TaskReportContent({ embedded = false }: TaskReportContentProps) 
       }
     >
       <Text variant="large" color="primary" style={styles.title}>
-        Task report
+        {t('nav.taskReport')}
       </Text>
       <Text variant="body" color="secondary" style={styles.subtitle}>
         {embedded
-          ? 'Swipe right to return home. Completion by day, week, and month.'
-          : 'Completion and status by day, week, and month.'}
+          ? t('tasks.report.subtitleEmbedded')
+          : t('tasks.report.subtitle')}
       </Text>
 
-      <View
-        style={[
-          styles.segmented,
-          { backgroundColor: theme.divider },
-        ]}
-      >
+      <View style={[styles.segmented, { backgroundColor: theme.divider }]}>
         {(['daily', 'weekly', 'monthly'] as const).map(p => (
           <TouchableOpacity
             key={p}
@@ -212,7 +213,7 @@ export function TaskReportContent({ embedded = false }: TaskReportContentProps) 
               color={period === p ? 'primary' : 'secondary'}
               style={styles.segmentLabel}
             >
-              {p === 'daily' ? 'Daily' : p === 'weekly' ? 'Weekly' : 'Monthly'}
+              {t(`tasks.report.${p}`)}
             </Text>
           </TouchableOpacity>
         ))}
@@ -222,7 +223,7 @@ export function TaskReportContent({ embedded = false }: TaskReportContentProps) 
         <View style={styles.statsGrid}>
           <View style={styles.statBlock}>
             <Text variant="caption" color="secondary" style={styles.statLabel}>
-              COMPLETED
+              {t('tasks.report.completed')}
             </Text>
             <Text variant="title" color="primary" style={styles.statValue}>
               {stats.completed}
@@ -230,7 +231,7 @@ export function TaskReportContent({ embedded = false }: TaskReportContentProps) 
           </View>
           <View style={styles.statBlock}>
             <Text variant="caption" color="secondary" style={styles.statLabel}>
-              PENDING
+              {t('tasks.report.pending')}
             </Text>
             <Text variant="title" color="primary" style={styles.statValue}>
               {stats.pending}
@@ -238,7 +239,7 @@ export function TaskReportContent({ embedded = false }: TaskReportContentProps) 
           </View>
           <View style={styles.statBlock}>
             <Text variant="caption" color="secondary" style={styles.statLabel}>
-              COMPLETION
+              {t('tasks.report.completion')}
             </Text>
             <Text
               variant="title"
@@ -246,8 +247,7 @@ export function TaskReportContent({ embedded = false }: TaskReportContentProps) 
               style={[
                 styles.statValue,
                 {
-                  color:
-                    completionPct === 100 ? '#34C759' : theme.textPrimary,
+                  color: completionPct === 100 ? '#34C759' : theme.textPrimary,
                 },
               ]}
             >
@@ -264,7 +264,7 @@ export function TaskReportContent({ embedded = false }: TaskReportContentProps) 
             color="secondary"
             style={styles.cardTitle}
           >
-            Today · Status
+            {t('tasks.report.todayStatus')}
           </Text>
           <View style={styles.chartSection}>
             <PieChart
@@ -283,7 +283,7 @@ export function TaskReportContent({ embedded = false }: TaskReportContentProps) 
                 color="secondary"
                 style={styles.categoryTitle}
               >
-                By category
+                {t('tasks.report.byCategory')}
               </Text>
               <View style={styles.chartSection}>
                 <PieChart
@@ -307,7 +307,7 @@ export function TaskReportContent({ embedded = false }: TaskReportContentProps) 
             color="secondary"
             style={styles.cardTitle}
           >
-            Last 7 days
+            {t('tasks.report.last7')}
           </Text>
           <BarChart
             data={weeklyBarData}
@@ -323,7 +323,7 @@ export function TaskReportContent({ embedded = false }: TaskReportContentProps) 
                 color="secondary"
                 style={styles.categoryTitle}
               >
-                By category
+                {t('tasks.report.byCategory')}
               </Text>
               <View style={styles.chartSection}>
                 <PieChart
@@ -347,7 +347,7 @@ export function TaskReportContent({ embedded = false }: TaskReportContentProps) 
             color="secondary"
             style={styles.cardTitle}
           >
-            This month by week
+            {t('tasks.report.monthByWeek')}
           </Text>
           <BarChart
             data={monthlyBarData}
@@ -363,7 +363,7 @@ export function TaskReportContent({ embedded = false }: TaskReportContentProps) 
                 color="secondary"
                 style={styles.categoryTitle}
               >
-                By category
+                {t('tasks.report.byCategory')}
               </Text>
               <View style={styles.chartSection}>
                 <PieChart

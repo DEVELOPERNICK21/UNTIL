@@ -7,24 +7,48 @@ import type {
   OnboardingGoal,
   OnboardingQuizAnswers,
 } from '../../../shared/types';
+import {
+  getLanguage,
+  t,
+  type TranslationKey,
+} from '../../../shared/i18n/translate';
 
 export type PersonalizationPriority = OnboardingGoal | 'rest' | 'other';
 
-const PRIORITY_LABELS: Record<PersonalizationPriority, string> = {
-  people: 'time with people',
-  focus: 'deep focus',
-  health: 'health and energy',
-  calm: 'calm and less doomscroll',
-  rest: 'protected rest',
-  other: 'what matters to you',
+// A whole sentence per answer: the grammar around the answer changes between languages.
+const PROTECT_KEYS: Record<PersonalizationPriority, TranslationKey> = {
+  people: 'reflections.weekly.protect.people',
+  focus: 'reflections.weekly.protect.focus',
+  health: 'reflections.weekly.protect.health',
+  calm: 'reflections.weekly.protect.calm',
+  rest: 'reflections.weekly.protect.rest',
+  other: 'reflections.weekly.protect.other',
 };
 
-const DRAIN_LABELS: Record<OnboardingDrain, string> = {
-  social: 'phone and social scrolling',
-  work: 'work overflow',
-  busywork: 'busywork and decisions',
-  priorities: 'unclear priorities',
-  unsure: 'quiet leaks',
+const MAP_KEYS: Record<PersonalizationPriority, TranslationKey> = {
+  people: 'ember.personal.map.people',
+  focus: 'ember.personal.map.focus',
+  health: 'ember.personal.map.health',
+  calm: 'ember.personal.map.calm',
+  rest: 'ember.personal.map.rest',
+  other: 'ember.personal.map.other',
+};
+
+const LIFE_GRID_KEYS: Record<PersonalizationPriority, TranslationKey> = {
+  people: 'ember.personal.lifeGrid.people',
+  focus: 'ember.personal.lifeGrid.focus',
+  health: 'ember.personal.lifeGrid.health',
+  calm: 'ember.personal.lifeGrid.calm',
+  rest: 'ember.personal.lifeGrid.rest',
+  other: 'ember.personal.lifeGrid.other',
+};
+
+const LEAK_KEYS: Record<OnboardingDrain, TranslationKey> = {
+  social: 'ember.personal.leak.social',
+  work: 'ember.personal.leak.work',
+  busywork: 'ember.personal.leak.busywork',
+  priorities: 'ember.personal.leak.priorities',
+  unsure: 'ember.personal.leak.unsure',
 };
 
 export interface EmberPersonalizationContext {
@@ -39,6 +63,37 @@ export function resolvePersonalizationPriority(
   return answers.valuesPriority ?? answers.goal;
 }
 
+/** What the quiz adds to the weekly reflection. */
+export interface WeeklyReflectionExtras {
+  /** How full the life grid is, 0 to 100. Left out when there is no birth date. */
+  lifePercent?: number;
+  priority?: PersonalizationPriority;
+}
+
+/**
+ * The weekly reflection message with the sentences the quiz adds: how full the life grid is and
+ * what to protect. Sentences are joined with a space, except in Japanese, which does not use one.
+ */
+export function weeklyReflectionMessage(
+  baseMessage: string,
+  extras: WeeklyReflectionExtras,
+  translate: typeof t = t
+): string {
+  const parts = [baseMessage];
+
+  if (extras.lifePercent != null) {
+    parts.push(
+      translate('reflections.weekly.lifeGrid', { percent: extras.lifePercent })
+    );
+  }
+
+  if (extras.priority) {
+    parts.push(translate(PROTECT_KEYS[extras.priority]));
+  }
+
+  return parts.join(getLanguage() === 'ja' ? '' : ' ');
+}
+
 export function personalizeWeeklyReflectionMessage(
   baseMessage: string,
   answers: OnboardingQuizAnswers | undefined,
@@ -47,53 +102,32 @@ export function personalizeWeeklyReflectionMessage(
     lifeProgress?: number;
   }
 ): string {
-  const parts = [baseMessage];
-  const priority = resolvePersonalizationPriority(answers);
-
-  if (options.hasBirthDate && options.lifeProgress != null) {
-    const pct = Math.round(options.lifeProgress * 100);
-    parts.push(
-      `Your life grid is ${pct}% complete. This week is one more row.`
-    );
-  }
-
-  if (priority) {
-    const label = PRIORITY_LABELS[priority];
-    parts.push(`Protect ${label} before the week fills up.`);
-  }
-
-  return parts.join(' ');
+  return weeklyReflectionMessage(baseMessage, {
+    lifePercent:
+      options.hasBirthDate && options.lifeProgress != null
+        ? Math.round(options.lifeProgress * 100)
+        : undefined,
+    priority: resolvePersonalizationPriority(answers),
+  });
 }
 
 function priorityTip(
   priority: PersonalizationPriority,
   ctx: EmberPersonalizationContext
 ): { eyebrow: string; body: string } {
-  const label = PRIORITY_LABELS[priority];
-  if (priority === 'calm') {
-    return {
-      eyebrow: 'Your map',
-      body: `You wanted less doomscroll. Watch when ${label} slips away today.`,
-    };
-  }
-  if (priority === 'focus') {
-    return {
-      eyebrow: 'Your map',
-      body: `Deep focus was your pick. Protect one quiet block before ${Math.round(
-        (1 - ctx.dayProgress) * 100
-      )}% of today is gone.`,
-    };
-  }
   return {
-    eyebrow: 'Your map',
-    body: `Your plan centers on ${label}. One small move today still counts.`,
+    eyebrow: t('ember.personal.map.eyebrow'),
+    // Only the deep-focus sentence uses the number.
+    body: t(MAP_KEYS[priority], {
+      percent: Math.round((1 - ctx.dayProgress) * 100),
+    }),
   };
 }
 
 function drainTip(drain: OnboardingDrain): { eyebrow: string; body: string } {
   return {
-    eyebrow: 'Leak watch',
-    body: `You named ${DRAIN_LABELS[drain]} as the drain. Catch one leak early.`,
+    eyebrow: t('ember.personal.leak.eyebrow'),
+    body: t(LEAK_KEYS[drain]),
   };
 }
 
@@ -117,15 +151,15 @@ export function personalizedEmberTipsForRoute(
 
   if (routeName === 'Life' && priority) {
     tips.push({
-      eyebrow: 'Life grid',
-      body: `Zoom out. ${PRIORITY_LABELS[priority]} still fits in a finite life.`,
+      eyebrow: t('ember.personal.lifeGrid.eyebrow'),
+      body: t(LIFE_GRID_KEYS[priority]),
     });
   }
 
   if (routeName === 'Settings' && answers.cadence === 'widgets') {
     tips.push({
-      eyebrow: 'Widgets first',
-      body: 'You chose widgets over check-ins. A glance can still change a day.',
+      eyebrow: t('ember.personal.widgetsFirst.eyebrow'),
+      body: t('ember.personal.widgetsFirst.body'),
     });
   }
 

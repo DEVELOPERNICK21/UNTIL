@@ -8,6 +8,7 @@ import {
 } from 'react-native';
 import { Text } from '../../../shared/ui';
 import { Spacing, Radius, useTheme } from '../../../shared/theme';
+import { useTranslation } from '../../../shared/i18n/useTranslation';
 import { useAnalytics } from '../../../shared/analytics/useAnalytics';
 
 interface ReminderOptInModalProps {
@@ -28,6 +29,7 @@ export function ReminderOptInModal({
 }: ReminderOptInModalProps) {
   const theme = useTheme();
   const { logEvent } = useAnalytics();
+  const { t } = useTranslation();
   const [working, setWorking] = useState(false);
 
   if (!visible) return null;
@@ -53,11 +55,10 @@ export function ReminderOptInModal({
       <View style={styles.backdrop}>
         <View style={[styles.card, { backgroundColor: theme.cardBaseAlpha }]}>
           <Text variant="title" color="primary" style={styles.title}>
-            A quiet nudge each morning?
+            {t('engagement.reminder.title')}
           </Text>
           <Text variant="body" color="secondary" style={styles.body}>
-            One line at 8 am: how much of your week and year is already gone.
-            Nothing else, and you can turn it off in Settings any time.
+            {t('engagement.reminder.body')}
           </Text>
           <TouchableOpacity
             style={[styles.primary, { backgroundColor: theme.percent }]}
@@ -67,13 +68,13 @@ export function ReminderOptInModal({
             disabled={working}
             activeOpacity={0.9}
             accessibilityRole="button"
-            accessibilityLabel="Yes, remind me"
+            accessibilityLabel={t('engagement.reminder.accept')}
           >
             {working ? (
               <ActivityIndicator color="#FFFFFF" />
             ) : (
               <Text variant="sectionTitle" style={styles.primaryLabel}>
-                Yes, remind me
+                {t('engagement.reminder.accept')}
               </Text>
             )}
           </TouchableOpacity>
@@ -83,10 +84,10 @@ export function ReminderOptInModal({
             disabled={working}
             activeOpacity={0.7}
             accessibilityRole="button"
-            accessibilityLabel="Not now"
+            accessibilityLabel={t('common.notNow')}
           >
             <Text variant="body" color="secondary">
-              Not now
+              {t('common.notNow')}
             </Text>
           </TouchableOpacity>
         </View>

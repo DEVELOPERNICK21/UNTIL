@@ -15,6 +15,7 @@ import { logAnalyticsEvent } from '../../../shared/analytics/analytics';
 import { getTrialDayIndex } from '../../premium/domain';
 import { requestNotificationPermission } from '../../../shared/platform/notificationPermission';
 import { MS_PER_DAY, MS_PER_HOUR } from '../../../shared/time/constants';
+import { t } from '../../../shared/i18n/translate';
 
 const CHANNEL_ID = 'retention';
 const DEFAULT_ENABLED = false;
@@ -215,7 +216,7 @@ export async function scheduleRetentionNotifications(
     const { TriggerType } = require('@notifee/react-native');
     await notifee.createChannel({
       id: CHANNEL_ID,
-      name: 'Daily Time Reminders',
+      name: t('notifications.channel.retention'),
     });
 
     await cancelRetentionNotifications();

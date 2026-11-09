@@ -1,7 +1,8 @@
 import { MS_PER_DAY, MS_PER_HOUR } from '../shared/time/constants';
 import { SITE_URL } from './storeUrls';
 /**
- * Monetization SSOT — pricing, paywall copy, and plan positioning.
+ * Monetization SSOT — pricing, trial rules and store links. The words on the paywall live in
+ * the `premium` locale files and are assembled in ./paywallCopy.
  * See docs/MONETIZATION_STRATEGY.md and docs/MONETIZATION_SETUP.md.
  */
 
@@ -12,9 +13,6 @@ export const MONETIZATION_PRICING = {
   lifetimeInr: 1999,
   yearlyStudentInr: 249,
   yearlyRegionalTier2Inr: 399,
-  yearlyPerDayDisplay: '₹1.37',
-  /** ₹149 × 12 − ₹499 */
-  yearlySavingsVsMonthlyDisplay: '₹1,289',
 } as const;
 
 /** Optional Play products — enable when created in Console. */
@@ -31,28 +29,7 @@ export const MONETIZATION_FEATURE_FLAGS = {
 export const PAYWALL_SOCIAL_PROOF = {
   /** null until a verified figure is available — line stays hidden. */
   verifiedActiveWatchers: null as number | null,
-  /** Used when `verifiedActiveWatchers` is a positive number. */
-  numericTemplate: 'Join {count}+ people watching their life',
 } as const;
-
-export function formatPaywallSocialProof(
-  count: number | null = PAYWALL_SOCIAL_PROOF.verifiedActiveWatchers
-): string | null {
-  if (
-    !MONETIZATION_FEATURE_FLAGS.socialProofEnabled ||
-    count == null ||
-    !Number.isFinite(count) ||
-    count <= 0
-  ) {
-    return null;
-  }
-  const rounded = Math.floor(count);
-  const display =
-    rounded >= 1000
-      ? rounded.toLocaleString('en-IN')
-      : String(rounded);
-  return PAYWALL_SOCIAL_PROOF.numericTemplate.replace('{count}', display);
-}
 
 export const MONETIZATION_TRIAL_DAYS = 5;
 
@@ -84,9 +61,6 @@ export const DESKTOP_DOWNLOAD_URLS = {
   windows: `${SITE_URL}/download/windows`,
 } as const;
 
-export const STORE_SUBSCRIPTION_MANAGE_PATH =
-  'Settings › Manage subscription, or your app store account';
-
 /** Store pages where the user can cancel. Opened by Settings › Manage subscription. */
 export const SUBSCRIPTION_MANAGE_URLS = {
   ios: 'https://apps.apple.com/account/subscriptions',
@@ -96,128 +70,6 @@ export const SUBSCRIPTION_MANAGE_URLS = {
 
 export type RenewalInterval = 'week' | 'month' | 'year';
 
-const RENEWAL_ADVERB: Record<RenewalInterval, string> = {
-  week: 'weekly',
-  month: 'monthly',
-  year: 'yearly',
-};
-
-/** Button label that states the renewal (affirmative consent to auto-renew). */
-export function formatSubscribeCta(interval: RenewalInterval): string {
-  return `Subscribe · renews ${RENEWAL_ADVERB[interval]}`;
-}
-
-/** Always-visible auto-renewal terms shown directly under the subscribe button. */
-export function formatRenewalTerms(
-  price: string,
-  interval: RenewalInterval
-): string {
-  return `${price} charged today, then ${price} every ${interval}. Renews automatically until you cancel. Cancel anytime in ${STORE_SUBSCRIPTION_MANAGE_PATH}, at least 24 hours before renewal.`;
-}
-
-export const MONETIZATION_PAYWALL_COPY = {
-  headline: 'Your life is passing. Start watching it.',
-  subheadline:
-    'See every day, month, and year of your life. Live on your home screen and overlay.',
-  /** Shown on yearly plan: subscription bills immediately (no store free trial). */
-  yearlyCta: 'Subscribe yearly',
-  yearlyCtaSub:
-    'Billed at the yearly price shown when you subscribe. Cancel anytime in your app store account before renewal.',
-  yearlyCtaSubDuringPreview:
-    'Your free app preview does not charge you. Subscribing bills the yearly price. Cancel anytime in your app store account.',
-  monthlyCta: 'Monthly',
-  monthlySub:
-    'Billed monthly when you subscribe. Cancel anytime in your app store account.',
-  weeklyCta: 'Weekly',
-  weeklySub:
-    'Billed weekly when you subscribe. Cancel anytime in your app store account.',
-  lifetimeCta: 'Own it forever',
-  lifetimeSub: 'One-time payment · all Premium features · no renewal',
-  studentCta: 'Student yearly',
-  studentSub: 'Verify with a school email · same Premium features',
-  lifetimeSecondaryCta: 'Prefer one-time? Own it forever',
-  regionalNote:
-    'Prices in your currency are set by the app store (regional pricing may apply).',
-  previewActiveTitle: 'Free app preview active',
-  previewActiveBody:
-    'Premium features unlocked for {days}. No payment or subscription yet. When the preview ends, Premium locks unless you subscribe. You will not be charged automatically.',
-  subscriptionDisclosureTitle: 'Subscription & preview terms',
-  lifeUnlockEndedTitle: 'Keep your life progress visible',
-  lifeUnlockEndedMessage:
-    'Your 24-hour Life preview ended. Premium keeps your life %, month widget, and overlay on every day.',
-  onboardingPaywallTitle: 'Keep your time map.',
-  onboardingPaywallSub:
-    'Month, life, and overlay stay with you so the plan you just built doesn’t disappear.',
-  previewEndingNoChargeNote:
-    'No payment is taken during the free app preview. You are only charged if you choose to subscribe.',
-  previewEndingCancelNote:
-    'To cancel an active subscription, manage it in your app store account.',
-  freeForeverLine: 'Day & year widgets and Share stay free forever.',
-} as const;
-
-/**
- * Loss-frame (threat) copy — what the user keeps losing without Premium.
- * Honest claims only; no fake scarcity.
- */
-export const PAYWALL_LOSS_FRAME = {
-  eyebrow: 'THE COST OF WAITING',
-  headlineFallback: 'Your life is passing whether you watch it or not.',
-  /** `{pct}` = integer percent lived (0–100). */
-  headlineWithLife:
-    "You've lived {pct}% of your life, and it's still rising off-screen.",
-  losses: [
-    'Each month passes unseen. No month widget.',
-    'Your life % climbs invisibly. No Life screen.',
-    'Lost hours vanish with no red alert',
-  ] as const,
-  /** `{days}` = days left in preview (e.g. "3 days" / "1 day"). */
-  previewFooter:
-    'Your preview ends in {days}. After that, month & life lock.',
-} as const;
-
-export function formatPaywallLossHeadline(
-  lifeProgress: number | undefined
-): string {
-  if (
-    typeof lifeProgress === 'number' &&
-    Number.isFinite(lifeProgress) &&
-    lifeProgress > 0 &&
-    lifeProgress < 1
-  ) {
-    const pct = Math.max(1, Math.min(99, Math.round(lifeProgress * 100)));
-    return PAYWALL_LOSS_FRAME.headlineWithLife.replace('{pct}', String(pct));
-  }
-  return PAYWALL_LOSS_FRAME.headlineFallback;
-}
-
-export function formatPaywallLossPreviewFooter(
-  trialEndsAtMs: number | null,
-  trialActive: boolean
-): string | null {
-  if (!trialActive) return null;
-  const days = trialPreviewDaysLeft(trialEndsAtMs);
-  if (days <= 0) return null;
-  const dayLabel = days === 1 ? '1 day' : `${days} days`;
-  return PAYWALL_LOSS_FRAME.previewFooter.replace('{days}', dayLabel);
-}
-
-export const PREMIUM_BENEFITS = [
-  'Month & Life home screen widgets',
-  'Full Life progress screen',
-  'Up to 20 deadlines and 20 counters, and a next-deadlines widget',
-  'Floating overlay and Dynamic Island for month & life',
-  'Activity intervention alerts',
-  `${MONETIZATION_TRIAL_DAYS}-day free app preview (no payment)`,
-] as const;
-
-export const PAYWALL_TRUST_SIGNALS = [
-  `Free ${MONETIZATION_TRIAL_DAYS}-day app preview. No charge until you subscribe`,
-  'No automatic charge when the preview ends',
-  `Cancel subscriptions in ${STORE_SUBSCRIPTION_MANAGE_PATH}`,
-  'Day + Year widgets free forever',
-  'Secure payment via your app store',
-] as const;
-
 /** Days left in the in-app preview (ceil), 0 if ended or unknown. */
 export function trialPreviewDaysLeft(
   trialEndsAtMs: number | null,
@@ -225,82 +77,6 @@ export function trialPreviewDaysLeft(
 ): number {
   if (trialEndsAtMs == null || nowMs >= trialEndsAtMs) return 0;
   return Math.ceil((trialEndsAtMs - nowMs) / MS_PER_DAY);
-}
-
-export function formatPreviewActiveBody(trialEndsAtMs: number | null): string {
-  const days = trialPreviewDaysLeft(trialEndsAtMs);
-  const dayLabel = days === 1 ? '1 day' : `${days} days`;
-  const base = MONETIZATION_PAYWALL_COPY.previewActiveBody.replace('{days}', dayLabel);
-  const endDate = formatPreviewEndDate(trialEndsAtMs);
-  return endDate ? `${base} Preview ends ${endDate}.` : base;
-}
-
-export function formatPreviewEndDate(trialEndsAtMs: number | null): string | null {
-  if (trialEndsAtMs == null) return null;
-  return new Date(trialEndsAtMs).toLocaleDateString(undefined, {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-  });
-}
-
-export function buildSubscriptionDisclosure(params: {
-  yearlyPrice: string;
-  monthlyPrice: string;
-  weeklyPrice?: string;
-  lifetimePrice: string;
-  trialActive: boolean;
-  trialEndsAtMs: number | null;
-}): readonly string[] {
-  const lines: string[] = [];
-  const daysLeft = trialPreviewDaysLeft(params.trialEndsAtMs);
-  const endDate = formatPreviewEndDate(params.trialEndsAtMs);
-
-  if (params.trialActive && daysLeft > 0) {
-    lines.push(
-      `${MONETIZATION_TRIAL_DAYS}-day free app preview (in-app only, not a store subscription trial). No payment is required during the preview.`
-    );
-    if (endDate) {
-      lines.push(
-        `Preview ends ${endDate} (${daysLeft === 1 ? '1 day' : `${daysLeft} days`} left). Premium features lock after that unless you subscribe. You will not be charged automatically when the preview ends.`
-      );
-    }
-  }
-
-  lines.push(
-    `Yearly subscription: ${params.yearlyPrice}/year. Charged when you subscribe. Renews yearly until you cancel at least 24 hours before renewal in ${STORE_SUBSCRIPTION_MANAGE_PATH}.`
-  );
-  lines.push(
-    `Monthly subscription: ${params.monthlyPrice}/month. Billed when you subscribe. Cancel anytime in ${STORE_SUBSCRIPTION_MANAGE_PATH}.`
-  );
-  if (params.weeklyPrice) {
-    lines.push(
-      `Weekly subscription: ${params.weeklyPrice}/week. Billed when you subscribe. Cancel anytime in ${STORE_SUBSCRIPTION_MANAGE_PATH}.`
-    );
-  }
-  lines.push(
-    `Lifetime: ${params.lifetimePrice} one-time payment. No renewal.`
-  );
-
-  return lines;
-}
-
-export function formatPreviewEndingMessage(
-  trialDay: number,
-  yearlyPrice: string = FALLBACK_YEARLY_PRICE
-): string {
-  const total = MONETIZATION_TRIAL_DAYS;
-  const cancelPath = STORE_SUBSCRIPTION_MANAGE_PATH;
-
-  if (trialDay >= total) {
-    return `Your free app preview ends today. You will not be charged unless you subscribe. To keep Premium, subscribe at ${yearlyPrice}/year. Cancel any subscription in ${cancelPath}.`;
-  }
-  if (trialDay === total - 1) {
-    return `Your free app preview ends tomorrow. No automatic charge. Subscribe at ${yearlyPrice}/year to keep month & life widgets. Cancel in ${cancelPath}.`;
-  }
-  const daysLeft = total - trialDay;
-  const leftLabel = daysLeft === 1 ? '1 day' : `${daysLeft} days`;
-  return `${leftLabel} left in your free app preview. No payment during the preview. Subscribe at ${yearlyPrice}/year when ready. Cancel anytime in ${cancelPath}.`;
 }
 
 export function formatInr(amount: number): string {

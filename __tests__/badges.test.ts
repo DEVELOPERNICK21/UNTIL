@@ -1,16 +1,19 @@
 import {
   BADGES,
   EMPTY_BADGE_SNAPSHOT,
-  PERFECT_DAY_MIN_TASKS,
-  countCompletedTasks,
-  countPerfectDays,
   findNewlyEarned,
   getBadgeDefinition,
   getBadgeProgress,
   pickUpNext,
   type BadgeSnapshot,
 } from '../src/features/badges/domain/badgeCatalog';
+import {
+  PERFECT_DAY_MIN_TASKS,
+  countCompletedTasks,
+  countPerfectDays,
+} from '../src/features/badges/domain/badgeStats';
 import { buildDailyQuests } from '../src/features/badges/domain/dailyQuests';
+import { badgeDescription, badgeTitle } from '../src/features/badges/ui/badgeLabels';
 
 function snap(patch: Partial<BadgeSnapshot>): BadgeSnapshot {
   return { ...EMPTY_BADGE_SNAPSHOT, ...patch };
@@ -22,13 +25,13 @@ describe('badge catalog', () => {
     expect(new Set(ids).size).toBe(ids.length);
     for (const b of BADGES) {
       expect(b.target).toBeGreaterThan(0);
-      expect(b.title.length).toBeGreaterThan(0);
+      expect(badgeTitle(b).length).toBeGreaterThan(0);
     }
   });
 
   it('keeps user-facing copy free of em dashes', () => {
     for (const b of BADGES) {
-      expect(`${b.title} ${b.description}`).not.toContain('—');
+      expect(`${badgeTitle(b)} ${badgeDescription(b)}`).not.toContain('—');
     }
   });
 

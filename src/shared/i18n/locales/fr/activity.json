@@ -1,0 +1,19 @@
+{
+  "activity.locked.eyebrow": "Alertes de temps perdu",
+  "activity.locked.unlock": "Débloquer",
+  "activity.locked.hint": "Notez les heures perdues. Recevez un rappel quand vous dépassez votre limite quotidienne.",
+  "activity.today.eyebrow": "Temps perdu aujourd’hui",
+  "activity.hint.tracking": "Suivi en cours. Arrêtez quand vous vous reconcentrez.",
+  "activity.hint.remaining": "Il reste {{time}} avant l’alerte.",
+  "activity.hint.idle": "Notez le temps de défilement avant que la journée ne s’achève.",
+  "activity.track.start": "Suivre",
+  "activity.track.stop": "Arrêter",
+  "activity.track.startLabel": "Suivre le temps perdu",
+  "activity.track.stopLabel": "Arrêter le suivi du temps perdu",
+  "activity.add30": "+30m",
+  "activity.add60": "+1h",
+  "activity.duration.minutes": "{{m}}m",
+  "activity.duration.hours": "{{h}}h",
+  "activity.duration.both": "{{h}}h {{m}}m",
+  "activity.limitCrossed": "Cette journée ne se répétera jamais."
+}

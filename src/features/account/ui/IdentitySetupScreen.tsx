@@ -36,6 +36,7 @@ import { useAnalytics } from '../../../shared/analytics/useAnalytics';
 import { useUpdateUserProfile } from '../../time';
 import { useOnboardingFunnel } from '../../onboarding';
 import type { AuthStackParamList } from '../../../shared/navigation/types';
+import { useTranslation } from '../../../shared/i18n/useTranslation';
 
 const LIFESPAN_MIN = 40;
 const LIFESPAN_MAX = 120;
@@ -80,12 +81,6 @@ function toBirthDateString(d: Date): string {
   return `${y}-${m}-${day}`;
 }
 
-function formatDisplayDate(date: Date): string {
-  const m = String(date.getMonth() + 1).padStart(2, '0');
-  const d = String(date.getDate()).padStart(2, '0');
-  return `${m}/${d}/${date.getFullYear()}`;
-}
-
 function waitForNextFrame(): Promise<void> {
   return new Promise(resolve => {
     requestAnimationFrame(() => resolve());
@@ -93,6 +88,9 @@ function waitForNextFrame(): Promise<void> {
 }
 
 export function IdentitySetupScreen() {
+  const { t, formatDate } = useTranslation();
+  const formatDisplayDate = (date: Date) =>
+    formatDate(date, { day: 'numeric', month: 'long', year: 'numeric' });
   const navigation =
     useNavigation<
       NativeStackNavigationProp<AuthStackParamList, 'IdentitySetup'>
@@ -171,14 +169,13 @@ export function IdentitySetupScreen() {
               variant="display"
               style={[styles.headline, { color: theme.textPrimary }]}
             >
-              When were you born?
+              {t('account.identity.title')}
             </Text>
             <Text
               variant="body"
               style={[styles.introBody, { color: theme.textSecondary }]}
             >
-              We use your birth date and expected lifespan to calculate life
-              progress. Data stays on your device.
+              {t('account.identity.body')}
             </Text>
           </View>
 
@@ -188,13 +185,13 @@ export function IdentitySetupScreen() {
                 variant="micro"
                 style={[styles.fieldLabel, { color: theme.textSecondary }]}
               >
-                Birth date
+                {t('account.identity.birthDate')}
               </Text>
               <Text
                 variant="micro"
                 style={[styles.fieldLabelMuted, { color: theme.textSecondary }]}
               >
-                Required for Life
+                {t('account.identity.required')}
               </Text>
             </View>
             <TouchableOpacity
@@ -208,7 +205,9 @@ export function IdentitySetupScreen() {
               onPress={() => setShowPicker(true)}
               activeOpacity={0.85}
               accessibilityRole="button"
-              accessibilityLabel={`Birth date ${formatDisplayDate(birthDate)}. Tap to change.`}
+              accessibilityLabel={t('account.identity.birthDateA11y', {
+                date: formatDisplayDate(birthDate),
+              })}
             >
               <Text
                 variant="title"
@@ -245,7 +244,7 @@ export function IdentitySetupScreen() {
                 variant="micro"
                 style={[styles.fieldLabel, { color: theme.textSecondary }]}
               >
-                Expected lifespan
+                {t('account.identity.lifespan')}
               </Text>
               <View style={styles.lifespanValueRow}>
                 <Text
@@ -262,7 +261,7 @@ export function IdentitySetupScreen() {
                   style={[styles.yearsLabel, { color: theme.textSecondary }]}
                 >
                   {' '}
-                  years
+                  {t('account.identity.yearsUnit', { count: lifespan })}
                 </Text>
               </View>
             </View>
@@ -292,9 +291,7 @@ export function IdentitySetupScreen() {
                 variant="body"
                 style={{ color: theme.textSecondary, flex: 1 }}
               >
-                Lifespan estimates are based on global averages (about 73–85
-                years). Change this to match your goals or family history. It
-                helps UNTIL show life progress.
+                {t('account.identity.lifespanNote')}
               </Text>
             </View>
           </Card>
@@ -310,10 +307,10 @@ export function IdentitySetupScreen() {
             onPress={handleSkip}
             style={styles.footerSkip}
             accessibilityRole="button"
-            accessibilityLabel="Skip for now"
+            accessibilityLabel={t('account.identity.skipA11y')}
           >
             <Text variant="body" style={{ color: theme.textSecondary }}>
-              Skip
+              {t('account.identity.skip')}
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
@@ -326,14 +323,14 @@ export function IdentitySetupScreen() {
             activeOpacity={0.85}
             disabled={isSubmitting}
             accessibilityRole="button"
-            accessibilityLabel="View my life"
+            accessibilityLabel={t('account.identity.viewLife')}
           >
             {isSubmitting ? (
               <ActivityIndicator color="#FFFFFF" />
             ) : (
               <>
                 <Text variant="sectionTitle" style={styles.ctaLabel}>
-                  View my life
+                  {t('account.identity.viewLife')}
                 </Text>
                 <Text variant="sectionTitle" style={styles.ctaLabel}>
                   {' '}

@@ -5,6 +5,7 @@
  */
 
 import { Platform } from 'react-native';
+import { t } from '../../../shared/i18n/translate';
 import { getAppVersion } from './AppVersion';
 
 type UpdatesAdapter = {
@@ -62,10 +63,10 @@ export function checkForAppUpdate(): void {
         }
       } else if (Platform.OS === 'ios') {
         updateOptions = {
-          title: 'Update available',
-          message: 'A new version of Until is available. Would you like to update now?',
-          buttonUpgradeText: 'Update',
-          buttonCancelText: 'Later',
+          title: t('system.update.available.title'),
+          message: t('system.update.native.message'),
+          buttonUpgradeText: t('system.update.available.button'),
+          buttonCancelText: t('system.update.available.later'),
         };
       }
       updates.startUpdate(updateOptions);

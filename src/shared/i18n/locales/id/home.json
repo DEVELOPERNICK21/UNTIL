@@ -1,0 +1,22 @@
+{
+  "home.headline": "Realitas waktu",
+  "home.swipeHint": "Geser ke kiri untuk laporan tugas →",
+  "home.tile.today": "Hari ini",
+  "home.tile.month": "Bulan",
+  "home.tile.year": "Tahun",
+  "home.tile.life": "Hidup",
+  "home.percentLeft": "{{percent}}% tersisa",
+  "home.tileA11y": "{{title}}: sisa {{left}}, lewat {{passed}}. Ketuk untuk detail.",
+  "home.unlock": "Buka",
+  "home.lifeLockedA11y": "Hidup terkunci. Buka Premium untuk membukanya.",
+  "home.setBirthDate": "Atur tanggal lahir",
+  "home.setBirthDateA11y": "Atur tanggal lahir di Pengaturan untuk melihat kemajuan hidup.",
+  "home.comingSoon.title": "Segera hadir",
+  "home.comingSoon.body": "Target bulanan dan tugas hari ini akan muncul di sini pada pembaruan mendatang.",
+  "home.fab.label": "Tugas",
+  "home.fab.a11y": "Tugas hari ini",
+  "home.cards.showMoreA11y": "Tampilkan lebih banyak kartu",
+  "home.cards.showFewerA11y": "Tampilkan lebih sedikit kartu",
+  "home.cards.showLess": "Tampilkan lebih sedikit",
+  "home.cards.more": "Lainnya ({{count}})"
+}

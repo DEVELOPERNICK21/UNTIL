@@ -3,6 +3,7 @@ import { View, StyleSheet, Pressable } from 'react-native';
 import { Text } from '../../../shared/ui';
 import { Spacing, useTheme } from '../../../shared/theme';
 import { logAnalyticsEvent } from '../../../shared/analytics/analytics';
+import { useTranslation } from '../../../shared/i18n/useTranslation';
 import type { HomeCardId, HomeCardOrder } from '../domain/homeCardOrder';
 
 /**
@@ -16,6 +17,7 @@ export function HomeCardStack({
   order: HomeCardOrder;
   cards: Partial<Record<HomeCardId, React.ReactNode>>;
 }) {
+  const { t } = useTranslation();
   const theme = useTheme();
   const [expanded, setExpanded] = useState(false);
   const counted = useRef(false);
@@ -48,11 +50,17 @@ export function HomeCardStack({
           <Pressable
             onPress={toggle}
             accessibilityRole="button"
-            accessibilityLabel={expanded ? 'Show fewer cards' : 'Show more cards'}
+            accessibilityLabel={
+              expanded
+                ? t('home.cards.showFewerA11y')
+                : t('home.cards.showMoreA11y')
+            }
             style={styles.more}
           >
             <Text variant="caption" style={{ color: theme.textSecondary }}>
-              {expanded ? 'Show less' : `More (${more.length})`}
+              {expanded
+                ? t('home.cards.showLess')
+                : t('home.cards.more', { count: more.length })}
             </Text>
           </Pressable>
         </>

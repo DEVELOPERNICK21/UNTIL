@@ -3,14 +3,7 @@
  */
 
 import React, { useEffect, useRef, useState } from 'react';
-import {
-  View,
-  StyleSheet,
-  Pressable,
-  Vibration,
-  Animated,
-  Easing,
-} from 'react-native';
+import { View, StyleSheet, Vibration, Animated } from 'react-native';
 import { Text } from '../../../shared/ui';
 import {
   useTheme,
@@ -19,140 +12,17 @@ import {
   Radius,
   Weight,
   getFontFamilyForWeight,
-  Shadows,
 } from '../../../shared/theme';
-import {
-  DAY_LEFT,
-  DAY_PASSED,
-  useEnter,
-  useLiveDayClock,
-} from './onboardingMotion';
-import { useReduceMotion } from '../../../shared/ui/useReduceMotion';
-
-function WidgetMock({
-  title,
-  value,
-  accent,
-  progress,
-  selected,
-  onPress,
-  enterDelay,
-  active,
-}: {
-  title: string;
-  value: string;
-  accent: string;
-  progress: number;
-  selected: boolean;
-  onPress: () => void;
-  enterDelay: number;
-  active: boolean;
-}) {
-  const theme = useTheme();
-  const reduceMotion = useReduceMotion();
-  const enter = useEnter(active, enterDelay);
-  const bob = useRef(new Animated.Value(0)).current;
-
-  useEffect(() => {
-    if (!active || reduceMotion) {
-      bob.setValue(0);
-      return;
-    }
-    const loop = Animated.loop(
-      Animated.sequence([
-        Animated.timing(bob, {
-          toValue: 1,
-          duration: 1600 + enterDelay,
-          easing: Easing.inOut(Easing.sin),
-          useNativeDriver: true,
-        }),
-        Animated.timing(bob, {
-          toValue: 0,
-          duration: 1600 + enterDelay,
-          easing: Easing.inOut(Easing.sin),
-          useNativeDriver: true,
-        }),
-      ])
-    );
-    loop.start();
-    return () => loop.stop();
-  }, [active, bob, enterDelay, reduceMotion]);
-
-  return (
-    <Animated.View
-      style={[
-        enter,
-        {
-          flex: 1,
-          transform: [
-            ...(enter.transform ?? []),
-            {
-              translateY: bob.interpolate({
-                inputRange: [0, 1],
-                outputRange: [0, -4],
-              }),
-            },
-            { scale: selected ? 1.04 : 1 },
-          ],
-        },
-      ]}
-    >
-      <Pressable
-        onPress={onPress}
-        style={[
-          styles.widgetCard,
-          {
-            backgroundColor: theme.glassBg,
-            borderColor: selected ? accent : theme.glassBorder,
-            ...Shadows.glass,
-          },
-        ]}
-      >
-        <Text
-          variant="micro"
-          style={{ color: theme.textSecondary, letterSpacing: 1 }}
-        >
-          {title}
-        </Text>
-        <Text
-          variant="title"
-          style={{
-            color: accent,
-            marginTop: 4,
-            fontFamily: getFontFamilyForWeight(Weight.semibold),
-          }}
-        >
-          {value}
-        </Text>
-        <View style={[styles.widgetBarTrack, { backgroundColor: DAY_PASSED }]}>
-          <View
-            style={[
-              styles.widgetBarFill,
-              {
-                width: `${Math.round(progress * 100)}%` as `${number}%`,
-                backgroundColor: DAY_LEFT,
-              },
-            ]}
-          />
-        </View>
-        {selected ? (
-          <Text
-            variant="micro"
-            style={{ color: accent, marginTop: 8, textAlign: 'center' }}
-          >
-            Add from your home screen
-          </Text>
-        ) : null}
-      </Pressable>
-    </Animated.View>
-  );
-}
+import { useTranslation } from '../../../shared/i18n/useTranslation';
+import { DAY_LEFT, useEnter, useLiveDayClock } from './onboardingMotion';
+import { WidgetMock } from './WidgetMock';
 
 interface InteractiveWidgetsProps {
   active: boolean;
 }
 
 export function InteractiveWidgets({ active }: InteractiveWidgetsProps) {
+  const { t } = useTranslation();
   const theme = useTheme();
   const clock = useLiveDayClock(active);
   const [focus, setFocus] = useState<'DAY' | 'YEAR' | null>(null);
@@ -178,7 +48,7 @@ export function InteractiveWidgets({ active }: InteractiveWidgetsProps) {
     <View style={styles.body}>
       <Animated.View style={title}>
         <Text variant="micro" style={[styles.eyebrow, { color: theme.percent }]}>
-          On your home screen
+          {t('onboarding.widgets.eyebrow')}
         </Text>
         <Text
           variant="display"
@@ -190,7 +60,7 @@ export function InteractiveWidgets({ active }: InteractiveWidgetsProps) {
             },
           ]}
         >
-          Glance. Stay aware.
+          {t('onboarding.widgets.title')}
         </Text>
       </Animated.View>
 
@@ -199,7 +69,7 @@ export function InteractiveWidgets({ active }: InteractiveWidgetsProps) {
           variant="body"
           style={[styles.slideSubtitle, { color: theme.textSecondary }]}
         >
-          Tap a preview widget, then add the real ones from your home screen.
+          {t('onboarding.widgets.subtitle')}
         </Text>
       </Animated.View>
 
@@ -225,7 +95,7 @@ export function InteractiveWidgets({ active }: InteractiveWidgetsProps) {
           />
           <View style={styles.widgetGrid}>
             <WidgetMock
-              title="DAY"
+              title={t('onboarding.widgets.day')}
               value={`${clock.percentDone}%`}
               accent={theme.percent}
               progress={clock.progress}
@@ -238,7 +108,7 @@ export function InteractiveWidgets({ active }: InteractiveWidgetsProps) {
               active={active}
             />
             <WidgetMock
-              title="YEAR"
+              title={t('onboarding.widgets.year')}
               value="53%"
               accent={DAY_LEFT}
               progress={0.53}
@@ -259,7 +129,7 @@ export function InteractiveWidgets({ active }: InteractiveWidgetsProps) {
               marginTop: Spacing.md,
             }}
           >
-            Home screen preview
+            {t('onboarding.widgets.preview')}
           </Text>
         </View>
       </Animated.View>
@@ -301,21 +171,5 @@ const styles = StyleSheet.create({
   widgetGrid: {
     flexDirection: 'row',
     gap: Spacing.sm,
-  },
-  widgetCard: {
-    borderWidth: 1,
-    borderRadius: Radius.md,
-    padding: Spacing.md,
-    minHeight: 120,
-  },
-  widgetBarTrack: {
-    height: 6,
-    borderRadius: 3,
-    marginTop: Spacing.sm,
-    overflow: 'hidden',
-  },
-  widgetBarFill: {
-    height: '100%',
-    borderRadius: 3,
   },
 });

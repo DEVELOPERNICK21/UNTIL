@@ -1,0 +1,21 @@
+{
+  "nav.settings": "Réglages",
+  "nav.life": "Votre vie",
+  "nav.widgets": "Widgets",
+  "nav.customizeWidget": "Personnaliser le widget",
+  "nav.customCounters": "Compteurs personnalisés",
+  "nav.deadlines": "Échéances",
+  "nav.todaysTasks": "Tâches du jour",
+  "nav.taskReport": "Bilan des tâches",
+  "nav.today": "Aujourd’hui",
+  "nav.thisMonth": "Ce mois-ci",
+  "nav.thisYear": "Cette année",
+  "nav.monthlyGoals": "Objectifs du mois",
+  "nav.goal": "Objectif",
+  "nav.hourCalculation": "Calcul des heures",
+  "nav.shareSnapshot": "Partager un aperçu",
+  "nav.badges": "Badges",
+  "nav.premium": "Premium",
+  "nav.tasksAndGoals": "Tâches et objectifs",
+  "nav.account": "Compte"
+}

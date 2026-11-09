@@ -1,0 +1,21 @@
+{
+  "nav.settings": "Settings",
+  "nav.life": "Your life",
+  "nav.widgets": "Widgets",
+  "nav.customizeWidget": "Customize widget",
+  "nav.customCounters": "Custom counters",
+  "nav.deadlines": "Deadlines",
+  "nav.todaysTasks": "Today's tasks",
+  "nav.taskReport": "Task report",
+  "nav.today": "Today",
+  "nav.thisMonth": "This month",
+  "nav.thisYear": "This year",
+  "nav.monthlyGoals": "Monthly goals",
+  "nav.goal": "Goal",
+  "nav.hourCalculation": "Hour calculation",
+  "nav.shareSnapshot": "Share snapshot",
+  "nav.badges": "Badges",
+  "nav.premium": "Premium",
+  "nav.tasksAndGoals": "Tasks & goals",
+  "nav.account": "Account"
+}

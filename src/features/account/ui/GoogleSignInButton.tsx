@@ -19,6 +19,7 @@ import {
   getFontFamilyForWeight,
   useTheme,
 } from '../../../shared/theme';
+import { useTranslation } from '../../../shared/i18n/useTranslation';
 import { GoogleMark } from './GoogleMark';
 
 type Props = {
@@ -35,6 +36,7 @@ export function GoogleSignInButton({
   style,
 }: Props) {
   const theme = useTheme();
+  const { t } = useTranslation();
   const isLight = theme.statusBarStyle === 'dark-content';
   const isDisabled = disabled ?? busy;
 
@@ -52,7 +54,7 @@ export function GoogleSignInButton({
       activeOpacity={0.85}
       disabled={isDisabled}
       accessibilityRole="button"
-      accessibilityLabel="Continue with Google"
+      accessibilityLabel={t('account.continueGoogle')}
       accessibilityState={{ busy, disabled: isDisabled }}
     >
       {busy ? (
@@ -61,7 +63,7 @@ export function GoogleSignInButton({
         <>
           <GoogleMark />
           <Text variant="sectionTitle" style={styles.label}>
-            Continue with Google
+            {t('account.continueGoogle')}
           </Text>
         </>
       )}

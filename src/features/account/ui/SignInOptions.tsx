@@ -35,6 +35,7 @@ import {
   EmailPasswordAuthForm,
   type EmailAuthMode,
 } from './EmailPasswordAuthForm';
+import { useTranslation } from '../../../shared/i18n/useTranslation';
 
 type SignInProvider = 'apple' | 'google' | 'email';
 type PendingProvider = SignInProvider | 'reset' | null;
@@ -75,6 +76,7 @@ export function SignInOptions({
   onEmailOpened,
 }: SignInOptionsProps) {
   const theme = useTheme();
+  const { t } = useTranslation();
   const reduceMotion = useReduceMotion();
   const age = useAgeConfirmation<SignInProvider>(onAgeGateBlocked);
   const [emailOpen, setEmailOpen] = useState(false);
@@ -132,9 +134,7 @@ export function SignInOptions({
     void run('reset', async () => {
       const sent = await onForgotPassword(email);
       if (sent) {
-        setResetNotice(
-          'If that email has an account, a reset link is on its way. Check your spam folder too.',
-        );
+        setResetNotice(t('account.resetNotice'));
       }
     });
   };
@@ -182,7 +182,7 @@ export function SignInOptions({
                 style={[styles.dividerLine, { backgroundColor: theme.divider }]}
               />
               <Text variant="caption" style={{ color: theme.textMuted }}>
-                email
+                {t('account.form.dividerEmail')}
               </Text>
               <View
                 style={[styles.dividerLine, { backgroundColor: theme.divider }]}
@@ -210,14 +210,14 @@ export function SignInOptions({
             activeOpacity={0.7}
             disabled={busy}
             accessibilityRole="button"
-            accessibilityLabel="Continue with email"
+            accessibilityLabel={t('account.continueEmail')}
           >
             <EmailMark color={theme.textPrimary} />
             <Text
               variant="sectionTitle"
               style={[styles.emailLabel, { color: theme.textPrimary }]}
             >
-              Continue with email
+              {t('account.continueEmail')}
             </Text>
           </TouchableOpacity>
         )}

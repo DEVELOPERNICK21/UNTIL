@@ -22,6 +22,7 @@ import {
   FontFamily,
   Typography,
 } from '../../../shared/theme';
+import { useTranslation } from '../../../shared/i18n/useTranslation';
 
 const PEEK_HEIGHT = 168;
 
@@ -152,8 +153,8 @@ function TeaserRow({
 
 export function TasksComingSoonScreen() {
   const theme = useTheme();
+  const { t } = useTranslation();
   const [expanded, setExpanded] = useState(false);
-
   const screenEnter = useRef(new Animated.Value(0)).current;
   const cardScale = useRef(new Animated.Value(1)).current;
   const pulse = useRef(new Animated.Value(0)).current;
@@ -299,17 +300,16 @@ export function TasksComingSoonScreen() {
                       variant="caption"
                       style={[styles.badgeText, { color: theme.percent }]}
                     >
-                      Coming soon
+                      {t('detail.comingSoon')}
                     </Text>
                   </View>
                 </View>
 
                 <Text variant="title" color="primary" style={styles.cardHeadline}>
-                  Tasks & goals
+                  {t('nav.tasksAndGoals')}
                 </Text>
                 <Text variant="body" color="secondary" style={styles.body}>
-                  Monthly goals, today&apos;s tasks, and matching widgets are on the way.
-                  We&apos;re building something you&apos;ll use every day.
+                  {t('detail.soon.body')}
                 </Text>
               </Pressable>
 
@@ -322,7 +322,7 @@ export function TasksComingSoonScreen() {
                 ]}
               >
                 <Text variant="caption" color="primary" style={styles.peekLabel}>
-                  What&apos;s planned
+                  {t('detail.soon.planned')}
                 </Text>
                 <Animated.View style={{ transform: [{ rotate: chevronSpin }] }}>
                   <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
@@ -348,22 +348,22 @@ export function TasksComingSoonScreen() {
                 ]}
               >
                 <Text variant="caption" color="muted" style={styles.peekIntro}>
-                  A quick preview. Tap above to collapse.
+                  {t('detail.soon.preview')}
                 </Text>
                 <TeaserRow
-                  label="Monthly goals with progress you can see at a glance"
+                  label={t('detail.soon.row1')}
                   index={0}
                   show={peekProgress}
                   accent={theme.percent}
                 />
                 <TeaserRow
-                  label="Today’s task list tied to your goals"
+                  label={t('detail.soon.row2')}
                   index={1}
                   show={peekProgress}
                   accent={theme.percent}
                 />
                 <TeaserRow
-                  label="Home screen & widget support when you need a nudge"
+                  label={t('detail.soon.row3')}
                   index={2}
                   show={peekProgress}
                   accent={theme.percent}
@@ -372,7 +372,7 @@ export function TasksComingSoonScreen() {
             </Animated.View>
 
             <Text variant="caption" color="muted" style={styles.hint}>
-              Tip: pull down from Home anytime. The floating button stays one tap away.
+              {t('detail.soon.tip')}
             </Text>
           </Animated.View>
         </ScrollView>

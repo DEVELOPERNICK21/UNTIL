@@ -1,0 +1,21 @@
+{
+  "nav.settings": "सेटिंग्स",
+  "nav.life": "आपका जीवन",
+  "nav.widgets": "विजेट",
+  "nav.customizeWidget": "विजेट अनुकूलित करें",
+  "nav.customCounters": "कस्टम काउंटर",
+  "nav.deadlines": "समय-सीमाएँ",
+  "nav.todaysTasks": "आज के कार्य",
+  "nav.taskReport": "कार्य रिपोर्ट",
+  "nav.today": "आज",
+  "nav.thisMonth": "यह महीना",
+  "nav.thisYear": "यह साल",
+  "nav.monthlyGoals": "मासिक लक्ष्य",
+  "nav.goal": "लक्ष्य",
+  "nav.hourCalculation": "घंटों का हिसाब",
+  "nav.shareSnapshot": "स्नैपशॉट साझा करें",
+  "nav.badges": "बैज",
+  "nav.premium": "प्रीमियम",
+  "nav.tasksAndGoals": "कार्य और लक्ष्य",
+  "nav.account": "खाता"
+}

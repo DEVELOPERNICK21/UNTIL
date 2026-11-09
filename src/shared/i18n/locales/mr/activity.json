@@ -1,0 +1,19 @@
+{
+  "activity.locked.eyebrow": "हरवलेल्या वेळेचे इशारे",
+  "activity.locked.unlock": "अनलॉक करा",
+  "activity.locked.hint": "वाया गेलेले तास नोंदवा. दैनिक मर्यादा ओलांडली की एक आठवण मिळवा.",
+  "activity.today.eyebrow": "आजचा हरवलेला वेळ",
+  "activity.hint.tracking": "आता नोंद होत आहे. पुन्हा लक्ष केंद्रित केल्यावर थांबवा.",
+  "activity.hint.remaining": "इशाऱ्यापूर्वी {{time}} उरले.",
+  "activity.hint.idle": "दिवस संपण्यापूर्वी स्क्रोलिंगचा वेळ नोंदवा.",
+  "activity.track.start": "नोंदवा",
+  "activity.track.stop": "थांबवा",
+  "activity.track.startLabel": "वाया गेलेला वेळ नोंदवा",
+  "activity.track.stopLabel": "वाया गेलेला वेळ नोंदवणे थांबवा",
+  "activity.add30": "+30मि",
+  "activity.add60": "+1तास",
+  "activity.duration.minutes": "{{m}}मि",
+  "activity.duration.hours": "{{h}}तास",
+  "activity.duration.both": "{{h}}तास {{m}}मि",
+  "activity.limitCrossed": "हा दिवस पुन्हा कधीच येणार नाही."
+}

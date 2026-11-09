@@ -22,12 +22,13 @@ import { isAuthCancelledError, isAuthRequiresPasswordError } from '../domain/aut
 /** Screens read the minimum age through this hook module rather than reaching into the domain. */
 export { MINIMUM_ACCOUNT_AGE_YEARS } from '../domain/ageGate';
 import type { AccountDevice, SignInResult } from '../../../shared/types';
+import { t } from '../../../shared/i18n/translate';
 
 function toErrorMessage(error: unknown): string {
   if (error instanceof Error && error.message) {
     return error.message;
   }
-  return 'Something went wrong. Try again.';
+  return t('account.error.generic');
 }
 
 export function useAccountActions() {
@@ -147,7 +148,7 @@ export function useAccountActions() {
       runAction(async () => {
         const uid = authSessionRepository.getUid();
         if (!uid) {
-          throw new Error('Not signed in');
+          throw new Error(t('account.error.notSignedIn'));
         }
         await removeAccountDeviceUseCase.execute(uid, deviceId);
       }),

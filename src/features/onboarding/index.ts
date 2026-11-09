@@ -5,6 +5,7 @@
 
 export { personalizedEmberTipsForRoute } from './domain/personalizedInsights';
 export type { OnboardingExitParams } from './services/onboardingCompletion';
+export { refreshDay2ReengagementLanguage } from './services/engagementNotifications';
 export { useOnboardingFunnel } from './hooks/useOnboardingFunnel';
 export { useOnboardingQuizAnswers } from './hooks/useOnboardingQuizAnswers';
 export { useOnboardingState } from './hooks/useOnboardingState';

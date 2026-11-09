@@ -1,3 +1,4 @@
+import { t } from '../../../shared/i18n/translate';
 import { getLocalDateKey } from './retentionNotificationCopy';
 
 export const TASK_REMINDER_HOUR = 23;
@@ -72,9 +73,8 @@ function buildPendingTasksCopy(pending: number): {
   body: string;
 } {
   return {
-    title: '1 hour left today',
-    body:
-      pending === 1 ? '1 task still open.' : `${pending} tasks still open.`,
+    title: t('notifications.tasks.pendingTitle'),
+    body: t('notifications.tasks.pendingBody', { count: pending }),
   };
 }
 
@@ -83,11 +83,8 @@ export function buildTaskCompletionCopy(total: number): {
   body: string;
 } {
   return {
-    title: 'All done',
-    body:
-      total === 1
-        ? '1 of 1 task finished today.'
-        : `${total} of ${total} tasks finished today.`,
+    title: t('notifications.tasks.doneTitle'),
+    body: t('notifications.tasks.doneBody', { count: total }),
   };
 }
 
@@ -115,7 +112,8 @@ export function buildTaskDeadlineSchedule(
   for (const countdown of input.countdowns) {
     const dateKey = countdown.date.slice(0, 10);
     if (!windowKeys.has(dateKey)) continue;
-    const name = countdown.title.trim() || 'Deadline';
+    const name =
+      countdown.title.trim() || t('notifications.deadline.defaultName');
 
     const morning = localTime(dateKey, DEADLINE_MORNING_HOUR);
     if (morning && morning > input.now) {
@@ -124,8 +122,8 @@ export function buildTaskDeadlineSchedule(
         kind: 'deadline_morning',
         dateKey,
         triggerAt: morning,
-        title: 'Due today',
-        body: `${name} is due today.`,
+        title: t('notifications.deadline.dueTodayTitle'),
+        body: t('notifications.deadline.dueTodayBody', { name }),
       });
     }
 
@@ -136,8 +134,8 @@ export function buildTaskDeadlineSchedule(
         kind: 'deadline_last_hour',
         dateKey,
         triggerAt: evening,
-        title: '1 hour left',
-        body: `${name} is due tonight.`,
+        title: t('notifications.deadline.lastHourTitle'),
+        body: t('notifications.deadline.dueTonightBody', { name }),
       });
     }
   }

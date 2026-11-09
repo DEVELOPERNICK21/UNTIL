@@ -6,6 +6,7 @@
 import type { AccountDevice, DevicePlatform } from '../../../shared/types';
 import { MS_PER_DAY, MS_PER_HOUR } from '../../../shared/time/constants';
 import { formatAccountDeviceLabel } from './accountCopy';
+import { t } from '../../../shared/i18n/translate';
 import {
   MAX_ACTIVE_DEVICES,
   countActiveDevices,
@@ -52,13 +53,17 @@ export function deviceKind(
 
 export function formatLastActive(lastSeenAt: number, now: number): string {
   const elapsed = Math.max(0, now - lastSeenAt);
-  if (elapsed < MS_PER_HOUR) return 'Active now';
+  if (elapsed < MS_PER_HOUR) return t('account.device.activeNow');
   const days = Math.floor(elapsed / MS_PER_DAY);
-  if (days < 1) return 'Active today';
-  if (days === 1) return 'Active yesterday';
-  if (days < 14) return `Active ${days} days ago`;
-  if (days < 60) return `Active ${Math.floor(days / 7)} weeks ago`;
-  return `Active ${Math.floor(days / 30)} months ago`;
+  if (days < 1) return t('account.device.activeToday');
+  if (days === 1) return t('account.device.activeYesterday');
+  if (days < 14) return t('account.device.activeDaysAgo', { count: days });
+  if (days < 60) {
+    return t('account.device.activeWeeksAgo', { count: Math.floor(days / 7) });
+  }
+  return t('account.device.activeMonthsAgo', {
+    count: Math.floor(days / 30),
+  });
 }
 
 function subtitleFor(
@@ -70,10 +75,10 @@ function subtitleFor(
   const parts: string[] = [PLATFORM_NAME[device.platform]];
   if (device.appVersion) parts.push(`UNTIL ${device.appVersion}`);
   if (isCurrent) {
-    parts.push('Active now');
+    parts.push(t('account.device.activeNow'));
   } else if (stale) {
     const days = Math.floor((now - device.lastSeenAt) / MS_PER_DAY);
-    parts.push(`Not opened in ${days} days`);
+    parts.push(t('account.device.notOpened', { count: days }));
   } else {
     parts.push(formatLastActive(device.lastSeenAt, now));
   }
@@ -97,7 +102,7 @@ export function describeDevices(
   const rows = ordered.map<DeviceRow>((device, i) => {
     const isCurrent = device.id === currentDeviceId;
     const stale = !isCurrent && isDeviceStale(device, now);
-    const clashes = titles.filter(t => t === titles[i]).length > 1;
+    const clashes = titles.filter(title => title === titles[i]).length > 1;
     const suffix = device.id.slice(-4).toUpperCase();
     return {
       id: device.id,

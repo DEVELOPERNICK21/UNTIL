@@ -21,9 +21,9 @@ import {
   hasNotificationPermission,
   requestNotificationPermission,
 } from '../../../shared/platform/notificationPermission';
+import { t } from '../../../shared/i18n/translate';
 
 const CHANNEL_ID = 'task_deadline';
-const CHANNEL_NAME = 'Tasks and deadlines';
 const DEFAULT_ENABLED = false;
 const CHANGE_DEBOUNCE_MS = 400;
 
@@ -82,7 +82,7 @@ async function ensureChannel(): Promise<void> {
   const { AndroidImportance } = require('@notifee/react-native');
   await notifee.createChannel({
     id: CHANNEL_ID,
-    name: CHANNEL_NAME,
+    name: t('notifications.channel.tasks'),
     importance: AndroidImportance.DEFAULT,
   });
 }

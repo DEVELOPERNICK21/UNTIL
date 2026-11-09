@@ -51,20 +51,16 @@ import {
 import { AppleSignInButton } from './AppleSignInButton';
 import { EmailMark } from './EmailMark';
 import { GoogleSignInButton } from './GoogleSignInButton';
-import { PREMIUM_DEVICES_BENEFIT } from '../domain/accountCopy';
+import { signInBenefits } from '../domain/accountCopy';
+import { useTranslation } from '../../../shared/i18n/useTranslation';
 
 const DEVICE_LIMIT_NOTE_MS = 2200;
-
-const BENEFITS = [
-  'DOB and life settings',
-  PREMIUM_DEVICES_BENEFIT,
-  'Restore after reinstall',
-] as const;
 
 type PendingProvider = 'apple' | 'google' | 'email' | null;
 
 export function AccountPromptScreen() {
   const theme = useTheme();
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const reduceMotion = useReduceMotion();
   const completeAuth = useOnboardingComplete();
@@ -134,7 +130,7 @@ export function AccountPromptScreen() {
     if (ageConfirmed) return true;
     setAgeNudge(true);
     AccessibilityInfo.announceForAccessibility(
-      `Confirm you're ${MINIMUM_ACCOUNT_AGE_YEARS} or older first.`,
+      t('common.age.announce', { age: MINIMUM_ACCOUNT_AGE_YEARS }),
     );
     if (!reduceMotion) {
       shakeX.setValue(0);
@@ -235,9 +231,7 @@ export function AccountPromptScreen() {
     try {
       await sendPasswordReset(email);
       void logAnalyticsEvent('account_prompt_password_reset_requested');
-      setResetNotice(
-        'If that email has an account, a reset link is on its way. Check your spam folder too.',
-      );
+      setResetNotice(t('account.resetNotice'));
     } catch (e) {
       void logAnalyticsEvent('account_prompt_password_reset_failed', {
         ...describeAuthFailure(e),
@@ -316,7 +310,7 @@ export function AccountPromptScreen() {
                     color="primary"
                     style={styles.headline}
                   >
-                    {deviceLimitNote ? 'Signed in' : 'Keep your data with you'}
+                    {deviceLimitNote ? t('account.signedIn') : t('account.intro.title')}
                   </Text>
                   {deviceLimitNote ? (
                     <Text
@@ -324,12 +318,11 @@ export function AccountPromptScreen() {
                       color="secondary"
                       style={styles.benefit}
                     >
-                      Premium needs a free device slot. Manage devices in
-                      Settings → Account.
+                      {t('account.deviceLimitSheet')}
                     </Text>
                   ) : (
                     <View style={styles.benefitList}>
-                      {BENEFITS.map(line => (
+                      {signInBenefits({ short: true }).map(line => (
                         <View key={line} style={styles.benefitRow}>
                           <View
                             style={[
@@ -445,7 +438,7 @@ export function AccountPromptScreen() {
                             activeOpacity={0.7}
                             disabled={busy}
                             accessibilityRole="button"
-                            accessibilityLabel="Continue with email"
+                            accessibilityLabel={t('account.continueEmail')}
                           >
                             <EmailMark color={theme.textPrimary} />
                             <Text
@@ -455,7 +448,7 @@ export function AccountPromptScreen() {
                                 { color: theme.textPrimary },
                               ]}
                             >
-                              Continue with email
+                              {t('account.continueEmail')}
                             </Text>
                           </TouchableOpacity>
                         )}
@@ -481,13 +474,13 @@ export function AccountPromptScreen() {
                       style={styles.skipHit}
                       disabled={busy}
                       accessibilityRole="button"
-                      accessibilityLabel="Continue without account"
+                      accessibilityLabel={t('account.continueWithout')}
                     >
                       <Text
                         variant="caption"
                         style={{ color: theme.textMuted }}
                       >
-                        Continue without account
+                        {t('account.continueWithout')}
                       </Text>
                     </TouchableOpacity>
                   </>
@@ -521,21 +514,20 @@ export function AccountPromptScreen() {
             ]}
           >
             <Text variant="title" color="primary" style={styles.sheetTitle}>
-              Without an account, data stays on this phone
+              {t('account.skipSheet.title')}
             </Text>
             <Text variant="body" color="secondary" style={styles.sheetBody}>
-              If you change phones or reinstall, DOB and premium may not come
-              with you.
+              {t('account.skipSheet.body')}
             </Text>
             <TouchableOpacity
               style={[styles.sheetPrimary, { backgroundColor: theme.percent }]}
               onPress={handleSheetSignIn}
               activeOpacity={0.9}
               accessibilityRole="button"
-              accessibilityLabel="Sign in to keep it"
+              accessibilityLabel={t('account.skipSheet.signIn')}
             >
               <Text variant="sectionTitle" style={styles.sheetPrimaryLabel}>
-                Sign in to keep it
+                {t('account.skipSheet.signIn')}
               </Text>
             </TouchableOpacity>
             <TouchableOpacity
@@ -543,10 +535,10 @@ export function AccountPromptScreen() {
               onPress={handleSkipConfirmed}
               activeOpacity={0.7}
               accessibilityRole="button"
-              accessibilityLabel="Continue anyway"
+              accessibilityLabel={t('account.skipSheet.continue')}
             >
               <Text variant="body" color="secondary">
-                Continue anyway
+                {t('account.skipSheet.continue')}
               </Text>
             </TouchableOpacity>
           </Pressable>

@@ -2,6 +2,7 @@ import React from 'react';
 import { Modal, View, StyleSheet, TouchableOpacity } from 'react-native';
 import { Text } from '../../../shared/ui';
 import { Spacing, Radius, useTheme } from '../../../shared/theme';
+import { useTranslation } from '../../../shared/i18n/useTranslation';
 import { rootNavigationRef } from '../../../shared/navigation/rootNavigationRef';
 import { useAnalytics } from '../../../shared/analytics/useAnalytics';
 
@@ -13,6 +14,7 @@ interface SharePromptModalProps {
 export function SharePromptModal({ visible, onDismiss }: SharePromptModalProps) {
   const theme = useTheme();
   const { logEvent } = useAnalytics();
+  const { t } = useTranslation();
 
   if (!visible) return null;
 
@@ -34,10 +36,10 @@ export function SharePromptModal({ visible, onDismiss }: SharePromptModalProps) 
       <View style={styles.backdrop}>
         <View style={[styles.card, { backgroundColor: theme.cardBaseAlpha }]}>
           <Text variant="title" color="primary" style={styles.title}>
-            Your countdown reached today
+            {t('share.prompt.title')}
           </Text>
           <Text variant="body" color="secondary" style={styles.body}>
-            Share the moment. Capture how much of your day, month, or year is left.
+            {t('share.prompt.body')}
           </Text>
           <TouchableOpacity
             style={[styles.primary, { backgroundColor: theme.percent }]}
@@ -45,12 +47,12 @@ export function SharePromptModal({ visible, onDismiss }: SharePromptModalProps) 
             activeOpacity={0.9}
           >
             <Text variant="sectionTitle" style={styles.primaryLabel}>
-              Share snapshot
+              {t('nav.shareSnapshot')}
             </Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.secondary} onPress={handleLater} activeOpacity={0.7}>
             <Text variant="body" color="secondary">
-              Not now
+              {t('common.notNow')}
             </Text>
           </TouchableOpacity>
         </View>

@@ -39,8 +39,30 @@ import {
   getProgressColor,
 } from '../../../shared/theme';
 import type { RootStackParamList } from '../../../shared/navigation/types';
+import { useTranslation } from '../../../shared/i18n/useTranslation';
+import { tIn, type TranslationKey } from '../../../shared/i18n/translate';
+import { shareImageLanguage } from './shareImageLanguage';
 
 type FocusKey = 'day' | 'month' | 'year' | 'life';
+
+const LABEL_KEYS: Record<FocusKey, TranslationKey> = {
+  day: 'share.label.day',
+  month: 'share.label.month',
+  year: 'share.label.year',
+  life: 'share.label.life',
+};
+const QUOTE_KEYS: Record<FocusKey, TranslationKey> = {
+  day: 'share.quote.day',
+  month: 'share.quote.month',
+  year: 'share.quote.year',
+  life: 'share.quote.life',
+};
+const LINE_KEYS: Record<FocusKey, TranslationKey> = {
+  day: 'share.line.day',
+  month: 'share.line.month',
+  year: 'share.line.year',
+  life: 'share.line.life',
+};
 
 const BACKGROUND_COLOR = '#000000';
 
@@ -54,6 +76,7 @@ function hexToRgba(hex: string, alpha: number): string {
 }
 
 function HeaderShareButton({ onPress }: { onPress: () => void }) {
+  const { t } = useTranslation();
   return (
     <TouchableOpacity
       onPress={onPress}
@@ -61,7 +84,7 @@ function HeaderShareButton({ onPress }: { onPress: () => void }) {
       activeOpacity={0.8}
     >
       <Text variant="caption" color="secondary">
-        Share
+        {t('share.header')}
       </Text>
     </TouchableOpacity>
   );
@@ -80,20 +103,21 @@ export function ShareSnapshotScreen() {
   const exportCanvasRef = useCanvasRef();
   const [focus, setFocus] = useState<FocusKey>('day');
   const { width: screenWidth } = useWindowDimensions();
+  const { t, language } = useTranslation();
+  // The image text is drawn with a bundled font: see shareImageLanguage.
+  const imageLanguage = shareImageLanguage(language);
 
   const dayProgressPct = Math.round((timeState.day ?? 0) * 100);
   const monthProgressPct = Math.round((timeState.month ?? 0) * 100);
   const yearProgressPct = Math.round((timeState.year ?? 0) * 100);
   const lifeProgressPct = Math.round((timeState.life ?? 0) * 100);
 
-  const focusConfig: Record<
-    FocusKey,
-    { pct: number; label: string; unit: 'day' | 'month' | 'year' | 'life' }
-  > = {
-    day: { pct: dayProgressPct, label: 'TODAY', unit: 'day' },
-    month: { pct: monthProgressPct, label: 'MONTH', unit: 'month' },
-    year: { pct: yearProgressPct, label: 'YEAR', unit: 'year' },
-    life: { pct: lifeProgressPct, label: 'LIFE', unit: 'life' },
+  const labelOf = (key: FocusKey) => tIn(imageLanguage, LABEL_KEYS[key]);
+  const focusConfig: Record<FocusKey, { pct: number; label: string }> = {
+    day: { pct: dayProgressPct, label: labelOf('day') },
+    month: { pct: monthProgressPct, label: labelOf('month') },
+    year: { pct: yearProgressPct, label: labelOf('year') },
+    life: { pct: lifeProgressPct, label: labelOf('life') },
   };
 
   const current = focusConfig[focus];
@@ -102,11 +126,11 @@ export function ShareSnapshotScreen() {
     [current.pct],
   );
 
-  const quote = useMemo(() => {
-    const unitPhrase =
-      current.unit === 'life' ? 'your life' : `your ${current.unit}`;
-    return `${current.pct}% of ${unitPhrase} is gone and it's not coming back`;
-  }, [current.pct, current.unit]);
+  const quote = useMemo(
+    () => tIn(imageLanguage, QUOTE_KEYS[focus], { percent: current.pct }),
+    [imageLanguage, focus, current.pct],
+  );
+  const watermark = tIn(imageLanguage, 'share.watermark');
 
   // Device-friendly canvas size so snapshot has real pixel dimensions
   const maxCanvasWidth = 360;
@@ -148,11 +172,10 @@ export function ShareSnapshotScreen() {
   );
   const brandLogo = useImage(require('../../../assets/images/appLogo.png'));
 
-  const primaryLine = useMemo(() => {
-    const unitPhrase =
-      current.unit === 'life' ? 'your life' : `your ${current.unit}`;
-    return `${current.pct}% of ${unitPhrase} is gone`;
-  }, [current.pct, current.unit]);
+  const primaryLine = useMemo(
+    () => tIn(imageLanguage, LINE_KEYS[focus], { percent: current.pct }),
+    [imageLanguage, focus, current.pct],
+  );
 
   function centerXForText(font: any, canvasW: number, text: string) {
     const w = font?.getTextWidth?.(text) ?? 0;
@@ -182,8 +205,8 @@ export function ShareSnapshotScreen() {
     try {
       if (!exportCanvasRef.current) {
         Alert.alert(
-          'Share unavailable',
-          'Preparing the snapshot… try again in a second.',
+          t('share.alert.unavailable.title'),
+          t('share.alert.preparing'),
         );
         return;
       }
@@ -198,8 +221,8 @@ export function ShareSnapshotScreen() {
         !brandByFont
       ) {
         Alert.alert(
-          'Share unavailable',
-          'Loading fonts… try again in a second.',
+          t('share.alert.unavailable.title'),
+          t('share.alert.fonts'),
         );
         return;
       }
@@ -223,7 +246,11 @@ export function ShareSnapshotScreen() {
       await Share.open({
         url: `file://${filePath}`,
         type: 'image/png',
-        message: `${quote}\n\nbuilt with UNTIL · ${shareInviteUrl(Platform.OS)}`,
+        // The caption is plain text, so it is always in the app's language.
+        message: t('share.caption', {
+          quote: t(QUOTE_KEYS[focus], { percent: current.pct }),
+          url: shareInviteUrl(Platform.OS),
+        }),
         failOnCancel: false,
       });
       void logAnalyticsEvent('share_completed', {
@@ -237,11 +264,11 @@ export function ShareSnapshotScreen() {
           focus,
         });
         Alert.alert(
-          'Keep this feeling on your home screen',
-          'Premium keeps Month & Life widgets, overlay, and intervention alerts visible after you share.',
+          t('share.upsell.title'),
+          t('share.upsell.message'),
           [
             {
-              text: 'Maybe later',
+              text: t('common.maybeLater'),
               style: 'cancel',
               onPress: () => {
                 void logAnalyticsEvent('post_share_upgrade_prompt_dismissed', {
@@ -250,7 +277,7 @@ export function ShareSnapshotScreen() {
               },
             },
             {
-              text: 'See Premium',
+              text: t('share.upsell.cta'),
               onPress: () => {
                 void logAnalyticsEvent('post_share_upgrade_prompt_tapped', {
                   focus,
@@ -265,8 +292,8 @@ export function ShareSnapshotScreen() {
       console.warn('Share snapshot failed', error);
       recordCrashError(error, 'ShareSnapshotScreen.share');
       Alert.alert(
-        'Share failed',
-        'Something went wrong while preparing the image.',
+        t('share.alert.failed.title'),
+        t('share.alert.failed.message'),
       );
     }
   }, [
@@ -279,8 +306,9 @@ export function ShareSnapshotScreen() {
     miniLabelFont,
     brandFont,
     brandByFont,
-    quote,
+    t,
     focus,
+    current.pct,
     hasPremiumBundle,
     navigation,
   ]);
@@ -311,10 +339,10 @@ export function ShareSnapshotScreen() {
     );
 
     for (let i = 1; i <= steps; i += 1) {
-      const t = (i / steps) * clampSweep + startAngle;
+      const angle = (i / steps) * clampSweep + startAngle;
       foregroundPath.lineTo(
-        centerX + radius * Math.cos(t),
-        centerY + radius * Math.sin(t),
+        centerX + radius * Math.cos(angle),
+        centerY + radius * Math.sin(angle),
       );
     }
 
@@ -367,26 +395,12 @@ export function ShareSnapshotScreen() {
     label: string;
     value: string;
     pct: number;
-  }[] = [
-    {
-      key: 'month',
-      label: 'MONTH',
-      value: `${monthProgressPct}%`,
-      pct: monthProgressPct,
-    },
-    {
-      key: 'year',
-      label: 'YEAR',
-      value: `${yearProgressPct}%`,
-      pct: yearProgressPct,
-    },
-    {
-      key: 'life',
-      label: 'LIFE',
-      value: `${lifeProgressPct}%`,
-      pct: lifeProgressPct,
-    },
-  ];
+  }[] = (['month', 'year', 'life'] as const).map(key => ({
+    key,
+    label: focusConfig[key].label,
+    value: `${focusConfig[key].pct}%`,
+    pct: focusConfig[key].pct,
+  }));
 
   const canvasStyle = {
     width: canvasSize.width,
@@ -552,10 +566,10 @@ export function ShareSnapshotScreen() {
                             cy + radius * Math.sin(start),
                           );
                           for (let i = 1; i <= steps; i += 1) {
-                            const t = (i / steps) * clampSweepMini + start;
+                            const angle = (i / steps) * clampSweepMini + start;
                             fgPath.lineTo(
-                              cx + radius * Math.cos(t),
-                              cy + radius * Math.sin(t),
+                              cx + radius * Math.cos(angle),
+                              cy + radius * Math.sin(angle),
                             );
                           }
 
@@ -606,7 +620,7 @@ export function ShareSnapshotScreen() {
                 ))}
               </View>
               <Text variant="caption" style={styles.branding}>
-                built with UNTIL
+                {tIn(imageLanguage, 'share.branding')}
               </Text>
             </Card>
           </View>
@@ -730,23 +744,7 @@ export function ShareSnapshotScreen() {
                   exportSize.width * 0.5,
                   exportSize.width * 0.75,
                 ];
-                const stats = [
-                  {
-                    label: 'MONTH',
-                    pct: monthProgressPct,
-                    value: `${monthProgressPct}%`,
-                  },
-                  {
-                    label: 'YEAR',
-                    pct: yearProgressPct,
-                    value: `${yearProgressPct}%`,
-                  },
-                  {
-                    label: 'LIFE',
-                    pct: lifeProgressPct,
-                    value: `${lifeProgressPct}%`,
-                  },
-                ];
+                const stats = miniStats;
                 return (
                   <>
                     {stats.map((s, i) => {
@@ -766,14 +764,14 @@ export function ShareSnapshotScreen() {
                         cy + radius * Math.sin(start),
                       );
                       for (let k = 1; k <= steps; k += 1) {
-                        const t = (k / steps) * clamp + start;
+                        const angle = (k / steps) * clamp + start;
                         fg.lineTo(
-                          cx + radius * Math.cos(t),
-                          cy + radius * Math.sin(t),
+                          cx + radius * Math.cos(angle),
+                          cy + radius * Math.sin(angle),
                         );
                       }
                       return (
-                        <React.Fragment key={s.label}>
+                        <React.Fragment key={s.key}>
                           <Path
                             path={bg}
                             color="rgba(255,255,255,0.16)"
@@ -829,10 +827,10 @@ export function ShareSnapshotScreen() {
                   x={centerXForText(
                     brandByFont,
                     exportSize.width,
-                    'built with',
+                    watermark,
                   )}
                   y={exportLayout.watermarkY}
-                  text="built with"
+                  text={watermark}
                   font={brandByFont}
                   color="rgba(255,255,255,0.38)"
                 />
@@ -889,7 +887,7 @@ export function ShareSnapshotScreen() {
             onPress={handleShare}
           >
             <Text variant="sectionTitle" style={styles.shareLabel}>
-              Share image
+              {t('share.button')}
             </Text>
           </TouchableOpacity>
           <View style={styles.bottomSpacer} />

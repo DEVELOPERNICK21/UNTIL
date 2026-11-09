@@ -6,6 +6,7 @@
  */
 
 import type { IAuthService } from '../ports/IAuthService';
+import { t } from '../../../../shared/i18n/translate';
 
 const LOOKS_LIKE_EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -14,8 +15,8 @@ export class SendPasswordResetUseCase {
 
   async execute(email: string): Promise<void> {
     const normalized = email.trim();
-    if (!normalized) throw new Error('Enter your email first.');
-    if (!LOOKS_LIKE_EMAIL.test(normalized)) throw new Error('Enter a valid email address.');
+    if (!normalized) throw new Error(t('account.error.enterEmail'));
+    if (!LOOKS_LIKE_EMAIL.test(normalized)) throw new Error(t('account.error.validEmail'));
     await this.authService.sendPasswordReset(normalized);
   }
 }

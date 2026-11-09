@@ -10,6 +10,7 @@ import {
   restorePurchasesUseCase,
 } from '../../../app/di';
 import { BILLING_PRODUCT_IDS } from '../../../config/billing';
+import { t } from '../../../shared/i18n/translate';
 import {
   mapOfferingPackagesToRows,
   type OfferingProductRow,
@@ -46,7 +47,7 @@ export function usePurchase() {
       return list;
     } catch (e) {
       const message =
-        e instanceof Error ? e.message : 'Could not load subscription plans.';
+        e instanceof Error ? e.message : t('premium.alert.loadPlans');
       setProductsError(message);
       setProducts([]);
       if (__DEV__) {

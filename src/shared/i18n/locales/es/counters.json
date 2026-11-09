@@ -1,0 +1,22 @@
+{
+  "counters.subtitle": "Añade lo que quieras contar (p. ej., Agua) y luego agrega el widget de contador a tu pantalla de inicio. El widget cuenta uno de ellos: tócalo para sumar +1. Usa −1 aquí si lo tocaste por error, o restablécelo para empezar de nuevo.",
+  "counters.namePlaceholder": "Nombre del contador (p. ej., Agua)",
+  "counters.empty": "Aún no hay contadores. Añade uno arriba, luego agrega el widget de contador desde tu pantalla de inicio y elige este contador.",
+  "counters.count": "Cuenta: {{value}}",
+  "counters.remove.title": "Eliminar contador",
+  "counters.remove.message": "¿Eliminar «{{title}}»? Se perderá la cuenta ({{value}}).",
+  "counters.hint.ios": "Mantén pulsada la pantalla de inicio → + → busca Until → agrega el widget «Counter».",
+  "counters.hint.android": "Mantén pulsada la pantalla de inicio → Widgets → Until → Counter.",
+  "counters.addWithPremium": "Añadir con Premium",
+  "counters.limit.reached": "Es el máximo que admite una lista ({{limit}}). Elimina uno para añadir otro.",
+  "counters.limit.free": "El plan gratuito guarda un contador. Premium admite hasta {{max}}.",
+  "counters.reset.title": "Restablecer contador",
+  "counters.reset.message": "¿Volver «{{title}}» a 0? Ahora está en {{value}}.",
+  "counters.reset.confirm": "Restablecer",
+  "counters.onWidget": "Se muestra en tu widget",
+  "counters.showOnWidget": "Mostrar en el widget",
+  "counters.a11y.showOnWidget": "Mostrar {{title}} en el widget",
+  "counters.a11y.subtract": "Restar uno",
+  "counters.a11y.add": "Sumar uno",
+  "counters.a11y.reset": "Restablecer a cero"
+}

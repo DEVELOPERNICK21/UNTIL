@@ -5,15 +5,13 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { Alert } from 'react-native';
+import { t } from '../i18n/translate';
 import {
   canPinWidgets,
   requestPinWidget,
   type PinWidgetKind,
   type PinWidgetOutcome,
 } from './widgetPin';
-
-const MANUAL_STEPS =
-  'Long-press an empty spot on your home screen, tap Widgets, then pick UNTIL.';
 
 export function usePinWidget(kind: PinWidgetKind, source: string) {
   const [available, setAvailable] = useState(false);
@@ -34,7 +32,11 @@ export function usePinWidget(kind: PinWidgetKind, source: string) {
     try {
       const outcome = await requestPinWidget(kind, source);
       if (outcome !== 'requested') {
-        Alert.alert('Add it by hand', MANUAL_STEPS);
+        // Read now, not at import, so the text follows the language chosen in Settings.
+        Alert.alert(
+          t('widgets.pin.manual.title'),
+          t('widgets.pin.manual.steps'),
+        );
       }
       return outcome;
     } finally {

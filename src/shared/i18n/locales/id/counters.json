@@ -1,0 +1,22 @@
+{
+  "counters.subtitle": "Tambahkan apa yang ingin kamu hitung (mis. Air), lalu pasang widget Penghitung di layar utama. Widget menghitung salah satunya: ketuk untuk menambah +1. Pakai −1 di sini kalau tidak sengaja mengetuk, atau atur ulang untuk mulai lagi.",
+  "counters.namePlaceholder": "Nama penghitung (mis. Air)",
+  "counters.empty": "Belum ada penghitung. Tambahkan di atas, lalu pasang widget Penghitung dari layar utama dan pilih penghitung ini.",
+  "counters.count": "Hitungan: {{value}}",
+  "counters.remove.title": "Hapus penghitung",
+  "counters.remove.message": "Hapus “{{title}}”? Hitungan ({{value}}) akan hilang.",
+  "counters.hint.ios": "Tekan lama layar utama → + → cari Until → tambahkan widget “Counter”.",
+  "counters.hint.android": "Tekan lama layar utama → Widget → Until → Counter.",
+  "counters.addWithPremium": "Tambah dengan Premium",
+  "counters.limit.reached": "Itu jumlah terbanyak yang muat dalam satu daftar ({{limit}}). Hapus satu untuk menambah yang lain.",
+  "counters.limit.free": "Paket gratis menyimpan satu penghitung. Premium menampung hingga {{max}}.",
+  "counters.reset.title": "Atur ulang penghitung",
+  "counters.reset.message": "Kembalikan “{{title}}” ke 0? Saat ini di {{value}}.",
+  "counters.reset.confirm": "Atur ulang",
+  "counters.onWidget": "Tampil di widget-mu",
+  "counters.showOnWidget": "Tampilkan di widget",
+  "counters.a11y.showOnWidget": "Tampilkan {{title}} di widget",
+  "counters.a11y.subtract": "Kurangi satu",
+  "counters.a11y.add": "Tambah satu",
+  "counters.a11y.reset": "Atur ulang ke nol"
+}

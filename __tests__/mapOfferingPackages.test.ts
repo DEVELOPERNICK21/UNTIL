@@ -11,6 +11,8 @@ describe('mapOfferingPackagesToRows', () => {
           title: 'Yearly',
           description: 'Best value',
           priceString: '₹500.00',
+          price: 500,
+          currencyCode: 'INR',
         },
         {
           identifier: '$rc_monthly',
@@ -18,6 +20,8 @@ describe('mapOfferingPackagesToRows', () => {
           title: 'Monthly',
           description: '',
           priceString: '₹100.00',
+          price: 100,
+          currencyCode: 'INR',
         },
       ],
     });
@@ -28,11 +32,15 @@ describe('mapOfferingPackagesToRows', () => {
         title: 'Yearly',
         description: 'Best value',
         price: '₹500.00',
+        amount: 500,
+        currency: 'INR',
       },
       {
         productId: 'monthly_subscription',
         title: 'Monthly',
         price: '₹100.00',
+        amount: 100,
+        currency: 'INR',
       },
     ]);
     expect(rows.find(r => r.productId === 'yearly_subscription')?.price).toBe(

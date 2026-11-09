@@ -2,6 +2,7 @@ import React from 'react';
 import { View, StyleSheet } from 'react-native';
 import { Text } from '../../../shared/ui';
 import { Colors, Spacing, Radius, Typography, Shadows } from '../../../shared/theme';
+import { useTranslation } from '../../../shared/i18n/useTranslation';
 import { getWidgetAccentColor } from '../config/widgetAccents';
 import type { WidgetConfig } from '../domain/WidgetConfig';
 
@@ -10,6 +11,7 @@ interface Props {
 }
 
 export function WidgetPreview({ config }: Props) {
+  const { t } = useTranslation();
   const isLight = config.theme === 'light';
   const backgroundColor =
     config.theme === 'amoled'
@@ -39,10 +41,10 @@ export function WidgetPreview({ config }: Props) {
   }[config.type];
 
   const label = {
-    day: 'Today',
-    month: 'This month',
-    year: 'This year',
-    life: 'Your life',
+    day: t('nav.today'),
+    month: t('nav.thisMonth'),
+    year: t('nav.thisYear'),
+    life: t('nav.life'),
   }[config.type];
 
   return (
@@ -53,7 +55,9 @@ export function WidgetPreview({ config }: Props) {
           <Text style={[styles.label, { color: textColor }]}>{label}</Text>
           <View style={[styles.pill, { borderColor: accentColor }]}>
             <Text style={[styles.pillText, { color: accentColor }]}>
-              {config.layout === 'minimal' ? 'Minimal' : 'Detailed'}
+              {config.layout === 'minimal'
+                ? t('widgets.custom.layout.minimal')
+                : t('widgets.custom.layout.detailed')}
             </Text>
           </View>
         </View>
@@ -63,20 +67,27 @@ export function WidgetPreview({ config }: Props) {
             <Text style={[styles.percent, titleStyle, { color: textColor }]}>
               {percent}%
             </Text>
-            <Text style={[styles.caption, { color: textColor }]}>done</Text>
+            <Text style={[styles.caption, { color: textColor }]}>
+              {t('widgets.preview.done')}
+            </Text>
           </View>
           {config.layout === 'detailed' && (
             <View style={styles.metaBlock}>
               <View style={styles.metaRow}>
                 <View style={[styles.dot, { backgroundColor: accentColor }]} />
                 <Text style={[styles.metaText, { color: textColor }]}>
-                  {percent} of {config.type === 'life' ? 'years' : 'time'} used
+                  {t(
+                    config.type === 'life'
+                      ? 'widgets.preview.yearsUsed'
+                      : 'widgets.preview.timeUsed',
+                    { percent },
+                  )}
                 </Text>
               </View>
               <View style={styles.metaRow}>
                 <View style={[styles.dot, { backgroundColor: mutedDot }]} />
                 <Text style={[styles.metaText, { color: textColor }]}>
-                  {100 - percent}% remaining
+                  {t('widgets.preview.remaining', { percent: 100 - percent })}
                 </Text>
               </View>
             </View>

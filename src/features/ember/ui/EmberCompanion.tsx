@@ -16,7 +16,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ember, Text } from '../../../shared/ui';
 import { Spacing, useTheme, Shadows } from '../../../shared/theme';
-import { emberSupportsRoute, type EmberInsight } from '../domain/emberInsights';
+import { emberFallbackTip, emberSupportsRoute, emberTapHint, emberTimeLeftTip, type EmberInsight } from '../domain/emberInsights';
 import { useObserveTimeState } from '../../time';
 import { useReduceMotion } from '../../../shared/ui/useReduceMotion';
 import { usePresenceStreak } from '../../presence';
@@ -448,10 +448,8 @@ export function EmberCompanion({ suppressed = false }: EmberCompanionProps) {
           else setInsight(pickMergedEmberTip(route, ctxRef.current, 0, quizAnswersRef.current));
         } else {
           setInsight(
-            pickMergedEmberTip(route, ctxRef.current, 0, quizAnswersRef.current) ?? {
-              eyebrow: 'Ember',
-              body: 'Tap me when you want a tip.',
-            },
+            pickMergedEmberTip(route, ctxRef.current, 0, quizAnswersRef.current) ??
+              emberFallbackTip(),
           );
           setBubbleOpen(false);
           setShowTapHint(false);
@@ -558,7 +556,7 @@ export function EmberCompanion({ suppressed = false }: EmberCompanionProps) {
 
   const onEmberHold = useCallback(
     (timeLeft: string) => {
-      showInsightBubble({ eyebrow: 'Right now', body: timeLeft }, 0, false);
+      showInsightBubble(emberTimeLeftTip(timeLeft), 0, false);
     },
     [showInsightBubble],
   );
@@ -681,7 +679,7 @@ export function EmberCompanion({ suppressed = false }: EmberCompanionProps) {
           </Text>
           {showTapHint ? (
             <Text variant="micro" color="secondary" style={styles.hint}>
-              Tap again for another whisper
+              {emberTapHint()}
             </Text>
           ) : null}
         </Pressable>

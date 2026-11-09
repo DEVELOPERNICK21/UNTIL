@@ -13,15 +13,15 @@ import { Text, ScreenGradient } from '../../../shared/ui';
 import { useCustomCounters } from '../hooks/useCustomCounters';
 import { useLimitUpgradePrompt } from '../../premium';
 import { CounterCard } from './CounterCard';
-import {
-  useWidgetSyncActions,
-} from '../../../shared/platform/useWidgetSyncActions';
+import { useTranslation } from '../../../shared/i18n/useTranslation';
+import { useWidgetSyncActions } from '../../../shared/platform/useWidgetSyncActions';
 import { Spacing, Colors, Radius, Typography } from '../../../shared/theme';
 import { MAX_TITLE_LENGTH } from '../../../config/inputLimits';
 import { PREMIUM_ITEM_LIMIT } from '../../../config/featureLimits';
 import type { CustomCounter } from '../../../shared/types';
 
 export function CustomCountersScreen() {
+  const { t, formatNumber } = useTranslation();
   const { syncCustomCounters } = useWidgetSyncActions();
   const {
     counters,
@@ -42,7 +42,7 @@ export function CustomCountersScreen() {
   useFocusEffect(
     useCallback(() => {
       refresh();
-    }, [refresh])
+    }, [refresh]),
   );
 
   const handleAdd = () => {
@@ -63,19 +63,22 @@ export function CustomCountersScreen() {
   const handleReset = (counter: CustomCounter) => {
     if (counter.count === 0) return;
     Alert.alert(
-      'Reset counter',
-      `Set "${counter.title}" back to 0? It is at ${counter.count}.`,
+      t('counters.reset.title'),
+      t('counters.reset.message', {
+        title: counter.title,
+        value: formatNumber(counter.count),
+      }),
       [
-        { text: 'Cancel', style: 'cancel' },
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text: 'Reset',
+          text: t('counters.reset.confirm'),
           style: 'destructive',
           onPress: () => {
             resetCounter(counter.id);
             syncCustomCounters();
           },
         },
-      ]
+      ],
     );
   };
 
@@ -86,19 +89,22 @@ export function CustomCountersScreen() {
 
   const handleRemove = (counter: CustomCounter) => {
     Alert.alert(
-      'Remove counter',
-      `Remove "${counter.title}"? The count (${counter.count}) will be lost.`,
+      t('counters.remove.title'),
+      t('counters.remove.message', {
+        title: counter.title,
+        value: formatNumber(counter.count),
+      }),
       [
-        { text: 'Cancel', style: 'cancel' },
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text: 'Remove',
+          text: t('common.remove'),
           style: 'destructive',
           onPress: () => {
             removeCounter(counter.id);
             syncCustomCounters();
           },
         },
-      ]
+      ],
     );
   };
 
@@ -111,10 +117,10 @@ export function CustomCountersScreen() {
           keyboardShouldPersistTaps="handled"
         >
           <Text variant="sectionTitle" color="primary" style={styles.title}>
-            Custom counters
+            {t('nav.customCounters')}
           </Text>
           <Text variant="body" color="secondary" style={styles.subtitle}>
-            Add what you want to count (e.g. Water), then add the Counter widget to your home screen. The widget counts one of them: tap it to add +1. Use −1 here if you tapped by mistake, or reset it to start again.
+            {t('counters.subtitle')}
           </Text>
 
           <View style={styles.addRow}>
@@ -122,7 +128,7 @@ export function CustomCountersScreen() {
               style={styles.input}
               value={newTitle}
               onChangeText={setNewTitle}
-              placeholder="Counter name (e.g. Water)"
+              placeholder={t('counters.namePlaceholder')}
               placeholderTextColor={Colors.textSecondary}
               autoCapitalize="words"
               maxLength={MAX_TITLE_LENGTH}
@@ -132,27 +138,34 @@ export function CustomCountersScreen() {
             <TouchableOpacity
               style={[
                 styles.addButton,
-                (!newTitle.trim() || (atLimit && hasPremium)) && styles.addButtonDisabled,
+                (!newTitle.trim() || (atLimit && hasPremium)) &&
+                  styles.addButtonDisabled,
               ]}
               onPress={handleAdd}
               disabled={!newTitle.trim() || (atLimit && hasPremium)}
             >
               <Text variant="caption" style={styles.addButtonText}>
-                {atLimit && !hasPremium ? 'Add with Premium' : 'Add'}
+                {atLimit && !hasPremium
+                  ? t('counters.addWithPremium')
+                  : t('common.add')}
               </Text>
             </TouchableOpacity>
           </View>
           {atLimit && (
-            <Text variant="caption" color="secondary" style={styles.singleLimitHint}>
+            <Text
+              variant="caption"
+              color="secondary"
+              style={styles.singleLimitHint}
+            >
               {hasPremium
-                ? `That is the most one list holds (${limit}). Remove one to add another.`
-                : `The free plan keeps one counter. Premium holds up to ${PREMIUM_ITEM_LIMIT}.`}
+                ? t('counters.limit.reached', { limit })
+                : t('counters.limit.free', { max: PREMIUM_ITEM_LIMIT })}
             </Text>
           )}
 
           {counters.length === 0 ? (
             <Text variant="body" color="secondary" style={styles.empty}>
-              No counters yet. Add one above, then add the Counter widget from your home screen and choose this counter.
+              {t('counters.empty')}
             </Text>
           ) : (
             counters.map((c, index) => (
@@ -171,8 +184,8 @@ export function CustomCountersScreen() {
 
           <Text variant="caption" color="secondary" style={styles.hint}>
             {Platform.OS === 'ios'
-              ? 'Long-press home screen → + → search Until → add "Counter" widget.'
-              : 'Long-press home screen → Widgets → Until → Counter.'}
+              ? t('counters.hint.ios')
+              : t('counters.hint.android')}
           </Text>
         </ScrollView>
       </ScreenGradient>

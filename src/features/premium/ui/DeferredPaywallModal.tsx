@@ -19,7 +19,7 @@ interface DeferredPaywallModalProps {
  * Native paywall over an RN Modal leaves a touch blocker after dismiss (freeze on Home).
  */
 export function DeferredPaywallModal({ visible, onClose }: DeferredPaywallModalProps) {
-  const { present } = usePresentRevenueCatPaywall();
+  const { present } = usePresentRevenueCatPaywall('deferred_paywall');
   const ranForVisible = useRef(false);
 
   useEffect(() => {

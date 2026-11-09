@@ -21,14 +21,11 @@ import {
   isPremiumWidgetAccent,
 } from '../config/widgetAccents';
 import type { RootStackParamList } from '../../../shared/navigation/types';
-
-const PRESET_MESSAGES = [
-  'Time is running',
-  'Make today count',
-  'You are using your life',
-];
+import { useTranslation } from '../../../shared/i18n/useTranslation';
+import { ToggleRow } from './ToggleRow';
 
 export function WidgetCustomizationScreen() {
+  const { t } = useTranslation();
   const theme = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const navigation =
@@ -50,27 +47,46 @@ export function WidgetCustomizationScreen() {
     void hydrate();
   }, [hydrate]);
 
-  const promptPremiumForWidget = useCallback(
-    (widgetLabel: string) => {
-      Alert.alert(
-        'Premium widget',
-        `${widgetLabel} is part of Premium. Upgrade to add this widget to your home screen.`,
-        [
-          { text: 'Not now', style: 'cancel' },
-          {
-            text: 'View Premium',
-            onPress: () => navigation.navigate('Premium'),
-          },
-        ],
-      );
+  // The saved message is compared as written, so a preset saved in another language is not highlighted.
+  const presets = useMemo(
+    () => [
+      t('widgets.custom.preset.1'),
+      t('widgets.custom.preset.2'),
+      t('widgets.custom.preset.3'),
+    ],
+    [t],
+  );
+
+  const askForPremium = useCallback(
+    (title: string, message: string) => {
+      Alert.alert(title, message, [
+        { text: t('common.notNow'), style: 'cancel' },
+        {
+          text: t('widgets.custom.viewPremium'),
+          onPress: () => navigation.navigate('Premium'),
+        },
+      ]);
     },
-    [navigation],
+    [navigation, t],
+  );
+
+  const promptPremiumForWidget = useCallback(
+    (type: string) =>
+      askForPremium(
+        t('widgets.custom.premiumWidget.title'),
+        t(
+          type === 'month'
+            ? 'widgets.custom.premiumWidget.month'
+            : 'widgets.custom.premiumWidget.life',
+        ),
+      ),
+    [askForPremium, t],
   );
 
   const handleSelectType = useCallback(
     (value: string) => {
       if (isPremiumWidgetConfigType(value) && !hasPremiumBundle) {
-        promptPremiumForWidget(value === 'month' ? 'Month' : 'Life');
+        promptPremiumForWidget(value);
         return;
       }
       setType(value as Parameters<typeof setType>[0]);
@@ -81,35 +97,26 @@ export function WidgetCustomizationScreen() {
   const handleSelectAccent = useCallback(
     (value: string) => {
       if (isPremiumWidgetAccent(value) && !hasPremiumBundle) {
-        Alert.alert(
-          'Premium accent',
-          'Color accents are part of Premium. Upgrade to personalize your widgets.',
-          [
-            { text: 'Not now', style: 'cancel' },
-            {
-              text: 'View Premium',
-              onPress: () => navigation.navigate('Premium'),
-            },
-          ],
+        askForPremium(
+          t('widgets.custom.premiumAccent.title'),
+          t('widgets.custom.premiumAccent.message'),
         );
         return;
       }
       setAccent(value as Parameters<typeof setAccent>[0]);
     },
-    [hasPremiumBundle, navigation, setAccent],
+    [askForPremium, hasPremiumBundle, setAccent, t],
   );
 
   const handleAddWidget = useCallback(() => {
     if (isPremiumWidgetConfigType(config.type) && !hasPremiumBundle) {
-      promptPremiumForWidget(config.type === 'month' ? 'Month' : 'Life');
+      promptPremiumForWidget(config.type);
       return;
     }
-    Alert.alert(
-      'Add widget',
-      'Long-press your home screen, tap Widgets, then choose Until and your preferred size.',
-      [{ text: 'OK' }],
-    );
-  }, [config.type, hasPremiumBundle, promptPremiumForWidget]);
+    Alert.alert(t('widgets.custom.addWidget'), t('widgets.custom.addAlert'), [
+      { text: t('widgets.custom.ok') },
+    ]);
+  }, [config.type, hasPremiumBundle, promptPremiumForWidget, t]);
 
   return (
     <ScreenGradient>
@@ -119,19 +126,19 @@ export function WidgetCustomizationScreen() {
         bounces
       >
         <Text variant="title" style={styles.title}>
-          Widget preview
+          {t('widgets.custom.previewTitle')}
         </Text>
 
         <WidgetPreview config={config} />
 
         <View style={styles.section}>
-          <SectionLabel label="Widget type" />
+          <SectionLabel label={t('widgets.custom.section.type')} />
           <HorizontalPills
             options={[
-              { key: 'day', label: 'Today' },
-              { key: 'month', label: 'This month' },
-              { key: 'year', label: 'This year' },
-              { key: 'life', label: 'Life' },
+              { key: 'day', label: t('nav.today') },
+              { key: 'month', label: t('nav.thisMonth') },
+              { key: 'year', label: t('nav.thisYear') },
+              { key: 'life', label: t('widgets.custom.type.life') },
             ]}
             selected={config.type}
             onSelect={handleSelectType}
@@ -139,12 +146,12 @@ export function WidgetCustomizationScreen() {
         </View>
 
         <View style={styles.section}>
-          <SectionLabel label="Theme" />
+          <SectionLabel label={t('widgets.custom.section.theme')} />
           <HorizontalPills
             options={[
-              { key: 'light', label: 'Light' },
-              { key: 'dark', label: 'Dark' },
-              { key: 'amoled', label: 'AMOLED' },
+              { key: 'light', label: t('widgets.custom.theme.light') },
+              { key: 'dark', label: t('widgets.custom.theme.dark') },
+              { key: 'amoled', label: t('widgets.custom.theme.amoled') },
             ]}
             selected={config.theme}
             onSelect={value => setTheme(value as any)}
@@ -152,11 +159,11 @@ export function WidgetCustomizationScreen() {
         </View>
 
         <View style={styles.section}>
-          <SectionLabel label="Layout" />
+          <SectionLabel label={t('widgets.custom.section.layout')} />
           <HorizontalPills
             options={[
-              { key: 'minimal', label: 'Minimal' },
-              { key: 'detailed', label: 'Detailed' },
+              { key: 'minimal', label: t('widgets.custom.layout.minimal') },
+              { key: 'detailed', label: t('widgets.custom.layout.detailed') },
             ]}
             selected={config.layout}
             onSelect={value => setLayout(value as any)}
@@ -164,11 +171,11 @@ export function WidgetCustomizationScreen() {
         </View>
 
         <View style={styles.section}>
-          <SectionLabel label="Font style" />
+          <SectionLabel label={t('widgets.custom.section.font')} />
           <HorizontalPills
             options={[
-              { key: 'clean', label: 'Clean' },
-              { key: 'emotional', label: 'Emotional' },
+              { key: 'clean', label: t('widgets.custom.font.clean') },
+              { key: 'emotional', label: t('widgets.custom.font.emotional') },
             ]}
             selected={config.font}
             onSelect={value => setFont(value as any)}
@@ -177,14 +184,14 @@ export function WidgetCustomizationScreen() {
 
         <View style={styles.section}>
           <View style={styles.accentHeaderRow}>
-            <SectionLabel label="Accent color" />
+            <SectionLabel label={t('widgets.custom.section.accent')} />
             {!hasPremiumBundle && (
               <Text
                 variant="caption"
                 color="secondary"
                 style={styles.premiumTag}
               >
-                PREMIUM
+                {t('widgets.custom.premiumTag')}
               </Text>
             )}
           </View>
@@ -214,7 +221,7 @@ export function WidgetCustomizationScreen() {
                     color={isActive ? 'primary' : 'secondary'}
                     style={styles.accentLabel}
                   >
-                    {option.label}
+                    {t(option.labelKey)}
                   </Text>
                 </TouchableOpacity>
               );
@@ -223,21 +230,21 @@ export function WidgetCustomizationScreen() {
         </View>
 
         <View style={styles.section}>
-          <SectionLabel label="Optional message" />
+          <SectionLabel label={t('widgets.custom.section.message')} />
           <ToggleRow
-            label="Show message"
+            label={t('widgets.custom.showMessage')}
             active={config.showMessage}
             onToggle={() => setShowMessage(!config.showMessage)}
           />
           {config.showMessage && (
             <View style={styles.messageSection}>
               <Text variant="caption" color="secondary" style={styles.subLabel}>
-                Presets
+                {t('widgets.custom.presets')}
               </Text>
               <HorizontalPills
-                options={PRESET_MESSAGES.map(m => ({ key: m, label: m }))}
+                options={presets.map(m => ({ key: m, label: m }))}
                 selected={
-                  PRESET_MESSAGES.includes(config.message)
+                  presets.includes(config.message)
                     ? config.message
                     : undefined
                 }
@@ -245,13 +252,13 @@ export function WidgetCustomizationScreen() {
                 wrap
               />
               <Text variant="caption" color="secondary" style={styles.subLabel}>
-                Or write your own
+                {t('widgets.custom.writeOwn')}
               </Text>
               <View style={styles.inputWrapper}>
                 <TextInput
                   value={config.message}
                   onChangeText={setMessage}
-                  placeholder="Type a short reminder to your future self"
+                  placeholder={t('widgets.custom.placeholder')}
                   placeholderTextColor={theme.textSecondary}
                   style={styles.input}
                   maxLength={80}
@@ -270,7 +277,9 @@ export function WidgetCustomizationScreen() {
           style={styles.primaryButton}
           onPress={handleAddWidget}
         >
-          <Text style={styles.primaryButtonText}>Add widget</Text>
+          <Text style={styles.primaryButtonText}>
+            {t('widgets.custom.addWidget')}
+          </Text>
         </TouchableOpacity>
       </View>
     </ScreenGradient>
@@ -282,7 +291,7 @@ function SectionLabel({ label }: { label: string }) {
   const styles = useMemo(() => createStyles(theme), [theme]);
   return (
     <Text variant="caption" color="secondary" style={styles.sectionLabel}>
-      {label.toUpperCase()}
+      {label}
     </Text>
   );
 }
@@ -327,41 +336,6 @@ function HorizontalPills({
         );
       })}
     </View>
-  );
-}
-
-interface ToggleRowProps {
-  label: string;
-  active: boolean;
-  onToggle: () => void;
-}
-
-function ToggleRow({ label, active, onToggle }: ToggleRowProps) {
-  const theme = useTheme();
-  const styles = useMemo(() => createStyles(theme), [theme]);
-  return (
-    <TouchableOpacity
-      activeOpacity={0.8}
-      style={styles.toggleRow}
-      onPress={onToggle}
-    >
-      <Text variant="body" style={styles.toggleLabel}>
-        {label}
-      </Text>
-      <View
-        style={[
-          styles.toggleTrack,
-          active ? styles.toggleTrackOn : styles.toggleTrackOff,
-        ]}
-      >
-        <View
-          style={[
-            styles.toggleThumb,
-            active ? styles.toggleThumbOn : styles.toggleThumbOff,
-          ]}
-        />
-      </View>
-    </TouchableOpacity>
   );
 }
 
@@ -470,39 +444,6 @@ function createStyles(theme: ThemePalette) {
       fontSize: Typography.body,
       color: theme.textPrimary,
     },
-    toggleRow: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      marginTop: Spacing.sm,
-    },
-    toggleLabel: {
-      color: theme.textPrimary,
-    },
-    toggleTrack: {
-      width: 44,
-      height: 26,
-      borderRadius: 13,
-      padding: 3,
-      flexDirection: 'row',
-      alignItems: 'center',
-    },
-    toggleTrackOn: {
-      backgroundColor: theme.percent,
-      justifyContent: 'flex-end',
-    },
-    toggleTrackOff: {
-      backgroundColor: theme.divider,
-      justifyContent: 'flex-start',
-    },
-    toggleThumb: {
-      width: 20,
-      height: 20,
-      borderRadius: 10,
-      backgroundColor: theme.cardBase,
-    },
-    toggleThumbOn: {},
-    toggleThumbOff: {},
     footer: {
       position: 'absolute',
       left: 0,

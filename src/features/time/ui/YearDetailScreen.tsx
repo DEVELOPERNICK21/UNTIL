@@ -3,6 +3,7 @@ import { View, StyleSheet } from 'react-native';
 import { Text, PeriodDotsGrid } from '../../../shared/ui';
 import { PeriodDetailScreen } from './PeriodDetailScreen';
 import { useObserveTimeState } from '../hooks/useObserveTimeState';
+import { useTranslation } from '../../../shared/i18n/useTranslation';
 import { Spacing, useTheme, getProgressColor } from '../../../shared/theme';
 
 function getDaysInYear(): number {
@@ -12,6 +13,7 @@ function getDaysInYear(): number {
 
 export function YearDetailScreen() {
   const theme = useTheme();
+  const { t, formatNumber } = useTranslation();
   const { timeState } = useObserveTimeState();
 
   const remainingDaysYear = timeState.remainingDaysYear ?? 0;
@@ -23,38 +25,40 @@ export function YearDetailScreen() {
   const progress = timeState.year ?? 0;
   const pct = Math.round(progress * 100);
   const fillColor = getProgressColor(progress);
-  const passedLabel = passedDays.toLocaleString();
-  const totalLabel = daysInYear.toLocaleString();
+  const counts = { passed: passedDays, total: daysInYear };
 
   return (
     <PeriodDetailScreen
       kind="year"
-      title="This year"
+      title={t('nav.thisYear')}
       progress={progress}
       passedLabel={`${passedDays}`}
       leftLabel={`${remainingDaysYear}`}
-      passedCaption="Days passed"
-      leftCaption="Days left"
-      summary={`${passedDays} of ${daysInYear} days · ${100 - pct}% of year remaining`}
+      passedCaption={t('detail.daysPassed')}
+      leftCaption={t('detail.daysLeft')}
+      summary={t('detail.year.summary', { ...counts, left: 100 - pct })}
       hero={
         <View style={styles.hero}>
           <Text
             variant="sectionTitle"
             style={[styles.heroDays, { color: fillColor ?? theme.percent }]}
           >
-            {passedLabel} / {totalLabel} days
+            {t('detail.year.hero', {
+              passed: formatNumber(passedDays),
+              total: formatNumber(daysInYear),
+            })}
           </Text>
           <PeriodDotsGrid
             filledCount={passedDays}
             totalCount={daysInYear}
             fillColor={fillColor}
-            accessibilityLabel={`${passedDays} of ${daysInYear} days passed`}
+            accessibilityLabel={t('detail.year.dotsLabel', counts)}
           />
         </View>
       }
       footer={
         <Text variant="caption" color="secondary" style={styles.hint}>
-          The Year widget shows all 365 days at a glance. Add it from Widgets.
+          {t('detail.year.hint')}
         </Text>
       }
     />

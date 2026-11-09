@@ -1,0 +1,22 @@
+{
+  "countdowns.subtitle": "Geri saydığın tarihleri ekle (ör. Proje, Mülakat). Widget en yakın olanı ve kaç gün kaldığını gösterir.",
+  "countdowns.titlePlaceholder": "Başlık (ör. Proje, Mülakat)",
+  "countdowns.defaultTitle": "Son tarih",
+  "countdowns.empty": "Henüz son tarih yok. Yukarıdan bir tane ekle, sonra Son tarih widget'ını ana ekranına ekle.",
+  "countdowns.widgetHint": "Son tarih widget'ını ana ekranından ekle.",
+  "countdowns.remove.title": "Geri sayımı kaldır",
+  "countdowns.remove.message": "“{{title}}” kaldırılsın mı?",
+  "countdowns.daysLeft_one": "{{count}} gün kaldı",
+  "countdowns.daysLeft_other": "{{count}} gün kaldı",
+  "countdowns.daysAgo_one": "{{count}} gün önce",
+  "countdowns.daysAgo_other": "{{count}} gün önce",
+  "countdowns.home.eyebrowNext": "SONRAKİ GERİ SAYIM",
+  "countdowns.home.eyebrowEmpty": "GERİ SAYIMLAR",
+  "countdowns.home.emptyTitle": "Bir şeye doğru geri say",
+  "countdowns.home.emptyBody": "Bir sınav, bir yolculuk, bir doğum günü, bir son tarih.",
+  "countdowns.addWithPremium": "Premium ile ekle",
+  "countdowns.limit.reached": "Bir liste en fazla bu kadar tutar ({{limit}}). Yenisini eklemek için birini kaldır.",
+  "countdowns.limit.free": "Ücretsiz plan tek bir son tarih tutar. Premium {{max}} adede kadar tutar.",
+  "countdowns.onWidget": "Widget’ında gösteriliyor",
+  "countdowns.passed": "Bu son tarih geçti. İşin bitince kaldır."
+}

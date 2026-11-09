@@ -3,6 +3,8 @@
  * Pure functions - no side effects
  */
 
+import { t } from '../../../shared/i18n/translate';
+
 export interface InterventionResult {
   shouldShowRed: boolean;
   limitCrossed: boolean;
@@ -20,6 +22,6 @@ export function shouldIntervene(
   return {
     shouldShowRed: limitCrossed,
     limitCrossed,
-    message: limitCrossed ? 'This day will never repeat.' : null,
+    message: limitCrossed ? t('activity.limitCrossed') : null,
   };
 }

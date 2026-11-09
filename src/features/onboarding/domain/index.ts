@@ -4,5 +4,10 @@
  * screens or hooks. Add an export deliberately when another feature's domain needs it.
  */
 
-export { personalizeWeeklyReflectionMessage } from './personalizedInsights';
+export {
+  personalizeWeeklyReflectionMessage,
+  resolvePersonalizationPriority,
+  weeklyReflectionMessage,
+} from './personalizedInsights';
+export type { PersonalizationPriority } from './personalizedInsights';
 export type { IOnboardingRepository } from './ports/IOnboardingRepository';

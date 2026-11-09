@@ -1,0 +1,19 @@
+{
+  "activity.locked.eyebrow": "Оповещения о потерянном времени",
+  "activity.locked.unlock": "Открыть",
+  "activity.locked.hint": "Записывайте потерянные часы. Получайте напоминание, когда превысите дневной лимит.",
+  "activity.today.eyebrow": "Потерянное время сегодня",
+  "activity.hint.tracking": "Идёт учёт. Остановите, когда снова сосредоточитесь.",
+  "activity.hint.remaining": "До оповещения осталось {{time}}.",
+  "activity.hint.idle": "Запишите время прокрутки, пока день не закончился.",
+  "activity.track.start": "Учёт",
+  "activity.track.stop": "Стоп",
+  "activity.track.startLabel": "Учитывать потерянное время",
+  "activity.track.stopLabel": "Остановить учёт потерянного времени",
+  "activity.add30": "+30м",
+  "activity.add60": "+1ч",
+  "activity.duration.minutes": "{{m}}м",
+  "activity.duration.hours": "{{h}}ч",
+  "activity.duration.both": "{{h}}ч {{m}}м",
+  "activity.limitCrossed": "Этот день никогда не повторится."
+}

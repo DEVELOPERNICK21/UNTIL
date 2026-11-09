@@ -1,0 +1,22 @@
+{
+  "home.headline": "時間の現実",
+  "home.swipeHint": "左にスワイプしてタスクレポートへ →",
+  "home.tile.today": "今日",
+  "home.tile.month": "月",
+  "home.tile.year": "年",
+  "home.tile.life": "人生",
+  "home.percentLeft": "残り{{percent}}%",
+  "home.tileA11y": "{{title}}：残り{{left}}、経過{{passed}}。タップで詳細を表示します。",
+  "home.unlock": "ロック解除",
+  "home.lifeLockedA11y": "人生はロックされています。プレミアムを開いて解除してください。",
+  "home.setBirthDate": "生年月日を設定",
+  "home.setBirthDateA11y": "人生の進み具合を見るには、設定で生年月日を設定してください。",
+  "home.comingSoon.title": "近日公開",
+  "home.comingSoon.body": "月間目標と今日のタスクは、今後のアップデートでここに表示されます。",
+  "home.fab.label": "タスク",
+  "home.fab.a11y": "今日のタスク",
+  "home.cards.showMoreA11y": "カードをもっと表示",
+  "home.cards.showFewerA11y": "カードの表示を減らす",
+  "home.cards.showLess": "表示を減らす",
+  "home.cards.more": "もっと見る（{{count}}）"
+}

@@ -4,7 +4,7 @@ import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Text } from '../../../shared/ui';
 import { Spacing, Radius, useTheme } from '../../../shared/theme';
-import { MONETIZATION_PAYWALL_COPY } from '../../../config/monetization';
+import { useTranslation } from '../../../shared/i18n/useTranslation';
 import { recordPaywallDismissed } from '../services/paywallPrompt';
 import type { RootStackParamList } from '../../../shared/navigation/types';
 
@@ -18,6 +18,7 @@ export function LifeUnlockEndedModal({
   onDismiss,
 }: LifeUnlockEndedModalProps) {
   const theme = useTheme();
+  const { t } = useTranslation();
   const navigation =
     useNavigation<NativeStackNavigationProp<RootStackParamList>>();
 
@@ -39,10 +40,10 @@ export function LifeUnlockEndedModal({
       <View style={styles.backdrop}>
         <View style={[styles.card, { backgroundColor: theme.cardBaseAlpha }]}>
           <Text variant="title" style={{ color: theme.textPrimary, marginBottom: Spacing[2] }}>
-            {MONETIZATION_PAYWALL_COPY.lifeUnlockEndedTitle}
+            {t('premium.paywall.lifeUnlockEndedTitle')}
           </Text>
           <Text variant="body" style={{ color: theme.textSecondary, marginBottom: Spacing[4] }}>
-            {MONETIZATION_PAYWALL_COPY.lifeUnlockEndedMessage}
+            {t('premium.paywall.lifeUnlockEndedMessage')}
           </Text>
           <TouchableOpacity
             style={[styles.primary, { backgroundColor: theme.percent }]}
@@ -50,12 +51,12 @@ export function LifeUnlockEndedModal({
             activeOpacity={0.9}
           >
             <Text variant="sectionTitle" style={styles.primaryLabel}>
-              See Premium plans
+              {t('premium.paywall.seePlans')}
             </Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.secondary} onPress={handleLater} activeOpacity={0.7}>
             <Text variant="body" style={{ color: theme.textSecondary }}>
-              Not now
+              {t('common.notNow')}
             </Text>
           </TouchableOpacity>
         </View>

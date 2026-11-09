@@ -1,0 +1,22 @@
+{
+  "home.headline": "Zamanın gerçeği",
+  "home.swipeHint": "Görev raporu için sola kaydır →",
+  "home.tile.today": "Bugün",
+  "home.tile.month": "Ay",
+  "home.tile.year": "Yıl",
+  "home.tile.life": "Hayat",
+  "home.percentLeft": "%{{percent}} kaldı",
+  "home.tileA11y": "{{title}}: {{left}} kaldı, {{passed}} geçti. Ayrıntılar için dokun.",
+  "home.unlock": "Kilidi aç",
+  "home.lifeLockedA11y": "Hayat kilitli. Kilidi açmak için Premium'u aç.",
+  "home.setBirthDate": "Doğum tarihini ayarla",
+  "home.setBirthDateA11y": "Hayat ilerlemesini görmek için Ayarlar'dan doğum tarihini ayarla.",
+  "home.comingSoon.title": "Yakında",
+  "home.comingSoon.body": "Aylık hedefler ve bugünün görevleri gelecek bir güncellemede burada görünecek.",
+  "home.fab.label": "Görevler",
+  "home.fab.a11y": "Bugünün görevleri",
+  "home.cards.showMoreA11y": "Daha fazla kart göster",
+  "home.cards.showFewerA11y": "Daha az kart göster",
+  "home.cards.showLess": "Daha az göster",
+  "home.cards.more": "Daha fazla ({{count}})"
+}

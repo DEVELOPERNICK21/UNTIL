@@ -6,10 +6,9 @@ import type {
   OnboardingCadence,
   OnboardingDrain,
   OnboardingFunnelStep,
-  OnboardingGoal,
   OnboardingQuizAnswers,
-  OnboardingValues,
 } from '../../../shared/types';
+import { t } from '../../../shared/i18n/translate';
 
 export const ONBOARDING_FUNNEL_STEPS: readonly OnboardingFunnelStep[] = [
   'brand',
@@ -54,19 +53,6 @@ const RECLAIM_HOURS: Record<OnboardingDrain, number> = {
   unsure: 14,
 };
 
-const GOAL_LABELS: Record<OnboardingGoal, string> = {
-  people: 'time with people',
-  focus: 'deep focus',
-  health: 'health & energy',
-  calm: 'calm and less doomscroll',
-  other: 'what matters to you',
-};
-
-const VALUES_LABELS: Record<OnboardingValues, string> = {
-  ...GOAL_LABELS,
-  rest: 'protected rest',
-};
-
 /** Picking daily check-ins (alone or with widgets) means they want the morning reminder. */
 export function wantsDailyCheckIns(cadence: OnboardingCadence | undefined): boolean {
   return cadence === 'checkins' || cadence === 'both';
@@ -87,24 +73,24 @@ export function buildResultCards(
 ): OnboardingResultCard[] {
   const hours = getReclaimHours(answers.timeDrain);
   const priority = answers.valuesPriority ?? answers.goal ?? 'other';
-  const planLabel = VALUES_LABELS[priority] ?? VALUES_LABELS.other;
+  const planLabel = t(`onboarding.results.priority.${priority}`);
 
-  let cadenceText = 'Gentle start. Widgets when you’re ready';
+  let cadenceText = t('onboarding.results.cadence.gentle');
   const cadence: OnboardingCadence | undefined = answers.cadence;
   if (wantsDailyCheckIns(cadence)) {
-    cadenceText = 'Daily awareness check-ins enabled';
+    cadenceText = t('onboarding.results.cadence.checkins');
   } else if (cadence === 'widgets') {
-    cadenceText = 'Home screen widgets prioritized';
+    cadenceText = t('onboarding.results.cadence.widgets');
   }
 
   return [
     {
       id: 'reclaim',
-      text: `~${hours} hrs/week could shift to what matters`,
+      text: t('onboarding.results.reclaim', { hours }),
     },
     {
       id: 'plan',
-      text: `Plan built around ${planLabel}`,
+      text: t('onboarding.results.plan', { priority: planLabel }),
     },
     {
       id: 'cadence',
@@ -160,10 +146,10 @@ const ENCOURAGEMENT_FINAL = new Set<OnboardingFunnelStep>([
 export function getFunnelEncouragement(
   step: OnboardingFunnelStep
 ): string | null {
-  if (ENCOURAGEMENT_EARLY.has(step)) return "You're underway";
-  if (ENCOURAGEMENT_MID.has(step)) return 'Your time map is forming';
-  if (ENCOURAGEMENT_LATE.has(step)) return 'Almost ready';
-  if (ENCOURAGEMENT_FINAL.has(step)) return 'Your plan is ready';
+  if (ENCOURAGEMENT_EARLY.has(step)) return t('onboarding.encouragement.early');
+  if (ENCOURAGEMENT_MID.has(step)) return t('onboarding.encouragement.mid');
+  if (ENCOURAGEMENT_LATE.has(step)) return t('onboarding.encouragement.late');
+  if (ENCOURAGEMENT_FINAL.has(step)) return t('onboarding.encouragement.final');
   return null;
 }
 

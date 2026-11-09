@@ -17,6 +17,8 @@ import { Spacing, Colors, Radius, Typography } from '../../../shared/theme';
 import type { RootStackParamList } from '../../../shared/navigation/types';
 import type { MonthlyGoal } from '../../../shared/types';
 import { logAnalyticsEvent } from '../../../shared/analytics/analytics';
+import { formatDate } from '../../../shared/i18n/translate';
+import { useTranslation } from '../../../shared/i18n/useTranslation';
 
 function currentMonthIso(): string {
   return new Date().toISOString().slice(0, 7); // YYYY-MM
@@ -25,11 +27,12 @@ function currentMonthIso(): string {
 function monthLabel(month: string): string {
   const [y, m] = month.split('-').map(Number);
   const d = new Date(y, m - 1, 1);
-  return d.toLocaleString('default', { month: 'long', year: 'numeric' });
+  return formatDate(d, { month: 'long', year: 'numeric' });
 }
 
 export function MonthlyGoalsScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList, 'MonthlyGoals'>>();
+  const { t } = useTranslation();
   const month = currentMonthIso();
   const { goals, refresh, addGoal, removeGoal } = useMonthlyGoals(month);
   const [modalVisible, setModalVisible] = useState(false);
@@ -49,11 +52,11 @@ export function MonthlyGoalsScreen() {
   };
 
   const handleAdd = () => {
-    const t = title.trim();
-    if (!t) return;
+    const trimmedTitle = title.trim();
+    if (!trimmedTitle) return;
     const hasTarget = !!targetDescription.trim();
     addGoal({
-      title: t,
+      title: trimmedTitle,
       targetDescription: targetDescription.trim() || undefined,
     });
     void logAnalyticsEvent('goal_created', { has_target_description: hasTarget });
@@ -62,12 +65,15 @@ export function MonthlyGoalsScreen() {
 
   const handleRemove = (goal: MonthlyGoal) => {
     Alert.alert(
-      'Remove goal',
-      `Remove "${goal.title}" and its ${goal.tasks.length} task(s)?`,
+      t('tasks.goals.remove'),
+      t('tasks.goals.removeBody', {
+        title: goal.title,
+        count: goal.tasks.length,
+      }),
       [
-        { text: 'Cancel', style: 'cancel' },
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text: 'Remove',
+          text: t('common.remove'),
           style: 'destructive',
           onPress: () => {
             removeGoal(goal.id);
@@ -86,12 +92,12 @@ export function MonthlyGoalsScreen() {
           keyboardShouldPersistTaps="handled"
         >
           <Text variant="body" color="secondary" style={styles.subtitle}>
-            Set goals for {monthLabel(currentMonthIso())} and add tasks to each. You can add those tasks to today or repeat them daily.
+            {t('tasks.goals.subtitle', { month: monthLabel(currentMonthIso()) })}
           </Text>
 
           {goals.length === 0 ? (
             <Text variant="body" color="secondary" style={styles.empty}>
-              No goals this month. Add one below.
+              {t('tasks.goals.empty')}
             </Text>
           ) : (
             goals.map((goal) => (
@@ -112,7 +118,7 @@ export function MonthlyGoalsScreen() {
                         </Text>
                       ) : null}
                       <Text variant="caption" color="secondary" style={styles.taskCount}>
-                        {goal.tasks.length} task{goal.tasks.length !== 1 ? 's' : ''}
+                        {t('tasks.goals.taskCount', { count: goal.tasks.length })}
                       </Text>
                     </View>
                     <TouchableOpacity
@@ -123,7 +129,7 @@ export function MonthlyGoalsScreen() {
                       style={styles.removeBtn}
                       hitSlop={12}
                     >
-                      <Text variant="caption" style={styles.removeText}>Remove</Text>
+                      <Text variant="caption" style={styles.removeText}>{t('common.remove')}</Text>
                     </TouchableOpacity>
                   </View>
                 </Card>
@@ -132,7 +138,7 @@ export function MonthlyGoalsScreen() {
           )}
 
           <TouchableOpacity style={styles.addButton} onPress={openAdd}>
-            <Text variant="caption" style={styles.addButtonText}>Add monthly goal</Text>
+            <Text variant="caption" style={styles.addButtonText}>{t('tasks.goals.add')}</Text>
           </TouchableOpacity>
         </ScrollView>
       </ScreenGradient>
@@ -141,13 +147,13 @@ export function MonthlyGoalsScreen() {
         <Pressable style={styles.modalOverlay} onPress={() => setModalVisible(false)}>
           <Pressable style={styles.modalContent} onPress={(e) => e.stopPropagation()}>
             <Text variant="sectionTitle" color="primary" style={styles.modalTitle}>
-              New monthly goal
+              {t('tasks.goals.new')}
             </Text>
             <TextInput
               style={styles.input}
               value={title}
               onChangeText={setTitle}
-              placeholder="Goal title (e.g. Gain 5 kg)"
+              placeholder={t('tasks.goals.titlePlaceholder')}
               placeholderTextColor={Colors.textSecondary}
               autoCapitalize="sentences"
             />
@@ -155,20 +161,20 @@ export function MonthlyGoalsScreen() {
               style={[styles.input, styles.inputArea]}
               value={targetDescription}
               onChangeText={setTargetDescription}
-              placeholder="Target (optional, e.g. increase 5 kg this month)"
+              placeholder={t('tasks.goals.targetPlaceholder')}
               placeholderTextColor={Colors.textSecondary}
               multiline
             />
             <View style={styles.modalActions}>
               <TouchableOpacity style={styles.modalButton} onPress={() => setModalVisible(false)}>
-                <Text variant="body" color="secondary">Cancel</Text>
+                <Text variant="body" color="secondary">{t('common.cancel')}</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.modalButton, styles.modalButtonPrimary]}
                 onPress={handleAdd}
                 disabled={!title.trim()}
               >
-                <Text variant="body" style={styles.modalButtonPrimaryText}>Add</Text>
+                <Text variant="body" style={styles.modalButtonPrimaryText}>{t('common.add')}</Text>
               </TouchableOpacity>
             </View>
           </Pressable>

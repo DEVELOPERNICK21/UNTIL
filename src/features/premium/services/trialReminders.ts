@@ -4,12 +4,13 @@ import { STORAGE_KEYS } from '../../../shared/persistence/schema';
 import {
   FALLBACK_YEARLY_PRICE,
   TRIAL_REMINDER_DAYS,
-  formatPreviewEndingMessage,
 } from '../../../config/monetization';
+import { formatPreviewEndingMessage } from '../../../config/paywallCopy';
 import { TRIAL_DURATION_MS } from '../../../config/accessConstants';
 import { requestNotificationPermission } from '../../../shared/platform/notificationPermission';
 import { getTrialDayIndex } from '../domain/trialDay';
 import { MS_PER_DAY, MS_PER_HOUR } from '../../../shared/time/constants';
+import { t } from '../../../shared/i18n/translate';
 
 
 function reminderCopyForDay(day: number): string {
@@ -63,20 +64,39 @@ export function getTrialReminderMessage(
   return formatPreviewEndingMessage(day, yearlyPrice);
 }
 
-/** Schedule local notifications for last preview days (Android). */
+/**
+ * Schedule local notifications for last preview days (Android).
+ * `rewrite` is for a language change: it replaces the pending reminders so their text follows
+ * the new language, and does nothing if none had been scheduled.
+ */
 export async function scheduleTrialLocalNotifications(
-  trialStartMs: number
+  trialStartMs: number,
+  options: { rewrite?: boolean } = {}
 ): Promise<void> {
   if (Platform.OS !== 'android') return;
-  if (getString(STORAGE_KEYS.TRIAL_REMINDERS_SCHEDULED) === '1') return;
+  const alreadyScheduled =
+    getString(STORAGE_KEYS.TRIAL_REMINDERS_SCHEDULED) === '1';
+  if (options.rewrite ? !alreadyScheduled : alreadyScheduled) return;
 
   try {
     const notifee = require('@notifee/react-native').default;
     await requestNotificationPermission('trial_reminder');
     await notifee.createChannel({
       id: 'trial',
-      name: 'Preview reminders',
+      name: t('notifications.channel.trial'),
     });
+    if (options.rewrite) {
+      // Reminders from before ids were set have none, so they are found by their channel.
+      const pending: {
+        notification?: { id?: string; android?: { channelId?: string } };
+      }[] = await notifee.getTriggerNotifications();
+      for (const item of pending) {
+        const id = item.notification?.id;
+        if (id && item.notification?.android?.channelId === 'trial') {
+          await notifee.cancelNotification(id);
+        }
+      }
+    }
 
     const ids: string[] = [];
     for (const day of TRIAL_REMINDER_DAYS) {
@@ -85,7 +105,8 @@ export async function scheduleTrialLocalNotifications(
 
       const id = await notifee.createTriggerNotification(
         {
-          title: 'UNTIL free preview',
+          id: `trial-reminder-day-${day}`,
+          title: t('notifications.trial.title'),
           body: reminderCopyForDay(day),
           android: { channelId: 'trial' },
         },

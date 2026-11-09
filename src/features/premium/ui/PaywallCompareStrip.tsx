@@ -12,12 +12,24 @@ import {
   Weight,
   getFontFamilyForWeight,
 } from '../../../shared/theme';
-
-const FREE_ITEMS = ['Day widget', 'Year widget', 'Share', '1 deadline, 1 counter'];
-const PREMIUM_ITEMS = ['Month widget', 'Life screen', 'Overlay', 'Up to 20 of each'];
+import { PREMIUM_ITEM_LIMIT } from '../../../config/featureLimits';
+import { useTranslation } from '../../../shared/i18n/useTranslation';
 
 export function PaywallCompareStrip() {
   const theme = useTheme();
+  const { t } = useTranslation();
+  const freeItems = [
+    t('premium.compare.dayWidget'),
+    t('premium.compare.yearWidget'),
+    t('premium.compare.share'),
+    t('premium.compare.freeLimits'),
+  ];
+  const premiumItems = [
+    t('premium.compare.monthWidget'),
+    t('premium.compare.lifeScreen'),
+    t('premium.compare.overlay'),
+    t('premium.compare.premiumLimits', { max: PREMIUM_ITEM_LIMIT }),
+  ];
 
   return (
     <View style={styles.wrap}>
@@ -38,9 +50,9 @@ export function PaywallCompareStrip() {
             fontFamily: getFontFamilyForWeight(Weight.medium),
           }}
         >
-          FREE FOREVER
+          {t('premium.compare.free')}
         </Text>
-        {FREE_ITEMS.map(item => (
+        {freeItems.map(item => (
           <Text
             key={item}
             variant="caption"
@@ -69,9 +81,9 @@ export function PaywallCompareStrip() {
             fontFamily: getFontFamilyForWeight(Weight.semibold),
           }}
         >
-          WITH PREMIUM
+          {t('premium.compare.premium')}
         </Text>
-        {PREMIUM_ITEMS.map(item => (
+        {premiumItems.map(item => (
           <Text
             key={item}
             variant="caption"

@@ -9,23 +9,26 @@ import { useObserveCategoryTotals } from '../hooks/useObserveCategoryTotals';
 import { useLogActivity } from '../hooks/useLogActivity';
 import { useDailyNothingLimit } from '../hooks/useDailyNothingLimit';
 import { Spacing, Radius, useTheme, getFontFamilyForWeight, Weight } from '../../../shared/theme';
+import { useTranslation } from '../../../shared/i18n/useTranslation';
+import type { t as translateFn } from '../../../shared/i18n/translate';
 import type { RootStackParamList } from '../../../shared/navigation/types';
 import { logAnalyticsEvent } from '../../../shared/analytics/analytics';
 
-function formatHours(hours: number): string {
+function formatHours(hours: number, t: typeof translateFn): string {
   if (hours < 1) {
-    return `${Math.round(hours * 60)}m`;
+    return t('activity.duration.minutes', { m: Math.round(hours * 60) });
   }
   const h = Math.floor(hours);
   const m = Math.round((hours - h) * 60);
-  if (m === 0) return `${h}h`;
-  return `${h}h ${m}m`;
+  if (m === 0) return t('activity.duration.hours', { h });
+  return t('activity.duration.both', { h, m });
 }
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 
 export function InterventionHomeCard() {
   const theme = useTheme();
+  const { t } = useTranslation();
   const navigation = useNavigation<Nav>();
   const { hasPremiumBundle } = useAccessControl();
   const intervention = useInterventionState();
@@ -66,16 +69,16 @@ export function InterventionHomeCard() {
       <GlassCard style={styles.card}>
         <View style={styles.headerRow}>
           <Text variant="caption" color="secondary" style={styles.eyebrow}>
-            Lost-time alerts
+            {t('activity.locked.eyebrow')}
           </Text>
           <TouchableOpacity onPress={goPremium} hitSlop={8} activeOpacity={0.85}>
             <Text variant="caption" style={{ color: theme.percent }}>
-              Unlock
+              {t('activity.locked.unlock')}
             </Text>
           </TouchableOpacity>
         </View>
         <Text variant="caption" color="secondary" numberOfLines={2} style={styles.hint}>
-          Log wasted hours. Get a nudge when you cross your daily limit.
+          {t('activity.locked.hint')}
         </Text>
       </GlassCard>
     );
@@ -85,10 +88,10 @@ export function InterventionHomeCard() {
     <GlassCard style={styles.card}>
       <View style={styles.headerRow}>
         <Text variant="caption" color="secondary" style={styles.eyebrow}>
-          Today&apos;s lost time
+          {t('activity.today.eyebrow')}
         </Text>
         <Text variant="caption" style={{ color: theme.percent }}>
-          {formatHours(nothingHours)} / {formatHours(limitHours)}
+          {formatHours(nothingHours, t)} / {formatHours(limitHours, t)}
         </Text>
       </View>
 
@@ -106,10 +109,12 @@ export function InterventionHomeCard() {
       ) : (
         <Text variant="caption" color="secondary" numberOfLines={1} style={styles.hint}>
           {trackingNothing
-            ? 'Tracking now. Stop when you refocus.'
+            ? t('activity.hint.tracking')
             : remainingBeforeAlert > 0
-              ? `${formatHours(remainingBeforeAlert)} left before the alert.`
-              : 'Log scroll time before the day is gone.'}
+              ? t('activity.hint.remaining', {
+                  time: formatHours(remainingBeforeAlert, t),
+                })
+              : t('activity.hint.idle')}
         </Text>
       )}
 
@@ -127,7 +132,9 @@ export function InterventionHomeCard() {
           onPress={handleToggleTrack}
           activeOpacity={0.8}
           accessibilityLabel={
-            trackingNothing ? 'Stop tracking wasted time' : 'Track wasted time'
+            trackingNothing
+              ? t('activity.track.stopLabel')
+              : t('activity.track.startLabel')
           }
         >
           <Text
@@ -137,7 +144,9 @@ export function InterventionHomeCard() {
               fontFamily: getFontFamilyForWeight(Weight.medium),
             }}
           >
-            {trackingNothing ? 'Stop' : 'Track'}
+            {trackingNothing
+              ? t('activity.track.stop')
+              : t('activity.track.start')}
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
@@ -152,7 +161,7 @@ export function InterventionHomeCard() {
           activeOpacity={0.8}
         >
           <Text variant="caption" color="secondary">
-            +30m
+            {t('activity.add30')}
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
@@ -167,7 +176,7 @@ export function InterventionHomeCard() {
           activeOpacity={0.8}
         >
           <Text variant="caption" color="secondary">
-            +1h
+            {t('activity.add60')}
           </Text>
         </TouchableOpacity>
       </View>

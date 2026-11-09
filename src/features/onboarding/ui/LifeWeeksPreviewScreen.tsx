@@ -16,6 +16,7 @@ import {
   Radius,
 } from '../../../shared/theme';
 import { useAnalytics } from '../../../shared/analytics/useAnalytics';
+import { useTranslation } from '../../../shared/i18n/useTranslation';
 import { useLifeWeeks } from '../../../shared/hooks/useLifeWeeks';
 import { useObserveTimeState } from '../../time';
 import { useOnboardingFunnel } from '../hooks/useOnboardingFunnel';
@@ -27,6 +28,7 @@ type AuthNav = NativeStackNavigationProp<
 >;
 
 export function LifeWeeksPreviewScreen() {
+  const { t, formatNumber } = useTranslation();
   const navigation = useNavigation<AuthNav>();
   const insets = useSafeAreaInsets();
   const theme = useTheme();
@@ -39,8 +41,8 @@ export function LifeWeeksPreviewScreen() {
     timeState.remainingDaysLife,
   );
 
-  const livedWeeksLabel = livedWeeks.toLocaleString();
-  const totalWeeksLabel = totalWeeks.toLocaleString();
+  const livedWeeksLabel = formatNumber(livedWeeks);
+  const totalWeeksLabel = formatNumber(totalWeeks);
 
   useEffect(() => {
     logEvent('life_preview_seen');
@@ -85,7 +87,7 @@ export function LifeWeeksPreviewScreen() {
                   variant="caption"
                   style={[styles.identityLabel, { color: theme.textSecondary }]}
                 >
-                  TIMELINE
+                  {t('onboarding.lifeWeeks.timeline')}
                 </Text>
               </View>
               <View style={styles.headerRight} />
@@ -94,13 +96,18 @@ export function LifeWeeksPreviewScreen() {
             <View style={styles.card}>
               <View style={styles.cardContent}>
                 <Text style={[styles.title, { color: theme.textPrimary }]}>
-                  You have lived{' '}
+                  {t('onboarding.lifeWeeks.livedPrefix')}{' '}
                 </Text>
                 <Text style={[styles.titleEmphasis, { color: theme.percent }]}>
                   {livedWeeksLabel}{' '}
-                  <Text style={[{ color: '#FFFFFF' }]}>weeks </Text>/{' '}
-                  {totalWeeksLabel}
-                  <Text style={[{ color: '#FFFFFF' }]}> weeks </Text>
+                  <Text style={[{ color: '#FFFFFF' }]}>
+                    {t('onboarding.lifeWeeks.unit', { count: livedWeeks })}{' '}
+                  </Text>
+                  / {totalWeeksLabel}
+                  <Text style={[{ color: '#FFFFFF' }]}>
+                    {' '}
+                    {t('onboarding.lifeWeeks.unit', { count: totalWeeks })}{' '}
+                  </Text>
                 </Text>
                 <LifeWeeksGrid
                   livedWeeks={renderLivedWeeks}
@@ -123,7 +130,7 @@ export function LifeWeeksPreviewScreen() {
               activeOpacity={0.85}
             >
               <Text variant="sectionTitle" style={styles.ctaLabel}>
-                Enter the Present
+                {t('onboarding.lifeWeeks.cta')}
               </Text>
             </TouchableOpacity>
           </View>

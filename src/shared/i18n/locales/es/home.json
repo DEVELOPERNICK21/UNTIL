@@ -1,0 +1,22 @@
+{
+  "home.headline": "La realidad del tiempo",
+  "home.swipeHint": "Desliza a la izquierda para ver el informe de tareas →",
+  "home.tile.today": "Hoy",
+  "home.tile.month": "Mes",
+  "home.tile.year": "Año",
+  "home.tile.life": "Vida",
+  "home.percentLeft": "{{percent}}% restante",
+  "home.tileA11y": "{{title}}: quedan {{left}}, han pasado {{passed}}. Toca para ver los detalles.",
+  "home.unlock": "Desbloquear",
+  "home.lifeLockedA11y": "Vida está bloqueada. Abre Premium para desbloquearla.",
+  "home.setBirthDate": "Indicar fecha de nacimiento",
+  "home.setBirthDateA11y": "Indica tu fecha de nacimiento en Ajustes para ver el progreso de tu vida.",
+  "home.comingSoon.title": "Próximamente",
+  "home.comingSoon.body": "Las metas del mes y las tareas de hoy aparecerán aquí en una futura actualización.",
+  "home.fab.label": "Tareas",
+  "home.fab.a11y": "Tareas de hoy",
+  "home.cards.showMoreA11y": "Mostrar más tarjetas",
+  "home.cards.showFewerA11y": "Mostrar menos tarjetas",
+  "home.cards.showLess": "Mostrar menos",
+  "home.cards.more": "Más ({{count}})"
+}

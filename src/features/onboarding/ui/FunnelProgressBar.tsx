@@ -2,6 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import { View, StyleSheet, Animated } from 'react-native';
 import { useTheme, Spacing, Radius, Weight, getFontFamilyForWeight } from '../../../shared/theme';
 import { Text } from '../../../shared/ui';
+import { useTranslation } from '../../../shared/i18n/useTranslation';
 
 interface FunnelProgressBarProps {
   progress: number;
@@ -14,6 +15,7 @@ export function FunnelProgressBar({
   visible,
   encouragement = null,
 }: FunnelProgressBarProps) {
+  const { t } = useTranslation();
   const theme = useTheme();
   const opacity = useRef(new Animated.Value(1)).current;
 
@@ -30,7 +32,9 @@ export function FunnelProgressBar({
 
   const clamped = Math.max(0, Math.min(1, progress));
   const percentLabel = Math.round(clamped * 100);
-  const percentText = `${percentLabel}% complete`;
+  const percentText = t('onboarding.progress.complete', {
+    percent: percentLabel,
+  });
   const label = encouragement
     ? `${encouragement} · ${percentText}`
     : percentText;

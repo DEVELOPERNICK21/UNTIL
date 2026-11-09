@@ -1,14 +1,34 @@
+import { t } from '../../../shared/i18n/translate';
 import type { AccountDevice } from '../../../shared/types';
 import { MAX_ACTIVE_DEVICES, STALE_DEVICE_DAYS } from './deviceLimit';
 
-export const PREMIUM_DEVICES_BENEFIT = `Premium on up to ${MAX_ACTIVE_DEVICES} devices`;
+// Functions, not constants: the text follows the language chosen in Settings.
 
-export const DEVICE_LIMIT_BANNER_COPY = `This account is already used on ${MAX_ACTIVE_DEVICES} devices. Remove one to unlock premium here.`;
+export function premiumDevicesBenefit(): string {
+  return t('account.benefit.devices', { max: MAX_ACTIVE_DEVICES });
+}
+
+/** The lines under the sign-in headline. The onboarding prompt uses the shorter birth-date wording. */
+export function signInBenefits(options: { short?: boolean } = {}): string[] {
+  return [
+    t(options.short ? 'account.benefit.lifeShort' : 'account.benefit.life'),
+    premiumDevicesBenefit(),
+    t('account.benefit.restore'),
+  ];
+}
+
+export function deviceLimitBannerCopy(): string {
+  return t('account.deviceLimitBanner', { max: MAX_ACTIVE_DEVICES });
+}
 
 /** Under the device list: the two rules people can't guess. */
-export const DEVICE_RULES_NOTE = `One Mac or Windows PC at a time. A device you haven't opened in ${STALE_DEVICE_DAYS} days stops using a slot.`;
+export function deviceRulesNote(): string {
+  return t('account.devices.rules', { days: STALE_DEVICE_DAYS });
+}
 
-export const DESKTOP_SLOT_NOTE = `Menu bar or tray. Counts as one of your ${MAX_ACTIVE_DEVICES} devices.`;
+export function desktopSlotNote(): string {
+  return t('account.desktop.slotNote', { max: MAX_ACTIVE_DEVICES });
+}
 
 export function formatAccountDeviceLabel(
   device: Pick<AccountDevice, 'id' | 'platform' | 'label'>,
@@ -17,9 +37,9 @@ export function formatAccountDeviceLabel(
   const suffix = device.id.slice(-4).toUpperCase();
   switch (device.platform) {
     case 'ios':
-      return `iPhone · ${suffix}`;
+      return t('account.device.iphone', { suffix });
     case 'android':
-      return `Android phone · ${suffix}`;
+      return t('account.device.androidPhone', { suffix });
     case 'macos':
       return 'Mac';
     case 'windows':
@@ -34,9 +54,9 @@ export function replaceDesktopBody(
   const name = label
     ? label
     : existing.platform === 'macos'
-      ? 'Mac'
-      : existing.platform === 'windows'
-        ? 'Windows'
-        : 'another computer';
-  return `UNTIL is already signed in on ${name}. Signing in here turns that one off.`;
+    ? 'Mac'
+    : existing.platform === 'windows'
+    ? 'Windows'
+    : t('account.device.anotherComputer');
+  return t('account.device.replaceDesktop', { name });
 }

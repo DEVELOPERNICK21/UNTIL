@@ -12,15 +12,17 @@ import { FontFamily, Spacing } from '../../../shared/theme';
 import { useBadges } from '../hooks/useBadges';
 import { usePresenceStreak } from '../../presence';
 import { logAnalyticsEvent } from '../../../shared/analytics/analytics';
+import { useTranslation } from '../../../shared/i18n/useTranslation';
+import type { TranslationKey } from '../../../shared/i18n/translate';
 import { BadgeUnlockOverlay } from './BadgeUnlockOverlay';
-import { progressLabel } from './badgeLabels';
+import { badgeDescription, badgeTitle, progressLabel } from './badgeLabels';
 import type { BadgeFamily } from '../domain/badgeCatalog';
 import type { BadgeView } from '../domain/useCases/GetBadgesUseCase';
 
-const SECTIONS: Array<{ family: BadgeFamily; title: string }> = [
-  { family: 'presence', title: 'Streaks' },
-  { family: 'tasks', title: 'Tasks' },
-  { family: 'time', title: 'Your time' },
+const SECTIONS: Array<{ family: BadgeFamily; titleKey: TranslationKey }> = [
+  { family: 'presence', titleKey: 'badges.section.presence' },
+  { family: 'tasks', titleKey: 'badges.section.tasks' },
+  { family: 'time', titleKey: 'badges.section.time' },
 ];
 
 const MEDAL_SIZE = 68;
@@ -34,14 +36,18 @@ function BadgeCell({
   index: number;
   onPress: () => void;
 }) {
+  const { t } = useTranslation();
+  const status = view.earned ? t('badges.earned') : progressLabel(view, t);
   return (
     <Pressable
       onPress={onPress}
       style={styles.cell}
       accessibilityRole="button"
-      accessibilityLabel={`${view.definition.title}. ${
-        view.earned ? 'Earned' : progressLabel(view)
-      }. ${view.definition.description}`}
+      accessibilityLabel={t('badges.a11y.item', {
+        title: badgeTitle(view.definition, t),
+        status,
+        description: badgeDescription(view.definition, t),
+      })}
     >
       <BadgeMedal
         glyph={view.definition.glyph}
@@ -59,16 +65,17 @@ function BadgeCell({
         numberOfLines={2}
         style={styles.cellTitle}
       >
-        {view.definition.title}
+        {badgeTitle(view.definition, t)}
       </Text>
       <Text variant="micro" color="secondary" numberOfLines={1}>
-        {view.earned ? 'Earned' : progressLabel(view)}
+        {status}
       </Text>
     </Pressable>
   );
 }
 
 export function BadgesScreen() {
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const { badges, earnedCount, total } = useBadges();
   const { streak } = usePresenceStreak();
@@ -87,8 +94,8 @@ export function BadgesScreen() {
   const closeDetail = useCallback(() => setOpenId(null), []);
 
   const freezeLine = streak.freezeAvailable
-    ? 'One missed day is forgiven. Ready now.'
-    : 'Freeze used. It comes back after 7 days in a row.';
+    ? t('badges.freeze.ready')
+    : t('badges.freeze.used');
 
   return (
     <View style={styles.container}>
@@ -108,11 +115,13 @@ export function BadgesScreen() {
             </ProgressRing>
             <View style={styles.summaryCopy}>
               <Text variant="sectionTitle" color="primary">
-                {earnedCount} of {total} badges
+                {t('badges.summary.count', { earned: earnedCount, total })}
               </Text>
               <Text variant="caption" color="secondary">
-                Streak: {streak.count} {streak.count === 1 ? 'day' : 'days'}. Best:{' '}
-                {streak.longest}.
+                {t('badges.summary.streak', {
+                  count: streak.count,
+                  best: streak.longest,
+                })}
               </Text>
               <Text variant="micro" color="secondary">
                 {freezeLine}
@@ -126,7 +135,7 @@ export function BadgesScreen() {
             return (
               <View key={section.family} style={styles.section}>
                 <Text variant="sectionTitle" color="secondary" style={styles.sectionTitle}>
-                  {section.title}
+                  {t(section.titleKey)}
                 </Text>
                 <View style={styles.grid}>
                   {items.map((b, i) => (

@@ -1,0 +1,22 @@
+{
+  "counters.subtitle": "जो गिनना चाहते हैं उसे जोड़ें (जैसे पानी), फिर काउंटर विजेट को अपनी होम स्क्रीन पर जोड़ें। विजेट इनमें से एक को गिनता है: +1 जोड़ने के लिए उस पर टैप करें। गलती से टैप हो जाए तो यहाँ −1 करें, या दोबारा शुरू करने के लिए रीसेट करें।",
+  "counters.namePlaceholder": "काउंटर का नाम (जैसे पानी)",
+  "counters.empty": "अभी कोई काउंटर नहीं है। ऊपर से एक जोड़ें, फिर होम स्क्रीन से काउंटर विजेट जोड़ें और यही काउंटर चुनें।",
+  "counters.count": "गिनती: {{value}}",
+  "counters.remove.title": "काउंटर हटाएँ",
+  "counters.remove.message": "“{{title}}” हटाएँ? गिनती ({{value}}) मिट जाएगी।",
+  "counters.hint.ios": "होम स्क्रीन को देर तक दबाएँ → + → Until खोजें → “Counter” विजेट जोड़ें।",
+  "counters.hint.android": "होम स्क्रीन को देर तक दबाएँ → विजेट → Until → Counter।",
+  "counters.addWithPremium": "प्रीमियम के साथ जोड़ें",
+  "counters.limit.reached": "एक सूची में इससे ज़्यादा नहीं आ सकते ({{limit}})। नया जोड़ने के लिए एक हटाएँ।",
+  "counters.limit.free": "फ़्री प्लान में एक काउंटर रहता है। प्रीमियम में {{max}} तक रख सकते हैं।",
+  "counters.reset.title": "काउंटर रीसेट करें",
+  "counters.reset.message": "“{{title}}” को वापस 0 करें? अभी यह {{value}} पर है।",
+  "counters.reset.confirm": "रीसेट करें",
+  "counters.onWidget": "आपके विजेट पर दिख रहा है",
+  "counters.showOnWidget": "विजेट पर दिखाएँ",
+  "counters.a11y.showOnWidget": "{{title}} को विजेट पर दिखाएँ",
+  "counters.a11y.subtract": "एक घटाएँ",
+  "counters.a11y.add": "एक जोड़ें",
+  "counters.a11y.reset": "शून्य पर रीसेट करें"
+}

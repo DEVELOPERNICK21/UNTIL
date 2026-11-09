@@ -12,22 +12,18 @@ import { useAccessControl } from '../../premium';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Text, ScreenGradient } from '../../../shared/ui';
 import { Spacing, Radius, Typography, useTheme } from '../../../shared/theme';
+import { useTranslation } from '../../../shared/i18n/useTranslation';
 import type { ThemePalette } from '../../../shared/theme';
 import type { RootStackParamList } from '../../../shared/navigation/types';
 import { AddToHomeScreenSection } from './AddToHomeScreenSection';
-
-const PREMIUM_WIDGET_TILES = [
-  { title: 'Month widget', description: 'This month progress on your home screen.', route: 'WidgetCustomization' },
-  { title: 'Life widget', description: 'Your life progress at a glance.', route: 'WidgetCustomization' },
-  { title: 'Next deadlines', description: 'Your three nearest deadlines on one widget.', route: 'Countdowns' },
-] as const;
+import { PREMIUM_WIDGET_TILES } from '../config/premiumWidgetTiles';
 
 function SectionHeader({ label }: { label: string }) {
   const theme = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
   return (
     <Text variant="caption" color="secondary" style={styles.sectionLabel}>
-      {label.toUpperCase()}
+      {label}
     </Text>
   );
 }
@@ -53,6 +49,7 @@ function SettingTile({
   onPress,
   children,
 }: SettingTileProps) {
+  const { t } = useTranslation();
   const theme = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const content = (
@@ -83,14 +80,14 @@ function SettingTile({
         {comingSoon && (
           <View style={[styles.premiumPill, styles.comingSoonPill]}>
             <Text variant="caption" style={styles.premiumPillText}>
-              Soon
+              {t('widgets.tile.soon')}
             </Text>
           </View>
         )}
         {locked && !comingSoon && (
           <View style={styles.premiumPill}>
             <Text variant="caption" style={styles.premiumPillText}>
-              Premium
+              {t('widgets.tile.premium')}
             </Text>
           </View>
         )}
@@ -102,9 +99,9 @@ function SettingTile({
         numberOfLines={2}
       >
         {comingSoon
-          ? 'Coming in a future update.'
+          ? t('widgets.tile.comingSoon')
           : locked
-          ? 'Upgrade to Premium to add this widget.'
+          ? t('widgets.tile.upgrade')
           : description}
       </Text>
       {children}
@@ -126,7 +123,7 @@ function SettingTile({
         >
           {content}
           <Text variant="caption" color="secondary" style={styles.tileChevron}>
-            Open →
+            {t('widgets.tile.open')}
           </Text>
         </View>
       </TouchableOpacity>
@@ -176,12 +173,15 @@ function QuickLinkTile({
 }
 
 export function WidgetScreen() {
+  const { t } = useTranslation();
   const theme = useTheme();
   const styles = useMemo(() => createStyles(theme), [theme]);
   const navigation =
     useNavigation<NativeStackNavigationProp<RootStackParamList, 'Widget'>>();
   const { liveActivityActive, overlayActive } = useWidgetSurfaceStatus();
   const { hasPremiumBundle } = useAccessControl();
+  const statusLabel = (on: boolean) =>
+    t(on ? 'widgets.status.active' : 'widgets.status.inactive');
 
   return (
     <View style={styles.container}>
@@ -191,30 +191,29 @@ export function WidgetScreen() {
           showsVerticalScrollIndicator={false}
         >
           <Text variant="sectionTitle" color="primary" style={styles.title}>
-            Widgets
+            {t('nav.widgets')}
           </Text>
           <Text variant="body" color="secondary" style={styles.subtitle}>
-            Widgets, Dynamic Island, and Live Island. Add home screen widgets
-            and configure what stays visible when the app is closed.
+            {t('widgets.screen.subtitle')}
           </Text>
 
-          <SectionHeader label="Always visible" />
+          <SectionHeader label={t('widgets.section.alwaysVisible')} />
           <View style={styles.sectionGroup}>
             {Platform.OS === 'ios' && (
               <SettingTile
-                title="Dynamic Island"
-                description="Live Activity in Dynamic Island and Lock Screen. Tap to configure."
+                title={t('widgets.island.ios.name')}
+                description={t('widgets.island.ios.tileDescription')}
                 status={liveActivityActive ? 'active' : 'inactive'}
-                statusLabel={liveActivityActive ? 'Active' : 'Inactive'}
+                statusLabel={statusLabel(liveActivityActive)}
                 onPress={() => navigation.navigate('DynamicIsland')}
               />
             )}
             {Platform.OS === 'android' && (
               <SettingTile
-                title="Live Island"
-                description="Lock-screen progress, floating pill, and status-bar chip where supported."
+                title={t('widgets.island.android.name')}
+                description={t('widgets.island.android.tileDescription')}
                 status={overlayActive ? 'active' : 'inactive'}
-                statusLabel={overlayActive ? 'Active' : 'Inactive'}
+                statusLabel={statusLabel(overlayActive)}
                 onPress={() => navigation.navigate('DynamicIsland')}
               />
             )}
@@ -225,13 +224,13 @@ export function WidgetScreen() {
             onLocked={() => navigation.navigate('Premium')}
           />
 
-          <SectionHeader label="Premium home screen widgets" />
+          <SectionHeader label={t('widgets.section.premiumWidgets')} />
           <View style={styles.sectionGroup}>
             {PREMIUM_WIDGET_TILES.map(tile => (
               <SettingTile
-                key={tile.title}
-                title={tile.title}
-                description={tile.description}
+                key={tile.titleKey}
+                title={t(tile.titleKey)}
+                description={t(tile.descriptionKey)}
                 locked={!hasPremiumBundle}
                 onPress={() =>
                   hasPremiumBundle
@@ -243,34 +242,32 @@ export function WidgetScreen() {
           </View>
 
           {/* Section: Quick links */}
-          <SectionHeader label="Manage data & features" />
+          <SectionHeader label={t('widgets.section.manage')} />
           <View style={styles.sectionGroup}>
             <QuickLinkTile
-              title="Custom counters"
-              subtitle="Tap-to-increment widgets (e.g. Water)"
+              title={t('nav.customCounters')}
+              subtitle={t('widgets.quick.counters.subtitle')}
               onPress={() => navigation.navigate('CustomCounters')}
             />
             <QuickLinkTile
-              title="Deadlines"
-              subtitle="Countdown to a date (e.g. project, interview)"
+              title={t('nav.deadlines')}
+              subtitle={t('widgets.quick.deadlines.subtitle')}
               onPress={() => navigation.navigate('Countdowns')}
             />
             <QuickLinkTile
-              title="Hour calculation"
-              subtitle="Tap widget to start/stop. Set title in app."
+              title={t('nav.hourCalculation')}
+              subtitle={t('widgets.quick.hour.subtitle')}
               onPress={() => navigation.navigate('HourCalculation')}
             />
             <QuickLinkTile
-              title="Task report"
-              subtitle="Daily, weekly & monthly charts"
+              title={t('nav.taskReport')}
+              subtitle={t('widgets.quick.report.subtitle')}
               onPress={() => navigation.navigate('TaskReport')}
             />
           </View>
 
           <Text variant="caption" color="secondary" style={styles.hint}>
-            {Platform.OS === 'ios'
-              ? 'Long-press the home screen, tap +, then search for Until to add a widget.'
-              : 'Long-press the home screen and tap Widgets to add an Until widget.'}
+            {Platform.OS === 'ios' ? t('widgets.hint.ios') : t('widgets.hint.android')}
           </Text>
         </ScrollView>
       </ScreenGradient>
@@ -288,7 +285,6 @@ function createStyles(theme: ThemePalette) {
     },
     title: { marginBottom: Spacing[2] },
     subtitle: { marginBottom: Spacing[4] },
-    statusText: { marginBottom: Spacing[3] },
 
     sectionLabel: {
       letterSpacing: 1.2,
@@ -375,10 +371,6 @@ function createStyles(theme: ThemePalette) {
     },
     quickLinkTitle: {
       marginBottom: 2,
-    },
-    quickLinkBody: {
-      flex: 1,
-      paddingRight: Spacing[2],
     },
     comingSoonPill: {
       backgroundColor: 'rgba(160, 160, 160, 0.35)',

@@ -2,6 +2,7 @@ import React from 'react';
 import { View, StyleSheet, TouchableOpacity } from 'react-native';
 import { Text, Card } from '../../../shared/ui';
 import { Spacing, Colors, Radius } from '../../../shared/theme';
+import { useTranslation } from '../../../shared/i18n/useTranslation';
 import type { CustomCounter } from '../../../shared/types';
 
 interface CounterCardProps {
@@ -25,6 +26,7 @@ export function CounterCard({
   onRemove,
   onShowOnWidget,
 }: CounterCardProps) {
+  const { t, formatNumber } = useTranslation();
   return (
     <Card style={styles.card}>
       <View style={styles.row}>
@@ -33,22 +35,22 @@ export function CounterCard({
             {c.title}
           </Text>
           <Text variant="caption" color="secondary">
-            Count: {c.count}
+            {t('counters.count', { value: formatNumber(c.count) })}
           </Text>
           {many &&
             (onWidget ? (
               <Text variant="caption" color="secondary" style={styles.widgetNote}>
-                Shown on your widget
+                {t('counters.onWidget')}
               </Text>
             ) : (
               <TouchableOpacity
                 onPress={() => onShowOnWidget(c)}
                 hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                 accessibilityRole="button"
-                accessibilityLabel={`Show ${c.title} on the widget`}
+                accessibilityLabel={t('counters.a11y.showOnWidget', { title: c.title })}
               >
                 <Text variant="caption" style={[styles.deleteText, styles.widgetNote]}>
-                  Show on widget
+                  {t('counters.showOnWidget')}
                 </Text>
               </TouchableOpacity>
             ))}
@@ -58,7 +60,9 @@ export function CounterCard({
           style={styles.deleteBtn}
           hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
         >
-          <Text variant="caption" style={styles.deleteText}>Remove</Text>
+          <Text variant="caption" style={styles.deleteText}>
+            {t('common.remove')}
+          </Text>
         </TouchableOpacity>
       </View>
       <View style={styles.actions}>
@@ -67,7 +71,7 @@ export function CounterCard({
           onPress={() => onStep(c, -1)}
           disabled={c.count === 0}
           accessibilityRole="button"
-          accessibilityLabel="Subtract one"
+          accessibilityLabel={t('counters.a11y.subtract')}
         >
           <Text variant="sectionTitle" style={styles.stepText}>−1</Text>
         </TouchableOpacity>
@@ -75,7 +79,7 @@ export function CounterCard({
           style={styles.stepBtn}
           onPress={() => onStep(c, 1)}
           accessibilityRole="button"
-          accessibilityLabel="Add one"
+          accessibilityLabel={t('counters.a11y.add')}
         >
           <Text variant="sectionTitle" style={styles.stepText}>+1</Text>
         </TouchableOpacity>
@@ -84,9 +88,11 @@ export function CounterCard({
           onPress={() => onReset(c)}
           disabled={c.count === 0}
           accessibilityRole="button"
-          accessibilityLabel="Reset to zero"
+          accessibilityLabel={t('counters.a11y.reset')}
         >
-          <Text variant="sectionTitle" style={styles.stepText}>Reset</Text>
+          <Text variant="sectionTitle" style={styles.stepText}>
+            {t('counters.reset.confirm')}
+          </Text>
         </TouchableOpacity>
       </View>
     </Card>

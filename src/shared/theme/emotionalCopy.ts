@@ -3,6 +3,8 @@
  * Presentation-only; surfaces consume via theme/ui.
  */
 
+import { t } from '../i18n/translate';
+
 export type ProgressBand = 'dawn' | 'open' | 'mid' | 'late' | 'dusk';
 
 export function progressBand(progress: number): ProgressBand {
@@ -16,69 +18,27 @@ export function progressBand(progress: number): ProgressBand {
 
 export function timeOfDayLabel(date: Date = new Date()): string {
   const h = date.getHours();
-  if (h < 5) return 'Still night';
-  if (h < 12) return 'Good morning';
-  if (h < 17) return 'Good afternoon';
-  if (h < 21) return 'Good evening';
-  return 'Winding down';
+  if (h < 5) return t('common.timeOfDay.night');
+  if (h < 12) return t('common.timeOfDay.morning');
+  if (h < 17) return t('common.timeOfDay.afternoon');
+  if (h < 21) return t('common.timeOfDay.evening');
+  return t('common.timeOfDay.windDown');
 }
-
-const DAY_FEEL: Record<ProgressBand, string> = {
-  dawn: 'Early day. Plenty ahead.',
-  open: 'Open stretch of today.',
-  mid: 'Halfway. Keep priorities close.',
-  late: 'Evening. Make the last hours count.',
-  dusk: 'Almost night. Rest is part of the day.',
-};
-
-const MONTH_FEEL: Record<ProgressBand, string> = {
-  dawn: 'Fresh page of the month.',
-  open: 'The month still has room.',
-  mid: 'Middle of the month. Quick checkpoint.',
-  late: 'Days thin out. Choose carefully.',
-  dusk: 'Month nearly spent. Honor what you lived.',
-};
-
-const YEAR_FEEL: Record<ProgressBand, string> = {
-  dawn: 'New year just starting.',
-  open: 'The year is still young.',
-  mid: 'Midyear. Look both ways.',
-  late: 'Late year. Hold the good days.',
-  dusk: 'Year almost done. Be kind to yourself.',
-};
-
-const LIFE_FEEL: Record<ProgressBand, string> = {
-  dawn: 'So much life still ahead.',
-  open: 'Long road. You’re not alone.',
-  mid: 'The middle is where meaning settles.',
-  late: 'Value in what remains.',
-  dusk: 'Every day left counts. Hold it carefully.',
-};
 
 export function feelForPeriod(
   kind: 'day' | 'month' | 'year' | 'life',
   progress: number,
 ): string {
-  const band = progressBand(progress);
-  switch (kind) {
-    case 'day':
-      return DAY_FEEL[band];
-    case 'month':
-      return MONTH_FEEL[band];
-    case 'year':
-      return YEAR_FEEL[band];
-    case 'life':
-      return LIFE_FEEL[band];
-  }
+  return t(`common.feel.${kind}.${progressBand(progress)}`);
 }
 
 export function homeHeroSupport(date: Date = new Date()): string {
   const h = date.getHours();
-  if (h < 5) return 'Quiet hours. Time is still yours.';
-  if (h < 12) return 'Start where you are. The day opens.';
-  if (h < 17) return 'Notice what’s left, not only what’s gone.';
-  if (h < 21) return 'Evening. Ease your pace.';
-  return 'Day’s almost done. You did enough for today.';
+  if (h < 5) return t('common.heroSupport.night');
+  if (h < 12) return t('common.heroSupport.morning');
+  if (h < 17) return t('common.heroSupport.afternoon');
+  if (h < 21) return t('common.heroSupport.evening');
+  return t('common.heroSupport.late');
 }
 
 /** Short line for Wear glance (keep tiny). */
@@ -86,14 +46,14 @@ export function wearDayWhisper(progress: number): string {
   const band = progressBand(progress);
   switch (band) {
     case 'dawn':
-      return 'Fresh day';
+      return t('notifications.whisper.dawn');
     case 'open':
-      return 'Still ahead';
+      return t('notifications.whisper.open');
     case 'mid':
-      return 'Hold steady';
+      return t('notifications.whisper.mid');
     case 'late':
-      return 'Closing soon';
+      return t('notifications.whisper.late');
     case 'dusk':
-      return 'Almost rest';
+      return t('notifications.whisper.dusk');
   }
 }

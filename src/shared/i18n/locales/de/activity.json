@@ -1,0 +1,19 @@
+{
+  "activity.locked.eyebrow": "Alarme für verlorene Zeit",
+  "activity.locked.unlock": "Freischalten",
+  "activity.locked.hint": "Erfasse vertane Stunden. Erhalte einen Hinweis, wenn du dein Tageslimit überschreitest.",
+  "activity.today.eyebrow": "Verlorene Zeit heute",
+  "activity.hint.tracking": "Wird erfasst. Stoppe, wenn du dich wieder fokussierst.",
+  "activity.hint.remaining": "Noch {{time}} bis zum Alarm.",
+  "activity.hint.idle": "Erfasse Scroll-Zeit, bevor der Tag vorbei ist.",
+  "activity.track.start": "Erfassen",
+  "activity.track.stop": "Stopp",
+  "activity.track.startLabel": "Vertane Zeit erfassen",
+  "activity.track.stopLabel": "Erfassung der vertanen Zeit stoppen",
+  "activity.add30": "+30m",
+  "activity.add60": "+1h",
+  "activity.duration.minutes": "{{m}}m",
+  "activity.duration.hours": "{{h}}h",
+  "activity.duration.both": "{{h}}h {{m}}m",
+  "activity.limitCrossed": "Dieser Tag wiederholt sich nie."
+}

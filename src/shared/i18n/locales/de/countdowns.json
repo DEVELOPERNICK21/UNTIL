@@ -1,0 +1,22 @@
+{
+  "countdowns.subtitle": "Füge die Termine hinzu, auf die du herunterzählst (z. B. Projekt, Vorstellungsgespräch). Das Widget zeigt den nächsten und wie viele Tage noch bleiben.",
+  "countdowns.titlePlaceholder": "Titel (z. B. Projekt, Vorstellungsgespräch)",
+  "countdowns.defaultTitle": "Frist",
+  "countdowns.empty": "Noch keine Fristen. Füge oben eine hinzu und lege dann das Frist-Widget auf deinen Startbildschirm.",
+  "countdowns.widgetHint": "Füge das Frist-Widget über deinen Startbildschirm hinzu.",
+  "countdowns.remove.title": "Countdown entfernen",
+  "countdowns.remove.message": "„{{title}}“ entfernen?",
+  "countdowns.daysLeft_one": "Noch {{count}} Tag",
+  "countdowns.daysLeft_other": "Noch {{count}} Tage",
+  "countdowns.daysAgo_one": "Vor {{count}} Tag",
+  "countdowns.daysAgo_other": "Vor {{count}} Tagen",
+  "countdowns.home.eyebrowNext": "NÄCHSTER COUNTDOWN",
+  "countdowns.home.eyebrowEmpty": "COUNTDOWNS",
+  "countdowns.home.emptyTitle": "Zähle die Tage bis zu etwas",
+  "countdowns.home.emptyBody": "Eine Prüfung, eine Reise, ein Geburtstag, eine Frist.",
+  "countdowns.addWithPremium": "Mit Premium hinzufügen",
+  "countdowns.limit.reached": "Mehr passt in eine Liste nicht ({{limit}}). Entferne eine, um eine weitere hinzuzufügen.",
+  "countdowns.limit.free": "Der kostenlose Tarif speichert eine Frist. Premium fasst bis zu {{max}}.",
+  "countdowns.onWidget": "Wird in deinem Widget angezeigt",
+  "countdowns.passed": "Diese Frist ist abgelaufen. Entferne sie, wenn du damit fertig bist."
+}

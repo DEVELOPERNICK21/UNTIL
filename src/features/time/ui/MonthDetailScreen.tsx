@@ -2,6 +2,7 @@ import React from 'react';
 import { Text } from '../../../shared/ui';
 import { PeriodDetailScreen } from './PeriodDetailScreen';
 import { useObserveTimeState } from '../hooks/useObserveTimeState';
+import { useTranslation } from '../../../shared/i18n/useTranslation';
 import { Spacing } from '../../../shared/theme';
 import { StyleSheet } from 'react-native';
 
@@ -11,6 +12,7 @@ function getDaysInMonth(): number {
 }
 
 export function MonthDetailScreen() {
+  const { t } = useTranslation();
   const { timeState } = useObserveTimeState();
 
   const remainingDaysMonth = timeState.remainingDaysMonth ?? 0;
@@ -22,16 +24,20 @@ export function MonthDetailScreen() {
   return (
     <PeriodDetailScreen
       kind="month"
-      title="This month"
+      title={t('nav.thisMonth')}
       progress={progress}
       passedLabel={`${passedDays}`}
       leftLabel={`${remainingDaysMonth}`}
-      passedCaption="Days passed"
-      leftCaption="Days left"
-      summary={`${passedDays} of ${daysInMonth} days · ${100 - pct}% of month remaining`}
+      passedCaption={t('detail.daysPassed')}
+      leftCaption={t('detail.daysLeft')}
+      summary={t('detail.month.summary', {
+        passed: passedDays,
+        total: daysInMonth,
+        left: 100 - pct,
+      })}
       footer={
         <Text variant="caption" color="secondary" style={styles.hint}>
-          The Month widget shows this same progress on your home screen.
+          {t('detail.month.hint')}
         </Text>
       }
     />

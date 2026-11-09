@@ -8,10 +8,10 @@ import { navigateToPremium } from '../../../shared/navigation/rootNavigationRef'
 import { logAnalyticsEvent } from '../../../shared/analytics/analytics';
 import { usePurchase } from '../hooks/usePurchase';
 import { usePresentRevenueCatPaywall } from '../hooks/usePresentRevenueCatPaywall';
-import {
-  FALLBACK_YEARLY_PRICE,
-  MONETIZATION_PAYWALL_COPY,
-} from '../../../config/monetization';
+import { FALLBACK_YEARLY_PRICE } from '../../../config/monetization';
+import { joinSentences } from '../../../config/paywallCopy';
+import { useTranslation } from '../../../shared/i18n/useTranslation';
+
 
 interface TrialEndingModalProps {
   visible: boolean;
@@ -25,8 +25,9 @@ export function TrialEndingModal({
   onDismiss,
 }: TrialEndingModalProps) {
   const theme = useTheme();
+  const { t } = useTranslation();
   const { products, productIds, getProducts } = usePurchase();
-  const { present, presenting } = usePresentRevenueCatPaywall();
+  const { present, presenting } = usePresentRevenueCatPaywall('trial_ending_modal');
 
   useEffect(() => {
     if (visible) {
@@ -66,14 +67,16 @@ export function TrialEndingModal({
       <View style={styles.backdrop}>
         <View style={[styles.card, { backgroundColor: theme.cardBaseAlpha }]}>
           <Text variant="title" style={{ color: theme.textPrimary, marginBottom: Spacing[2] }}>
-            Free app preview ending soon
+            {t('premium.preview.endingTitle')}
           </Text>
           <Text variant="body" style={{ color: theme.textSecondary, marginBottom: Spacing[2] }}>
             {getTrialReminderMessage(trialDay, yearlyPrice)}
           </Text>
           <Text variant="caption" style={{ color: theme.textSecondary, marginBottom: Spacing[4] }}>
-            {MONETIZATION_PAYWALL_COPY.previewEndingNoChargeNote}{' '}
-            {MONETIZATION_PAYWALL_COPY.previewEndingCancelNote}
+            {joinSentences(
+              t('premium.preview.noChargeNote'),
+              t('premium.preview.cancelNote'),
+            )}
           </Text>
           <TouchableOpacity
             style={[styles.primary, { backgroundColor: theme.percent }]}
@@ -85,7 +88,7 @@ export function TrialEndingModal({
               <ActivityIndicator color="#FFFFFF" />
             ) : (
               <Text variant="sectionTitle" style={styles.primaryLabel}>
-                View Premium plans ({yearlyPrice}/year)
+                {t('premium.preview.viewPlans', { price: yearlyPrice })}
               </Text>
             )}
           </TouchableOpacity>
@@ -96,7 +99,7 @@ export function TrialEndingModal({
             disabled={presenting}
           >
             <Text variant="body" style={{ color: theme.textSecondary }}>
-              Not now
+              {t('common.notNow')}
             </Text>
           </TouchableOpacity>
         </View>

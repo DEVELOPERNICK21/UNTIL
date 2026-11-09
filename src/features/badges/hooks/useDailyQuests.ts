@@ -7,10 +7,12 @@ import { getDailyTaskStatsUseCase, observeDailyTasksUseCase } from '../../../app
 import { buildDailyQuests } from '../domain/dailyQuests';
 import { usePresenceStreak } from '../../presence';
 import { useTodayIso } from '../../../shared/hooks/useTodayIso';
+import { useTranslation } from '../../../shared/i18n/useTranslation';
 
 export function useDailyQuests() {
   const today = useTodayIso();
   const { streak } = usePresenceStreak();
+  const { t } = useTranslation();
   const [stats, setStats] = useState(() =>
     getDailyTaskStatsUseCase.execute(today),
   );
@@ -24,13 +26,17 @@ export function useDailyQuests() {
     return observeDailyTasksUseCase.subscribe(refresh);
   }, [refresh]);
 
+  // `t` is listed so the quest labels are rebuilt when the language changes.
   return useMemo(
     () =>
-      buildDailyQuests({
-        noticedToday: streak.noticedToday,
-        tasksTotal: stats.total,
-        tasksCompleted: stats.completed,
-      }),
-    [streak.noticedToday, stats.total, stats.completed],
+      buildDailyQuests(
+        {
+          noticedToday: streak.noticedToday,
+          tasksTotal: stats.total,
+          tasksCompleted: stats.completed,
+        },
+        t,
+      ),
+    [streak.noticedToday, stats.total, stats.completed, t],
   );
 }

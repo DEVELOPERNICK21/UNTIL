@@ -14,6 +14,7 @@ import { formatDateToIso, parseDate, todayIso } from '../../../shared/time/clock
 import { addDaysIso } from '../domain/taskMove';
 import { Colors, Radius, Spacing } from '../../../shared/theme';
 import { Text } from '../../../shared/ui';
+import { useTranslation } from '../../../shared/i18n/useTranslation';
 
 export interface TaskMoveSheetProps {
   visible: boolean;
@@ -30,6 +31,7 @@ export function TaskMoveSheet({
   onClose,
   onSelectDate,
 }: TaskMoveSheetProps) {
+  const { t } = useTranslation();
   const [showPicker, setShowPicker] = useState(false);
   const today = todayIso();
   const tomorrow = addDaysIso(today, 1);
@@ -83,7 +85,7 @@ export function TaskMoveSheet({
               accessibilityRole="button"
             >
               <Text variant="body" color="primary">
-                Today
+                {t('common.today')}
               </Text>
             </TouchableOpacity>
           ) : null}
@@ -94,7 +96,7 @@ export function TaskMoveSheet({
             accessibilityRole="button"
           >
             <Text variant="body" color="primary">
-              Tomorrow
+              {t('common.tomorrow')}
             </Text>
           </TouchableOpacity>
 
@@ -105,7 +107,7 @@ export function TaskMoveSheet({
             accessibilityState={{ expanded: showPicker }}
           >
             <Text variant="body" color="primary">
-              Pick a date
+              {t('tasks.pickDate')}
             </Text>
           </TouchableOpacity>
 

@@ -3,9 +3,11 @@ import { getDailyReflectionUseCase } from '../../../app/di';
 import type { DailyReflectionState, ReflectionTone } from '../domain/reflectionTypes';
 import { useAccessControl } from '../../premium';
 import { useObserveTimeState } from '../../time';
+import { useTranslation } from '../../../shared/i18n/useTranslation';
 
 export function useDailyReflection() {
   const { userProfile, timeState } = useObserveTimeState();
+  const { language } = useTranslation();
   const { access, hasPremiumBundle } = useAccessControl();
   const [state, setState] = useState<DailyReflectionState>(() =>
     getDailyReflectionUseCase.execute()
@@ -19,6 +21,7 @@ export function useDailyReflection() {
     refresh();
   }, [
     refresh,
+    language,
     userProfile.birthDate,
     timeState.day,
     timeState.month,

@@ -9,6 +9,7 @@ import {
 import Svg, { Path } from 'react-native-svg';
 import { ConfettiBurst, GlassCard, ProgressRing, Text, useReduceMotion } from '../../../shared/ui';
 import { FontFamily, Spacing, useTheme } from '../../../shared/theme';
+import { useTranslation } from '../../../shared/i18n/useTranslation';
 import type {
   DailyQuest,
   DailyQuests,
@@ -116,6 +117,7 @@ interface DailyQuestsCardProps {
  * the moment the last one is done (not when the screen first opens that way).
  */
 export function DailyQuestsCard({ quests, onQuestPress }: DailyQuestsCardProps) {
+  const { t } = useTranslation();
   const reduceMotion = useReduceMotion();
   const wasAllDone = useRef(quests.allDone);
   const [burstKey, setBurstKey] = useState<number | null>(null);
@@ -129,8 +131,11 @@ export function DailyQuestsCard({ quests, onQuestPress }: DailyQuestsCardProps) 
   }, [quests.allDone, reduceMotion]);
 
   const summary = quests.allDone
-    ? 'All done for today.'
-    : `${quests.doneCount} of ${quests.quests.length} done`;
+    ? t('badges.quests.allDone')
+    : t('badges.quests.doneCount', {
+        done: quests.doneCount,
+        total: quests.quests.length,
+      });
 
   return (
     <View style={styles.wrap}>
@@ -143,7 +148,7 @@ export function DailyQuestsCard({ quests, onQuestPress }: DailyQuestsCardProps) 
           </ProgressRing>
           <View style={styles.headCopy}>
             <Text variant="sectionTitle" color="primary">
-              Today
+              {t('common.today')}
             </Text>
             <Text variant="caption" color="secondary">
               {summary}

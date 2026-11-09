@@ -1,0 +1,19 @@
+{
+  "activity.locked.eyebrow": "失われた時間のアラート",
+  "activity.locked.unlock": "解除",
+  "activity.locked.hint": "無駄にした時間を記録しましょう。1日の上限を超えるとお知らせします。",
+  "activity.today.eyebrow": "今日失った時間",
+  "activity.hint.tracking": "記録中です。集中し直したら止めましょう。",
+  "activity.hint.remaining": "アラートまであと{{time}}です。",
+  "activity.hint.idle": "1日が終わる前に、スクロールした時間を記録しましょう。",
+  "activity.track.start": "記録",
+  "activity.track.stop": "停止",
+  "activity.track.startLabel": "無駄にした時間を記録",
+  "activity.track.stopLabel": "無駄にした時間の記録を停止",
+  "activity.add30": "+30分",
+  "activity.add60": "+1時間",
+  "activity.duration.minutes": "{{m}}分",
+  "activity.duration.hours": "{{h}}時間",
+  "activity.duration.both": "{{h}}時間{{m}}分",
+  "activity.limitCrossed": "この1日は二度と戻りません。"
+}

@@ -1,0 +1,22 @@
+{
+  "home.headline": "वेळेचे वास्तव",
+  "home.swipeHint": "कामांच्या अहवालासाठी डावीकडे स्वाइप करा →",
+  "home.tile.today": "आज",
+  "home.tile.month": "महिना",
+  "home.tile.year": "वर्ष",
+  "home.tile.life": "आयुष्य",
+  "home.percentLeft": "{{percent}}% बाकी",
+  "home.tileA11y": "{{title}}: {{left}} बाकी, {{passed}} सरले. तपशीलासाठी टॅप करा.",
+  "home.unlock": "अनलॉक करा",
+  "home.lifeLockedA11y": "आयुष्य लॉक आहे. अनलॉक करण्यासाठी प्रीमियम उघडा.",
+  "home.setBirthDate": "जन्मतारीख सेट करा",
+  "home.setBirthDateA11y": "आयुष्याची प्रगती पाहण्यासाठी सेटिंग्जमध्ये जन्मतारीख सेट करा.",
+  "home.comingSoon.title": "लवकरच येत आहे",
+  "home.comingSoon.body": "मासिक ध्येये आणि आजची कामे पुढील अपडेटमध्ये इथे दिसतील.",
+  "home.fab.label": "कामे",
+  "home.fab.a11y": "आजची कामे",
+  "home.cards.showMoreA11y": "अधिक कार्ड दाखवा",
+  "home.cards.showFewerA11y": "कमी कार्ड दाखवा",
+  "home.cards.showLess": "कमी दाखवा",
+  "home.cards.more": "अधिक ({{count}})"
+}

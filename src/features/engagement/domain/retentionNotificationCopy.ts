@@ -1,3 +1,4 @@
+import { t } from '../../../shared/i18n/translate';
 import { MS_PER_DAY } from '../../../shared/time/constants';
 
 export interface RetentionNotificationInput {
@@ -38,10 +39,6 @@ function clampPercent(value: number): number {
   return Math.min(100, Math.max(0, Math.round(value * 100)));
 }
 
-function formatNumber(n: number): string {
-  return n.toLocaleString('en-IN');
-}
-
 export function getLocalDateKey(date: Date): string {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -72,55 +69,31 @@ export function buildRetentionNotification(
 
   if (weekday === 6) return null;
 
-  if (weekday === 1) {
-    return {
-      title: 'UNTIL',
-      body: 'Your week starts now. Monday is 0% gone. What will you do with it?',
-    };
-  }
-
-  if (weekday === 2) {
-    return {
-      title: 'UNTIL',
-      body: '29% of this week is behind you. Tuesday morning. The week is moving fast.',
-    };
-  }
-
-  if (weekday === 3) {
-    return {
-      title: 'UNTIL',
-      body: 'Halfway through the week. Wednesday. You still have 57% of this week left.',
-    };
-  }
-
-  if (weekday === 4) {
-    return {
-      title: 'UNTIL',
-      body: '71% of this week is gone. Only Friday left before the weekend.',
-    };
-  }
-
-  if (weekday === 5) {
-    return {
-      title: 'UNTIL',
-      body: 'Last working day of the week. What did you say you would finish this week?',
-    };
-  }
+  const weekdayKeys = [
+    null,
+    'notifications.retention.monday',
+    'notifications.retention.tuesday',
+    'notifications.retention.wednesday',
+    'notifications.retention.thursday',
+    'notifications.retention.friday',
+  ] as const;
+  const weekdayKey = weekdayKeys[weekday];
+  if (weekdayKey) return { title: 'UNTIL', body: t(weekdayKey) };
 
   if (weekday === 0) {
-    const lifeLine =
-      typeof input.lifeWeeksLived === 'number' && input.lifeWeeksLived > 0
-        ? ` You have lived ${formatNumber(input.lifeWeeksLived)} weeks.`
-        : '';
+    const weeks = input.lifeWeeksLived;
     return {
       title: 'UNTIL',
-      body: `Another week of your life begins tomorrow.${lifeLine} Open UNTIL and see where you stand.`,
+      body:
+        typeof weeks === 'number' && weeks > 0
+          ? t('notifications.retention.sundayWeeks', { count: weeks })
+          : t('notifications.retention.sunday'),
     };
   }
 
   return {
     title: 'UNTIL',
-    body: `Your year is ${yearPct}% gone. Open UNTIL and see where you stand.`,
+    body: t('notifications.retention.yearFallback', { pct: yearPct }),
   };
 }
 
@@ -148,12 +121,15 @@ export function buildWinBackNotification(
   if (daysAway >= 7) {
     return {
       title: 'UNTIL',
-      body: `A week of your life went by. Your year is ${yearPct}% gone. Take ten seconds to look.`,
+      body: t('notifications.retention.winBackWeek', { pct: yearPct }),
     };
   }
   return {
     title: 'UNTIL',
-    body: `${daysAway} days since you looked. Your year is ${yearPct}% gone. Still here when you are.`,
+    body: t('notifications.retention.winBackDays', {
+      count: daysAway,
+      pct: yearPct,
+    }),
   };
 }
 

@@ -62,6 +62,8 @@ function toPackageDTO(pkg: PurchasesPackage): PurchasesPackageDTO {
     title: pkg.product.title,
     description: pkg.product.description,
     priceString: pkg.product.priceString,
+    price: pkg.product.price,
+    currencyCode: pkg.product.currencyCode,
   };
 }
 

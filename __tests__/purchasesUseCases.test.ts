@@ -118,6 +118,8 @@ describe('GetOfferingsUseCase', () => {
         title: 'Yearly',
         description: '',
         priceString: '$29.99',
+        price: 29.99,
+        currencyCode: 'USD',
       }],
     };
     const result = await new GetOfferingsUseCase(purchases).execute();

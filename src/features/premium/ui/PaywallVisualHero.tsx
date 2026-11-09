@@ -13,6 +13,7 @@ import {
   Weight,
   getFontFamilyForWeight,
 } from '../../../shared/theme';
+import { useTranslation } from '../../../shared/i18n/useTranslation';
 
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 
@@ -29,6 +30,7 @@ export function PaywallVisualHero({
   lifeProgress,
 }: PaywallVisualHeroProps) {
   const theme = useTheme();
+  const { t } = useTranslation();
   const glow = useRef(new Animated.Value(0)).current;
   const ring = useRef(new Animated.Value(0)).current;
   const hasLife =
@@ -148,7 +150,7 @@ export function PaywallVisualHero({
               fontFamily: getFontFamilyForWeight(Weight.semibold),
             }}
           >
-            {lifePercent}% of your expected life lived
+            {t('premium.paywall.lifeLived', { percent: lifePercent })}
           </Text>
         </View>
       ) : null}

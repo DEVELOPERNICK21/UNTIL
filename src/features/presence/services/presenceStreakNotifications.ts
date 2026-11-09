@@ -11,6 +11,7 @@ import { STORAGE_KEYS } from '../../../shared/persistence/schema';
 import { getString, setString } from '../../../shared/persistence/mmkv';
 import { requestNotificationPermission } from '../../../shared/platform/notificationPermission';
 import { wearDayWhisper } from '../../../shared/theme/emotionalCopy';
+import { t } from '../../../shared/i18n/translate';
 
 const CHANNEL_ID = 'presence';
 
@@ -67,7 +68,7 @@ export async function schedulePresenceStreakSaver(
     if (Platform.OS === 'android') {
       await notifee.createChannel({
         id: CHANNEL_ID,
-        name: 'Presence',
+        name: t('notifications.channel.presence'),
         importance: AndroidImportance.DEFAULT,
       });
     }
@@ -79,11 +80,14 @@ export async function schedulePresenceStreakSaver(
     await notifee.createTriggerNotification(
       {
         id,
-        title: 'Ember is still here',
+        title: t('notifications.presence.title'),
         body:
           state.count >= 2
-            ? `${whisper}. Your ${state.count}-day presence is still open.`
-            : `${whisper}. Open UNTIL once to notice what’s left of today.`,
+            ? t('notifications.presence.bodyStreak', {
+                whisper,
+                count: state.count,
+              })
+            : t('notifications.presence.body', { whisper }),
         android: { channelId: CHANNEL_ID, pressAction: { id: 'default' } },
         ios: { sound: 'default' },
       },
