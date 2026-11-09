@@ -201,7 +201,7 @@ The `.jks` / `.keystore` file and `keystore.properties` are **not** in git. Only
 **Why your `app-release.apk` is big**
 
 1. **Universal APK = all CPU architectures**  
-   `assembleRelease` builds one APK that includes **arm64-v8a**, **armeabi-v7a**, **x86**, and **x86_64**. So the file is roughly 4× the size of a single-architecture build. That’s normal for a “universal” APK.
+   `assembleRelease` builds one APK that includes every architecture listed in `reactNativeArchitectures` (`android/gradle.properties`): **arm64-v8a** and **armeabi-v7a**. So the file is roughly twice the size of a single-architecture build. That’s normal for a “universal” APK. x86 and x86_64 are no longer built: they are for Intel emulators and Chromebooks, and each added about 30 MB.
 
 2. **R8 and resource shrinking are now enabled**  
    Release builds use:
@@ -219,6 +219,34 @@ The `.jks` / `.keystore` file and `keystore.properties` are **not** in git. Only
 | Build | What you get | Typical use |
 |-------|----------------|-------------|
 | `app-release.aab` | Bundle; Play Store splits it per device | **Use this for Play Store** → smaller user downloads |
-| `app-release.apk` | One APK with all ABIs (~4× one ABI) | Testing, or direct install; not for store upload |
+| `app-release.apk` | One APK with both phone ABIs (~2× one ABI) | Testing, or direct install; not for store upload |
 
 So the large **APK** on disk is expected. For store distribution, use the **AAB**; user download size will be smaller.
+
+---
+
+## Keeping the app small
+
+Measured on 9 Nov 2026 (release build, `apkanalyzer`):
+
+| | Before | After |
+|---|---:|---:|
+| Universal APK file | 131.8 MB | 67.2 MB |
+| arm64 phone, estimated download | 24.6 MB | 22.8 MB |
+| armeabi-v7a phone, estimated download | 23.2 MB | 21.3 MB |
+| JS bundle | 8.6 MB | 6.0 MB |
+
+What made the difference, and what to watch:
+
+- **Architectures** are listed once, in `reactNativeArchitectures` (`android/gradle.properties`). `android/app/build.gradle` reads the same property, so what is compiled and what is packaged cannot drift apart. Prebuilt libraries (Skia, Hermes) ship every ABI; the filter drops the ones not listed. On an Intel-Mac emulator, build with `-PreactNativeArchitectures=x86_64`.
+- **Everything exported from `src/assets/icons/index.ts` is bundled**, used or not. Three onboarding illustrations were raster images wrapped in SVG (about 2.5 MB of base64) and were never shown. Do not add a raster image inside an SVG; use a PNG or WebP where it is shown.
+- **Biggest native pieces** (arm64): Skia 11.2 MB, React Native 7.0 MB, Hermes 2.5 MB. Skia is used by the share image and the period dot grids; replacing it would be the next large saving, and a real refactor.
+- **Measure before and after** a change:
+
+```bash
+~/Library/Android/sdk/cmdline-tools/latest/bin/apkanalyzer apk file-size app-release.apk
+~/Library/Android/sdk/cmdline-tools/latest/bin/apkanalyzer apk download-size app-release.apk
+unzip -lv app-release.apk | sort -k3 -rn | head -20
+```
+
+Native libraries stay stored uncompressed in the APK (the Android default). That makes a universal APK file bigger but the installed app smaller and faster to start; Play downloads are compressed either way.
