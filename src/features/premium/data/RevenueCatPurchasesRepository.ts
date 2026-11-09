@@ -188,6 +188,12 @@ export class RevenueCatPurchasesRepository implements IPurchasesRepository {
     return toDTO(customerInfo);
   }
 
+  setEmail(email: string | null): void {
+    Purchases.setEmail(email).catch(() => {
+      /* retried at the next launch */
+    });
+  }
+
   async logOut(): Promise<CustomerInfoDTO> {
     const info = await Purchases.logOut();
     return toDTO(info);

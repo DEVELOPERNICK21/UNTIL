@@ -93,7 +93,8 @@ export const restorePurchasesUseCase = new RestorePurchasesUseCase(
 
 export const identifyPurchasesUserUseCase = new IdentifyPurchasesUserUseCase(
   purchasesRepository,
-  syncCustomerInfoUseCase
+  syncCustomerInfoUseCase,
+  authSessionRepository
 );
 
 export const resetPurchasesUserUseCase = new ResetPurchasesUserUseCase(

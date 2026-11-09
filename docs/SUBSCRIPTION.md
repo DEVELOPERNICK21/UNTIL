@@ -35,6 +35,12 @@ What the app keeps and shows once RevenueCat says a plan is active (`SyncCustome
 
 RevenueCat lists entitlements that are no longer active (`entitlements.all`). When it says `premium` has ended (expired, refunded), the app turns Premium off, clears the plan record and the purchase type, and keeps the badges. An answer that is merely empty (offline, a fresh sign-in) does not take Premium away: only an explicit "ended" does. A web license key keeps Premium on whatever the store says.
 
+### Finding a customer by email in RevenueCat
+
+People who sign in are RevenueCat customers under their Firebase user ID. After the login the app sends their email as the `$email` attribute (`IdentifyPurchasesUserUseCase`, every launch and at sign-in), so the dashboard search bar (or Cmd/Ctrl+K) finds them by the exact address. Guests have no email: they appear only as `$RCAnonymousID:…` until they sign in. An Apple "Hide My Email" address is searchable as the relay address, not the real one. The email is cleared again for a signed-out customer, and nothing is sent for anyone who could not create an account (under 13). The privacy policy says so (Purchases paragraph).
+
+To reward or win back someone: open the customer, then **Grant promotional entitlement** on `premium` for a duration (a month, a year, lifetime). It takes effect the next time the app syncs and shows as the same Premium, without any store purchase. Store offer codes (Play promo codes, App Store offer codes) are the other route for a discount on a paid plan.
+
 ### Dashboard checklist
 
 All five products attached to the `premium` entitlement; offering `default` current, with packages `$rc_weekly`, `$rc_monthly`, `$rc_annual`, `$rc_lifetime` and `student_yearly`; products Active in Play Console and App Store Connect; release builds use the `appl_` and `goog_` keys, never `test_`.

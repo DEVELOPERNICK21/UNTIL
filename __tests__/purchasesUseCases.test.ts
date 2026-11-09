@@ -74,6 +74,7 @@ class FakePurchases implements IPurchasesRepository {
   purchaseError: unknown = null;
   purchasedProductId: string | null = null;
   loggedInUid: string | null = null;
+  emailSent: string | null | undefined = undefined;
   loggedOut = false;
   restoreCount = 0;
 
@@ -100,6 +101,9 @@ class FakePurchases implements IPurchasesRepository {
   async logIn(appUserId: string) {
     this.loggedInUid = appUserId;
     return this.customerInfo;
+  }
+  setEmail(email: string | null) {
+    this.emailSent = email;
   }
   async logOut() {
     this.loggedOut = true;
@@ -243,6 +247,57 @@ describe('IdentifyPurchasesUserUseCase', () => {
     expect(purchases.loggedInUid).toBe('uid-1');
     expect(sub.getIsPremium()).toBe(true);
     expect(onApplied).toHaveBeenCalledTimes(1);
+  });
+
+  it('sends the signed-in email to RevenueCat after the login, so the customer can be found by it', async () => {
+    const purchases = new FakePurchases();
+    const order: string[] = [];
+    const logIn = purchases.logIn.bind(purchases);
+    purchases.logIn = async (uid: string) => {
+      order.push('logIn');
+      return logIn(uid);
+    };
+    purchases.setEmail = (email: string | null) => {
+      order.push(`email:${email}`);
+    };
+    await new IdentifyPurchasesUserUseCase(
+      purchases,
+      new SyncCustomerInfoUseCase(fakeSub()),
+      { getEmail: () => 'nick@example.com' },
+    ).execute('uid-1');
+    expect(order).toEqual(['logIn', 'email:nick@example.com']);
+  });
+
+  it('clears the email when the account has none, and sends nothing without a session', async () => {
+    const withoutEmail = new FakePurchases();
+    await new IdentifyPurchasesUserUseCase(
+      withoutEmail,
+      new SyncCustomerInfoUseCase(fakeSub()),
+      { getEmail: () => null },
+    ).execute('uid-2');
+    expect(withoutEmail.emailSent).toBeNull();
+
+    const noSession = new FakePurchases();
+    await new IdentifyPurchasesUserUseCase(
+      noSession,
+      new SyncCustomerInfoUseCase(fakeSub()),
+    ).execute('uid-3');
+    expect(noSession.emailSent).toBeUndefined();
+  });
+
+  it('does not send the email when the login fails', async () => {
+    const purchases = new FakePurchases();
+    purchases.logIn = async () => {
+      throw new Error('offline');
+    };
+    await expect(
+      new IdentifyPurchasesUserUseCase(
+        purchases,
+        new SyncCustomerInfoUseCase(fakeSub()),
+        { getEmail: () => 'nick@example.com' },
+      ).execute('uid-4'),
+    ).rejects.toThrow('offline');
+    expect(purchases.emailSent).toBeUndefined();
   });
 });
 
