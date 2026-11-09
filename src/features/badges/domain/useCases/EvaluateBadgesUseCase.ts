@@ -1,6 +1,7 @@
 import { getSignedDaysUntil } from '../../../countdowns/domain';
 import { findNewlyEarned, type BadgeSnapshot } from '../badgeCatalog';
 import { countCompletedTasks, countPerfectDays } from '../badgeStats';
+import { planBadgeSnapshot } from '../planBadges';
 import { localDateKey } from '../../../presence/domain';
 import type { IBadgeRepository } from '../ports/IBadgeRepository';
 import type { ICountdownRepository } from '../../../countdowns/domain';
@@ -9,7 +10,10 @@ import type {
   ITaskRepository,
 } from '../../../tasks/domain';
 import type { IPresenceRepository } from '../../../presence/domain';
-import type { ISubscriptionRepository } from '../../../premium/domain';
+import type {
+  IPlanRecordStore,
+  ISubscriptionRepository,
+} from '../../../premium/domain';
 import type { ITimeRepository } from '../../../time/domain';
 import { now as clockNow } from '../../../../shared/time/clock';
 
@@ -27,6 +31,7 @@ export class EvaluateBadgesUseCase {
     private readonly monthlyGoalRepository: IMonthlyGoalRepository,
     private readonly timeRepository: ITimeRepository,
     private readonly subscriptionRepository: ISubscriptionRepository,
+    private readonly planRecordStore?: Pick<IPlanRecordStore, 'getPlansBought'>,
   ) {}
 
   snapshot(): BadgeSnapshot {
@@ -44,6 +49,7 @@ export class EvaluateBadgesUseCase {
       birthDateSet: this.timeRepository.getUserProfile().birthDate ? 1 : 0,
       lifeViewed: this.subscriptionRepository.getLifeScreenViewed() ? 1 : 0,
       appOpens: this.subscriptionRepository.getAppOpenCount(),
+      ...planBadgeSnapshot(this.planRecordStore?.getPlansBought() ?? []),
     };
   }
 

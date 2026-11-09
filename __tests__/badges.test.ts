@@ -13,6 +13,7 @@ import {
   countPerfectDays,
 } from '../src/features/badges/domain/badgeStats';
 import { buildDailyQuests } from '../src/features/badges/domain/dailyQuests';
+import { PLAN_BADGES, planBadgeSnapshot } from '../src/features/badges/domain/planBadges';
 import { badgeDescription, badgeTitle } from '../src/features/badges/ui/badgeLabels';
 
 function snap(patch: Partial<BadgeSnapshot>): BadgeSnapshot {
@@ -174,5 +175,55 @@ describe('daily quests', () => {
     });
     expect(q.quests[2].ratio).toBe(1);
     expect(q.ratio).toBeLessThanOrEqual(1);
+  });
+});
+
+describe('plan badges', () => {
+  it('has one badge for each plan a person can buy', () => {
+    expect(PLAN_BADGES.map(b => b.id)).toEqual([
+      'plan_weekly',
+      'plan_monthly',
+      'plan_yearly',
+      'plan_student',
+      'plan_lifetime',
+    ]);
+    expect(PLAN_BADGES.every(b => b.family === 'premium')).toBe(true);
+    expect(BADGES.map(b => b.id)).toEqual(expect.arrayContaining(PLAN_BADGES.map(b => b.id)));
+  });
+
+  it('reads the plans ever bought as 0 or 1 each', () => {
+    expect(planBadgeSnapshot([])).toEqual({
+      planWeekly: 0,
+      planMonthly: 0,
+      planYearly: 0,
+      planStudent: 0,
+      planLifetime: 0,
+    });
+    expect(planBadgeSnapshot(['yearly', 'student'])).toMatchObject({
+      planYearly: 1,
+      planStudent: 1,
+      planWeekly: 0,
+    });
+  });
+
+  it('awards only the badge of the plan that was bought', () => {
+    expect(findNewlyEarned(snap(planBadgeSnapshot(['lifetime'])), new Set())).toEqual([
+      'plan_lifetime',
+    ]);
+    expect(
+      findNewlyEarned(snap(planBadgeSnapshot(['lifetime'])), new Set(['plan_lifetime'])),
+    ).toEqual([]);
+  });
+
+  it('awards nothing to a free account, and never offers a plan badge as "up next"', () => {
+    expect(findNewlyEarned(EMPTY_BADGE_SNAPSHOT, new Set())).toEqual([]);
+    expect(pickUpNext(snap({ longestStreak: 0 }), new Set())).toBeNull();
+  });
+
+  it('words every plan badge', () => {
+    for (const b of PLAN_BADGES) {
+      expect(badgeTitle(b).length).toBeGreaterThan(0);
+      expect(badgeDescription(b)).not.toContain('badges.items');
+    }
   });
 });

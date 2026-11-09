@@ -9,7 +9,7 @@ const { appName, baseUrl, contactEmail } = SITE_CONFIG;
 
 export const PRIVACY_TITLE = `Privacy Policy · ${appName}`;
 
-export const PRIVACY_LAST_UPDATED = '2026-09-28';
+export const PRIVACY_LAST_UPDATED = '2026-11-09';
 
 export const PRIVACY_SECTIONS = [
   {
@@ -24,7 +24,7 @@ export const PRIVACY_SECTIONS = [
 
 **If you create an account (optional):** We use Google Firebase Authentication to sign you in with Google or with email and password. We store your email address and a Firebase user ID. In Google Cloud Firestore we store your birth date, expected lifespan, theme, a record that you confirmed you are 13 or older, the devices signed in to your account (device ID, platform, device name, last seen date), and your Premium status (active or not, plan type, store). Without an account, this data stays on your device.
 
-**Purchases:** Payments are handled by Google Play or the Apple App Store. We never see your card details. We use RevenueCat (RevenueCat, Inc.) to check your subscription. RevenueCat receives an anonymous app user ID (or your account user ID if you sign in) and your purchase receipts.
+**Purchases:** Payments are handled by Google Play or the Apple App Store. We never see your card details. We use RevenueCat (RevenueCat, Inc.) to check your subscription. RevenueCat receives an anonymous app user ID (or your account user ID and your email address if you sign in) and your purchase receipts. We use the email only to find your purchase when you contact us for help, or when we want to give you a discount or free access.
 
 **Free preview:** To stop the free preview restarting after a reinstall, the App sends a device ID to our server. We store only a salted hash of that ID and the preview start date, in a database run by Vercel KV (Upstash, Inc.).
 

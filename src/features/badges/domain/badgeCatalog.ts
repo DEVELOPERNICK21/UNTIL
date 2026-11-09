@@ -9,8 +9,12 @@
 
 import type { TranslationKey } from '../../../shared/i18n/translate';
 import { PERFECT_DAY_MIN_TASKS } from './badgeStats';
+import { PLAN_BADGES } from './planBadges';
+import type { BadgeSnapshot } from './badgeSnapshot';
 
-export type BadgeFamily = 'presence' | 'tasks' | 'time';
+export { EMPTY_BADGE_SNAPSHOT, type BadgeSnapshot } from './badgeSnapshot';
+
+export type BadgeFamily = 'presence' | 'tasks' | 'time' | 'premium';
 
 /** Look of the medal. `ember` is the rare orange one. */
 export type BadgeTier = 'bronze' | 'silver' | 'gold' | 'ember';
@@ -28,35 +32,6 @@ export type BadgeGlyphKind =
 
 /** Numbers the catalog can test. Each one comes from BadgeSnapshot. */
 export type BadgeMetric = keyof BadgeSnapshot;
-
-export interface BadgeSnapshot {
-  /** Best run of days in a row. Uses the longest value, so a reset never un-earns. */
-  longestStreak: number;
-  /** Tasks marked done, all days. */
-  tasksCompleted: number;
-  /** Days where every task was done (see PERFECT_DAY_MIN_TASKS). */
-  perfectDays: number;
-  countdownsCreated: number;
-  countdownsReached: number;
-  goalsCreated: number;
-  /** 1 when a birth date is saved, else 0. */
-  birthDateSet: number;
-  /** 1 once the Life screen has been opened, else 0. */
-  lifeViewed: number;
-  appOpens: number;
-}
-
-export const EMPTY_BADGE_SNAPSHOT: BadgeSnapshot = {
-  longestStreak: 0,
-  tasksCompleted: 0,
-  perfectDays: 0,
-  countdownsCreated: 0,
-  countdownsReached: 0,
-  goalsCreated: 0,
-  birthDateSet: 0,
-  lifeViewed: 0,
-  appOpens: 0,
-};
 
 export interface BadgeDefinition {
   id: string;
@@ -248,6 +223,7 @@ export const BADGES: readonly BadgeDefinition[] = [
     metric: 'appOpens',
     target: 50,
   },
+  ...PLAN_BADGES,
 ];
 
 const BADGE_BY_ID = new Map(BADGES.map(b => [b.id, b]));

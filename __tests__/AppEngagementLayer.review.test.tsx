@@ -33,6 +33,8 @@ jest.mock('../src/features/onboarding', () => ({
 
 jest.mock('../src/features/premium', () => ({
   DeferredPaywallModal: () => null,
+  PurchaseWelcomeSheet: () => null,
+  usePurchaseWelcome: () => ({ pending: false, visible: false }),
 }));
 
 jest.mock('../src/features/ember', () => ({

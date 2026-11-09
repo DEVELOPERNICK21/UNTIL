@@ -80,5 +80,16 @@
   "badges.quests.tasks_few": "{{count}} задачи",
   "badges.quests.tasks_many": "{{count}} задач",
   "badges.quests.tasks_other": "{{count}} задачи",
-  "badges.quests.addTask": "Добавьте задачу"
+  "badges.quests.addTask": "Добавьте задачу",
+  "badges.section.premium": "Премиум",
+  "badges.items.plan_weekly.title": "Поддержка на неделю",
+  "badges.items.plan_weekly.description": "Оформите недельный тариф Премиум.",
+  "badges.items.plan_monthly.title": "Поддержка на месяц",
+  "badges.items.plan_monthly.description": "Оформите месячный тариф Премиум.",
+  "badges.items.plan_yearly.title": "Поддержка на год",
+  "badges.items.plan_yearly.description": "Оформите годовой тариф Премиум.",
+  "badges.items.plan_student.title": "Студенческая поддержка",
+  "badges.items.plan_student.description": "Оформите годовой студенческий тариф Премиум.",
+  "badges.items.plan_lifetime.title": "Основатель навсегда",
+  "badges.items.plan_lifetime.description": "Получите Премиум навсегда."
 }

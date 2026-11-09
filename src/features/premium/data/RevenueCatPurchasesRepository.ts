@@ -38,6 +38,19 @@ const PACKAGE_LOOKUP_BY_PRODUCT: Record<string, string> = {
   [BILLING_PRODUCT_IDS.yearlyStudent]: 'student_yearly',
 };
 
+function toStore(store: string | undefined): 'app_store' | 'play' | 'other' {
+  if (store === 'APP_STORE' || store === 'MAC_APP_STORE') return 'app_store';
+  if (store === 'PLAY_STORE') return 'play';
+  return 'other';
+}
+
+function toPeriodType(periodType: string | undefined): 'normal' | 'trial' | 'intro' {
+  const upper = (periodType ?? '').toUpperCase();
+  if (upper === 'TRIAL') return 'trial';
+  if (upper === 'INTRO') return 'intro';
+  return 'normal';
+}
+
 function toDTO(info: CustomerInfo): CustomerInfoDTO {
   const active = Object.entries(info.entitlements.active).map(([id, e]) => ({
     identifier: id,
@@ -47,10 +60,17 @@ function toDTO(info: CustomerInfo): CustomerInfoDTO {
       : null,
     expirationDateMs: e.expirationDate ? Date.parse(e.expirationDate) : null,
     willRenew: e.willRenew,
+    periodType: toPeriodType(e.periodType),
+    store: toStore(e.store),
+    billingIssueDetectedAtMs: e.billingIssueDetectedAtMillis ?? null,
   }));
+  const ended = Object.entries(info.entitlements.all ?? {})
+    .filter(([, e]) => !e.isActive)
+    .map(([id]) => id);
   return {
     activeEntitlements: active,
     allPurchasedProductIds: info.allPurchasedProductIdentifiers ?? [],
+    endedEntitlementIds: ended,
   };
 }
 
@@ -166,6 +186,12 @@ export class RevenueCatPurchasesRepository implements IPurchasesRepository {
   async logIn(appUserId: string): Promise<CustomerInfoDTO> {
     const { customerInfo } = await Purchases.logIn(appUserId);
     return toDTO(customerInfo);
+  }
+
+  setEmail(email: string | null): void {
+    Purchases.setEmail(email).catch(() => {
+      /* retried at the next launch */
+    });
   }
 
   async logOut(): Promise<CustomerInfoDTO> {

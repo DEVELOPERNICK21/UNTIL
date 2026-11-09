@@ -1,5 +1,6 @@
 import type { CustomerInfoDTO, CustomerInfoSyncPlan } from '../../../shared/types/purchases';
 import { productIdToPurchaseType } from './mapProductId';
+import { planFromEntitlement } from './plan';
 
 export const PREMIUM_ENTITLEMENT_ID = 'premium';
 
@@ -17,6 +18,7 @@ export function mapCustomerInfoToSyncPlan(
       purchaseType: productIdToPurchaseType(premiumEntitlement.productIdentifier),
       purchaseDateMs: premiumEntitlement.latestPurchaseDateMs,
       clearStorePurchaseFields: false,
+      plan: planFromEntitlement(premiumEntitlement) ?? undefined,
     };
   }
 
@@ -26,10 +28,17 @@ export function mapCustomerInfoToSyncPlan(
       purchaseType: null,
       purchaseDateMs: null,
       clearStorePurchaseFields: true,
+      plan: null,
     };
   }
 
-  if (opts.hasStorePurchase) {
+  /**
+   * An empty answer (new sign-in, offline, a fresh anonymous id) keeps what is stored. Only
+   * RevenueCat saying the entitlement has ended (expired, refunded) takes Premium away.
+   */
+  const storeEntitlementEnded =
+    info.endedEntitlementIds?.includes(PREMIUM_ENTITLEMENT_ID) === true;
+  if (opts.hasStorePurchase && !storeEntitlementEnded) {
     return {
       setIsPremium: true,
       purchaseType: null,
@@ -43,5 +52,6 @@ export function mapCustomerInfoToSyncPlan(
     purchaseType: null,
     purchaseDateMs: null,
     clearStorePurchaseFields: true,
+    plan: null,
   };
 }

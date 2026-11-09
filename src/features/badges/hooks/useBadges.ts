@@ -14,6 +14,7 @@ import {
   evaluateBadgesUseCase,
   getBadgesUseCase,
   observeDailyTasksUseCase,
+  observePlanUseCase,
 } from '../../../app/di';
 import type { BadgeOverview } from '../domain/useCases/GetBadgesUseCase';
 import { logAnalyticsEvent } from '../../../shared/analytics/analytics';
@@ -42,11 +43,13 @@ export function useBadgeOverview() {
 
   useEffect(() => {
     const unsubscribe = observeDailyTasksUseCase.subscribe(refresh);
+    const unsubscribePlan = observePlanUseCase.subscribe(refresh);
     const sub = AppState.addEventListener('change', state => {
       if (state === 'active') refresh();
     });
     return () => {
       unsubscribe();
+      unsubscribePlan();
       sub.remove();
     };
   }, [refresh]);

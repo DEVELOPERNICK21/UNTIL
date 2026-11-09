@@ -65,5 +65,16 @@
   "badges.quests.plan": "1日の計画を立てる",
   "badges.quests.finish": "タスクを終わらせる",
   "badges.quests.tasks_other": "{{count}}個のタスク",
-  "badges.quests.addTask": "タスクを追加"
+  "badges.quests.addTask": "タスクを追加",
+  "badges.section.premium": "プレミアム",
+  "badges.items.plan_weekly.title": "週間サポーター",
+  "badges.items.plan_weekly.description": "週間プレミアムプランを始めましょう。",
+  "badges.items.plan_monthly.title": "月間サポーター",
+  "badges.items.plan_monthly.description": "月間プレミアムプランを始めましょう。",
+  "badges.items.plan_yearly.title": "年間サポーター",
+  "badges.items.plan_yearly.description": "年間プレミアムプランを始めましょう。",
+  "badges.items.plan_student.title": "学生サポーター",
+  "badges.items.plan_student.description": "学生向け年間プレミアムプランを始めましょう。",
+  "badges.items.plan_lifetime.title": "永久ファウンダー",
+  "badges.items.plan_lifetime.description": "プレミアムを一生ものにしましょう。"
 }

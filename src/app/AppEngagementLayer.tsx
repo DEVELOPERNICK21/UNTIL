@@ -10,7 +10,11 @@ import {
 } from '../features/engagement';
 import { useOnboardingQuizAnswers } from '../features/onboarding';
 import { UpdateSheet, useAppUpdate } from '../features/app-update';
-import { DeferredPaywallModal } from '../features/premium';
+import {
+  DeferredPaywallModal,
+  PurchaseWelcomeSheet,
+  usePurchaseWelcome,
+} from '../features/premium';
 import { EmberCompanion } from '../features/ember';
 import { BadgeUnlockHost } from '../features/badges';
 import { useAnalytics } from '../shared/analytics/useAnalytics';
@@ -37,6 +41,9 @@ export function AppEngagementLayer() {
   // A new store version comes first: while its sheet is up the other prompts wait their turn.
   const appUpdate = useAppUpdate();
   const updateVisible = appUpdate.decision.kind !== 'none';
+  // A plan that just became active is greeted before anything else asks for attention.
+  const welcome = usePurchaseWelcome();
+  const holdBack = updateVisible || welcome.pending;
   const quizAnswers = useOnboardingQuizAnswers();
   const widgetsOnly = quizAnswers.cadence === 'widgets';
 
@@ -169,7 +176,7 @@ export function AppEngagementLayer() {
     engagementBlockingVisible ||
     deferredPaywallVisible ||
     reminderOptInVisible ||
-    updateVisible;
+    holdBack;
 
   const handleDeferredPaywallClose = useCallback(() => {
     setDeferredPaywallVisible(false);
@@ -194,8 +201,13 @@ export function AppEngagementLayer() {
         onUpdate={appUpdate.update}
         onLater={appUpdate.later}
       />
+      <PurchaseWelcomeSheet
+        welcome={{ ...welcome, visible: welcome.visible && !updateVisible }}
+        onClose={welcome.dismiss}
+        onSeePlan={welcome.seePlan}
+      />
       <WidgetCoachModal
-        visible={widgetCoachVisible && !updateVisible}
+        visible={widgetCoachVisible && !holdBack}
         onDismiss={() => {
           dismissWidgetCoach();
           setWidgetCoachVisible(false);
@@ -203,7 +215,7 @@ export function AppEngagementLayer() {
         }}
       />
       <FeatureDiscoveryModal
-        visible={featureCoachVisible && !widgetCoachVisible && !updateVisible}
+        visible={featureCoachVisible && !widgetCoachVisible && !holdBack}
         onDismiss={() => {
           dismissFeatureCoach();
           setFeatureCoachVisible(false);
@@ -220,7 +232,7 @@ export function AppEngagementLayer() {
           sharePromptVisible &&
           !widgetCoachVisible &&
           !featureCoachVisible &&
-          !updateVisible
+          !holdBack
         }
         onDismiss={() => {
           dismissSharePrompt();
@@ -228,13 +240,13 @@ export function AppEngagementLayer() {
         }}
       />
       <ReminderOptInModal
-        visible={reminderOptInVisible && !updateVisible}
+        visible={reminderOptInVisible && !holdBack}
         onAccept={acceptReminderOptIn}
         onDismiss={() => setReminderOptInVisible(false)}
       />
       <DeferredPaywallModal
         visible={
-          deferredPaywallVisible && !engagementBlockingVisible && !updateVisible
+          deferredPaywallVisible && !engagementBlockingVisible && !holdBack
         }
         onClose={handleDeferredPaywallClose}
       />

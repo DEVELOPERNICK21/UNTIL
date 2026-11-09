@@ -6,6 +6,7 @@ import { MmkvPresenceRepository } from '../../features/presence/data/MmkvPresenc
 import { MmkvBadgeRepository } from '../../features/badges/data/MmkvBadgeRepository';
 import { MmkvTimeRepository } from '../../features/time/data/MmkvTimeRepository';
 import { MmkvSubscriptionRepository } from '../../features/premium/data/MmkvSubscriptionRepository';
+import { MmkvPlanRecordStore } from '../../features/premium/data/MmkvPlanRecordStore';
 import { MmkvActivityRepository } from '../../features/activity/data/MmkvActivityRepository';
 import { MmkvCustomCounterRepository } from '../../features/counters/data/MmkvCustomCounterRepository';
 import { MmkvCountdownRepository } from '../../features/countdowns/data/MmkvCountdownRepository';
@@ -38,6 +39,7 @@ export const badgeRepository = new MmkvBadgeRepository();
 export const timeRepository = new MmkvTimeRepository(presenceRepository);
 
 export const subscriptionRepository = new MmkvSubscriptionRepository();
+export const planRecordStore = new MmkvPlanRecordStore();
 
 export const activityRepository = new MmkvActivityRepository();
 

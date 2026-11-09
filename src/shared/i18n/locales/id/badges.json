@@ -65,5 +65,16 @@
   "badges.quests.plan": "Rencanakan harimu",
   "badges.quests.finish": "Selesaikan tugasmu",
   "badges.quests.tasks_other": "{{count}} tugas",
-  "badges.quests.addTask": "Tambahkan tugas"
+  "badges.quests.addTask": "Tambahkan tugas",
+  "badges.section.premium": "Premium",
+  "badges.items.plan_weekly.title": "Pendukung mingguan",
+  "badges.items.plan_weekly.description": "Mulai paket Premium mingguan.",
+  "badges.items.plan_monthly.title": "Pendukung bulanan",
+  "badges.items.plan_monthly.description": "Mulai paket Premium bulanan.",
+  "badges.items.plan_yearly.title": "Pendukung tahunan",
+  "badges.items.plan_yearly.description": "Mulai paket Premium tahunan.",
+  "badges.items.plan_student.title": "Pendukung pelajar",
+  "badges.items.plan_student.description": "Mulai paket Premium tahunan untuk pelajar.",
+  "badges.items.plan_lifetime.title": "Pendiri seumur hidup",
+  "badges.items.plan_lifetime.description": "Dapatkan Premium seumur hidup."
 }

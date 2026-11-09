@@ -58,6 +58,7 @@ import {
   LanguagePickerModal,
   nativeLanguageName,
 } from './LanguagePickerModal';
+import { ProfileHero } from './ProfileHero';
 
 function parseBirthDate(str: string): Date {
   if (!str || str.length < 10) return new Date(1990, 0, 1);
@@ -167,52 +168,10 @@ export function SettingsScreen() {
             ]}
             showsVerticalScrollIndicator={false}
           >
-            {/* Profile hero — centered, minimal */}
-            <View style={styles.profileHero}>
-              <View style={[styles.avatarRing, { borderColor: theme.divider }]}>
-                <View
-                  style={[
-                    styles.avatar,
-                    { backgroundColor: theme.cardLighter },
-                  ]}
-                >
-                  <Text
-                    variant="sectionTitle"
-                    style={{ color: theme.textSecondary }}
-                  >
-                    UNTIL
-                  </Text>
-                </View>
-                <View
-                  style={[
-                    styles.avatarEditBadge,
-                    { backgroundColor: theme.background },
-                  ]}
-                >
-                  <Text style={[styles.editIcon, { color: theme.textPrimary }]}>
-                    ✎
-                  </Text>
-                </View>
-              </View>
-              <Text
-                variant="title"
-                style={[styles.profileName, { color: theme.textPrimary }]}
-              >
-                {t('settings.profile.name')}
-              </Text>
-              <Text
-                variant="caption"
-                style={[styles.profileMeta, { color: theme.textSecondary }]}
-              >
-                {bornExpectedLine}
-              </Text>
-              <Text
-                variant="caption"
-                style={[styles.profileMeta, { color: theme.textSecondary }]}
-              >
-                {t('settings.profile.lifeComplete', { percent: lifePercent })}
-              </Text>
-            </View>
+            <ProfileHero
+              bornExpectedLine={bornExpectedLine}
+              lifePercent={lifePercent}
+            />
 
             {/* ACCOUNT */}
             <View style={styles.section}>
@@ -593,48 +552,6 @@ const styles = StyleSheet.create({
   content: {
     paddingHorizontal: Spacing[4],
     paddingTop: Spacing[4],
-  },
-  profileHero: {
-    alignItems: 'center',
-    marginBottom: Spacing[5],
-  },
-  avatarRing: {
-    width: 88,
-    height: 88,
-    borderRadius: 44,
-    borderWidth: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: Spacing[3],
-  },
-  avatar: {
-    width: 78,
-    height: 78,
-    borderRadius: 39,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  avatarEditBadge: {
-    position: 'absolute',
-    right: -2,
-    bottom: -2,
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-  },
-  editIcon: {
-    fontSize: 12,
-  },
-  profileName: {
-    fontFamily: getFontFamilyForWeight(Weight.semibold),
-    marginBottom: Spacing.xs,
-  },
-  profileMeta: {
-    letterSpacing: 0.5,
-    marginTop: Spacing.xs,
   },
   section: {
     marginBottom: Spacing[4],
