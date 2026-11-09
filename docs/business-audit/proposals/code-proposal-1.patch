@@ -1,0 +1,1244 @@
+diff --git a/src/app/App.tsx b/src/app/App.tsx
+index a1d5112..bea7e06 100644
+--- a/src/app/App.tsx
++++ b/src/app/App.tsx
+@@ -102,7 +102,7 @@ function handleIncrementCounterUrl(url: string | null): boolean {
+ }
+ 
+ /** Splash display duration (SSOT); passed to SplashScreen for aligned progress animation */
+-const SPLASH_DURATION_MS = 1000;
++const SPLASH_DURATION_MS = 500;
+ const ACTIVE_EVENT_DEBOUNCE_MS = 2000;
+ 
+ function App() {
+diff --git a/src/config/monetization.ts b/src/config/monetization.ts
+index a41264f..6f7c8bd 100644
+--- a/src/config/monetization.ts
++++ b/src/config/monetization.ts
+@@ -13,9 +13,6 @@ export const MONETIZATION_PRICING = {
+   lifetimeInr: 1999,
+   yearlyStudentInr: 249,
+   yearlyRegionalTier2Inr: 399,
+-  yearlyPerDayDisplay: '₹1.37',
+-  /** ₹149 × 12 − ₹499 */
+-  yearlySavingsVsMonthlyDisplay: '₹1,289',
+ } as const;
+ 
+ /** Optional Play products — enable when created in Console. */
+diff --git a/src/features/onboarding/ui/OnboardingScreen.tsx b/src/features/onboarding/ui/OnboardingScreen.tsx
+index c69ac65..24a0e56 100644
+--- a/src/features/onboarding/ui/OnboardingScreen.tsx
++++ b/src/features/onboarding/ui/OnboardingScreen.tsx
+@@ -83,6 +83,7 @@ const DEMO_STEPS: OnboardingFunnelStep[] = [
+   'widgets_demo',
+ ];
+ 
++const LOADER_BEAT_MS = 700; // computes nothing: a short beat before the results
+ export function OnboardingScreen() {
+   const { t } = useTranslation();
+   const prompts = getQuizPrompts();
+@@ -139,7 +140,7 @@ export function OnboardingScreen() {
+     loaderStarted.current = true;
+     const id = setTimeout(() => {
+       setStep('results');
+-    }, 2600);
++    }, LOADER_BEAT_MS);
+     return () => clearTimeout(id);
+   }, [step, setStep]);
+ 
+diff --git a/src/features/premium/data/RevenueCatPurchasesRepository.ts b/src/features/premium/data/RevenueCatPurchasesRepository.ts
+index 8d8b2ef..051313f 100644
+--- a/src/features/premium/data/RevenueCatPurchasesRepository.ts
++++ b/src/features/premium/data/RevenueCatPurchasesRepository.ts
+@@ -62,6 +62,8 @@ function toPackageDTO(pkg: PurchasesPackage): PurchasesPackageDTO {
+     title: pkg.product.title,
+     description: pkg.product.description,
+     priceString: pkg.product.priceString,
++    price: pkg.product.price,
++    currencyCode: pkg.product.currencyCode,
+   };
+ }
+ 
+diff --git a/src/features/premium/domain/mapOfferingPackages.ts b/src/features/premium/domain/mapOfferingPackages.ts
+index 1e1b768..e013f6d 100644
+--- a/src/features/premium/domain/mapOfferingPackages.ts
++++ b/src/features/premium/domain/mapOfferingPackages.ts
+@@ -5,6 +5,8 @@ export type OfferingProductRow = {
+   title: string;
+   description?: string;
+   price: string;
++  /** Numeric store price and its ISO currency, when the store reports them. */
++  amount?: number;
+   currency?: string;
+ };
+ 
+@@ -19,6 +21,8 @@ export function mapOfferingPackagesToRows(
+       productId: pkg.productId,
+       title: pkg.title,
+       price: pkg.priceString,
++      amount: pkg.price,
++      currency: pkg.currencyCode,
+     };
+     if (pkg.description) {
+       row.description = pkg.description;
+diff --git a/src/features/premium/domain/paywallMoney.ts b/src/features/premium/domain/paywallMoney.ts
+new file mode 100644
+index 0000000..b183381
+--- /dev/null
++++ b/src/features/premium/domain/paywallMoney.ts
+@@ -0,0 +1,66 @@
++/**
++ * Paywall price maths, in the store's own currency.
++ *
++ * The store reports a numeric price and an ISO currency per product. Everything the paywall
++ * shows beside a price (per day, the struck-through monthly × 12, the saving) is derived from
++ * those numbers here, so a US, Indian or Japanese viewer sees figures in their own currency.
++ * When a number or a currency is missing, or the comparison would not be true, the function
++ * returns null and the caller leaves that line out instead of guessing.
++ */
++
++export type Money = { amount: number; currency: string };
++
++const DAYS_PER_YEAR = 365;
++const MONTHS_PER_YEAR = 12;
++
++export function toMoney(
++  row: { amount?: number; currency?: string } | undefined,
++): Money | null {
++  if (!row?.currency) return null;
++  if (typeof row.amount !== 'number' || !Number.isFinite(row.amount)) return null;
++  if (row.amount <= 0) return null;
++  return { amount: row.amount, currency: row.currency };
++}
++
++/** Smallest-unit digits for a currency (JPY 0, USD 2). Falls back to 2 if Intl cannot say. */
++export function currencyFractionDigits(currency: string): number {
++  try {
++    return new Intl.NumberFormat('en', { style: 'currency', currency })
++      .resolvedOptions().maximumFractionDigits ?? 2;
++  } catch {
++    return 2;
++  }
++}
++
++/**
++ * The yearly price per day, rounded UP to the currency's smallest unit, so the paywall's
++ * "Less than X/day" is always true (499 / 365 = 1.367 → 1.37; exact figures go one unit above).
++ */
++export function yearlyPerDay(yearly: Money | null): Money | null {
++  if (!yearly) return null;
++  const factor = 10 ** currencyFractionDigits(yearly.currency);
++  const perDay = Math.floor((yearly.amount / DAYS_PER_YEAR) * factor + 1e-9) + 1;
++  return { amount: perDay / factor, currency: yearly.currency };
++}
++
++/** Twelve monthly payments, shown struck through next to the yearly price. Null unless it is higher. */
++export function monthlyTimesTwelve(
++  monthly: Money | null,
++  yearly: Money | null,
++): Money | null {
++  if (!monthly || !yearly || monthly.currency !== yearly.currency) return null;
++  const anchor = monthly.amount * MONTHS_PER_YEAR;
++  if (anchor <= yearly.amount) return null;
++  return { amount: anchor, currency: monthly.currency };
++}
++
++/** Whole-percent saving of yearly against twelve monthly payments, rounded down. Null below 1%. */
++export function yearlySavingPercent(
++  monthly: Money | null,
++  yearly: Money | null,
++): number | null {
++  const anchor = monthlyTimesTwelve(monthly, yearly);
++  if (!anchor || !yearly) return null;
++  const percent = Math.floor((1 - yearly.amount / anchor.amount) * 100);
++  return percent >= 1 ? percent : null;
++}
+diff --git a/src/features/premium/hooks/usePaywallPrices.ts b/src/features/premium/hooks/usePaywallPrices.ts
+index 2d409fb..3630e8e 100644
+--- a/src/features/premium/hooks/usePaywallPrices.ts
++++ b/src/features/premium/hooks/usePaywallPrices.ts
+@@ -6,11 +6,22 @@ import {
+   FALLBACK_STUDENT_YEARLY_PRICE,
+   FALLBACK_WEEKLY_PRICE,
+   FALLBACK_YEARLY_PRICE,
+-  MONETIZATION_PRICING,
+-  formatInr,
+ } from '../../../config/monetization';
++import { useTranslation } from '../../../shared/i18n/useTranslation';
++import {
++  monthlyTimesTwelve,
++  toMoney,
++  yearlyPerDay,
++  yearlySavingPercent,
++  type Money,
++} from '../domain/paywallMoney';
+ 
+-type ProductRow = { productId: string; price: string };
++type ProductRow = {
++  productId: string;
++  price: string;
++  amount?: number;
++  currency?: string;
++};
+ 
+ /** The store's own price string for a product (already in the person's currency), else a fallback. */
+ export function priceLabel(
+@@ -22,13 +33,46 @@ export function priceLabel(
+   return p?.price ?? fallback;
+ }
+ 
+-/** Display prices for every plan on the paywall. Store prices are shown as the store formats them. */
++function moneyOf(products: ProductRow[], productId: string): Money | null {
++  return toMoney(products.find(x => x.productId === productId));
++}
++
++type FormatNumber = ReturnType<typeof useTranslation>['formatNumber'];
++
++/** `money` in its own currency, in the app language; null if the runtime cannot format it. */
++function formatMoney(fmt: FormatNumber, money: Money | null): string | null {
++  if (!money) return null;
++  try {
++    return fmt(money.amount, { style: 'currency', currency: money.currency });
++  } catch {
++    return null;
++  }
++}
++
++/** Whole percent as the app language writes it ("72%"); null when there is no saving. */
++function formatPercent(fmt: FormatNumber, percent: number | null): string | null {
++  if (percent == null) return null;
++  try {
++    return fmt(percent / 100, { style: 'percent' });
++  } catch {
++    return `${percent}%`;
++  }
++}
++
++/**
++ * Display prices for every plan on the paywall. Store prices are shown as the store formats them.
++ * The lines derived from them (per day, struck-through anchor, saving) are computed in the store's
++ * currency and are null when the store gave no number to compute from.
++ */
+ export function usePaywallPrices(
+   products: ProductRow[],
+   productIds: typeof BILLING_PRODUCT_IDS,
+ ) {
+-  return useMemo(
+-    () => ({
++  const { formatNumber } = useTranslation();
++  return useMemo(() => {
++    const yearlyMoney = moneyOf(products, productIds.yearly);
++    const monthlyMoney = moneyOf(products, productIds.monthly);
++    return {
+       yearly: priceLabel(products, productIds.yearly, FALLBACK_YEARLY_PRICE),
+       monthly: priceLabel(products, productIds.monthly, FALLBACK_MONTHLY_PRICE),
+       weekly: priceLabel(
+@@ -46,9 +90,12 @@ export function usePaywallPrices(
+         productIds.yearlyStudent ?? 'yearly_subscription_student',
+         FALLBACK_STUDENT_YEARLY_PRICE,
+       ),
+-      /** The monthly price × 12, struck through next to the yearly price. */
+-      monthlyAnchorYearly: formatInr(MONETIZATION_PRICING.monthlyInr * 12),
+-    }),
+-    [products, productIds],
+-  );
++      /** "Less than {price}/day" for the yearly plan. */
++      yearlyPerDay: formatMoney(formatNumber, yearlyPerDay(yearlyMoney)),
++      /** The monthly price × 12, struck through next to the yearly price; null unless higher. */
++      monthlyAnchorYearly: formatMoney(formatNumber, monthlyTimesTwelve(monthlyMoney, yearlyMoney)),
++      /** Saving of yearly against twelve monthly payments, e.g. "72%". */
++      yearlySavings: formatPercent(formatNumber, yearlySavingPercent(monthlyMoney, yearlyMoney)),
++    };
++  }, [products, productIds, formatNumber]);
+ }
+diff --git a/src/features/premium/hooks/usePaywallVisit.ts b/src/features/premium/hooks/usePaywallVisit.ts
+new file mode 100644
+index 0000000..b578876
+--- /dev/null
++++ b/src/features/premium/hooks/usePaywallVisit.ts
+@@ -0,0 +1,33 @@
++/**
++ * usePaywallVisit — one visit to the custom paywall: `paywall_shown` when it mounts,
++ * `paywall_dismissed` (with seconds open) when it unmounts without a purchase or restore.
++ * Call the returned function when the visit ends in a purchase or restore.
++ * A subscriber looking at the paywall is logged as shown (is_premium) but never as dismissed.
++ */
++
++import { useCallback, useEffect, useRef } from 'react';
++import type { AnalyticsPaywallSource } from '../../../shared/analytics/analytics';
++import { logPaywallDismissed, logPaywallShown } from '../services/paywallTelemetry';
++
++export function usePaywallVisit(
++  surface: AnalyticsPaywallSource,
++  isPremium: boolean,
++): () => void {
++  const converted = useRef(false);
++  const premiumAtOpen = useRef(isPremium);
++
++  useEffect(() => {
++    const openedAt = Date.now();
++    const wasPremium = premiumAtOpen.current;
++    logPaywallShown(surface, 'custom', wasPremium);
++    return () => {
++      if (!converted.current && !wasPremium) {
++        logPaywallDismissed(surface, 'custom', openedAt, 'leave');
++      }
++    };
++  }, [surface]);
++
++  return useCallback(() => {
++    converted.current = true;
++  }, []);
++}
+diff --git a/src/features/premium/hooks/usePresentRevenueCatPaywall.ts b/src/features/premium/hooks/usePresentRevenueCatPaywall.ts
+index ad5b674..511af92 100644
+--- a/src/features/premium/hooks/usePresentRevenueCatPaywall.ts
++++ b/src/features/premium/hooks/usePresentRevenueCatPaywall.ts
+@@ -1,6 +1,11 @@
+ /**
+  * usePresentRevenueCatPaywall — first-offer screens (onboarding, deferred, trial).
+  * Settings → Premium keeps the custom PremiumPaywallBody.
++ *
++ * `surface` names the screen for analytics. The SDK's present call only resolves when the
++ * paywall closes and offers no "on screen" callback, so `paywall_shown` (and, for a close
++ * without buying, `paywall_dismissed`) is logged when it resolves, and only if the paywall
++ * really was presented: counts are accurate, the timestamp is the close, not the open.
+  */
+ 
+ import { useCallback, useState } from 'react';
+@@ -9,21 +14,31 @@ import {
+   presentRevenueCatPaywallUseCase,
+ } from '../../../app/di';
+ import type { PaywallPresentResult } from '../domain/ports/IPaywallPresenter';
++import type { AnalyticsPaywallSource } from '../../../shared/analytics/analytics';
++import { logPaywallDismissed, logPaywallShown } from '../services/paywallTelemetry';
+ 
+-export function usePresentRevenueCatPaywall() {
++export function usePresentRevenueCatPaywall(surface: AnalyticsPaywallSource) {
+   const [presenting, setPresenting] = useState(false);
+ 
+   const present = useCallback(
+     async (options?: { onlyIfNeeded?: boolean }): Promise<PaywallPresentResult> => {
+       setPresenting(true);
++      const startedAt = Date.now();
+       try {
+         ensurePurchasesConfigured();
+-        return await presentRevenueCatPaywallUseCase.execute(options);
++        const result = await presentRevenueCatPaywallUseCase.execute(options);
++        if (result !== 'error' && result !== 'not_presented') {
++          logPaywallShown(surface, 'revenuecat');
++          if (result === 'cancelled') {
++            logPaywallDismissed(surface, 'revenuecat', startedAt, 'close');
++          }
++        }
++        return result;
+       } finally {
+         setPresenting(false);
+       }
+     },
+-    [],
++    [surface],
+   );
+ 
+   return { present, presenting };
+diff --git a/src/features/premium/services/paywallTelemetry.ts b/src/features/premium/services/paywallTelemetry.ts
+new file mode 100644
+index 0000000..770fc77
+--- /dev/null
++++ b/src/features/premium/services/paywallTelemetry.ts
+@@ -0,0 +1,109 @@
++/**
++ * Paywall funnel telemetry: what was shown, what was chosen, how it ended.
++ * Event names live in shared/analytics/paywallEvents.ts.
++ */
++
++import {
++  logAnalyticsEvent,
++  type AnalyticsPaywallSource,
++} from '../../../shared/analytics/analytics';
++import { BILLING_PRODUCT_IDS } from '../../../config/billing';
++
++/** 'custom' is our own PremiumPaywallBody; 'revenuecat' is the dashboard-designed paywall. */
++export type PaywallKind = 'custom' | 'revenuecat';
++
++type PricedRow = { productId: string; amount?: number; currency?: string };
++
++const seconds = (sinceMs: number) => Math.round((Date.now() - sinceMs) / 1000);
++
++export function logPaywallShown(
++  surface: AnalyticsPaywallSource,
++  kind: PaywallKind,
++  isPremium = false,
++): void {
++  void logAnalyticsEvent('paywall_shown', { surface, kind, is_premium: isPremium });
++}
++
++export function logPaywallDismissed(
++  surface: AnalyticsPaywallSource,
++  kind: PaywallKind,
++  shownAtMs: number,
++  method: string,
++): void {
++  void logAnalyticsEvent('paywall_dismissed', {
++    surface,
++    kind,
++    method,
++    seconds_open: seconds(shownAtMs),
++  });
++}
++
++export function logPlanSelected(
++  surface: AnalyticsPaywallSource,
++  planId: string,
++): void {
++  void logAnalyticsEvent('paywall_plan_selected', { surface, plan_id: planId });
++}
++
++export function logRestoreEmpty(source: AnalyticsPaywallSource): void {
++  void logAnalyticsEvent('premium_restore_empty', { source });
++}
++
++export function logRestoreFailed(
++  source: AnalyticsPaywallSource,
++  error: unknown,
++): void {
++  const code = (error as { code?: unknown } | null)?.code;
++  void logAnalyticsEvent('premium_restore_failed', {
++    source,
++    error_code: typeof code === 'string' || typeof code === 'number' ? code : 'unknown',
++  });
++}
++
++export function logPurchaseFailed(args: {
++  planId: string;
++  source: AnalyticsPaywallSource;
++  priceDisplay: string;
++  code?: unknown;
++  message?: string;
++}): void {
++  const { code } = args;
++  void logAnalyticsEvent('premium_purchase_failed', {
++    plan_id: args.planId,
++    source: args.source,
++    price_display: args.priceDisplay,
++    error_code: typeof code === 'string' || typeof code === 'number' ? code : 'unknown',
++    error_message: (args.message ?? 'Unknown error').slice(0, 100),
++    payment_provider: 'revenuecat',
++  });
++}
++
++/** Billing period of a product id, for revenue breakdowns. */
++function periodOf(productId: string): string {
++  switch (productId) {
++    case BILLING_PRODUCT_IDS.yearly:
++    case BILLING_PRODUCT_IDS.yearlyStudent:
++      return 'year';
++    case BILLING_PRODUCT_IDS.monthly:
++      return 'month';
++    case BILLING_PRODUCT_IDS.weekly:
++      return 'week';
++    case BILLING_PRODUCT_IDS.lifetime:
++      return 'lifetime';
++    default:
++      return 'unknown';
++  }
++}
++
++/**
++ * Numeric revenue fields for premium_purchase_completed: `value` in `currency` (the store's
++ * price for the product, before store fees and tax), plus the billing `period`. Without these
++ * the event only carried a display string and revenue could not be summed.
++ */
++export function purchaseRevenueParams(
++  products: PricedRow[],
++  productId: string,
++): { value?: number; currency?: string; period: string } {
++  const row = products.find(p => p.productId === productId);
++  return { value: row?.amount, currency: row?.currency, period: periodOf(productId) };
++}
+diff --git a/src/features/premium/ui/DeferredPaywallModal.tsx b/src/features/premium/ui/DeferredPaywallModal.tsx
+index 966df37..ada8641 100644
+--- a/src/features/premium/ui/DeferredPaywallModal.tsx
++++ b/src/features/premium/ui/DeferredPaywallModal.tsx
+@@ -19,7 +19,7 @@ interface DeferredPaywallModalProps {
+  * Native paywall over an RN Modal leaves a touch blocker after dismiss (freeze on Home).
+  */
+ export function DeferredPaywallModal({ visible, onClose }: DeferredPaywallModalProps) {
+-  const { present } = usePresentRevenueCatPaywall();
++  const { present } = usePresentRevenueCatPaywall('deferred_paywall');
+   const ranForVisible = useRef(false);
+ 
+   useEffect(() => {
+diff --git a/src/features/premium/ui/OnboardingPaywallScreen.tsx b/src/features/premium/ui/OnboardingPaywallScreen.tsx
+index 07d08e1..133862f 100644
+--- a/src/features/premium/ui/OnboardingPaywallScreen.tsx
++++ b/src/features/premium/ui/OnboardingPaywallScreen.tsx
+@@ -23,6 +23,7 @@ import { useNavigation } from '@react-navigation/native';
+ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+ import { Text, ScreenGradient } from '../../../shared/ui';
+ import { PremiumPaywallBody } from './PremiumPaywallBody';
++import { markDeferredPaywallShown } from '../services/deferredPaywall';
+ import { useObserveTimeState } from '../../time';
+ import {
+   usePresentRevenueCatPaywall,
+@@ -44,7 +45,7 @@ export function OnboardingPaywallScreen() {
+       NativeStackNavigationProp<AuthStackParamList, 'OnboardingPaywall'>
+     >();
+   const { timeState } = useObserveTimeState();
+-  const { present, presenting } = usePresentRevenueCatPaywall();
++  const { present, presenting } = usePresentRevenueCatPaywall('onboarding_paywall');
+   const [showCustomPaywall, setShowCustomPaywall] = useState(false);
+   const presentedOnce = useRef(false);
+   const [canSkipSpinner, setCanSkipSpinner] = useState(false);
+@@ -66,6 +67,8 @@ export function OnboardingPaywallScreen() {
+     if (presentedOnce.current) return;
+     presentedOnce.current = true;
+ 
++    // This is the first paywall; the deferred one must not follow it on the next open.
++    markDeferredPaywallShown();
+     void (async () => {
+       void logAnalyticsEvent('onboarding_paywall_seen', { deferred: false });
+       void logAnalyticsEvent('premium_viewed', { source: 'onboarding_paywall' });
+diff --git a/src/features/premium/ui/PremiumPaywallBody.tsx b/src/features/premium/ui/PremiumPaywallBody.tsx
+index 068c4e4..680bbe0 100644
+--- a/src/features/premium/ui/PremiumPaywallBody.tsx
++++ b/src/features/premium/ui/PremiumPaywallBody.tsx
+@@ -30,7 +30,6 @@ import {
+ } from '../../../shared/theme';
+ import {
+   MONETIZATION_FEATURE_FLAGS,
+-  MONETIZATION_PRICING,
+   LEGAL_URLS,
+ } from '../../../config/monetization';
+ import {
+@@ -54,13 +53,19 @@ import { PaywallVisualHero } from './PaywallVisualHero';
+ import { PaywallLossFrame } from './PaywallLossFrame';
+ import { PaywallFeatureTiles } from './PaywallFeatureTiles';
+ import { PaywallCompareStrip } from './PaywallCompareStrip';
+-import {
+-  PaywallPlanCards,
+-  type PaywallPlanOption,
+-} from './PaywallPlanCards';
++import { PaywallPlanCards } from './PaywallPlanCards';
+ import { StudentVerifyModal } from './StudentVerifyModal';
+ import { useStudentVerification } from '../hooks/useStudentVerification';
+ import { useManageSubscription } from '../hooks/useManageSubscription';
++import { usePaywallVisit } from '../hooks/usePaywallVisit';
++import {
++  logPlanSelected,
++  logPurchaseFailed,
++  logRestoreEmpty,
++  logRestoreFailed,
++  purchaseRevenueParams,
++} from '../services/paywallTelemetry';
++import { buildPaywallPlans } from './paywallPlans';
+ 
+ if (
+   Platform.OS === 'android' &&
+@@ -92,6 +97,7 @@ export function PremiumPaywallBody({
+   const headline = headlineProp ?? t('premium.paywall.headline');
+   const subheadline = subheadlineProp ?? t('premium.paywall.subheadline');
+   const { isPremium } = useObserveSubscription();
++  const markVisitConverted = usePaywallVisit(source, isPremium);
+   const { access } = useAccessControl();
+   const { timeState } = useObserveTimeState();
+   const {
+@@ -107,7 +113,7 @@ export function PremiumPaywallBody({
+   const [restoring, setRestoring] = useState(false);
+   const [purchasing, setPurchasing] = useState(false);
+   const [termsOpen, setTermsOpen] = useState(false);
+-  const [selectedPlanId, setSelectedPlanId] = useState(productIds.yearly);
++  const [selectedPlanId, setSelectedPlanId] = useState<string>(productIds.yearly);
+   const [studentModalOpen, setStudentModalOpen] = useState(false);
+   const { isVerified, verify, checkVerified } =
+     useStudentVerification();
+@@ -120,64 +126,20 @@ export function PremiumPaywallBody({
+     void getProducts().catch(() => {});
+   }, [getProducts]);
+ 
++  const prices = usePaywallPrices(products, productIds);
+   const {
+     yearly: yearlyPrice,
+     monthly: monthlyPrice,
+     weekly: weeklyPrice,
+     lifetime: lifetimePrice,
+     student: studentPrice,
+-    monthlyAnchorYearly,
+-  } = usePaywallPrices(products, productIds);
++  } = prices;
+ 
+   /** Three cards only: yearly (primary), monthly, weekly. */
+-  const planOptions = useMemo((): PaywallPlanOption[] => {
+-    const plans: PaywallPlanOption[] = [
+-      {
+-        productId: productIds.yearly,
+-        title: t('premium.plan.yearly'),
+-        subtitle: t('premium.plan.yearlySub', {
+-          price: MONETIZATION_PRICING.yearlyPerDayDisplay,
+-        }),
+-        price: yearlyPrice,
+-        periodLabel: t('premium.period.year'),
+-        renewalInterval: 'year',
+-        comparePrice: `${monthlyAnchorYearly}${t('premium.period.year')}`,
+-        badge: t('premium.plan.save', {
+-          amount: MONETIZATION_PRICING.yearlySavingsVsMonthlyDisplay,
+-        }),
+-      },
+-      {
+-        productId: productIds.monthly,
+-        title: t('premium.plan.monthly'),
+-        subtitle: t('premium.plan.monthlySub'),
+-        price: monthlyPrice,
+-        periodLabel: t('premium.period.month'),
+-        renewalInterval: 'month',
+-      },
+-    ];
+-
+-    if (productIds.weekly) {
+-      plans.push({
+-        productId: productIds.weekly,
+-        title: t('premium.plan.weekly'),
+-        subtitle: t('premium.plan.weeklySub'),
+-        price: weeklyPrice,
+-        periodLabel: t('premium.period.week'),
+-        renewalInterval: 'week',
+-      });
+-    }
+-
+-    return plans;
+-  }, [
+-    productIds.yearly,
+-    productIds.monthly,
+-    productIds.weekly,
+-    yearlyPrice,
+-    monthlyPrice,
+-    weeklyPrice,
+-    monthlyAnchorYearly,
+-    t,
+-  ]);
++  const planOptions = useMemo(
++    () => buildPaywallPlans(productIds, prices, t),
++    [productIds, prices, t],
++  );
+ 
+   const selectedPlan =
+     planOptions.find(p => p.productId === selectedPlanId) ?? planOptions[0];
+@@ -254,13 +216,12 @@ export function PremiumPaywallBody({
+         }
+         if (result.status === 'error') {
+           clearPendingPurchase();
+-          void logAnalyticsEvent('premium_purchase_failed', {
+-            plan_id: productId,
++          logPurchaseFailed({
++            planId: productId,
+             source,
+-            price_display: priceDisplay,
+-            error_code: result.code,
+-            error_message: result.message.slice(0, 100),
+-            payment_provider: 'revenuecat',
++            priceDisplay,
++            code: result.code,
++            message: result.message,
+           });
+           recordCrashError(
+             new Error(result.message),
+@@ -278,6 +239,7 @@ export function PremiumPaywallBody({
+           source,
+           price_display: priceDisplay,
+           payment_provider: 'revenuecat',
++          ...purchaseRevenueParams(products, productId),
+         });
+         if (wasTrialActive) {
+           void logAnalyticsEvent('trial_preview_ended', {
+@@ -285,17 +247,17 @@ export function PremiumPaywallBody({
+             plan_id: productId,
+           });
+         }
++        markVisitConverted();
+         onPurchaseSuccess?.();
+       } catch (e: unknown) {
+         const err = e as { code?: string; message?: string };
+         clearPendingPurchase();
+-        void logAnalyticsEvent('premium_purchase_failed', {
+-          plan_id: productId,
++        logPurchaseFailed({
++          planId: productId,
+           source,
+-          price_display: priceDisplay,
+-          error_code: err?.code ?? 'unknown',
+-          error_message: (err?.message ?? 'Unknown error').slice(0, 100),
+-          payment_provider: 'revenuecat',
++          priceDisplay,
++          code: err?.code,
++          message: err?.message,
+         });
+         recordCrashError(e, 'PremiumPaywallBody.requestPurchase');
+         Alert.alert(
+@@ -319,6 +281,7 @@ export function PremiumPaywallBody({
+       checkVerified,
+       access.trialActive,
+       onPurchaseSuccess,
++      markVisitConverted,
+       t,
+     ]
+   );
+@@ -337,10 +300,14 @@ export function PremiumPaywallBody({
+       );
+       if (restored) {
+         void logAnalyticsEvent('premium_restore_completed', { source });
++        markVisitConverted();
+         onPurchaseSuccess?.();
++      } else {
++        logRestoreEmpty(source);
+       }
+     } catch (e: unknown) {
+       const err = e as { message?: string };
++      logRestoreFailed(source, e);
+       recordCrashError(e, 'PremiumPaywallBody.restorePurchases');
+       Alert.alert(
+         t('premium.alert.restoreFailed'),
+@@ -349,7 +316,7 @@ export function PremiumPaywallBody({
+     } finally {
+       setRestoring(false);
+     }
+-  }, [restorePurchases, onPurchaseSuccess, source, t]);
++  }, [restorePurchases, onPurchaseSuccess, markVisitConverted, source, t]);
+ 
+   const continueDisabled = purchasing || loading;
+ 
+@@ -426,7 +393,10 @@ export function PremiumPaywallBody({
+           <PaywallPlanCards
+             plans={planOptions}
+             selectedId={selectedPlan.productId}
+-            onSelect={setSelectedPlanId}
++            onSelect={id => {
++              setSelectedPlanId(id);
++              logPlanSelected(source, id);
++            }}
+           />
+ 
+           {selectedPlan.comparePrice ? (
+diff --git a/src/features/premium/ui/TrialEndingModal.tsx b/src/features/premium/ui/TrialEndingModal.tsx
+index ea63bff..97f1248 100644
+--- a/src/features/premium/ui/TrialEndingModal.tsx
++++ b/src/features/premium/ui/TrialEndingModal.tsx
+@@ -27,7 +27,7 @@ export function TrialEndingModal({
+   const theme = useTheme();
+   const { t } = useTranslation();
+   const { products, productIds, getProducts } = usePurchase();
+-  const { present, presenting } = usePresentRevenueCatPaywall();
++  const { present, presenting } = usePresentRevenueCatPaywall('trial_ending_modal');
+ 
+   useEffect(() => {
+     if (visible) {
+diff --git a/src/features/premium/ui/paywallPlans.ts b/src/features/premium/ui/paywallPlans.ts
+new file mode 100644
+index 0000000..5fa1e8b
+--- /dev/null
++++ b/src/features/premium/ui/paywallPlans.ts
+@@ -0,0 +1,59 @@
++/**
++ * The plan cards of the custom paywall: yearly (primary), monthly, weekly.
++ * Pure, so the "no figure we cannot back" rule is testable: the per-day line, the struck-through
++ * anchor and the saving badge appear only when the store gave numbers to compute them from.
++ */
++
++import type { BILLING_PRODUCT_IDS } from '../../../config/billing';
++import type { TranslateParams } from '../../../shared/i18n/translate';
++import type { TranslationKey } from '../../../shared/i18n/resources';
++import type { usePaywallPrices } from '../hooks/usePaywallPrices';
++import type { PaywallPlanOption } from './PaywallPlanCards';
++
++type Translate = (key: TranslationKey, params?: TranslateParams) => string;
++
++export function buildPaywallPlans(
++  productIds: typeof BILLING_PRODUCT_IDS,
++  prices: ReturnType<typeof usePaywallPrices>,
++  t: Translate,
++): PaywallPlanOption[] {
++  const plans: PaywallPlanOption[] = [
++    {
++      productId: productIds.yearly,
++      title: t('premium.plan.yearly'),
++      subtitle: prices.yearlyPerDay
++        ? t('premium.plan.yearlySub', { price: prices.yearlyPerDay })
++        : undefined,
++      price: prices.yearly,
++      periodLabel: t('premium.period.year'),
++      renewalInterval: 'year',
++      comparePrice: prices.monthlyAnchorYearly
++        ? `${prices.monthlyAnchorYearly}${t('premium.period.year')}`
++        : undefined,
++      badge: prices.yearlySavings
++        ? t('premium.plan.save', { amount: prices.yearlySavings })
++        : undefined,
++    },
++    {
++      productId: productIds.monthly,
++      title: t('premium.plan.monthly'),
++      subtitle: t('premium.plan.monthlySub'),
++      price: prices.monthly,
++      periodLabel: t('premium.period.month'),
++      renewalInterval: 'month',
++    },
++  ];
++
++  if (productIds.weekly) {
++    plans.push({
++      productId: productIds.weekly,
++      title: t('premium.plan.weekly'),
++      subtitle: t('premium.plan.weeklySub'),
++      price: prices.weekly,
++      periodLabel: t('premium.period.week'),
++      renewalInterval: 'week',
++    });
++  }
++
++  return plans;
++}
+diff --git a/src/shared/analytics/analytics.ts b/src/shared/analytics/analytics.ts
+index 0e70426..84634da 100644
+--- a/src/shared/analytics/analytics.ts
++++ b/src/shared/analytics/analytics.ts
+@@ -23,9 +23,9 @@ export type AnalyticsPaywallSource =
+   | 'unknown';
+ 
+ export type AnalyticsEventName =
++  | import('./paywallEvents').PaywallEventName
+   | 'app_open'
+   | 'manage_subscription_opened'
+-  | 'onboarding_step'
+   | 'onboarding_step_view'
+   | 'onboarding_answer'
+   | 'onboarding_life_aha'
+diff --git a/src/shared/analytics/paywallEvents.ts b/src/shared/analytics/paywallEvents.ts
+new file mode 100644
+index 0000000..8bbfad3
+--- /dev/null
++++ b/src/shared/analytics/paywallEvents.ts
+@@ -0,0 +1,17 @@
++/**
++ * Paywall funnel events. Kept apart from the main event list so that file stays within its
++ * line limit; AnalyticsEventName includes this union.
++ *
++ * - paywall_shown          { surface, kind: 'custom' | 'revenuecat', is_premium? }
++ *                          The paywall was actually on screen (not merely requested).
++ * - paywall_plan_selected  { surface, plan_id }   A plan card was tapped on the custom paywall.
++ * - paywall_dismissed      { surface, kind, method, seconds_open }   Closed without buying.
++ * - premium_restore_empty  { source }   Restore succeeded but found nothing.
++ * - premium_restore_failed { source, error_code }   Restore threw.
++ */
++export type PaywallEventName =
++  | 'paywall_shown'
++  | 'paywall_plan_selected'
++  | 'paywall_dismissed'
++  | 'premium_restore_empty'
++  | 'premium_restore_failed';
+diff --git a/src/shared/types/purchases.ts b/src/shared/types/purchases.ts
+index 45bbc20..af4f261 100644
+--- a/src/shared/types/purchases.ts
++++ b/src/shared/types/purchases.ts
+@@ -4,6 +4,10 @@ export type PurchasesPackageDTO = {
+   title: string;
+   description: string;
+   priceString: string;
++  /** Store price as a number, in `currencyCode`. */
++  price: number;
++  /** ISO 4217 code of the store's price, e.g. USD, INR. */
++  currencyCode: string;
+ };
+ 
+ export type PurchasesOfferingDTO = {
+diff --git a/__tests__/deferredPaywall.test.ts b/__tests__/deferredPaywall.test.ts
+new file mode 100644
+index 0000000..a5eb8f9
+--- /dev/null
++++ b/__tests__/deferredPaywall.test.ts
+@@ -0,0 +1,34 @@
++import {
++  markDeferredPaywallShown,
++  shouldShowDeferredPaywall,
++} from '../src/features/premium/services/deferredPaywall';
++import type { AccessState } from '../src/shared/types';
++
++const mockStore = new Map<string, string>();
++jest.mock('../src/shared/persistence/mmkv', () => ({
++  getString: (key: string) => mockStore.get(key),
++  setString: (key: string, value: string) => {
++    mockStore.set(key, value);
++  },
++}));
++
++const access = (over: Partial<AccessState>): AccessState =>
++  ({ isPremium: false, appOpenCount: 2, ...over }) as AccessState;
++
++describe('deferred paywall', () => {
++  beforeEach(() => mockStore.clear());
++
++  it('is due from the second open for someone who has not subscribed', () => {
++    expect(shouldShowDeferredPaywall(access({ appOpenCount: 1 }))).toBe(false);
++    expect(shouldShowDeferredPaywall(access({ appOpenCount: 2 }))).toBe(true);
++  });
++
++  it('never shows to a subscriber', () => {
++    expect(shouldShowDeferredPaywall(access({ isPremium: true }))).toBe(false);
++  });
++
++  it('stays off once any paywall was marked as shown (the onboarding paywall does this)', () => {
++    markDeferredPaywallShown();
++    expect(shouldShowDeferredPaywall(access({ appOpenCount: 10 }))).toBe(false);
++  });
++});
+diff --git a/__tests__/mapOfferingPackages.test.ts b/__tests__/mapOfferingPackages.test.ts
+index 03f42b1..d3c0ba0 100644
+--- a/__tests__/mapOfferingPackages.test.ts
++++ b/__tests__/mapOfferingPackages.test.ts
+@@ -11,6 +11,8 @@ describe('mapOfferingPackagesToRows', () => {
+           title: 'Yearly',
+           description: 'Best value',
+           priceString: '₹500.00',
++          price: 500,
++          currencyCode: 'INR',
+         },
+         {
+           identifier: '$rc_monthly',
+@@ -18,6 +20,8 @@ describe('mapOfferingPackagesToRows', () => {
+           title: 'Monthly',
+           description: '',
+           priceString: '₹100.00',
++          price: 100,
++          currencyCode: 'INR',
+         },
+       ],
+     });
+@@ -28,11 +32,15 @@ describe('mapOfferingPackagesToRows', () => {
+         title: 'Yearly',
+         description: 'Best value',
+         price: '₹500.00',
++        amount: 500,
++        currency: 'INR',
+       },
+       {
+         productId: 'monthly_subscription',
+         title: 'Monthly',
+         price: '₹100.00',
++        amount: 100,
++        currency: 'INR',
+       },
+     ]);
+     expect(rows.find(r => r.productId === 'yearly_subscription')?.price).toBe(
+diff --git a/__tests__/monetizationPricing.test.ts b/__tests__/monetizationPricing.test.ts
+index 4df903d..998334d 100644
+--- a/__tests__/monetizationPricing.test.ts
++++ b/__tests__/monetizationPricing.test.ts
+@@ -8,7 +8,6 @@ describe('monetization pricing', () => {
+     expect(MONETIZATION_PRICING.yearlyInr).toBe(499);
+     expect(MONETIZATION_PRICING.lifetimeInr).toBe(1999);
+     expect(MONETIZATION_PRICING.yearlyStudentInr).toBe(249);
+-    expect(MONETIZATION_PRICING.yearlySavingsVsMonthlyDisplay).toBe('₹1,289');
+   });
+ 
+   it('hides social proof when count is unverified', () => {
+diff --git a/__tests__/paywallMoney.test.ts b/__tests__/paywallMoney.test.ts
+new file mode 100644
+index 0000000..9af064c
+--- /dev/null
++++ b/__tests__/paywallMoney.test.ts
+@@ -0,0 +1,73 @@
++import {
++  monthlyTimesTwelve,
++  toMoney,
++  yearlyPerDay,
++  yearlySavingPercent,
++} from '../src/features/premium/domain/paywallMoney';
++
++const usd = (amount: number) => ({ amount, currency: 'USD' });
++const inr = (amount: number) => ({ amount, currency: 'INR' });
++const jpy = (amount: number) => ({ amount, currency: 'JPY' });
++
++describe('toMoney', () => {
++  it('needs a positive finite amount and a currency', () => {
++    expect(toMoney({ amount: 4.99, currency: 'USD' })).toEqual(usd(4.99));
++    expect(toMoney(undefined)).toBeNull();
++    expect(toMoney({ amount: 4.99 })).toBeNull();
++    expect(toMoney({ currency: 'USD' })).toBeNull();
++    expect(toMoney({ amount: 0, currency: 'USD' })).toBeNull();
++    expect(toMoney({ amount: NaN, currency: 'USD' })).toBeNull();
++  });
++});
++
++describe('yearlyPerDay', () => {
++  it('rounds up so "less than X a day" stays true', () => {
++    // 499 / 365 = 1.3671 → 1.37 (the figure the paywall used to hard-code for rupees)
++    expect(yearlyPerDay(inr(499))).toEqual(inr(1.37));
++    // 14.99 / 365 = 0.04107 → 0.05
++    expect(yearlyPerDay(usd(14.99))).toEqual(usd(0.05));
++  });
++
++  it('goes one unit above an exact figure', () => {
++    // 365 / 365 = 1.00 exactly: "less than 1.00" would be false, so 1.01
++    expect(yearlyPerDay(usd(365))).toEqual(usd(1.01));
++  });
++
++  it('uses the currency\'s own smallest unit', () => {
++    // 1,200 yen / 365 = 3.29 → 4 (yen has no minor unit)
++    expect(yearlyPerDay(jpy(1200))).toEqual(jpy(4));
++  });
++
++  it('is null without a price', () => {
++    expect(yearlyPerDay(null)).toBeNull();
++  });
++});
++
++describe('monthlyTimesTwelve', () => {
++  it('is twelve payments when that is more than the yearly price', () => {
++    expect(monthlyTimesTwelve(usd(2.99), usd(14.99))).toEqual(usd(35.88));
++    expect(monthlyTimesTwelve(inr(149), inr(499))).toEqual(inr(1788));
++  });
++
++  it('is null when it would not be a real anchor', () => {
++    expect(monthlyTimesTwelve(usd(1), usd(14.99))).toBeNull(); // 12 < yearly
++    expect(monthlyTimesTwelve(usd(2.99), inr(499))).toBeNull(); // currencies differ
++    expect(monthlyTimesTwelve(null, usd(14.99))).toBeNull();
++    expect(monthlyTimesTwelve(usd(2.99), null)).toBeNull();
++  });
++});
++
++describe('yearlySavingPercent', () => {
++  it('is the whole-percent saving against twelve monthly payments, rounded down', () => {
++    // 1 - 499 / 1788 = 72.09%
++    expect(yearlySavingPercent(inr(149), inr(499))).toBe(72);
++    // 1 - 14.99 / 35.88 = 58.22%
++    expect(yearlySavingPercent(usd(2.99), usd(14.99))).toBe(58);
++  });
++
++  it('is null when there is no saving or the figures cannot be compared', () => {
++    expect(yearlySavingPercent(usd(1), usd(14.99))).toBeNull();
++    expect(yearlySavingPercent(usd(2.99), inr(499))).toBeNull();
++    expect(yearlySavingPercent(null, usd(14.99))).toBeNull();
++  });
++});
+diff --git a/__tests__/paywallPlans.test.ts b/__tests__/paywallPlans.test.ts
+new file mode 100644
+index 0000000..eb0ea53
+--- /dev/null
++++ b/__tests__/paywallPlans.test.ts
+@@ -0,0 +1,57 @@
++import { BILLING_PRODUCT_IDS } from '../src/config/billing';
++import { buildPaywallPlans } from '../src/features/premium/ui/paywallPlans';
++
++type Prices = Parameters<typeof buildPaywallPlans>[1];
++
++// A translator that shows the key and the params, so the test sees what would be interpolated.
++const t = (key: string, params?: Record<string, string | number>) =>
++  params ? `${key}|${Object.values(params).join(',')}` : key;
++const translate = t as Parameters<typeof buildPaywallPlans>[2];
++
++const base: Prices = {
++  yearly: '$14.99',
++  monthly: '$2.99',
++  weekly: '$0.99',
++  lifetime: '$39.99',
++  student: '$7.99',
++  yearlyPerDay: '$0.05',
++  monthlyAnchorYearly: '$35.88',
++  yearlySavings: '58%',
++};
++
++describe('buildPaywallPlans', () => {
++  it('derives the per-day, anchor and saving lines from the prices it is given', () => {
++    const yearly = buildPaywallPlans(BILLING_PRODUCT_IDS, base, translate)[0];
++    expect(yearly.price).toBe('$14.99');
++    expect(yearly.subtitle).toBe('premium.plan.yearlySub|$0.05');
++    expect(yearly.comparePrice).toBe('$35.88premium.period.year');
++    expect(yearly.badge).toBe('premium.plan.save|58%');
++  });
++
++  it('leaves those lines out when the store gave nothing to compute them from', () => {
++    const bare: Prices = {
++      ...base,
++      yearlyPerDay: null,
++      monthlyAnchorYearly: null,
++      yearlySavings: null,
++    };
++    const yearly = buildPaywallPlans(BILLING_PRODUCT_IDS, bare, translate)[0];
++    expect(yearly.subtitle).toBeUndefined();
++    expect(yearly.comparePrice).toBeUndefined();
++    expect(yearly.badge).toBeUndefined();
++  });
++
++  it('never shows a rupee sign to a viewer whose store prices are in another currency', () => {
++    const plans = buildPaywallPlans(BILLING_PRODUCT_IDS, base, translate);
++    expect(JSON.stringify(plans)).not.toContain('₹');
++  });
++
++  it('lists yearly, monthly, weekly in that order', () => {
++    const ids = buildPaywallPlans(BILLING_PRODUCT_IDS, base, translate).map(p => p.productId);
++    expect(ids).toEqual([
++      BILLING_PRODUCT_IDS.yearly,
++      BILLING_PRODUCT_IDS.monthly,
++      BILLING_PRODUCT_IDS.weekly,
++    ]);
++  });
++});
+diff --git a/__tests__/paywallTelemetry.test.ts b/__tests__/paywallTelemetry.test.ts
+new file mode 100644
+index 0000000..6da1da6
+--- /dev/null
++++ b/__tests__/paywallTelemetry.test.ts
+@@ -0,0 +1,82 @@
++import {
++  logPaywallDismissed,
++  logPaywallShown,
++  logPlanSelected,
++  logPurchaseFailed,
++  logRestoreEmpty,
++  logRestoreFailed,
++  purchaseRevenueParams,
++} from '../src/features/premium/services/paywallTelemetry';
++import { BILLING_PRODUCT_IDS } from '../src/config/billing';
++
++const mockLog = jest.fn();
++jest.mock('../src/shared/analytics/analytics', () => ({
++  logAnalyticsEvent: (...args: unknown[]) => mockLog(...args),
++}));
++
++describe('paywall telemetry', () => {
++  beforeEach(() => mockLog.mockClear());
++
++  it('paywall_shown and paywall_dismissed carry surface, kind and time open', () => {
++    jest.spyOn(Date, 'now').mockReturnValue(10_000 + 12_400);
++    logPaywallShown('onboarding_paywall', 'revenuecat');
++    logPaywallDismissed('onboarding_paywall', 'revenuecat', 10_000, 'close');
++    expect(mockLog).toHaveBeenNthCalledWith(1, 'paywall_shown', {
++      surface: 'onboarding_paywall',
++      kind: 'revenuecat',
++      is_premium: false,
++    });
++    expect(mockLog).toHaveBeenNthCalledWith(2, 'paywall_dismissed', {
++      surface: 'onboarding_paywall',
++      kind: 'revenuecat',
++      method: 'close',
++      seconds_open: 12,
++    });
++    jest.restoreAllMocks();
++  });
++
++  it('plan selection and restore outcomes are logged with their source', () => {
++    logPlanSelected('premium_screen', BILLING_PRODUCT_IDS.monthly);
++    logRestoreEmpty('premium_screen');
++    logRestoreFailed('premium_screen', { code: '7' });
++    logRestoreFailed('premium_screen', new Error('no code'));
++    expect(mockLog.mock.calls).toEqual([
++      ['paywall_plan_selected', { surface: 'premium_screen', plan_id: 'monthly_subscription' }],
++      ['premium_restore_empty', { source: 'premium_screen' }],
++      ['premium_restore_failed', { source: 'premium_screen', error_code: '7' }],
++      ['premium_restore_failed', { source: 'premium_screen', error_code: 'unknown' }],
++    ]);
++  });
++
++  it('a failed purchase keeps its code and a message cut to 100 characters', () => {
++    logPurchaseFailed({
++      planId: 'yearly_subscription',
++      source: 'onboarding_paywall',
++      priceDisplay: '$14.99',
++      code: 'PRODUCT_NOT_AVAILABLE',
++      message: 'x'.repeat(300),
++    });
++    const [, params] = mockLog.mock.calls[0];
++    expect(params.error_code).toBe('PRODUCT_NOT_AVAILABLE');
++    expect(params.error_message).toHaveLength(100);
++  });
++
++  it('purchase revenue is the store price as a number, its currency and the billing period', () => {
++    const products = [
++      { productId: BILLING_PRODUCT_IDS.yearly, amount: 14.99, currency: 'USD' },
++      { productId: BILLING_PRODUCT_IDS.lifetime, amount: 39.99, currency: 'USD' },
++    ];
++    expect(purchaseRevenueParams(products, BILLING_PRODUCT_IDS.yearly)).toEqual({
++      value: 14.99,
++      currency: 'USD',
++      period: 'year',
++    });
++    expect(purchaseRevenueParams(products, BILLING_PRODUCT_IDS.lifetime).period).toBe('lifetime');
++    // no price known for the product → no invented value
++    expect(purchaseRevenueParams(products, BILLING_PRODUCT_IDS.weekly)).toEqual({
++      value: undefined,
++      currency: undefined,
++      period: 'week',
++    });
++  });
++});
+diff --git a/__tests__/purchasesUseCases.test.ts b/__tests__/purchasesUseCases.test.ts
+index d19e9a3..b125fd5 100644
+--- a/__tests__/purchasesUseCases.test.ts
++++ b/__tests__/purchasesUseCases.test.ts
+@@ -118,6 +118,8 @@ describe('GetOfferingsUseCase', () => {
+         title: 'Yearly',
+         description: '',
+         priceString: '$29.99',
++        price: 29.99,
++        currencyCode: 'USD',
+       }],
+     };
+     const result = await new GetOfferingsUseCase(purchases).execute();
+diff --git a/__tests__/usePaywallVisit.test.tsx b/__tests__/usePaywallVisit.test.tsx
+new file mode 100644
+index 0000000..770f6e4
+--- /dev/null
++++ b/__tests__/usePaywallVisit.test.tsx
+@@ -0,0 +1,54 @@
++import React from 'react';
++import ReactTestRenderer, { act } from 'react-test-renderer';
++import { usePaywallVisit } from '../src/features/premium/hooks/usePaywallVisit';
++
++const mockShown = jest.fn();
++const mockDismissed = jest.fn();
++jest.mock('../src/features/premium/services/paywallTelemetry', () => ({
++  logPaywallShown: (...a: unknown[]) => mockShown(...a),
++  logPaywallDismissed: (...a: unknown[]) => mockDismissed(...a),
++}));
++
++let markConverted: () => void = () => {};
++function Probe({ isPremium }: { isPremium: boolean }) {
++  markConverted = usePaywallVisit('premium_screen', isPremium);
++  return null;
++}
++
++async function mount(isPremium: boolean) {
++  let renderer!: ReactTestRenderer.ReactTestRenderer;
++  await act(async () => {
++    renderer = ReactTestRenderer.create(<Probe isPremium={isPremium} />);
++  });
++  return renderer;
++}
++
++describe('usePaywallVisit', () => {
++  beforeEach(() => {
++    mockShown.mockClear();
++    mockDismissed.mockClear();
++  });
++
++  it('logs shown on mount and dismissed when it closes without a purchase', async () => {
++    const r = await mount(false);
++    expect(mockShown).toHaveBeenCalledWith('premium_screen', 'custom', false);
++    await act(async () => r.unmount());
++    expect(mockDismissed).toHaveBeenCalledWith(
++      'premium_screen', 'custom', expect.any(Number), 'leave',
++    );
++  });
++
++  it('does not log dismissed after a purchase or restore', async () => {
++    const r = await mount(false);
++    await act(async () => markConverted());
++    await act(async () => r.unmount());
++    expect(mockDismissed).not.toHaveBeenCalled();
++  });
++
++  it('logs a subscriber as shown, flagged, and never as dismissed', async () => {
++    const r = await mount(true);
++    expect(mockShown).toHaveBeenCalledWith('premium_screen', 'custom', true);
++    await act(async () => r.unmount());
++    expect(mockDismissed).not.toHaveBeenCalled();
++  });
++});

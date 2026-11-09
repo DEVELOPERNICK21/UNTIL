@@ -96,7 +96,7 @@ function handleIncrementCounterUrl(url: string | null): boolean {
 }
 
 /** Splash display duration (SSOT); passed to SplashScreen for aligned progress animation */
-const SPLASH_DURATION_MS = 1000;
+const SPLASH_DURATION_MS = 500;
 const ACTIVE_EVENT_DEBOUNCE_MS = 2000;
 
 function App() {

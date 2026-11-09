@@ -1,0 +1,1526 @@
+diff --git a/src/app/bootstrap/useAnalyticsBootstrap.ts b/src/app/bootstrap/useAnalyticsBootstrap.ts
+index a245313..dedf337 100644
+--- a/src/app/bootstrap/useAnalyticsBootstrap.ts
++++ b/src/app/bootstrap/useAnalyticsBootstrap.ts
+@@ -3,13 +3,28 @@
+  */
+ 
+ import { useEffect, useRef } from 'react';
++import { AppState } from 'react-native';
+ import { getDeviceId } from '../../shared/platform/device/DeviceId';
+-import { getAccessStateUseCase, observeSubscriptionUseCase } from '../di';
+ import {
++  getAccessStateUseCase,
++  getOnboardingQuizAnswersUseCase,
++  observeSubscriptionUseCase,
++} from '../di';
++import {
++  aliasPostHogUser,
+   identifyPostHogUser,
+   setPostHogPersonProperties,
++  shouldAliasToAccount,
+ } from '../../shared/analytics/posthogClient';
+-import { syncAnalyticsUserProperties } from '../../shared/analytics/analyticsUserProperties';
++import {
++  syncAnalyticsUserProperties,
++  type ExtraUserProperties,
++} from '../../shared/analytics/analyticsUserProperties';
++import { setFirebaseUserId } from '../../shared/analytics/firebaseUserProperties';
++import { subscribeNotificationOpened } from '../../shared/platform/notificationOpened';
++import { reportWidgetTelemetry } from '../../shared/platform/widgetTelemetry';
++import { useTranslation } from '../../shared/i18n/useTranslation';
++import { getRetentionNotificationsEnabled } from '../../features/engagement';
+ import {
+   logAnalyticsEvent,
+   setCrashAttributes,
+@@ -20,6 +35,15 @@ import { useAuthSession } from '../../features/account';
+ 
+ let appVersionPromise: Promise<string | undefined> | null = null;
+ 
++/** The user properties only the app layer can read (other features' settings and answers). */
++function readExtraUserProperties(): ExtraUserProperties {
++  const goal = getOnboardingQuizAnswersUseCase.execute().goal;
++  return {
++    remindersOn: getRetentionNotificationsEnabled(),
++    onboardingGoal: goal ? String(goal) : undefined,
++  };
++}
++
+ function loadAppVersion(): Promise<string | undefined> {
+   if (!appVersionPromise) {
+     appVersionPromise = (async () => {
+@@ -38,6 +62,7 @@ function loadAppVersion(): Promise<string | undefined> {
+ export function useAnalyticsBootstrap(): void {
+   const { hasCompleted } = useOnboardingState();
+   const { uid } = useAuthSession();
++  const { language } = useTranslation();
+   const wasTrialActiveRef = useRef<boolean | null>(null);
+   const identifiedAsRef = useRef<string | null>(null);
+ 
+@@ -46,10 +71,17 @@ export function useAnalyticsBootstrap(): void {
+       const deviceId = await getDeviceId();
+       const distinctId = uid ?? deviceId;
+       // Re-runs when uid changes (sign-in/out), not on every render.
+-      if (identifiedAsRef.current === distinctId) return;
++      const previousDistinctId = identifiedAsRef.current;
++      if (previousDistinctId === distinctId) return;
+       identifiedAsRef.current = distinctId;
+ 
++      // Signing in on a device PostHog already knew by its device id: link the two before identify,
++      // or the same person becomes two in funnels and retention.
++      if (uid && shouldAliasToAccount(previousDistinctId, deviceId, uid)) {
++        aliasPostHogUser(uid);
++      }
+       identifyPostHogUser(distinctId);
++      setFirebaseUserId(distinctId);
+       setCrashUserId(distinctId);
+       if (uid) {
+         // Signed in: identity is the account uid, device id kept as a property.
+@@ -59,24 +91,22 @@ export function useAnalyticsBootstrap(): void {
+ 
+       const access = getAccessStateUseCase.execute();
+       const appVersion = await loadAppVersion();
+-      syncAnalyticsUserProperties({
+-        access,
+-        onboardingComplete: hasCompleted,
+-        appVersion,
+-      });
++      syncAnalyticsUserProperties(
++        { access, onboardingComplete: hasCompleted, appVersion },
++        readExtraUserProperties(),
++      );
+       wasTrialActiveRef.current = access.trialActive;
+     })();
+-  }, [hasCompleted, uid]);
++  }, [hasCompleted, uid, language]);
+ 
+   useEffect(() => {
+     const refresh = () => {
+       const access = getAccessStateUseCase.execute();
+       void loadAppVersion().then(appVersion => {
+-        syncAnalyticsUserProperties({
+-          access,
+-          onboardingComplete: hasCompleted,
+-          appVersion,
+-        });
++        syncAnalyticsUserProperties(
++          { access, onboardingComplete: hasCompleted, appVersion },
++          readExtraUserProperties(),
++        );
+       });
+ 
+       if (
+@@ -91,5 +121,17 @@ export function useAnalyticsBootstrap(): void {
+ 
+     refresh();
+     return observeSubscriptionUseCase.subscribe(refresh);
+-  }, [hasCompleted]);
++  }, [hasCompleted, language]);
++
++  // Which reminder brought the person back.
++  useEffect(() => subscribeNotificationOpened(), []);
++
++  // Widgets on the home screen, and whether the background refresh is keeping up.
++  useEffect(() => {
++    void reportWidgetTelemetry();
++    const sub = AppState.addEventListener('change', state => {
++      if (state === 'active') void reportWidgetTelemetry();
++    });
++    return () => sub.remove();
++  }, []);
+ }
+diff --git a/src/app/di/engagement.ts b/src/app/di/engagement.ts
+index ec824f0..7b7e637 100644
+--- a/src/app/di/engagement.ts
++++ b/src/app/di/engagement.ts
+@@ -15,6 +15,7 @@ import { ClearSharePromptPendingUseCase } from '../../features/engagement/domain
+ import { GetReminderOptInDueUseCase } from '../../features/engagement/domain/useCases/GetReminderOptInDueUseCase';
+ import { RecordReminderOptInAskUseCase } from '../../features/engagement/domain/useCases/RecordReminderOptInAskUseCase';
+ import { getRetentionNotificationsEnabled } from '../../features/engagement/services/retentionNotifications';
++import { AppStateSessionTracker } from '../../features/engagement/services/appSessionTracker';
+ import {
+   engagementRepository,
+   inAppReviewService,
+@@ -27,7 +28,14 @@ import { recordPresenceUseCase } from './presence';
+ 
+ export const trackAppOpenUseCase = new TrackAppOpenUseCase(
+   subscriptionRepository,
+-  syncTrialPreviewUseCase
++  syncTrialPreviewUseCase,
++  new AppStateSessionTracker(),
++  ({ sessionIndex, daysSinceInstall }) => {
++    void logAnalyticsEvent('session_start_app', {
++      session_index: sessionIndex,
++      days_since_install: daysSinceInstall,
++    });
++  }
+ );
+ 
+ export const maybeRequestInAppReviewUseCase = new MaybeRequestInAppReviewUseCase(
+diff --git a/src/features/engagement/domain/ports/IAppSessionTracker.ts b/src/features/engagement/domain/ports/IAppSessionTracker.ts
+new file mode 100644
+index 0000000..a5569c4
+--- /dev/null
++++ b/src/features/engagement/domain/ports/IAppSessionTracker.ts
+@@ -0,0 +1,9 @@
++/**
++ * Tells the app-open use case whether this foreground starts a new session.
++ * A session starts on a cold start, or when the app comes back after a long time in the
++ * background; a quick return (a permission dialog, the store sheet, a glance at a message) does not.
++ */
++export interface IAppSessionTracker {
++  /** Call once per foreground. True when this foreground begins a new session. */
++  noteForeground(now: number): boolean;
++}
+diff --git a/src/features/engagement/domain/retentionNotificationCopy.ts b/src/features/engagement/domain/retentionNotificationCopy.ts
+index cfb163a..d811409 100644
+--- a/src/features/engagement/domain/retentionNotificationCopy.ts
++++ b/src/features/engagement/domain/retentionNotificationCopy.ts
+@@ -26,6 +26,8 @@ export interface RetentionScheduleItem extends RetentionNotificationCopy {
+   id: string;
+   dateKey: string;
+   triggerAt: Date;
++  /** The person has been away long enough for the win-back wording. */
++  winBack: boolean;
+ }
+ 
+ export interface RetentionSkipInput {
+@@ -173,14 +175,14 @@ export function buildRetentionNotificationSchedule(
+       : 0;
+     if (daysAway > WIN_BACK_GIVE_UP_AFTER_DAYS) continue;
+ 
+-    const copy =
+-      daysAway >= WIN_BACK_AFTER_DAYS
+-        ? buildWinBackNotification(daysAway, input.yearProgress)
+-        : buildRetentionNotification({
+-            date: triggerAt,
+-            yearProgress: input.yearProgress,
+-            lifeWeeksLived: input.lifeWeeksLived,
+-          });
++    const winBack = daysAway >= WIN_BACK_AFTER_DAYS;
++    const copy = winBack
++      ? buildWinBackNotification(daysAway, input.yearProgress)
++      : buildRetentionNotification({
++          date: triggerAt,
++          yearProgress: input.yearProgress,
++          lifeWeeksLived: input.lifeWeeksLived,
++        });
+     if (!copy) continue;
+ 
+     scheduledDays.add(dateKey);
+@@ -189,6 +191,7 @@ export function buildRetentionNotificationSchedule(
+       id: `retention-${dateKey}`,
+       dateKey,
+       triggerAt,
++      winBack,
+     });
+   }
+ 
+diff --git a/src/features/engagement/domain/useCases/TrackAppOpenUseCase.ts b/src/features/engagement/domain/useCases/TrackAppOpenUseCase.ts
+index 3b76144..53dc61c 100644
+--- a/src/features/engagement/domain/useCases/TrackAppOpenUseCase.ts
++++ b/src/features/engagement/domain/useCases/TrackAppOpenUseCase.ts
+@@ -1,5 +1,9 @@
+ /**
+  * TrackAppOpenUseCase — first-open trial start, app open count, 24h Life unlock after 3 opens.
++ *
++ * An "open" is a session, not a foreground: the count only rises when a session starts (see
++ * IAppSessionTracker). It gates the Life unlock, the reminder opt-in, the review prompt, the
++ * feature coach and the "opens" badge, none of which should be reached by tabbing back and forth.
+  */
+ 
+ import type {
+@@ -7,19 +11,34 @@ import type {
+   SyncTrialPreviewUseCase,
+ } from '../../../premium/domain';
+ import { LIFE_EVENT_UNLOCK_MS } from '../../../../config/accessConstants';
++import { MS_PER_DAY } from '../../../../shared/time/constants';
++import type { IAppSessionTracker } from '../ports/IAppSessionTracker';
++
++export type NewSessionInfo = { sessionIndex: number; daysSinceInstall: number };
+ 
+ export class TrackAppOpenUseCase {
+   constructor(
+     private readonly subscriptionRepository: ISubscriptionRepository,
+-    private readonly syncTrialPreview?: SyncTrialPreviewUseCase
++    private readonly syncTrialPreview?: SyncTrialPreviewUseCase,
++    /** Without one, every foreground counts as a session (the previous behaviour). */
++    private readonly sessions?: IAppSessionTracker,
++    private readonly onNewSession?: (info: NewSessionInfo) => void,
+   ) {}
+ 
+   execute(now: number = Date.now()): void {
+-    if (this.subscriptionRepository.getTrialStartDate() == null) {
++    const firstOpenAt = this.subscriptionRepository.getTrialStartDate();
++    if (firstOpenAt == null) {
+       this.subscriptionRepository.setTrialStartDate(now);
+     }
+ 
+-    const count = this.subscriptionRepository.incrementAppOpenCount();
++    let count = this.subscriptionRepository.getAppOpenCount();
++    if (this.sessions?.noteForeground(now) ?? true) {
++      count = this.subscriptionRepository.incrementAppOpenCount();
++      this.onNewSession?.({
++        sessionIndex: count,
++        daysSinceInstall: Math.floor((now - (firstOpenAt ?? now)) / MS_PER_DAY),
++      });
++    }
+     if (count >= 3) {
+       this.subscriptionRepository.setLifeUnlockUntil(now + LIFE_EVENT_UNLOCK_MS);
+     }
+diff --git a/src/features/engagement/index.ts b/src/features/engagement/index.ts
+index 48d9b77..d909e6d 100644
+--- a/src/features/engagement/index.ts
++++ b/src/features/engagement/index.ts
+@@ -4,6 +4,7 @@
+  */
+ 
+ export {
++  getRetentionNotificationsEnabled,
+   recordRetentionAppOpen,
+   scheduleRetentionNotifications,
+ } from './services/retentionNotifications';
+diff --git a/src/features/engagement/services/appSessionTracker.ts b/src/features/engagement/services/appSessionTracker.ts
+new file mode 100644
+index 0000000..70a2e39
+--- /dev/null
++++ b/src/features/engagement/services/appSessionTracker.ts
+@@ -0,0 +1,48 @@
++/**
++ * App session boundaries from the OS app state. A session starts on a cold start, or when the app
++ * returns after at least SESSION_GAP_MS in the background. Kept in memory: a new process is a new
++ * session, which is what a person who closed the app and opened it again would call it.
++ *
++ * Only 'background' counts as leaving. On iOS 'inactive' fires for the notification shade,
++ * permission dialogs and the purchase sheet, none of which end a session.
++ */
++
++import { AppState } from 'react-native';
++import { MS_PER_MINUTE } from '../../../shared/time/constants';
++import type { IAppSessionTracker } from '../domain/ports/IAppSessionTracker';
++
++export const SESSION_GAP_MS = 30 * MS_PER_MINUTE;
++
++type AppStateSource = {
++  addEventListener: (type: 'change', listener: (state: string) => void) => unknown;
++};
++
++export class AppStateSessionTracker implements IAppSessionTracker {
++  private backgroundedAt: number | null = null;
++  private seenForeground = false;
++  private listening = false;
++
++  constructor(
++    private readonly appState: AppStateSource = AppState,
++    private readonly clock: () => number = Date.now,
++  ) {}
++
++  noteForeground(now: number): boolean {
++    this.listen();
++    if (!this.seenForeground) {
++      this.seenForeground = true;
++      return true;
++    }
++    const left = this.backgroundedAt;
++    this.backgroundedAt = null;
++    return left != null && now - left >= SESSION_GAP_MS;
++  }
++
++  private listen(): void {
++    if (this.listening) return;
++    this.listening = true;
++    this.appState.addEventListener('change', state => {
++      if (state === 'background') this.backgroundedAt = this.clock();
++    });
++  }
++}
+diff --git a/src/features/engagement/services/retentionNotifications.ts b/src/features/engagement/services/retentionNotifications.ts
+index d9d4344..fb3ec90 100644
+--- a/src/features/engagement/services/retentionNotifications.ts
++++ b/src/features/engagement/services/retentionNotifications.ts
+@@ -228,7 +228,7 @@ export async function scheduleRetentionNotifications(
+           id: item.id,
+           title: item.title,
+           body: item.body,
+-          data: { type: 'retention', dateKey: item.dateKey },
++          data: { type: item.winBack ? 'winback' : 'retention', dateKey: item.dateKey },
+           android: { channelId: CHANNEL_ID },
+         },
+         {
+diff --git a/src/shared/analytics/analytics.ts b/src/shared/analytics/analytics.ts
+index 84634da..187d12a 100644
+--- a/src/shared/analytics/analytics.ts
++++ b/src/shared/analytics/analytics.ts
+@@ -13,6 +13,8 @@ import {
+   isCrashReportingAllowed,
+   subscribeAnalyticsConsent,
+ } from './analyticsConsent';
++import { getAnalyticsModule } from './firebaseAnalytics';
++import type { ExtraEventName } from './extraEvents';
+ 
+ export type AnalyticsPaywallSource =
+   | 'premium_screen'
+@@ -23,7 +25,7 @@ export type AnalyticsPaywallSource =
+   | 'unknown';
+ 
+ export type AnalyticsEventName =
+-  | import('./paywallEvents').PaywallEventName
++  | ExtraEventName
+   | 'app_open'
+   | 'manage_subscription_opened'
+   | 'onboarding_step_view'
+@@ -154,43 +156,6 @@ function toPostHogProperties(
+   return Object.keys(out).length ? out : undefined;
+ }
+ 
+-function getAnalyticsModule(): {
+-  logEvent: (
+-    name: string,
+-    params?: Record<string, string | number>,
+-  ) => Promise<void>;
+-  setCollectionEnabled: (enabled: boolean) => Promise<void>;
+-} | null {
+-  try {
+-    const { getApp, getApps } = require('@react-native-firebase/app') as {
+-      getApp: () => unknown;
+-      getApps: () => unknown[];
+-    };
+-    if (getApps().length === 0) return null;
+-    const { getAnalytics, logEvent, setAnalyticsCollectionEnabled } =
+-      require('@react-native-firebase/analytics') as {
+-        getAnalytics: (app: unknown) => unknown;
+-        logEvent: (
+-          analytics: unknown,
+-          name: string,
+-          params?: Record<string, string | number>,
+-        ) => Promise<void>;
+-        setAnalyticsCollectionEnabled: (
+-          analytics: unknown,
+-          enabled: boolean,
+-        ) => Promise<void>;
+-      };
+-    const instance = getAnalytics(getApp());
+-    return {
+-      logEvent: (name, params) => logEvent(instance, name, params),
+-      setCollectionEnabled: enabled =>
+-        setAnalyticsCollectionEnabled(instance, enabled),
+-    };
+-  } catch {
+-    return null;
+-  }
+-}
+-
+ function getCrashlyticsModule(): {
+   recordError: (error: Error) => void;
+   log: (message: string) => void;
+diff --git a/src/shared/analytics/analyticsUserProperties.ts b/src/shared/analytics/analyticsUserProperties.ts
+index a5298b4..6fd727f 100644
+--- a/src/shared/analytics/analyticsUserProperties.ts
++++ b/src/shared/analytics/analyticsUserProperties.ts
+@@ -7,6 +7,8 @@ import type { AccessState } from '../types';
+ import { TRIAL_DURATION_MS } from '../../config/accessConstants';
+ import { setPostHogPersonProperties } from './posthogClient';
+ import { setCrashAttributes } from './analytics';
++import { setFirebaseUserProperties } from './firebaseUserProperties';
++import { getLanguage } from '../i18n/translate';
+ import { MS_PER_DAY } from '../time/constants';
+ 
+ export function buildAnalyticsUserProperties(input: {
+@@ -34,13 +36,30 @@ export function buildAnalyticsUserProperties(input: {
+   };
+ }
+ 
+-export function syncAnalyticsUserProperties(input: {
+-  access: AccessState;
+-  onboardingComplete: boolean;
+-  appVersion?: string;
+-}): void {
++/** Things only the app layer can read; each is optional and left out of the report if unknown. */
++export type ExtraUserProperties = {
++  remindersOn?: boolean;
++  onboardingGoal?: string;
++};
++
++export function syncAnalyticsUserProperties(
++  input: {
++    access: AccessState;
++    onboardingComplete: boolean;
++    appVersion?: string;
++  },
++  extra: ExtraUserProperties = {},
++): void {
+   const props = buildAnalyticsUserProperties(input);
+   setPostHogPersonProperties(props);
++  // Firebase gets the properties worth splitting reports by (names match the PostHog ones).
++  setFirebaseUserProperties({
++    is_premium: props.is_premium,
++    app_language: getLanguage(),
++    reminders_on: extra.remindersOn,
++    onboarding_goal: extra.onboardingGoal,
++    onboarding_complete: props.onboarding_complete,
++  });
+   setCrashAttributes({
+     is_premium: props.is_premium,
+     trial_active: props.trial_active,
+diff --git a/src/shared/analytics/extraEvents.ts b/src/shared/analytics/extraEvents.ts
+new file mode 100644
+index 0000000..1f51a89
+--- /dev/null
++++ b/src/shared/analytics/extraEvents.ts
+@@ -0,0 +1,23 @@
++/**
++ * Event names kept apart from the main list so analytics.ts stays within its line limit;
++ * AnalyticsEventName includes ExtraEventName.
++ *
++ * - session_start_app   { session_index, days_since_install }   A new session began (cold start,
++ *                       or back after 30+ minutes in the background). `app_open` still fires on
++ *                       every foreground and is telemetry only.
++ * - widget_inventory    { widget_count, widget_types, platform }   Widget kinds on the home screen
++ *                       (a kind counts once however many of it are placed). Logged when it changes.
++ * - widget_stale        { hours_stale, manufacturer }   Android: hours since the background
++ *                       refresh last ran, logged at app open when a widget exists and it is 3h+.
++ * - notification_opened { type, source }   A notification was tapped (type: retention, winback,
++ *                       task, streak, trial, day2, other).
++ */
++import type { PaywallEventName } from './paywallEvents';
++
++export type MeasurementEventName =
++  | 'session_start_app'
++  | 'widget_inventory'
++  | 'widget_stale'
++  | 'notification_opened';
++
++export type ExtraEventName = PaywallEventName | MeasurementEventName;
+diff --git a/src/shared/analytics/firebaseAnalytics.ts b/src/shared/analytics/firebaseAnalytics.ts
+new file mode 100644
+index 0000000..904a0aa
+--- /dev/null
++++ b/src/shared/analytics/firebaseAnalytics.ts
+@@ -0,0 +1,57 @@
++/**
++ * Firebase Analytics accessor, loaded lazily so a build without Firebase configured (local dev,
++ * tests) gets null instead of a crash. Moved out of analytics.ts, which is over its line limit.
++ */
++
++export type FirebaseAnalyticsModule = {
++  logEvent: (
++    name: string,
++    params?: Record<string, string | number>,
++  ) => Promise<void>;
++  setCollectionEnabled: (enabled: boolean) => Promise<void>;
++  setUserProperties: (properties: Record<string, string | null>) => Promise<void>;
++  setUserId: (id: string | null) => Promise<void>;
++};
++
++export function getAnalyticsModule(): FirebaseAnalyticsModule | null {
++  try {
++    const { getApp, getApps } = require('@react-native-firebase/app') as {
++      getApp: () => unknown;
++      getApps: () => unknown[];
++    };
++    if (getApps().length === 0) return null;
++    const {
++      getAnalytics,
++      logEvent,
++      setAnalyticsCollectionEnabled,
++      setUserProperties,
++      setUserId,
++    } = require('@react-native-firebase/analytics') as {
++      getAnalytics: (app: unknown) => unknown;
++      logEvent: (
++        analytics: unknown,
++        name: string,
++        params?: Record<string, string | number>,
++      ) => Promise<void>;
++      setAnalyticsCollectionEnabled: (
++        analytics: unknown,
++        enabled: boolean,
++      ) => Promise<void>;
++      setUserProperties: (
++        analytics: unknown,
++        properties: Record<string, string | null>,
++      ) => Promise<void>;
++      setUserId: (analytics: unknown, id: string | null) => Promise<void>;
++    };
++    const instance = getAnalytics(getApp());
++    return {
++      logEvent: (name, params) => logEvent(instance, name, params),
++      setCollectionEnabled: enabled =>
++        setAnalyticsCollectionEnabled(instance, enabled),
++      setUserProperties: properties => setUserProperties(instance, properties),
++      setUserId: id => setUserId(instance, id),
++    };
++  } catch {
++    return null;
++  }
++}
+diff --git a/src/shared/analytics/firebaseUserProperties.ts b/src/shared/analytics/firebaseUserProperties.ts
+new file mode 100644
+index 0000000..9466047
+--- /dev/null
++++ b/src/shared/analytics/firebaseUserProperties.ts
+@@ -0,0 +1,49 @@
++/**
++ * Firebase Analytics user properties and user id.
++ *
++ * Until now only PostHog and Crashlytics knew who a user was, so Firebase could not split
++ * retention by premium, widget owner or language. GA4 keeps a property until it is changed, so a
++ * value is sent only when it differs from the last one sent in this process.
++ *
++ * Each property used for a report must also be registered as a custom dimension in
++ * GA4 Admin → Custom definitions (User scope). Limits: name 24 characters, value 36.
++ */
++
++import { isAnalyticsAllowed } from './analyticsConsent';
++import { getAnalyticsModule } from './firebaseAnalytics';
++
++const MAX_VALUE_LENGTH = 36;
++
++const lastSent = new Map<string, string>();
++let lastUserId: string | null = null;
++
++/** GA4 user-property value for a JS value: booleans as 1/0 (like event params), cut to 36 chars. */
++export function toUserPropertyValue(value: string | number | boolean): string {
++  const text = typeof value === 'boolean' ? (value ? '1' : '0') : String(value);
++  return text.slice(0, MAX_VALUE_LENGTH);
++}
++
++export function setFirebaseUserProperties(
++  properties: Record<string, string | number | boolean | undefined>,
++): void {
++  if (!isAnalyticsAllowed()) return;
++  const changed: Record<string, string> = {};
++  for (const [name, value] of Object.entries(properties)) {
++    if (value === undefined) continue;
++    const text = toUserPropertyValue(value);
++    if (lastSent.get(name) !== text) changed[name] = text;
++  }
++  if (Object.keys(changed).length === 0) return;
++  const analytics = getAnalyticsModule();
++  if (!analytics) return;
++  for (const [name, text] of Object.entries(changed)) lastSent.set(name, text);
++  void analytics.setUserProperties(changed).catch(() => {});
++}
++
++export function setFirebaseUserId(id: string): void {
++  if (!isAnalyticsAllowed() || !id || id === lastUserId) return;
++  const analytics = getAnalyticsModule();
++  if (!analytics) return;
++  lastUserId = id;
++  void analytics.setUserId(id).catch(() => {});
++}
+diff --git a/src/shared/analytics/posthogClient.ts b/src/shared/analytics/posthogClient.ts
+index 3aaf9a5..1704843 100644
+--- a/src/shared/analytics/posthogClient.ts
++++ b/src/shared/analytics/posthogClient.ts
+@@ -68,6 +68,30 @@ export async function applyPostHogConsent(allowed: boolean): Promise<void> {
+   }
+ }
+ 
++/**
++ * True when this person was known by their device id in this session and has just signed in:
++ * PostHog treats `identify(accountId)` after `identify(deviceId)` as a second person, so the
++ * account id must be aliased to the device id first. Not needed on a cold start with an account
++ * already signed in (nothing earlier in this session to link).
++ */
++export function shouldAliasToAccount(
++  previousDistinctId: string | null,
++  deviceId: string,
++  accountId: string | null,
++): boolean {
++  return accountId != null && previousDistinctId === deviceId && accountId !== deviceId;
++}
++
++export function aliasPostHogUser(accountId: string): void {
++  const client = getPostHogClient();
++  if (!client || !isAnalyticsAllowed()) return;
++  try {
++    client.alias(accountId);
++  } catch {
++    /* best-effort */
++  }
++}
++
+ export async function identifyPostHogUser(distinctId: string): Promise<void> {
+   const client = getPostHogClient();
+   if (!client || !isAnalyticsAllowed()) return;
+diff --git a/src/shared/platform/notificationOpened.ts b/src/shared/platform/notificationOpened.ts
+new file mode 100644
+index 0000000..ced1c18
+--- /dev/null
++++ b/src/shared/platform/notificationOpened.ts
+@@ -0,0 +1,112 @@
++/**
++ * `notification_opened`: which reminder brought someone back.
++ *
++ * Notifee delivers a tap three ways: a foreground event (app open), a background event (app
++ * alive but backgrounded; the handler must be registered at startup, before React renders) and
++ * getInitialNotification (the tap that started the app from closed). Each reports once.
++ * Notifee is loaded lazily and every call is best-effort, like the rest of the notification code.
++ */
++
++import { logAnalyticsEvent } from '../analytics/analytics';
++
++export type NotificationKind =
++  | 'retention'
++  | 'winback'
++  | 'task'
++  | 'streak'
++  | 'trial'
++  | 'day2'
++  | 'other';
++
++type NotificationLike = { id?: string; data?: Record<string, unknown> } | undefined;
++type OpenSource = 'foreground' | 'background' | 'launch';
++
++/** Kind from the notification's `data.type` when set, else from its id prefix. */
++export function notificationKindOf(notification: NotificationLike): NotificationKind {
++  const type = notification?.data?.type;
++  if (type === 'retention' || type === 'winback') return type;
++  const id = notification?.id ?? '';
++  if (id.startsWith('retention-')) return 'retention';
++  if (id.startsWith('taskdl-')) return 'task';
++  if (id.startsWith('presence-saver-')) return 'streak';
++  if (id === 'trial' || id.startsWith('trial-')) return 'trial';
++  if (id === 'engagement-day2') return 'day2';
++  return 'other';
++}
++
++export function logNotificationOpened(
++  notification: NotificationLike,
++  source: OpenSource,
++): void {
++  void logAnalyticsEvent('notification_opened', {
++    type: notificationKindOf(notification),
++    source,
++  });
++}
++
++type NotifeeEvent = {
++  type: number;
++  detail?: { notification?: { id?: string; data?: Record<string, unknown> } };
++};
++
++function loadNotifee(): {
++  notifee: {
++    onForegroundEvent: (handler: (event: NotifeeEvent) => void) => () => void;
++    onBackgroundEvent: (handler: (event: NotifeeEvent) => Promise<void>) => void;
++    getInitialNotification: () => Promise<{
++      notification?: { id?: string; data?: Record<string, unknown> };
++    } | null>;
++  };
++  pressType: number;
++} | null {
++  try {
++    const mod = require('@notifee/react-native');
++    return { notifee: mod.default, pressType: mod.EventType.PRESS };
++  } catch {
++    return null;
++  }
++}
++
++/** Call once at startup, outside React (index.js). Taps while the app is backgrounded land here. */
++export function registerNotificationBackgroundHandler(): void {
++  const loaded = loadNotifee();
++  if (!loaded) return;
++  try {
++    loaded.notifee.onBackgroundEvent(async event => {
++      if (event.type === loaded.pressType) {
++        logNotificationOpened(event.detail?.notification, 'background');
++      }
++    });
++  } catch {
++    /* Notifee unavailable */
++  }
++}
++
++let launchChecked = false;
++
++/**
++ * Reports taps made while the app is open and, once per process, the tap that launched it.
++ * Returns the unsubscribe function.
++ */
++export function subscribeNotificationOpened(): () => void {
++  const loaded = loadNotifee();
++  if (!loaded) return () => {};
++  try {
++    if (!launchChecked) {
++      launchChecked = true;
++      void loaded.notifee
++        .getInitialNotification()
++        .then(initial => {
++          if (initial?.notification) logNotificationOpened(initial.notification, 'launch');
++        })
++        .catch(() => {});
++    }
++    return loaded.notifee.onForegroundEvent(event => {
++      if (event.type === loaded.pressType) {
++        logNotificationOpened(event.detail?.notification, 'foreground');
++      }
++    });
++  } catch {
++    return () => {};
++  }
++}
+diff --git a/src/shared/platform/widgetHealth.ts b/src/shared/platform/widgetHealth.ts
+new file mode 100644
+index 0000000..cf8b1b6
+--- /dev/null
++++ b/src/shared/platform/widgetHealth.ts
+@@ -0,0 +1,79 @@
++/**
++ * What is on the home screen, and whether Android's background refresh is keeping up.
++ *
++ * Reads the native WidgetBridge: `getWidgetStatus` on Android (AppWidgetManager) and iOS
++ * (WidgetCenter.getCurrentConfigurations), `getWidgetHealth` on Android only. Every read is
++ * best-effort and returns null when the bridge or the method is missing, so an older native build
++ * simply reports nothing.
++ */
++
++import { NativeModules, Platform } from 'react-native';
++import { MS_PER_HOUR } from '../time/constants';
++
++/** Native status field → the short kind name used in analytics. */
++const KIND_BY_FIELD: Record<string, string> = {
++  dayWidgetAdded: 'day',
++  monthWidgetAdded: 'month',
++  yearWidgetAdded: 'year',
++  lifeWidgetAdded: 'life',
++  counterWidgetAdded: 'counter',
++  countdownWidgetAdded: 'countdown',
++  dailyTasksWidgetAdded: 'daily_tasks',
++  hourCalculationWidgetAdded: 'hour_calc',
++};
++
++export type WidgetInventory = {
++  /** Kinds with at least one widget placed, sorted. A kind counts once however many are placed. */
++  kinds: string[];
++  count: number;
++};
++
++/** Hours of staleness at or above which `widget_stale` is reported. */
++export const STALE_AFTER_HOURS = 3;
++
++type WidgetBridgeShape = {
++  getWidgetStatus?: () => Promise<Record<string, boolean | undefined>>;
++  getWidgetHealth?: () => Promise<{ lastBackgroundRefreshMs?: number | null }>;
++};
++
++function bridge(): WidgetBridgeShape | undefined {
++  return NativeModules.WidgetBridge;
++}
++
++export function inventoryFromStatus(
++  status: Record<string, boolean | undefined>,
++): WidgetInventory {
++  const kinds = Object.entries(KIND_BY_FIELD)
++    .filter(([field]) => status[field] === true)
++    .map(([, kind]) => kind)
++    .sort();
++  return { kinds, count: kinds.length };
++}
++
++export async function readWidgetInventory(): Promise<WidgetInventory | null> {
++  try {
++    const status = await bridge()?.getWidgetStatus?.();
++    return status ? inventoryFromStatus(status) : null;
++  } catch {
++    return null;
++  }
++}
++
++/** Whole hours between the last background refresh and `now`, or null when unknown. */
++export function hoursSince(lastMs: number | null | undefined, now: number): number | null {
++  if (typeof lastMs !== 'number' || !Number.isFinite(lastMs) || lastMs <= 0) return null;
++  return Math.max(0, Math.floor((now - lastMs) / MS_PER_HOUR));
++}
++
++/** Android only: hours since WorkManager last refreshed the widgets in the background. */
++export async function readWidgetStaleHours(
++  now: number = Date.now(),
++): Promise<number | null> {
++  if (Platform.OS !== 'android') return null;
++  try {
++    const health = await bridge()?.getWidgetHealth?.();
++    return hoursSince(health?.lastBackgroundRefreshMs, now);
++  } catch {
++    return null;
++  }
++}
+diff --git a/src/shared/platform/widgetTelemetry.ts b/src/shared/platform/widgetTelemetry.ts
+new file mode 100644
+index 0000000..a1ea882
+--- /dev/null
++++ b/src/shared/platform/widgetTelemetry.ts
+@@ -0,0 +1,66 @@
++/**
++ * Widget activation and reliability telemetry, run at app start and on each return to the
++ * foreground. The home-screen widget is the product's strongest retention signal, and Firebase
++ * could not see whether anyone had one.
++ *
++ * - `widget_inventory`: logged when the set of widget kinds changes (and once per launch).
++ *   `has_widget` and `widget_count` also go out as Firebase user properties so every report can be
++ *   split by them.
++ * - `widget_stale` (Android): the periodic background refresh last ran 3+ hours ago while a widget
++ *   is on the screen. Phones that defer WorkManager (Doze, aggressive battery managers) show up
++ *   here by manufacturer. At most once every 6 hours.
++ */
++
++import { Platform } from 'react-native';
++import { logAnalyticsEvent } from '../analytics/analytics';
++import { setFirebaseUserProperties } from '../analytics/firebaseUserProperties';
++import { MS_PER_HOUR } from '../time/constants';
++import {
++  STALE_AFTER_HOURS,
++  readWidgetInventory,
++  readWidgetStaleHours,
++} from './widgetHealth';
++
++const STALE_LOG_EVERY_MS = 6 * MS_PER_HOUR;
++
++let lastInventoryKey: string | null = null;
++let lastStaleLoggedAt = 0;
++
++async function manufacturer(): Promise<string> {
++  try {
++    const DeviceInfo = require('react-native-device-info').default;
++    const name = await DeviceInfo?.getManufacturer?.();
++    return typeof name === 'string' && name ? name.toLowerCase() : 'unknown';
++  } catch {
++    return 'unknown';
++  }
++}
++
++export async function reportWidgetTelemetry(now: number = Date.now()): Promise<void> {
++  const inventory = await readWidgetInventory();
++  if (!inventory) return;
++
++  setFirebaseUserProperties({
++    has_widget: inventory.count > 0,
++    widget_count: inventory.count,
++  });
++
++  const key = inventory.kinds.join(',');
++  if (key !== lastInventoryKey) {
++    lastInventoryKey = key;
++    void logAnalyticsEvent('widget_inventory', {
++      widget_count: inventory.count,
++      widget_types: key || 'none',
++      platform: Platform.OS,
++    });
++  }
++
++  if (inventory.count === 0 || now - lastStaleLoggedAt < STALE_LOG_EVERY_MS) return;
++  const hours = await readWidgetStaleHours(now);
++  if (hours == null || hours < STALE_AFTER_HOURS) return;
++  lastStaleLoggedAt = now;
++  void logAnalyticsEvent('widget_stale', {
++    hours_stale: hours,
++    manufacturer: await manufacturer(),
++  });
++}
+diff --git a/__tests__/appSessionTracker.test.ts b/__tests__/appSessionTracker.test.ts
+new file mode 100644
+index 0000000..b74b352
+--- /dev/null
++++ b/__tests__/appSessionTracker.test.ts
+@@ -0,0 +1,77 @@
++import {
++  AppStateSessionTracker,
++  SESSION_GAP_MS,
++} from '../src/features/engagement/services/appSessionTracker';
++
++function setup() {
++  let listener: (state: string) => void = () => {};
++  const appState = {
++    addEventListener: jest.fn((_type: 'change', fn: (state: string) => void) => {
++      listener = fn;
++      return { remove: jest.fn() };
++    }),
++  };
++  let clock = 1_000_000;
++  const tracker = new AppStateSessionTracker(appState, () => clock);
++  return {
++    tracker,
++    appState,
++    send: (state: string) => listener(state),
++    at: (ms: number) => {
++      clock = ms;
++    },
++  };
++}
++
++describe('AppStateSessionTracker', () => {
++  it('a cold start is a new session', () => {
++    expect(setup().tracker.noteForeground(1_000_000)).toBe(true);
++  });
++
++  it('coming back from the background within the gap is the same session', () => {
++    const { tracker, send, at } = setup();
++    tracker.noteForeground(1_000_000);
++    at(1_000_000);
++    send('background');
++    expect(tracker.noteForeground(1_000_000 + SESSION_GAP_MS - 1)).toBe(false);
++  });
++
++  it('coming back after the gap is a new session', () => {
++    const { tracker, send, at } = setup();
++    tracker.noteForeground(1_000_000);
++    at(1_000_000);
++    send('background');
++    expect(tracker.noteForeground(1_000_000 + SESSION_GAP_MS)).toBe(true);
++  });
++
++  it('inactive (shade, permission dialog, purchase sheet) never ends a session', () => {
++    const { tracker, send } = setup();
++    tracker.noteForeground(1_000_000);
++    send('inactive');
++    expect(tracker.noteForeground(1_000_000 + 10 * SESSION_GAP_MS)).toBe(false);
++  });
++
++  it('a foreground with no background before it is the same session', () => {
++    const { tracker } = setup();
++    tracker.noteForeground(1_000_000);
++    expect(tracker.noteForeground(1_000_500)).toBe(false);
++  });
++
++  it('measures each gap from its own background event', () => {
++    const { tracker, send, at } = setup();
++    tracker.noteForeground(0);
++    at(0);
++    send('background');
++    expect(tracker.noteForeground(SESSION_GAP_MS)).toBe(true);
++    at(SESSION_GAP_MS + 10);
++    send('background');
++    expect(tracker.noteForeground(SESSION_GAP_MS + 60_000)).toBe(false);
++  });
++
++  it('listens to the OS once', () => {
++    const { tracker, appState } = setup();
++    tracker.noteForeground(1);
++    tracker.noteForeground(2);
++    expect(appState.addEventListener).toHaveBeenCalledTimes(1);
++  });
++});
+diff --git a/__tests__/architecture.test.ts b/__tests__/architecture.test.ts
+index 8daed99..dded87e 100644
+--- a/__tests__/architecture.test.ts
++++ b/__tests__/architecture.test.ts
+@@ -76,7 +76,7 @@ const LEGACY_OVERSIZE: Record<string, number> = {
+   'features/widgets/ui/DynamicIslandScreen.tsx': 423,
+   'features/tasks/ui/GoalDetailScreen.tsx': 386,
+   'features/widgets/ui/WidgetScreen.tsx': 391,
+-  'shared/analytics/analytics.ts': 363,
++  'shared/analytics/analytics.ts': 328,
+   'features/badges/ui/BadgeMedal.tsx': 333,
+   'features/badges/domain/badgeCatalog.ts': 309,
+   'app/App.tsx': 331,
+diff --git a/__tests__/firebaseUserProperties.test.ts b/__tests__/firebaseUserProperties.test.ts
+new file mode 100644
+index 0000000..0a1df1d
+--- /dev/null
++++ b/__tests__/firebaseUserProperties.test.ts
+@@ -0,0 +1,89 @@
++// A module (not a script), so its top-level names stay out of the other test files.
++export {};
++
++const mockSetUserProperties = jest.fn().mockResolvedValue(undefined);
++const mockSetUserId = jest.fn().mockResolvedValue(undefined);
++let mockAllowed = true;
++let mockModuleAvailable = true;
++
++jest.mock('../src/shared/analytics/analyticsConsent', () => ({
++  isAnalyticsAllowed: () => mockAllowed,
++}));
++jest.mock('../src/shared/analytics/firebaseAnalytics', () => ({
++  getAnalyticsModule: () =>
++    mockModuleAvailable
++      ? { setUserProperties: mockSetUserProperties, setUserId: mockSetUserId }
++      : null,
++}));
++
++function load() {
++  let mod!: typeof import('../src/shared/analytics/firebaseUserProperties');
++  jest.isolateModules(() => {
++    mod = require('../src/shared/analytics/firebaseUserProperties');
++  });
++  return mod;
++}
++
++beforeEach(() => {
++  mockSetUserProperties.mockClear();
++  mockSetUserId.mockClear();
++  mockAllowed = true;
++  mockModuleAvailable = true;
++});
++
++describe('setFirebaseUserProperties', () => {
++  it('sends booleans as 1/0 and cuts values to 36 characters', () => {
++    const { setFirebaseUserProperties } = load();
++    setFirebaseUserProperties({ is_premium: true, has_widget: false, onboarding_goal: 'x'.repeat(50) });
++    expect(mockSetUserProperties).toHaveBeenCalledWith({
++      is_premium: '1',
++      has_widget: '0',
++      onboarding_goal: 'x'.repeat(36),
++    });
++  });
++
++  it('sends only what changed since the last send', () => {
++    const { setFirebaseUserProperties } = load();
++    setFirebaseUserProperties({ app_language: 'en', is_premium: false });
++    setFirebaseUserProperties({ app_language: 'en', is_premium: true });
++    setFirebaseUserProperties({ app_language: 'en', is_premium: true });
++    expect(mockSetUserProperties).toHaveBeenCalledTimes(2);
++    expect(mockSetUserProperties).toHaveBeenLastCalledWith({ is_premium: '1' });
++  });
++
++  it('skips unknown (undefined) values', () => {
++    const { setFirebaseUserProperties } = load();
++    setFirebaseUserProperties({ reminders_on: undefined });
++    expect(mockSetUserProperties).not.toHaveBeenCalled();
++  });
++
++  it('sends nothing without analytics consent, then sends once consent is given', () => {
++    const { setFirebaseUserProperties } = load();
++    mockAllowed = false;
++    setFirebaseUserProperties({ is_premium: true });
++    expect(mockSetUserProperties).not.toHaveBeenCalled();
++    mockAllowed = true;
++    setFirebaseUserProperties({ is_premium: true });
++    expect(mockSetUserProperties).toHaveBeenCalledTimes(1);
++  });
++
++  it('is a no-op when Firebase is not configured', () => {
++    mockModuleAvailable = false;
++    expect(() => load().setFirebaseUserProperties({ is_premium: true })).not.toThrow();
++    expect(mockSetUserProperties).not.toHaveBeenCalled();
++  });
++});
++
++describe('setFirebaseUserId', () => {
++  it('sets the id once, and not without consent', () => {
++    const { setFirebaseUserId } = load();
++    mockAllowed = false;
++    setFirebaseUserId('abc');
++    expect(mockSetUserId).not.toHaveBeenCalled();
++    mockAllowed = true;
++    setFirebaseUserId('abc');
++    setFirebaseUserId('abc');
++    setFirebaseUserId('def');
++    expect(mockSetUserId.mock.calls).toEqual([['abc'], ['def']]);
++  });
++});
+diff --git a/__tests__/notificationOpened.test.ts b/__tests__/notificationOpened.test.ts
+new file mode 100644
+index 0000000..7f458fb
+--- /dev/null
++++ b/__tests__/notificationOpened.test.ts
+@@ -0,0 +1,100 @@
++// A module (not a script), so its top-level names stay out of the other test files.
++export {};
++
++const mockLog = jest.fn();
++jest.mock('../src/shared/analytics/analytics', () => ({
++  logAnalyticsEvent: (...a: unknown[]) => mockLog(...a),
++}));
++
++const PRESS = 1;
++const mockNotifee = {
++  onForegroundEvent: jest.fn(),
++  onBackgroundEvent: jest.fn(),
++  getInitialNotification: jest.fn(),
++};
++jest.mock('@notifee/react-native', () => ({
++  __esModule: true,
++  default: mockNotifee,
++  EventType: { PRESS: 1, DISMISSED: 0 },
++}));
++
++function load() {
++  let mod!: typeof import('../src/shared/platform/notificationOpened');
++  jest.isolateModules(() => {
++    mod = require('../src/shared/platform/notificationOpened');
++  });
++  return mod;
++}
++
++beforeEach(() => {
++  mockLog.mockReset();
++  mockNotifee.onForegroundEvent.mockReset().mockReturnValue(jest.fn());
++  mockNotifee.onBackgroundEvent.mockReset();
++  mockNotifee.getInitialNotification.mockReset().mockResolvedValue(null);
++});
++
++describe('notificationKindOf', () => {
++  const { notificationKindOf } = load();
++
++  it('uses data.type when the schedule set it', () => {
++    expect(notificationKindOf({ id: 'retention-2026-06-01', data: { type: 'winback' } })).toBe('winback');
++    expect(notificationKindOf({ id: 'x', data: { type: 'retention' } })).toBe('retention');
++  });
++
++  it('falls back to the id prefix of each scheduler', () => {
++    expect(notificationKindOf({ id: 'retention-2026-06-01' })).toBe('retention');
++    expect(notificationKindOf({ id: 'taskdl-tasks-2026-06-01' })).toBe('task');
++    expect(notificationKindOf({ id: 'taskdl-dl-am-abc-2026-06-01' })).toBe('task');
++    expect(notificationKindOf({ id: 'presence-saver-2026-06-01' })).toBe('streak');
++    expect(notificationKindOf({ id: 'trial-reminder-day-4' })).toBe('trial');
++    expect(notificationKindOf({ id: 'trial' })).toBe('trial');
++    expect(notificationKindOf({ id: 'engagement-day2' })).toBe('day2');
++  });
++
++  it('is "other" for anything it does not know, including nothing', () => {
++    expect(notificationKindOf({ id: 'something-new' })).toBe('other');
++    expect(notificationKindOf(undefined)).toBe('other');
++  });
++});
++
++describe('subscribeNotificationOpened', () => {
++  it('reports a tap made while the app is open, and ignores other events', () => {
++    load().subscribeNotificationOpened();
++    const handler = mockNotifee.onForegroundEvent.mock.calls[0][0];
++    handler({ type: 0, detail: { notification: { id: 'retention-x' } } });
++    handler({ type: PRESS, detail: { notification: { id: 'taskdl-done-2026-06-01' } } });
++    expect(mockLog).toHaveBeenCalledTimes(1);
++    expect(mockLog).toHaveBeenCalledWith('notification_opened', { type: 'task', source: 'foreground' });
++  });
++
++  it('reports the tap that launched the app, once per process', async () => {
++    const { subscribeNotificationOpened } = load();
++    mockNotifee.getInitialNotification.mockResolvedValue({
++      notification: { id: 'retention-2026-06-02', data: { type: 'winback' } },
++    });
++    subscribeNotificationOpened();
++    subscribeNotificationOpened();
++    await Promise.resolve();
++    await Promise.resolve();
++    expect(mockNotifee.getInitialNotification).toHaveBeenCalledTimes(1);
++    expect(mockLog).toHaveBeenCalledWith('notification_opened', { type: 'winback', source: 'launch' });
++  });
++
++  it('returns the unsubscribe function from Notifee', () => {
++    const unsubscribe = jest.fn();
++    mockNotifee.onForegroundEvent.mockReturnValue(unsubscribe);
++    load().subscribeNotificationOpened()();
++    expect(unsubscribe).toHaveBeenCalled();
++  });
++});
++
++describe('registerNotificationBackgroundHandler', () => {
++  it('reports a tap that arrives while the app is in the background', async () => {
++    load().registerNotificationBackgroundHandler();
++    const handler = mockNotifee.onBackgroundEvent.mock.calls[0][0];
++    await handler({ type: PRESS, detail: { notification: { id: 'presence-saver-2026-06-01' } } });
++    await handler({ type: 0, detail: { notification: { id: 'presence-saver-2026-06-01' } } });
++    expect(mockLog).toHaveBeenCalledTimes(1);
++    expect(mockLog).toHaveBeenCalledWith('notification_opened', { type: 'streak', source: 'background' });
++  });
++});
+diff --git a/__tests__/posthogAlias.test.ts b/__tests__/posthogAlias.test.ts
+new file mode 100644
+index 0000000..d96d633
+--- /dev/null
++++ b/__tests__/posthogAlias.test.ts
+@@ -0,0 +1,27 @@
++import { shouldAliasToAccount } from '../src/shared/analytics/posthogClient';
++
++// posthogClient reads the analytics consent from MMKV; the decision under test does not need it.
++jest.mock('../src/shared/analytics/analyticsConsent', () => ({
++  isAnalyticsAllowed: () => true,
++  subscribeAnalyticsConsent: () => () => {},
++}));
++
++describe('shouldAliasToAccount', () => {
++  it('links the account id when this device was already known by its device id', () => {
++    expect(shouldAliasToAccount('device-1', 'device-1', 'uid-9')).toBe(true);
++  });
++
++  it('does not alias on a cold start with an account already signed in', () => {
++    expect(shouldAliasToAccount(null, 'device-1', 'uid-9')).toBe(false);
++  });
++
++  it('does not alias when signing out, or when there is no account', () => {
++    expect(shouldAliasToAccount('uid-9', 'device-1', null)).toBe(false);
++    expect(shouldAliasToAccount('device-1', 'device-1', null)).toBe(false);
++  });
++
++  it('does not alias an id to itself, or switch between two accounts', () => {
++    expect(shouldAliasToAccount('device-1', 'device-1', 'device-1')).toBe(false);
++    expect(shouldAliasToAccount('uid-1', 'device-1', 'uid-2')).toBe(false);
++  });
++});
+diff --git a/__tests__/retentionWinBack.test.ts b/__tests__/retentionWinBack.test.ts
+index 5d3b534..bcb4c63 100644
+--- a/__tests__/retentionWinBack.test.ts
++++ b/__tests__/retentionWinBack.test.ts
+@@ -53,6 +53,12 @@ describe('retention schedule for someone who stopped opening the app', () => {
+     const items = schedule('2026-05-22');
+     expect(WIN_BACK_AFTER_DAYS).toBe(3);
+     expect(items[0].body).toContain('3 days since you looked');
++    expect(items[0].winBack).toBe(true);
++  });
++
++  it('flags routine items as not win-back, so a tap can be told apart', () => {
++    expect(schedule('2026-05-24')[0].winBack).toBe(false);
++    expect(schedule(undefined)[0].winBack).toBe(false);
+   });
+ 
+   it('stops after two weeks away instead of nagging for ever', () => {
+diff --git a/__tests__/trackAppOpenSessions.test.ts b/__tests__/trackAppOpenSessions.test.ts
+new file mode 100644
+index 0000000..f84dfcf
+--- /dev/null
++++ b/__tests__/trackAppOpenSessions.test.ts
+@@ -0,0 +1,83 @@
++import { TrackAppOpenUseCase } from '../src/features/engagement/domain/useCases/TrackAppOpenUseCase';
++import { LIFE_EVENT_UNLOCK_MS } from '../src/config/accessConstants';
++
++const DAY = 86_400_000;
++
++function fakeRepo(initial: { count?: number; trialStart?: number | null } = {}) {
++  const state = {
++    count: initial.count ?? 0,
++    trialStart: initial.trialStart ?? null,
++    lifeUnlockUntil: null as number | null,
++  };
++  const repo = {
++    getTrialStartDate: () => state.trialStart,
++    setTrialStartDate: (ms: number | null) => {
++      state.trialStart = ms;
++    },
++    getAppOpenCount: () => state.count,
++    incrementAppOpenCount: () => ++state.count,
++    setLifeUnlockUntil: (ms: number | null) => {
++      state.lifeUnlockUntil = ms;
++    },
++  };
++  return { repo: repo as never, state };
++}
++
++const sessions = (answers: boolean[]) => {
++  const queue = [...answers];
++  return { noteForeground: jest.fn(() => queue.shift() ?? false) };
++};
++
++describe('TrackAppOpenUseCase with sessions', () => {
++  it('counts a foreground only when it starts a session', () => {
++    const { repo, state } = fakeRepo();
++    const useCase = new TrackAppOpenUseCase(repo, undefined, sessions([true, false, false, true]));
++    for (let i = 0; i < 4; i += 1) useCase.execute(1_000 + i);
++    expect(state.count).toBe(2);
++  });
++
++  it('without a tracker every foreground counts, as before', () => {
++    const { repo, state } = fakeRepo();
++    const useCase = new TrackAppOpenUseCase(repo);
++    useCase.execute(1);
++    useCase.execute(2);
++    useCase.execute(3);
++    expect(state.count).toBe(3);
++  });
++
++  it('starts the preview clock on the very first open only', () => {
++    const { repo, state } = fakeRepo();
++    const useCase = new TrackAppOpenUseCase(repo, undefined, sessions([true, true]));
++    useCase.execute(5_000);
++    useCase.execute(9_000);
++    expect(state.trialStart).toBe(5_000);
++  });
++
++  it('unlocks Life for 24h from the third session and keeps refreshing it on later foregrounds', () => {
++    const { repo, state } = fakeRepo({ count: 2, trialStart: 0 });
++    const useCase = new TrackAppOpenUseCase(repo, undefined, sessions([false, true, false]));
++    useCase.execute(10); // still session 2: nothing yet
++    expect(state.lifeUnlockUntil).toBeNull();
++    useCase.execute(20); // third session
++    expect(state.lifeUnlockUntil).toBe(20 + LIFE_EVENT_UNLOCK_MS);
++    useCase.execute(30); // a quick return keeps the window fresh
++    expect(state.lifeUnlockUntil).toBe(30 + LIFE_EVENT_UNLOCK_MS);
++  });
++
++  it('reports each new session with its number and the days since the first open', () => {
++    const { repo } = fakeRepo({ count: 4, trialStart: 0 });
++    const onNewSession = jest.fn();
++    const useCase = new TrackAppOpenUseCase(repo, undefined, sessions([true, false]), onNewSession);
++    useCase.execute(3 * DAY + 5);
++    useCase.execute(3 * DAY + 10);
++    expect(onNewSession).toHaveBeenCalledTimes(1);
++    expect(onNewSession).toHaveBeenCalledWith({ sessionIndex: 5, daysSinceInstall: 3 });
++  });
++
++  it('the first ever session is day 0', () => {
++    const { repo } = fakeRepo();
++    const onNewSession = jest.fn();
++    new TrackAppOpenUseCase(repo, undefined, sessions([true]), onNewSession).execute(777);
++    expect(onNewSession).toHaveBeenCalledWith({ sessionIndex: 1, daysSinceInstall: 0 });
++  });
++});
+diff --git a/__tests__/widgetHealth.test.ts b/__tests__/widgetHealth.test.ts
+new file mode 100644
+index 0000000..f4c7305
+--- /dev/null
++++ b/__tests__/widgetHealth.test.ts
+@@ -0,0 +1,40 @@
++import { hoursSince, inventoryFromStatus } from '../src/shared/platform/widgetHealth';
++
++const HOUR = 3_600_000;
++
++describe('inventoryFromStatus', () => {
++  it('lists the kinds that exist, sorted, and counts kinds', () => {
++    expect(
++      inventoryFromStatus({
++        yearWidgetAdded: true,
++        dayWidgetAdded: true,
++        monthWidgetAdded: false,
++        dailyTasksWidgetAdded: true,
++      }),
++    ).toEqual({ kinds: ['daily_tasks', 'day', 'year'], count: 3 });
++  });
++
++  it('ignores unknown fields and missing values', () => {
++    expect(inventoryFromStatus({ somethingElse: true, lifeWidgetAdded: undefined })).toEqual({
++      kinds: [],
++      count: 0,
++    });
++  });
++});
++
++describe('hoursSince', () => {
++  it('is whole hours, rounded down', () => {
++    expect(hoursSince(0 + 1, 1 + 3 * HOUR + 59 * 60_000)).toBe(3);
++  });
++
++  it('is null when the worker has never run or the value is junk', () => {
++    expect(hoursSince(null, 5 * HOUR)).toBeNull();
++    expect(hoursSince(undefined, 5 * HOUR)).toBeNull();
++    expect(hoursSince(0, 5 * HOUR)).toBeNull();
++    expect(hoursSince(NaN, 5 * HOUR)).toBeNull();
++  });
++
++  it('never goes negative if the clock moved back', () => {
++    expect(hoursSince(10 * HOUR, 5 * HOUR)).toBe(0);
++  });
++});
+diff --git a/__tests__/widgetTelemetry.test.ts b/__tests__/widgetTelemetry.test.ts
+new file mode 100644
+index 0000000..40d67f0
+--- /dev/null
++++ b/__tests__/widgetTelemetry.test.ts
+@@ -0,0 +1,104 @@
++// A module (not a script), so its top-level names stay out of the other test files.
++export {};
++
++const mockLog = jest.fn();
++const mockSetProps = jest.fn();
++const mockInventory = jest.fn();
++const mockStale = jest.fn();
++
++jest.mock('../src/shared/analytics/analytics', () => ({
++  logAnalyticsEvent: (...a: unknown[]) => mockLog(...a),
++}));
++jest.mock('../src/shared/analytics/firebaseUserProperties', () => ({
++  setFirebaseUserProperties: (...a: unknown[]) => mockSetProps(...a),
++}));
++jest.mock('../src/shared/platform/widgetHealth', () => ({
++  STALE_AFTER_HOURS: 3,
++  readWidgetInventory: () => mockInventory(),
++  readWidgetStaleHours: () => mockStale(),
++}));
++jest.mock('react-native-device-info', () => ({
++  __esModule: true,
++  default: { getManufacturer: async () => 'Xiaomi' },
++}));
++
++const HOUR = 3_600_000;
++
++function load() {
++  let mod!: typeof import('../src/shared/platform/widgetTelemetry');
++  jest.isolateModules(() => {
++    mod = require('../src/shared/platform/widgetTelemetry');
++  });
++  return mod;
++}
++
++beforeEach(() => {
++  mockLog.mockReset();
++  mockSetProps.mockReset();
++  mockInventory.mockReset();
++  mockStale.mockReset();
++});
++
++describe('reportWidgetTelemetry', () => {
++  it('logs the inventory and sets the user properties', async () => {
++    mockInventory.mockResolvedValue({ kinds: ['day', 'year'], count: 2 });
++    mockStale.mockResolvedValue(null);
++    await load().reportWidgetTelemetry(10 * HOUR);
++    expect(mockSetProps).toHaveBeenCalledWith({ has_widget: true, widget_count: 2 });
++    expect(mockLog).toHaveBeenCalledWith(
++      'widget_inventory',
++      expect.objectContaining({ widget_count: 2, widget_types: 'day,year' }),
++    );
++  });
++
++  it('logs the inventory again only when it changes', async () => {
++    const { reportWidgetTelemetry } = load();
++    mockStale.mockResolvedValue(null);
++    mockInventory.mockResolvedValue({ kinds: ['day'], count: 1 });
++    await reportWidgetTelemetry(1 * HOUR);
++    await reportWidgetTelemetry(2 * HOUR);
++    mockInventory.mockResolvedValue({ kinds: ['day', 'life'], count: 2 });
++    await reportWidgetTelemetry(3 * HOUR);
++    const inventoryCalls = mockLog.mock.calls.filter(c => c[0] === 'widget_inventory');
++    expect(inventoryCalls).toHaveLength(2);
++  });
++
++  it('reports "none" for a phone with no widget, and never staleness', async () => {
++    mockInventory.mockResolvedValue({ kinds: [], count: 0 });
++    mockStale.mockResolvedValue(48);
++    await load().reportWidgetTelemetry(10 * HOUR);
++    expect(mockLog).toHaveBeenCalledWith(
++      'widget_inventory',
++      expect.objectContaining({ widget_count: 0, widget_types: 'none' }),
++    );
++    expect(mockLog.mock.calls.some(c => c[0] === 'widget_stale')).toBe(false);
++  });
++
++  it('does nothing when the native bridge cannot say', async () => {
++    mockInventory.mockResolvedValue(null);
++    await load().reportWidgetTelemetry(10 * HOUR);
++    expect(mockLog).not.toHaveBeenCalled();
++    expect(mockSetProps).not.toHaveBeenCalled();
++  });
++
++  it('reports widget_stale at 3+ hours with the manufacturer, at most every 6 hours', async () => {
++    const { reportWidgetTelemetry } = load();
++    mockInventory.mockResolvedValue({ kinds: ['day'], count: 1 });
++    mockStale.mockResolvedValue(2);
++    await reportWidgetTelemetry(10 * HOUR); // 2h: fresh enough
++    mockStale.mockResolvedValue(5);
++    await reportWidgetTelemetry(11 * HOUR); // 5h: reported
++    await reportWidgetTelemetry(12 * HOUR); // reported an hour ago: held back
++    await reportWidgetTelemetry(17 * HOUR + 1); // 6h later: reported again
++    const stale = mockLog.mock.calls.filter(c => c[0] === 'widget_stale');
++    expect(stale).toHaveLength(2);
++    expect(stale[0][1]).toEqual({ hours_stale: 5, manufacturer: 'xiaomi' });
++  });
++
++  it('stays quiet about staleness when the worker has never run', async () => {
++    mockInventory.mockResolvedValue({ kinds: ['day'], count: 1 });
++    mockStale.mockResolvedValue(null);
++    await load().reportWidgetTelemetry(10 * HOUR);
++    expect(mockLog.mock.calls.some(c => c[0] === 'widget_stale')).toBe(false);
++  });
++});
+diff --git a/index.js b/index.js
+index 9b73932..12a4f16 100644
+--- a/index.js
++++ b/index.js
+@@ -5,5 +5,8 @@
+ import { AppRegistry } from 'react-native';
+ import App from './App';
+ import { name as appName } from './app.json';
++import { registerNotificationBackgroundHandler } from './src/shared/platform/notificationOpened';
++
++registerNotificationBackgroundHandler();
+ 
+ AppRegistry.registerComponent(appName, () => App);

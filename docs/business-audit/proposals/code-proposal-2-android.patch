@@ -1,0 +1,102 @@
+diff --git a/android/app/src/main/java/app/until/time/UNTILWidgetWorker.kt b/android/app/src/main/java/app/until/time/UNTILWidgetWorker.kt
+index 75cb6e3..2be4b22 100644
+--- a/android/app/src/main/java/app/until/time/UNTILWidgetWorker.kt
++++ b/android/app/src/main/java/app/until/time/UNTILWidgetWorker.kt
+@@ -55,6 +55,7 @@ class UNTILWidgetWorker(
+ 
+     override suspend fun doWork(): Result {
+         updateWidgets(applicationContext)
++        WidgetHealth.recordBackgroundRefresh(applicationContext)
+         return Result.success()
+     }
+ 
+diff --git a/android/app/src/main/java/app/until/time/WidgetBridgeModule.kt b/android/app/src/main/java/app/until/time/WidgetBridgeModule.kt
+index 1eae3e5..8170682 100644
+--- a/android/app/src/main/java/app/until/time/WidgetBridgeModule.kt
++++ b/android/app/src/main/java/app/until/time/WidgetBridgeModule.kt
+@@ -110,6 +110,27 @@ class WidgetBridgeModule(reactContext: ReactApplicationContext) :
+         return AppWidgetManager.getInstance(ctx).isRequestPinAppWidgetSupported
+     }
+ 
++    /** When the periodic background refresh last ran (null until it has), for `widget_stale`. */
++    @ReactMethod
++    fun getWidgetHealth(promise: Promise) {
++        try {
++            val ctx = reactApplicationContext.applicationContext ?: run {
++                promise.reject("NO_CONTEXT", "Application context not available")
++                return
++            }
++            val last = WidgetHealth.lastBackgroundRefreshMs(ctx)
++            val map = WritableNativeMap()
++            if (last != null) {
++                map.putDouble("lastBackgroundRefreshMs", last.toDouble())
++            } else {
++                map.putNull("lastBackgroundRefreshMs")
++            }
++            promise.resolve(map)
++        } catch (e: Exception) {
++            promise.reject("WIDGET_HEALTH_ERROR", e.message, e)
++        }
++    }
++
+     @ReactMethod
+     fun getWidgetStatus(promise: Promise) {
+         try {
+diff --git a/android/app/src/main/java/app/until/time/UNTILOverlayService.kt b/android/app/src/main/java/app/until/time/UNTILOverlayService.kt
+index 7086f34..837c6db 100644
+--- a/android/app/src/main/java/app/until/time/UNTILOverlayService.kt
++++ b/android/app/src/main/java/app/until/time/UNTILOverlayService.kt
+@@ -102,6 +102,16 @@ class UNTILOverlayService : Service() {
+ 
+     override fun onBind(intent: Intent?): IBinder? = null
+ 
++    /**
++     * Android 15 stops a dataSync foreground service after 6 hours in 24 and calls this. The
++     * service must stop within seconds or the system throws and the app crashes ("did not stop
++     * within its timeout"). Stopping removes the island; onDestroy records it as off, and the
++     * person turns it back on from the app. (Not called on Android 14 and below.)
++     */
++    override fun onTimeout(startId: Int, fgsType: Int) {
++        stopSelf()
++    }
++
+     override fun onDestroy() {
+         updateHandler?.removeCallbacks(updateRunnable)
+         stopStickerPulse()
+diff --git a/android/app/src/main/java/app/until/time/WidgetHealth.kt b/android/app/src/main/java/app/until/time/WidgetHealth.kt
+new file mode 100644
+index 0000000..0da75c5
+--- /dev/null
++++ b/android/app/src/main/java/app/until/time/WidgetHealth.kt
+@@ -0,0 +1,31 @@
++package app.until.time
++
++import android.content.Context
++
++/**
++ * When the periodic background refresh (UNTILWidgetWorker) last ran. The JS side reads it through
++ * WidgetBridge.getWidgetHealth to report `widget_stale`: phones whose battery manager defers
++ * WorkManager show up as a growing gap. Only the periodic worker records it; a refresh the app
++ * itself asks for at launch would always look fresh.
++ */
++object WidgetHealth {
++    private const val PREFS = "until_widget_health"
++    private const val KEY_LAST_BACKGROUND_REFRESH = "last_background_refresh_ms"
++
++    fun recordBackgroundRefresh(context: Context, nowMs: Long = System.currentTimeMillis()) {
++        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
++            .edit()
++            .putLong(KEY_LAST_BACKGROUND_REFRESH, nowMs)
++            .apply()
++    }
++
++    /** Milliseconds since the epoch, or null if the worker has not run yet. */
++    fun lastBackgroundRefreshMs(context: Context): Long? {
++        val prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
++        return if (prefs.contains(KEY_LAST_BACKGROUND_REFRESH)) {
++            prefs.getLong(KEY_LAST_BACKGROUND_REFRESH, 0L)
++        } else {
++            null
++        }
++    }
++}
