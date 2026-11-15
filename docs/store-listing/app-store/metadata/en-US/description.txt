@@ -1,0 +1,46 @@
+How much of today is left? Of this year? Of your life?
+
+UNTIL shows you on your Home Screen, Lock Screen and Apple Watch, so you see it every time you pick up your phone, without opening an app.
+
+WIDGETS FOR HOME SCREEN AND LOCK SCREEN
+• Day, Month, Year and Life: the percentage and the time that is left
+• Deadline: the days left until a date that matters
+• Counter: tap to add +1 (water, pages, workouts, anything)
+• Hour timer: tap to start and stop
+• Tasks: today's list at a glance
+• Next deadlines: your nearest three, in order (Premium)
+
+YOUR LIFE IN WEEKS
+Set your birth date and see your whole life as a grid of weeks. A calm, plain reminder that time is limited and today counts.
+
+COUNTDOWNS THAT KEEP YOU HONEST
+Add an exam, a launch, a trip or a birthday and watch the days go down.
+
+ON YOUR WRIST AND ON THE ISLAND
+• Apple Watch: today's % on the watch face, and a Time Hub on your wrist
+• Dynamic Island and Live Activity on iPhones that have them (Premium)
+
+MAKE TODAY COUNT
+• Daily tasks and tap counters
+• Streaks and badges for showing up
+• Ember, a small companion that reacts to your day
+• Share a clean progress picture
+
+FREE
+• Day and Year widgets
+• Apple Watch Day %
+• Your first deadline and your first counter
+• Daily tasks, streaks, badges and sharing
+
+PREMIUM
+• Month and Life widgets and the full Life in weeks screen
+• Up to 20 deadlines and 20 counters, and the Next deadlines widget
+• Dynamic Island and Live Activity
+• Extra widget customization
+Try everything free for 5 days. No payment is taken for the preview and it does not renew by itself. After that, Premium is a weekly, monthly or yearly subscription, or a one-time purchase. Subscriptions renew until you cancel; manage them in your Apple ID settings.
+
+No ads. UNTIL is a time awareness app, not another noisy to-do list. Glance at what is left, then get back to your day.
+
+Terms of Use (EULA): https://developernick1-until.vercel.app/terms
+Privacy Policy: https://developernick1-until.vercel.app/privacy
+Support: developernick1@gmail.com

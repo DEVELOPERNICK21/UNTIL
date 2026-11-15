@@ -1,4 +1,8 @@
-# Play Store listing images
+# Store listing images and copy checks
+
+Google Play: `build.py` (below). App Store: `build_ios.py` and `check_app_store_copy.py` (section at the end).
+
+## Play Store images
 
 `build.py` turns real captures of the app into the Play Store screenshots and feature graphic.
 
@@ -36,3 +40,46 @@ Capture names the script looks for: `01-home-widgets`, `02-life`, `03-deadlines`
 Tips that saved time: set the emulator's time zone (`adb shell service call alarm 3 s16 America/Sao_Paulo`) so "today" is not nearly over, turn on dark mode (`adb shell cmd uimode night yes`), and open a screen directly with `adb shell am start -a android.intent.action.VIEW -d until://open/Premium -n app.until.time/.MainActivity` (also `Life`, `Countdowns`, `CustomCounters`, `Badges`, `DailyTasks`).
 
 Do not publish a capture that shows a real name, email or birth date.
+
+---
+
+## App Store
+
+### Check the copy
+
+```bash
+python3 scripts/store-listing/check_app_store_copy.py
+```
+
+Reads `docs/store-listing/app-store/metadata/<locale>/*.txt` and checks Apple's limits, keyword rules, the Terms and Privacy links and unbacked claims. The plan and the text are in `docs/APP_STORE_LISTING.md`.
+
+### Build the screenshots
+
+```bash
+python3 scripts/store-listing/build_ios.py     # needs Pillow
+```
+
+| In | Out |
+|----|-----|
+| `docs/store-listing/captures-ios/*.png` (1320×2868) | `docs/store-listing/screenshots-ios/01.png … 07.png` (1320×2868, Apple's 6.9-inch size) |
+
+Headlines are in `SHOTS` at the top of `build_ios.py`; keep them the same as the table in `docs/APP_STORE_LISTING.md`.
+
+Why not reuse the Play ones: they show Android's status bar and launcher, and Apple rejects screenshots with other platforms in them (Guideline 2.3.10). These come from the iOS Simulator.
+
+### Taking the iOS captures again
+
+1. A clean simulator so no personal data is on screen: `xcrun simctl create UNTIL_Store com.apple.CoreSimulator.SimDeviceType.iPhone-17-Pro-Max com.apple.CoreSimulator.SimRuntime.iOS-26-5`, then `xcrun simctl boot <udid>`.
+2. A clean status bar and dark mode:
+
+```bash
+xcrun simctl status_bar <udid> override --time 9:41 --batteryState charged --batteryLevel 100 --cellularMode active --cellularBars 4 --wifiBars 3 --operatorName ""
+xcrun simctl ui <udid> appearance dark
+```
+
+3. Build and install a Debug build, start Metro on a free port, and point the app at it: `xcrun simctl spawn <udid> defaults write com.developernick.until RCT_jsLocation localhost:<port>`.
+4. Open a screen with a deep link: `xcrun simctl openurl <udid> until://open/Life` (also `Premium`, `Countdowns`, `CustomCounters`, `Badges`, `DailyTasks`), then `xcrun simctl io <udid> screenshot docs/store-listing/captures-ios/<name>.png`.
+5. Widgets and the Lock Screen need the widgets added by hand from the widget gallery. Use fictional demo data: no real name, e-mail or birth date.
+
+Capture names the script looks for: `01-life`, `02-home-widgets`, `03-lock-screen`, `04-deadlines`, `05-counters`, `06-watch`, `07-premium`.
+

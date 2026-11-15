@@ -1,0 +1,37 @@
+¿Cuánto queda de hoy? ¿Del año? ¿De tu vida?
+
+UNTIL te lo muestra en la pantalla de inicio, la pantalla de bloqueo y el Apple Watch, para que lo veas cada vez que tomas el teléfono, sin abrir una app.
+
+WIDGETS
+• Día, mes, año y vida: el porcentaje y el tiempo que queda
+• Fecha límite: los días que faltan para una fecha importante
+• Contador: toca para sumar +1 (agua, páginas, entrenamientos, lo que sea)
+• Temporizador de horas: toca para iniciar y parar
+• Tareas de hoy de un vistazo
+• Próximas fechas límite: las tres más cercanas (Premium)
+
+TU VIDA EN SEMANAS
+Indica tu fecha de nacimiento y mira toda tu vida como una cuadrícula de semanas. Un recordatorio tranquilo y claro de que el tiempo es limitado y de que hoy cuenta.
+
+EN LA MUÑECA Y EN LA ISLA
+• Apple Watch: el % de hoy en la esfera y un Time Hub en la muñeca
+• Dynamic Island y Live Activity en los iPhone que la tienen (Premium)
+
+GRATIS
+• Widgets de día y de año
+• El % de hoy en el Apple Watch
+• Tu primera fecha límite y tu primer contador
+• Tareas diarias, rachas, insignias y compartir
+
+PREMIUM
+• Widgets de mes y de vida, y toda tu vida en semanas
+• Hasta 20 fechas límite y contadores, y el widget de próximas fechas
+• Dynamic Island y Live Activity
+• Más opciones de personalización de widgets
+Prueba todo gratis durante 5 días. No se cobra nada por la prueba y no se renueva sola. Después, Premium es una suscripción semanal, mensual o anual, o una compra única. Las suscripciones se renuevan hasta que las canceles; adminístralas en los ajustes de tu ID de Apple.
+
+Sin anuncios. UNTIL es una app para tomar conciencia del tiempo, no otra lista de tareas ruidosa. Mira lo que queda y vuelve a tu día.
+
+Terms of Use (EULA): https://developernick1-until.vercel.app/terms
+Privacy Policy: https://developernick1-until.vercel.app/privacy
+Support: developernick1@gmail.com

@@ -1,6 +1,6 @@
 # App Store audit and ASO plan — 2026-11-15
 
-What the live listing says today, how it ranks, who it competes with, and what to change. The Google Play counterpart is [`PLAY_STORE_ASO.md`](PLAY_STORE_ASO.md).
+What the live listing says today, how it ranks, who it competes with, and what to change. The Google Play counterpart is [`PLAY_STORE_ASO.md`](PLAY_STORE_ASO.md). The paste-ready copy, languages and launch plan that fix this audit are in [`APP_STORE_LISTING.md`](APP_STORE_LISTING.md).
 
 Sources: Apple's public lookup and search endpoints (`itunes.apple.com`, India, US, UK, Germany, Canada, Australia), the public App Store page, the 7 live screenshots, the repo, and the live website. Rankings are a snapshot from Apple's search endpoint, not from inside the App Store app, and the app is two days old, so treat positions as a baseline, not a verdict.
 

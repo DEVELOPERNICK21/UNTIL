@@ -1,0 +1,37 @@
+Berapa banyak yang tersisa dari hari ini? Dari tahun ini? Dari hidupmu?
+
+UNTIL menampilkannya di Layar Utama, Layar Kunci, dan Apple Watch, setiap kali kamu mengambil ponsel, tanpa membuka aplikasi.
+
+WIDGET
+• Hari, bulan, tahun, dan hidup: persentase dan waktu yang tersisa
+• Tenggat: jumlah hari menuju tanggal penting
+• Penghitung: ketuk untuk menambah +1 (air, halaman, olahraga, apa saja)
+• Timer jam: ketuk untuk mulai dan berhenti
+• Tugas hari ini sekilas pandang
+• Tenggat berikutnya: tiga terdekat berurutan (Premium)
+
+HIDUPMU DALAM MINGGU
+Masukkan tanggal lahirmu dan lihat seluruh hidupmu sebagai kisi minggu. Pengingat yang tenang dan jelas bahwa waktu terbatas dan hari ini berarti.
+
+DI PERGELANGAN TANGAN DAN DI PULAU
+• Apple Watch: persentase hari ini di tampilan jam dan Time Hub di pergelangan tangan
+• Dynamic Island dan Live Activity di iPhone yang mendukungnya (Premium)
+
+GRATIS
+• Widget hari dan tahun
+• Persentase hari ini di Apple Watch
+• Tenggat pertama dan penghitung pertamamu
+• Tugas harian, runtutan, lencana, dan berbagi
+
+PREMIUM
+• Widget bulan dan hidup, serta seluruh hidup dalam minggu
+• Hingga 20 tenggat dan penghitung, serta widget tenggat berikutnya
+• Dynamic Island dan Live Activity
+• Penyesuaian widget tambahan
+Coba semuanya gratis selama 5 hari. Tidak ada pembayaran untuk pratinjau dan tidak diperpanjang otomatis. Setelah itu, Premium adalah langganan mingguan, bulanan, atau tahunan, atau pembelian sekali bayar. Langganan diperpanjang sampai kamu membatalkannya; kelola di pengaturan ID Apple.
+
+Tanpa iklan. UNTIL adalah aplikasi kesadaran waktu, bukan daftar tugas ribut lainnya. Lihat apa yang tersisa, lalu kembali ke harimu.
+
+Terms of Use (EULA): https://developernick1-until.vercel.app/terms
+Privacy Policy: https://developernick1-until.vercel.app/privacy
+Support: developernick1@gmail.com
