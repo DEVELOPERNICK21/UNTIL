@@ -109,8 +109,9 @@ The first week sets the ranking baseline. Post where the audience already is (r/
 
 | Done | Item | Who |
 |:----:|------|-----|
-| [ ] | Replace "App Store · Coming soon" on the website with the real link; fix `appStoreUrl`; add Smart App Banner, sitemap, robots, preview image | code |
-| [ ] | Set `IOS_APP_STORE_ID`; Settings "Rate" opens the write-review link; iPhone share link uses the App Store link with `ct=share` | code |
+| [x] | Replace "App Store · Coming soon" on the website with the real link; fix `appStoreUrl`; add Smart App Banner, sitemap, robots, preview image | code (done) |
+| [x] | Set `IOS_APP_STORE_ID`; Settings "Rate" opens the write-review link; iPhone share link uses the App Store link with `ct=share` | code (done) |
+| [ ] | Paste the App Store provider token into `APP_STORE_PROVIDER_TOKEN` (`src/config/storeUrls.ts`) and `appStoreCtaUrl` (`website/src/domain/config.ts`) so Connect groups downloads by campaign | you, then code |
 | [ ] | New title, subtitle and keywords in the next app version (1.0.1) | App Store Connect |
 | [ ] | Promotional text (any time) | App Store Connect |
 | [ ] | Rebuild the 7 screenshots in the new order; add video; iPad set or iPhone-only | design |

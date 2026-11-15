@@ -13,8 +13,10 @@ export const LANDING_COPY = {
     title: 'See your time.',
     headline: 'Day, month, year, and life. Always visible.',
     subtitle:
-      'Ember, home widgets, Wear OS Day %, deadlines, tasks, and shareable snapshots. Check them without opening the app.',
+      'Ember, home widgets, Apple Watch and Wear OS Day %, deadlines, tasks, and shareable snapshots. Check them without opening the app.',
     cta: 'Get the app',
+    ctaApple: 'Download on the App Store',
+    ctaPlay: 'Get it on Google Play',
     playLink: 'or play the full game',
     toyHint: 'Tap the clock. Tap fast to spin it harder.',
     toyWarmup: 'Keep tapping.',
@@ -38,7 +40,7 @@ export const LANDING_COPY = {
     metricLabel: 'Days Left',
     ctaHeading: 'Start seeing time clearly.',
     ctaDescription:
-      'Available on Android now. iOS coming soon. Widgets, Ember, and Wear OS Day % without opening the app.',
+      'Free on iPhone and Android. Widgets, Ember, and Day % on your watch without opening the app.',
   },
 
   /** Feature cards (with optional category for layout) */
@@ -144,7 +146,7 @@ export const LANDING_COPY = {
       {
         question: 'Does Until work on Wear OS?',
         answer:
-          'Yes. On Android, UNTIL syncs Day % to Wear OS so you can add a tile or complication on a compatible watch. Open the phone app so Day data stays fresh. iOS (and Apple Watch) are coming soon.',
+          'Yes. On Android, UNTIL syncs Day % to Wear OS so you can add a tile or complication on a compatible watch. On iPhone, UNTIL puts Day % on Apple Watch. Open the phone app so Day data stays fresh.',
       },
       {
         question: 'Who is Until for?',
@@ -227,12 +229,12 @@ export const LANDING_COPY = {
       'Premium: month/life widgets, overlay, intervention alerts',
     ],
     ctaLabelAndroid: 'Get on Google Play',
-    iosComingSoon: 'Coming soon',
+    iosLabel: 'Download on the',
   },
 
   cta: {
     title: 'Start seeing time clearly.',
-    subtitle: 'Available on Android now. iOS coming soon.',
+    subtitle: 'Free on iPhone and Android.',
   },
 
   footer: {
@@ -257,7 +259,7 @@ export const LANDING_COPY = {
     whispers: [
       'I\u2019m Ember. I stick around while you look around.',
       'Your day is still open. UNTIL keeps it visible on your home screen.',
-      'When you\u2019re ready, Android has widgets, Ember, and Wear OS Day %.',
+      'When you\u2019re ready, iPhone and Android have widgets, Ember, and Day % for your watch.',
       'No rush. Scroll a little more. I\u2019ll stay nearby.',
     ],
   },

@@ -18,9 +18,9 @@ export function CinematicHeroSection() {
       metricLabel={cinematicHero.metricLabel}
       ctaHeading={cinematicHero.ctaHeading}
       ctaDescription={cinematicHero.ctaDescription}
-      playStoreUrl={SITE_CONFIG.playStoreUrl}
-      appStoreUrl={SITE_CONFIG.appStoreUrl}
-      iosComingSoon={pricingCta.iosComingSoon}
+      playStoreUrl={SITE_CONFIG.playStoreCtaUrl}
+      appStoreUrl={SITE_CONFIG.appStoreCtaUrl}
+      iosLabel={pricingCta.iosLabel}
       heroExtra={<HeroClockToy />}
     />
   );

@@ -1,7 +1,8 @@
 import { PRIVACY_TITLE, PRIVACY_LAST_UPDATED, PRIVACY_SECTIONS } from '@/domain';
 
 export const metadata = {
-  title: PRIVACY_TITLE,
+  // Already names the app, so the site-wide " · UNTIL" suffix would repeat it.
+  title: { absolute: PRIVACY_TITLE },
   description: 'Privacy Policy for UNTIL : Countdown & Time Left app and website.',
 };
 

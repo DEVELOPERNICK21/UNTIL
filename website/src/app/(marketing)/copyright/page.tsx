@@ -6,7 +6,8 @@ import {
 } from '@/domain';
 
 export const metadata = {
-  title: COPYRIGHT_TITLE,
+  // Already names the app, so the site-wide " · UNTIL" suffix would repeat it.
+  title: { absolute: COPYRIGHT_TITLE },
   description: 'Copyright and DMCA takedown policy for UNTIL : Countdown & Time Left.',
 };
 

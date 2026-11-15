@@ -36,12 +36,12 @@ export const APP_UPDATE: { android: PlatformUpdate; ios: PlatformUpdate } = {
     notes: [],
   },
   ios: {
-    // Off until the App Store listing is public. Then set the real numeric Apple ID in `storeUrl`
-    // (App Store Connect > App Information > Apple ID) and the live build number here.
+    // 1.0 is live and is the newest build, so nothing to prompt yet. When a newer build is live
+    // to everyone, set `latestBuild` (its build number) and `versionName`. The listing is below.
     latestBuild: null,
     minimumBuild: 1,
     versionName: null,
-    storeUrl: null,
+    storeUrl: 'https://apps.apple.com/app/id6813366004',
     notes: [],
   },
 };

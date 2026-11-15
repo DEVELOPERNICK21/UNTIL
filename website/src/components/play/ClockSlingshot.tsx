@@ -1485,7 +1485,7 @@ export function ClockSlingshot() {
             </div>
             {shareNote ? <p className="play-best">{shareNote}</p> : null}
             <a
-              href={SITE_CONFIG.playStoreUrl}
+              href={SITE_CONFIG.playStoreCtaUrl}
               target="_blank"
               rel="noopener noreferrer"
               className="play-get"

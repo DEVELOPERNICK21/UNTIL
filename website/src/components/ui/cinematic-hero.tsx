@@ -204,7 +204,8 @@ export interface CinematicHeroProps extends React.HTMLAttributes<HTMLDivElement>
   ctaDescription?: string;
   playStoreUrl?: string;
   appStoreUrl?: string;
-  iosComingSoon?: string;
+  /** Small line above "App Store" on the iPhone button. */
+  iosLabel?: string;
   /** Rendered above the taglines on the first screen. */
   heroExtra?: React.ReactNode;
 }
@@ -224,10 +225,10 @@ export function CinematicHero({
   metricValue = 247,
   metricLabel = 'Days Left',
   ctaHeading = 'Start seeing time clearly.',
-  ctaDescription = 'Available on Android now. iOS coming soon.',
+  ctaDescription = 'Free on iPhone and Android.',
   playStoreUrl = '#',
   appStoreUrl = '#',
-  iosComingSoon = 'Coming soon',
+  iosLabel = 'Download on the',
   heroExtra,
   className,
   ...props
@@ -526,9 +527,12 @@ export function CinematicHero({
           {ctaDescription}
         </p>
         <div className="flex flex-col sm:flex-row gap-6">
-          <span
-            aria-label={`App Store · ${iosComingSoon}`}
-            className="btn-modern-light btn-modern-disabled flex items-center justify-center gap-3 px-8 py-4 rounded-[1.25rem]"
+          <a
+            href={appStoreUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="Download on the App Store"
+            className="btn-modern-light flex items-center justify-center gap-3 px-8 py-4 rounded-[1.25rem] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--offer)] focus-visible:ring-offset-2 focus-visible:ring-offset-background"
           >
             <svg
               className="w-8 h-8"
@@ -540,13 +544,13 @@ export function CinematicHero({
             </svg>
             <div className="text-left">
               <div className="text-[10px] font-bold tracking-wider text-neutral-500 uppercase mb-[-2px]">
-                {iosComingSoon}
+                {iosLabel}
               </div>
               <div className="text-xl font-bold leading-none tracking-tight">
                 App Store
               </div>
             </div>
-          </span>
+          </a>
           <a
             href={playStoreUrl}
             target="_blank"
