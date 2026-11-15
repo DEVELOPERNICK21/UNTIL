@@ -19,6 +19,10 @@ export const APP_NAME = 'UNTIL : Countdown & Time Left' as const;
  */
 const SUPPORT_EMAIL = 'developernick1+until@gmail.com';
 
+const PLAY_STORE_LISTING = 'https://play.google.com/store/apps/details?id=app.until.time';
+const APP_STORE_ID = '6813366004';
+const APP_STORE_LISTING = `https://apps.apple.com/app/id${APP_STORE_ID}`;
+
 export const SITE_CONFIG = {
   /** Base URL for canonical links and sitemap */
   baseUrl:
@@ -39,9 +43,20 @@ export const SITE_CONFIG = {
     email: SUPPORT_EMAIL,
     registrationNumber: null as string | null,
   },
-  /** Placeholder; replace with real store URLs when published */
-  playStoreUrl: 'https://play.google.com/store/apps/details?id=app.until.time',
-  appStoreUrl: 'https://apps.apple.com/app/until/id000000000',
+  /** Store listings (plain links, for structured data and anywhere a tag is not wanted). */
+  playStoreUrl: PLAY_STORE_LISTING,
+  appStoreUrl: APP_STORE_LISTING,
+  /** Numeric Apple ID: App Store Connect > App Information. Drives the iPhone Smart App Banner. */
+  appStoreId: APP_STORE_ID,
+  /**
+   * The same links with a campaign, for the buttons on this site, so downloads that started on
+   * the website show up as their own source (Play: referrer; App Store: ct, which also needs the
+   * provider token in the link before App Store Connect groups it, see docs/ATTRIBUTION.md).
+   */
+  playStoreCtaUrl: `${PLAY_STORE_LISTING}&referrer=${encodeURIComponent(
+    'utm_source=website&utm_medium=button',
+  )}`,
+  appStoreCtaUrl: `${APP_STORE_LISTING}?ct=website_button&mt=8`,
   /** Desktop installers and updater manifest live on this repo's desktop-v* releases. */
   githubRepo: 'DEVELOPERNICK21/UNTIL',
   desktopDownload: {

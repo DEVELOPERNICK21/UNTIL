@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   PRICING_PLAN_CARDS,
   PRICING_DISPLAY,
@@ -10,10 +10,24 @@ import { SITE_CONFIG } from '@/domain';
 
 type BillingFocus = 'monthly' | 'yearly';
 
+/** The store a visitor can actually install from: the App Store on an iPhone or iPad, else Google Play. */
+function useStoreUrl(): string {
+  const [url, setUrl] = useState<string>(SITE_CONFIG.playStoreCtaUrl);
+  useEffect(() => {
+    const ua = navigator.userAgent;
+    // iPadOS 13+ reports itself as a Mac, so tell it apart by its touch screen.
+    const isIos =
+      /iPhone|iPad|iPod/.test(ua) ||
+      (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1);
+    if (isIos) setUrl(SITE_CONFIG.appStoreCtaUrl);
+  }, []);
+  return url;
+}
+
 export function PricingSection() {
   const [focus, setFocus] = useState<BillingFocus>('yearly');
   const { pricing } = SITE_CONFIG;
-  const playUrl = SITE_CONFIG.playStoreUrl;
+  const storeUrl = useStoreUrl();
 
   const cards = PRICING_PLAN_CARDS.map(card => {
     if (card.id === 'yearly' && focus === 'yearly') {
@@ -72,7 +86,7 @@ export function PricingSection() {
             includesLabel={card.includesLabel}
             features={card.features}
             badge={card.badge}
-            href={playUrl}
+            href={storeUrl}
             highlighted={
               (focus === 'yearly' && card.id === 'yearly') ||
               (focus === 'monthly' && card.id === 'monthly')

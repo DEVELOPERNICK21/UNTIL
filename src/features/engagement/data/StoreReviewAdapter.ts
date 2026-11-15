@@ -1,7 +1,7 @@
 import { Linking, Platform } from 'react-native';
 import type { IInAppReviewService } from '../domain/ports/IInAppReviewService';
 import {
-  IOS_APP_STORE_ID,
+  APP_STORE_WRITE_REVIEW_URL,
   PLAY_STORE_LISTING_URL,
   PLAY_STORE_MARKET_URL,
 } from '../../../config/storeUrls';
@@ -47,10 +47,10 @@ export class StoreReviewAdapter implements IInAppReviewService {
       }
       return;
     }
-    if (Platform.OS === 'ios' && IOS_APP_STORE_ID.trim()) {
-      await Linking.openURL(
-        `https://apps.apple.com/app/id${IOS_APP_STORE_ID.trim()}`
-      );
+    // Only used when the in-app review box has nothing to show (iOS limits it to three a year),
+    // so go straight to the review form instead of the top of the page.
+    if (Platform.OS === 'ios' && APP_STORE_WRITE_REVIEW_URL) {
+      await Linking.openURL(APP_STORE_WRITE_REVIEW_URL);
     }
   }
 }

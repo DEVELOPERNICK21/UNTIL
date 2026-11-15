@@ -1,7 +1,8 @@
 import { TERMS_TITLE, TERMS_LAST_UPDATED, TERMS_SECTIONS } from '@/domain';
 
 export const metadata = {
-  title: TERMS_TITLE,
+  // Already names the app, so the site-wide " · UNTIL" suffix would repeat it.
+  title: { absolute: TERMS_TITLE },
   description: 'Terms of Service for UNTIL : Countdown & Time Left app and website.',
 };
 

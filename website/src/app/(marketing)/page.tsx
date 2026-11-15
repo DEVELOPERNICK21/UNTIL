@@ -6,6 +6,21 @@ import { PricingSection } from '@/components/PricingSection';
 import { DesktopDownloadSection } from '@/components/DesktopDownloadSection';
 import { LANDING_COPY, SITE_CONFIG } from '@/domain';
 
+/** Tells search engines what this is: one free app on two platforms. No ratings are claimed. */
+const APP_JSON_LD = {
+  '@context': 'https://schema.org',
+  '@type': 'MobileApplication',
+  name: 'UNTIL',
+  alternateName: 'UNTIL : Countdown & Time Left',
+  description:
+    'See your life in weeks, the year so far and the time left today on your Home Screen, Lock Screen and watch.',
+  applicationCategory: 'LifestyleApplication',
+  operatingSystem: 'iOS, Android',
+  url: SITE_CONFIG.baseUrl,
+  downloadUrl: [SITE_CONFIG.appStoreUrl, SITE_CONFIG.playStoreUrl],
+  offers: { '@type': 'Offer', price: '0', priceCurrency: 'INR' },
+};
+
 export default function HomePage() {
   const {
     introPriceLine,
@@ -16,13 +31,17 @@ export default function HomePage() {
     whyChoose,
     testimonials,
     faq,
-    pricingCta,
     cta,
   } = LANDING_COPY;
   const { pricing } = SITE_CONFIG;
 
   return (
     <>
+      <script
+        type="application/ld+json"
+        // JSON.stringify output of a constant above; nothing from a visitor goes in.
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(APP_JSON_LD) }}
+      />
       {/* Cinematic scroll-pinned hero */}
       <div className="landing-cinematic-hero">
         <CinematicHeroSection />
@@ -84,26 +103,21 @@ export default function HomePage() {
             marginBottom: '2rem',
           }}
         >
-          <span
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              padding: '0.75rem 1.5rem',
-              minHeight: 44,
-              color: 'var(--text-secondary)',
-              fontSize: '0.95rem',
-              fontWeight: 500,
-            }}
-          >
-            App Store · {pricingCta.iosComingSoon}
-          </span>
           <a
-            href={SITE_CONFIG.playStoreUrl}
+            href={SITE_CONFIG.appStoreCtaUrl}
             target="_blank"
             rel="noopener noreferrer"
             className="landing-primary-cta"
           >
-            {hero.cta}
+            {hero.ctaApple}
+          </a>
+          <a
+            href={SITE_CONFIG.playStoreCtaUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="landing-secondary-cta"
+          >
+            {hero.ctaPlay}
           </a>
         </div>
         <HeroScreenshotShowcase />
@@ -373,22 +387,31 @@ export default function HomePage() {
         <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem' }}>
           {cta.subtitle}
         </p>
-        <a
-          href={SITE_CONFIG.playStoreUrl}
-          target="_blank"
-          rel="noopener noreferrer"
+        <div
           style={{
-            display: 'inline-block',
-            padding: '0.75rem 1.5rem',
-            background: 'var(--text)',
-            color: 'var(--bg)',
-            borderRadius: 'var(--radius)',
-            fontWeight: 600,
-            textDecoration: 'none',
+            display: 'flex',
+            gap: '1rem',
+            justifyContent: 'center',
+            flexWrap: 'wrap',
           }}
         >
-          {hero.cta}
-        </a>
+          <a
+            href={SITE_CONFIG.appStoreCtaUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="landing-primary-cta"
+          >
+            {hero.ctaApple}
+          </a>
+          <a
+            href={SITE_CONFIG.playStoreCtaUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="landing-secondary-cta"
+          >
+            {hero.ctaPlay}
+          </a>
+        </div>
       </section>
 
       <EmberCompanion />
