@@ -1,0 +1,37 @@
+Bugünden ne kadarı kaldı? Yıldan? Hayatından?
+
+UNTIL bunu Ana Ekranında, Kilit Ekranında ve Apple Watch'ta gösterir. Telefonu her aldığında, uygulamayı açmadan görürsün.
+
+WIDGET'LAR
+• Gün, ay, yıl ve hayat: yüzde ve kalan süre
+• Son tarih: önemli bir tarihe kaç gün kaldı
+• Sayaç: +1 eklemek için dokun (su, sayfa, antrenman, her şey)
+• Saat zamanlayıcı: başlatmak ve durdurmak için dokun
+• Bugünün görevleri tek bakışta
+• Sıradaki son tarihler: en yakın üçü sırayla (Premium)
+
+HAFTALARLA HAYATIN
+Doğum tarihini gir ve tüm hayatını hafta ızgarası olarak gör. Zamanın sınırlı olduğunu ve bugünün önemli olduğunu sakin, net biçimde hatırlatır.
+
+BİLEKTE VE ADADA
+• Apple Watch: kadranda bugünün yüzdesi, bilekte Time Hub
+• Dynamic Island ve Live Activity, bunlara sahip iPhone'larda (Premium)
+
+ÜCRETSİZ
+• Gün ve yıl widget'ları
+• Apple Watch'ta bugünün yüzdesi
+• İlk son tarihin ve ilk sayacın
+• Günlük görevler, seriler, rozetler ve paylaşım
+
+PREMIUM
+• Ay ve hayat widget'ları, tüm hayatın haftalarla ekranı
+• 20'ye kadar son tarih ve sayaç, ve sıradaki son tarihler widget'ı
+• Dynamic Island ve Live Activity
+• Ek widget özelleştirme
+Her şeyi 5 gün ücretsiz dene. Önizleme için ödeme alınmaz ve kendiliğinden yenilenmez. Sonrasında Premium haftalık, aylık veya yıllık bir abonelik ya da tek seferlik bir satın alımdır. Abonelikler sen iptal edene kadar yenilenir; Apple Kimliği ayarlarından yönetebilirsin.
+
+Reklam yok. UNTIL zaman farkındalığı uygulamasıdır, bir başka gürültülü yapılacaklar listesi değil. Neyin kaldığına bak, sonra gününe dön.
+
+Terms of Use (EULA): https://developernick1-until.vercel.app/terms
+Privacy Policy: https://developernick1-until.vercel.app/privacy
+Support: developernick1@gmail.com

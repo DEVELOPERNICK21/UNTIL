@@ -1,0 +1,4 @@
+A clearer sign-in screen.
+Account now lists the devices you use UNTIL on.
+A refreshed Home screen with Ember, a small companion that reacts to your day.
+Fixes and polish.

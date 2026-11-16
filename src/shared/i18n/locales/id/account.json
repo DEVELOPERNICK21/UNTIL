@@ -70,7 +70,7 @@
   "account.form.haveAccount": "Sudah punya akun? [Masuk]",
   "account.form.newHere": "Baru di sini? [Buat akun]",
   "account.identity.title": "Kapan kamu lahir?",
-  "account.identity.body": "Kami memakai tanggal lahir dan perkiraan usia hidupmu untuk menghitung progres hidup. Data tetap di perangkatmu.",
+  "account.identity.body": "Kami memakai tanggal lahir dan perkiraan usia hidupmu untuk menghitung progres hidup. Data tetap di perangkatmu dan hanya disinkronkan ke akunmu jika kamu masuk.",
   "account.identity.birthDate": "Tanggal lahir",
   "account.identity.required": "Diperlukan untuk Hidup",
   "account.identity.birthDateA11y": "Tanggal lahir {{date}}. Ketuk untuk mengubah.",

@@ -1,0 +1,37 @@
+Wie viel vom heutigen Tag ist noch übrig? Vom Jahr? Von deinem Leben?
+
+UNTIL zeigt es dir auf dem Home-Bildschirm, dem Sperrbildschirm und der Apple Watch, jedes Mal, wenn du zum Telefon greifst, ohne eine App zu öffnen.
+
+WIDGETS
+• Tag, Monat, Jahr und Leben: Prozent und verbleibende Zeit
+• Frist: die Tage bis zu einem wichtigen Datum
+• Zähler: tippen für +1 (Wasser, Seiten, Workouts, alles)
+• Stundentimer: tippen zum Starten und Stoppen
+• Heutige Aufgaben auf einen Blick
+• Nächste Fristen: die drei nächsten in Reihenfolge (Premium)
+
+DEIN LEBEN IN WOCHEN
+Gib dein Geburtsdatum ein und sieh dein ganzes Leben als Raster aus Wochen. Eine ruhige, klare Erinnerung: Zeit ist begrenzt, und heute zählt.
+
+AM HANDGELENK UND AUF DER INSEL
+• Apple Watch: heutiger Prozentwert auf dem Zifferblatt und ein Time Hub am Handgelenk
+• Dynamic Island und Live Activity auf iPhones, die sie haben (Premium)
+
+KOSTENLOS
+• Tages- und Jahres-Widgets
+• Apple Watch: heutiger Prozentwert
+• Deine erste Frist und dein erster Zähler
+• Tägliche Aufgaben, Serien, Abzeichen und Teilen
+
+PREMIUM
+• Monats- und Lebens-Widgets und das komplette Leben in Wochen
+• Bis zu 20 Fristen und Zähler sowie das Widget „Nächste Fristen“
+• Dynamic Island und Live Activity
+• Zusätzliche Widget-Anpassungen
+Teste alles 5 Tage kostenlos. Für die Vorschau wird nichts berechnet, und sie verlängert sich nicht von selbst. Danach ist Premium ein Wochen-, Monats- oder Jahresabo oder ein Einmalkauf. Abos verlängern sich, bis du kündigst; verwalte sie in den Einstellungen deiner Apple-ID.
+
+Keine Werbung. UNTIL ist eine App für Zeitbewusstsein, nicht noch eine laute To-do-Liste. Sieh, was bleibt, und kehre zu deinem Tag zurück.
+
+Terms of Use (EULA): https://developernick1-until.vercel.app/terms
+Privacy Policy: https://developernick1-until.vercel.app/privacy
+Support: developernick1@gmail.com

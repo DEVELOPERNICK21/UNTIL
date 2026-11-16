@@ -74,7 +74,7 @@
   "account.form.haveAccount": "Schon ein Konto? [Anmelden]",
   "account.form.newHere": "Neu hier? [Konto erstellen]",
   "account.identity.title": "Wann wurdest du geboren?",
-  "account.identity.body": "Wir berechnen deinen Lebensfortschritt aus Geburtsdatum und erwarteter Lebensdauer. Die Daten bleiben auf deinem Gerät.",
+  "account.identity.body": "Wir berechnen deinen Lebensfortschritt aus Geburtsdatum und erwarteter Lebensdauer. Beides bleibt auf deinem Gerät und wird nur mit deinem Konto synchronisiert, wenn du dich anmeldest.",
   "account.identity.birthDate": "Geburtsdatum",
   "account.identity.required": "Für „Leben“ erforderlich",
   "account.identity.birthDateA11y": "Geburtsdatum {{date}}. Zum Ändern tippen.",

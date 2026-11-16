@@ -74,7 +74,7 @@
   "account.form.haveAccount": "Hesabın var mı? [Giriş yap]",
   "account.form.newHere": "Burada yeni misin? [Hesap oluştur]",
   "account.identity.title": "Ne zaman doğdun?",
-  "account.identity.body": "Yaşam ilerlemeni hesaplamak için doğum tarihini ve beklenen ömrünü kullanırız. Veriler cihazında kalır.",
+  "account.identity.body": "Yaşam ilerlemeni hesaplamak için doğum tarihini ve beklenen ömrünü kullanırız. Veriler cihazında kalır ve yalnızca giriş yaparsan hesabınla senkronize edilir.",
   "account.identity.birthDate": "Doğum tarihi",
   "account.identity.required": "Yaşam için gerekli",
   "account.identity.birthDateA11y": "Doğum tarihi {{date}}. Değiştirmek için dokun.",

@@ -74,7 +74,7 @@
   "account.form.haveAccount": "¿Ya tienes cuenta? [Inicia sesión]",
   "account.form.newHere": "¿Eres nuevo? [Crea una cuenta]",
   "account.identity.title": "¿Cuándo naciste?",
-  "account.identity.body": "Usamos tu fecha de nacimiento y la esperanza de vida para calcular el progreso de tu vida. Los datos se quedan en tu dispositivo.",
+  "account.identity.body": "Usamos tu fecha de nacimiento y la esperanza de vida para calcular el progreso de tu vida. Se quedan en tu dispositivo y solo se sincronizan con tu cuenta si inicias sesión.",
   "account.identity.birthDate": "Fecha de nacimiento",
   "account.identity.required": "Necesaria para Vida",
   "account.identity.birthDateA11y": "Fecha de nacimiento {{date}}. Toca para cambiarla.",
