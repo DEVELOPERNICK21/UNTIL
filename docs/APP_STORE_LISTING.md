@@ -56,6 +56,24 @@ The first three lines are what people see before "more", so they carry the whole
 
 ---
 
+## How it will look: search result and product page header
+
+`docs/store-listing/previews/search-result.png` and `product-header.png` show the live listing next to the new one. Rebuild them after any copy or screenshot change:
+
+```bash
+python3 scripts/store-listing/preview_ios.py --before <folder with the live icon.jpg and shot1.jpg … shot3.jpg>
+```
+
+Without `--before` it draws only the new column. They are mock-ups: Inter stands in for Apple's font, so truncation is close to, not exactly, what iOS shows.
+
+What the previews show:
+- **In search, only the first part of the name is visible.** `UNTIL: Life Weeks & Tim…` against `UNTIL : Countdown & Ti…` now. The words that matter most are the first two after the colon, which is why "Life Weeks" comes first. The full name shows on the product page.
+- **The subtitle shows in full in both**, so it is the best place for a second message. The new one adds year, progress, widgets and watch; the old one repeated the app name.
+- **Search shows only the first three screenshots**, so slides 1 to 3 do the selling before anyone opens the page: the life grid, the Home Screen widgets, and Home. The old first three had two copies of "Track Your Progress", with a bell and a dartboard that say nothing about the app.
+- **The product page leads with the promotional text** (until "more"), which is the line you can change any time without a new version.
+
+---
+
 ## Languages
 
 Add these localizations in App Store Connect → the version → the language menu. Each one gets its own name, subtitle and 100-character keyword field, which is extra searchable text in that storefront.
@@ -114,6 +132,35 @@ Also worth doing, in this order: an **app preview video** (15 to 30 seconds: the
 
 ---
 
+## Header and Search Results assets (App Store Connect > Product Page Information > Header and Search Results)
+
+This tab takes creative assets that sit on top of the product page (header) and in search results. They are not screenshots. Spec from Apple's [creative assets specifications](https://developer.apple.com/help/app-store-connect/reference/app-information/creative-assets-specifications): no transparency in any of them, and key art must stay inside the art safe area.
+
+| File (`docs/store-listing/header-search/`) | Size | Ratio | Where it goes | Art safe area |
+|------|------|:-----:|---------------|---------------|
+| `universal.png` | 5244×2950, PNG | 16:9 | **Header**, and tick the option to use it in search results too | 1402×962 at (1921, 660) |
+| `universal-notext.png` | 5244×2950, PNG | 16:9 | Same, for languages whose headline is not translated yet | same |
+| `header.png` | 3840×1646 | 21:9 | Header only, if you want a tighter crop than the universal one | 1646×661 at (1097, 493) |
+| `search.png` | 3840×2560 | 3:2 | Search results only | 2168×1030 at (836, 765) |
+
+**Recommended:** upload `universal.png` to Header and use it for search results as well. Apple suggests one universal image to build brand recognition. Then press Preview in App Store Connect to check the crop on every device and in Dark Mode before you submit.
+
+What it shows: one idea, "Your life in weeks". The life grid (lived weeks in orange, the rest dim) runs across the whole canvas, and the real Day widget (day, month, year and life left) sits in the safe area under the headline. It is a real capture of the widget, not a drawing.
+
+Rules from Apple's [asset best practices](https://developer.apple.com/app-store/asset-best-practices/) that the image follows, and that any change should keep:
+- One clear idea, a short phrase that adds to the picture, nothing busy.
+- No prices or discounts, web addresses, copyright marks, awards, Apple recognitions such as "Editor's Choice", or logos of other platforms.
+- The artwork must be fine for a 4+ age rating.
+- Localize the words, or use the text-free file.
+
+Notes:
+- The headline is English. Use `universal-notext.png` for other languages until each has its own text (Inter has no Hindi, Marathi or Japanese glyphs, so those need a different font).
+- If you do not upload a search results asset, search shows your in-app events, app previews and screenshots instead.
+- The widget shows the day it was captured ("Mon, 16 Nov", a one-day streak). That is fine for launch; retake `captures-ios/02-home-widgets.png` and rerun `python3 scripts/store-listing/build_header_ios.py` for the New Year version ("Your year in weeks").
+- Test it: Product Page Optimization can run the text version against the text-free one.
+
+---
+
 ## Free ways to get seen
 
 ### In-app event: "New Year, in weeks"
@@ -168,6 +215,7 @@ Change one thing at a time. Name and keywords together are one change; screensho
 | [ ] | 1.0.1 submitted with name, subtitle, keywords and the `hi` + `mr` listings | App Store Connect, this week |
 | [ ] | A native reader checked `hi`, `mr`, `es-MX`, `de-DE`, `ja`, `pt-BR` | you, before pasting |
 | [ ] | New screenshots (4 built) uploaded, old ones removed; Lock Screen, Watch, countdowns and free-to-start captured and added | App Store Connect, design |
+| [ ] | Header and Search Results: `header-search/universal.png` uploaded, Preview checked on every device and in Dark Mode | App Store Connect |
 | [ ] | Provider token pasted into `APP_STORE_PROVIDER_TOKEN` and `appStoreCtaUrl` | code, 2 files |
 | [ ] | New Year event submitted | mid-December |
 | [ ] | Featuring nomination sent | App Store Connect |

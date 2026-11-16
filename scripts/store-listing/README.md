@@ -67,6 +67,22 @@ Headlines are in `SHOTS` at the top of `build_ios.py`; keep them the same as the
 
 Why not reuse the Play ones: they show Android's status bar and launcher, and Apple rejects screenshots with other platforms in them (Guideline 2.3.10). These come from the iOS Simulator.
 
+### Build the header and search results assets
+
+```bash
+python3 scripts/store-listing/build_header_ios.py --guides     # needs Pillow
+```
+
+Writes `docs/store-listing/header-search/` (`universal.png` 5244×2950, `universal-notext.png`, `header.png` 3840×1646, `search.png` 3840×2560; RGB PNG, no alpha) from the Home Screen widget capture `captures-ios/02-home-widgets.png`. `--guides` also writes copies with Apple's art safe area drawn on, into `docs/store-listing/previews/`. Specs, rules and upload steps are in `docs/APP_STORE_LISTING.md`.
+
+### Preview the listing (search result and product page header)
+
+```bash
+python3 scripts/store-listing/preview_ios.py --before <folder with the live icon.jpg, shot1.jpg … shot3.jpg>
+```
+
+Writes `docs/store-listing/previews/search-result.png` and `product-header.png`, the live listing next to the new one. A mock-up: Inter stands in for Apple's font.
+
 ### Taking the iOS captures again
 
 1. A clean simulator so no personal data is on screen: `xcrun simctl create UNTIL_Store com.apple.CoreSimulator.SimDeviceType.iPhone-17-Pro-Max com.apple.CoreSimulator.SimRuntime.iOS-26-5`, then `xcrun simctl boot <udid>`.
