@@ -24,7 +24,7 @@ from PIL import Image, ImageDraw, ImageFont
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 META = os.path.join(ROOT, 'docs', 'store-listing', 'app-store', 'metadata', 'en-US')
-SHOTS = os.path.join(ROOT, 'docs', 'store-listing', 'screenshots-ios')
+SHOTS = os.path.join(ROOT, 'docs', 'store-listing', 'screenshots-ios', '1320x2868')
 OUT = os.path.join(ROOT, 'docs', 'store-listing', 'previews')
 ICON = os.path.join(ROOT, 'ios', 'UNTIL', 'Images.xcassets', 'AppIcon.appiconset', 'AppIcon.png')
 FONTS = os.path.join(ROOT, 'src', 'assets', 'fonts')
