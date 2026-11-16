@@ -69,7 +69,7 @@ Without `--before` it draws only the new column. They are mock-ups: Inter stands
 What the previews show:
 - **In search, only the first part of the name is visible.** `UNTIL: Life Weeks & Tim…` against `UNTIL : Countdown & Ti…` now. The words that matter most are the first two after the colon, which is why "Life Weeks" comes first. The full name shows on the product page.
 - **The subtitle shows in full in both**, so it is the best place for a second message. The new one adds year, progress, widgets and watch; the old one repeated the app name.
-- **Search shows only the first three screenshots**, so slides 1 to 3 do the selling before anyone opens the page: the life grid, the Home Screen widgets, and Home. The old first three had two copies of "Track Your Progress", with a bell and a dartboard that say nothing about the app.
+- **Search shows only the first three screenshots**, so slides 1 to 3 do the selling before anyone opens the page: the life grid, the Home Screen widgets, and the Apple Watch. The old first three had two copies of "Track Your Progress", with a bell and a dartboard that say nothing about the app.
 - **The product page leads with the promotional text** (until "more"), which is the line you can change any time without a new version.
 
 ---
@@ -118,16 +118,23 @@ The old set (see the audit) repeats two headlines, repeats a slide, uses sticker
 
 The paths above are all under `docs/store-listing/`.
 
-**iPhone slides** (4, each in the two iPhone sizes above):
+**iPhone slides** (9 of the 10 Apple allows, each in the two iPhone sizes above). The order is on purpose: search shows only the first three, so they are the life grid, the widgets and the watch.
 
 | # | Headline | Shows |
 |---|----------|-------|
 | 1 | Your *life* in weeks | The Life grid (1,663 of 4,174 weeks) |
 | 2 | Time left, on your *Home Screen* | The large Day widget (day, month, year, life) and the small Day widget |
-| 3 | Day, year and *life* | Home: today, month, year and life, with today's tasks |
-| 4 | *Show up* daily | Streaks and badges ("a missed day is forgiven") |
+| 3 | And on your *wrist* | The four Apple Watch screens: today, month, year, life |
+| 4 | Watch *today* pass | Today's ring: passed, left, updating every second |
+| 5 | Your *year*, one dot a day | This year: 320 of 365 days, 45 left |
+| 6 | Day, year and *life* | Home: today, month, year and life, with today's tasks |
+| 7 | *Share* your progress | The share snapshot: today's ring and the month, year and life rings |
+| 8 | Your *month* in one ring | This month: 16 days passed, 14 left |
+| 9 | *Show up* daily | Streaks and badges ("a missed day is forgiven") |
 
-They come from the iOS Simulator with demo data only (the app's default birth date, no name or e-mail on screen). Rebuild them with `python3 scripts/store-listing/build_ios.py`; how to retake the captures is in [`scripts/store-listing/README.md`](../scripts/store-listing/README.md).
+They come from the iOS Simulator with demo data only (the app's default birth date, no name or e-mail on screen). Rebuild them with `python3 scripts/store-listing/build_ios.py`; how to retake the captures is in [`scripts/store-listing/README.md`](../scripts/store-listing/README.md). The numbers in slides 4, 5 and 8 are from 16 November; they are real, and fit the New Year season, but retake them for a later version if the date matters.
+
+Slide 3 uses the watch captures below inside two staggered columns instead of a phone, because the watch screens are the real app on the watch.
 
 **Apple Watch slides** (4, real captures from a Series 11 46mm simulator, no frame; Apple wants the real watch screen):
 
@@ -148,7 +155,7 @@ Rebuild with `python3 scripts/store-listing/build_watch.py`. The times in the co
 | Countdowns, Counters | The simulator would not focus the text fields, so no demo deadline could be added | Add a deadline ("Product launch") and a counter ("Water") by hand, then capture `Countdowns` and `CustomCounters` |
 | Free to start, 5-day preview | The paywall needs the RevenueCat key and App Store products; the simulator has neither | Capture on a real iPhone with a TestFlight build |
 
-Four strong slides are better than seven repeated ones. Add the missing ones to `SHOTS` in `build_ios.py` when the captures exist; the order to aim for is life, Home Screen, Lock Screen, countdowns, free-to-start.
+The tenth slot is free for the Lock Screen or free-to-start slide; add the capture and a line in `SHOTS` in `build_ios.py` when it exists. If the Lock Screen one is taken, put it third, ahead of the watch.
 
 Also worth doing, in this order: an **app preview video** (15 to 30 seconds: the widgets arriving on a Home Screen, then the Life grid), then **Product Page Optimization** to test the first two screenshots against each other.
 

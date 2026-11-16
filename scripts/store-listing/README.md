@@ -120,7 +120,7 @@ xcrun simctl ui <udid> appearance dark
 4. Open a screen with a deep link: `xcrun simctl openurl <udid> until://open/Life` (also `Premium`, `Countdowns`, `CustomCounters`, `Badges`, `DailyTasks`), then `xcrun simctl io <udid> screenshot docs/store-listing/captures-ios/<name>.png`.
 5. Widgets and the Lock Screen need the widgets added by hand from the widget gallery. Use fictional demo data: no real name, e-mail or birth date.
 
-Capture names `build_ios.py` looks for today: `01-life`, `02-home-widgets`, `03-home`, `04-badges`. Add `lock-screen`, `watch`, `deadlines`, `counters` and `premium` captures the same way and list them in `SHOTS`.
+Capture names `build_ios.py` looks for today: `01-life`, `02-home-widgets`, `03-home`, `04-badges`, `05-day`, `06-year`, `07-month`, `08-share` (in `captures-ios/`), plus the four watch captures in `captures-watch/` for the watch slide. The detail screens open with `until://open/DayDetail`, `MonthDetail`, `YearDetail` (also `HourCalculation`); the share screen opens from the share icon on Home. Add `lock-screen`, `deadlines`, `counters` and `premium` captures the same way and list them in `SHOTS`.
 
 Tips from the first run: pass `-derivedDataPath` so your own DerivedData is untouched; build with signing on (a build with `CODE_SIGNING_ALLOWED=NO` crashes at launch because the App Group is not accessible); the Debug build shows a "debugger warnings" toast, dismiss it before each capture; the first visit to each screen shows a badge popup, so visit every screen once before the real capture; `xcrun simctl io <udid> screenshot <file>` takes the capture without a screenshot tool.
 
