@@ -74,7 +74,7 @@
   "account.form.haveAccount": "Déjà un compte ? [Se connecter]",
   "account.form.newHere": "Nouveau ici ? [Créer un compte]",
   "account.identity.title": "Quand êtes-vous né(e) ?",
-  "account.identity.body": "Nous utilisons votre date de naissance et votre espérance de vie pour calculer la progression de votre vie. Les données restent sur votre appareil.",
+  "account.identity.body": "Nous utilisons votre date de naissance et votre espérance de vie pour calculer la progression de votre vie. Elles restent sur votre appareil et ne sont synchronisées avec votre compte que si vous vous connectez.",
   "account.identity.birthDate": "Date de naissance",
   "account.identity.required": "Requise pour Vie",
   "account.identity.birthDateA11y": "Date de naissance {{date}}. Touchez pour la modifier.",

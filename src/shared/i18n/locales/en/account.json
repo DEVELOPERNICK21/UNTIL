@@ -74,7 +74,7 @@
   "account.form.haveAccount": "Have an account? [Sign in]",
   "account.form.newHere": "New here? [Create an account]",
   "account.identity.title": "When were you born?",
-  "account.identity.body": "We use your birth date and expected lifespan to calculate life progress. Data stays on your device.",
+  "account.identity.body": "We use your birth date and expected lifespan to calculate life progress. They stay on this device, and sync to your account only if you sign in.",
   "account.identity.birthDate": "Birth date",
   "account.identity.required": "Required for Life",
   "account.identity.birthDateA11y": "Birth date {{date}}. Tap to change.",

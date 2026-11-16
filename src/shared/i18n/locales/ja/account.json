@@ -70,7 +70,7 @@
   "account.form.haveAccount": "アカウントをお持ちですか？[ログイン]",
   "account.form.newHere": "初めてですか？[アカウントを作成]",
   "account.identity.title": "生まれたのはいつですか？",
-  "account.identity.body": "生年月日と想定寿命から、人生の進み具合を計算します。データはデバイスの中だけに保存されます。",
+  "account.identity.body": "生年月日と想定寿命から、人生の進み具合を計算します。データはこのデバイスに保存され、ログインした場合のみアカウントに同期されます。",
   "account.identity.birthDate": "生年月日",
   "account.identity.required": "ライフ機能に必要",
   "account.identity.birthDateA11y": "生年月日 {{date}}。タップして変更します。",
