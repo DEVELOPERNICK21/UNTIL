@@ -98,3 +98,6 @@ desktop/dist
 desktop/src-tauri/target
 desktop/src-tauri/gen
 desktop/.env.local
+
+# Generated QA copies with the art safe area drawn on (build_header_ios.py --guides)
+docs/store-listing/previews/*-guides.png

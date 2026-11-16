@@ -106,7 +106,19 @@ Notes:
 
 The old set (see the audit) repeats two headlines, repeats a slide, uses stickers that have nothing to do with the app, and leads with the tasks screen. The new set is one idea per slide, real iOS captures, the app's own dark look.
 
-**Built and ready to upload** (`docs/store-listing/screenshots-ios/01.png … 04.png`, 1320×2868, Apple's 6.9-inch size; Apple scales them for smaller iPhones):
+**Which file goes in which slot.** App Store Connect has one upload slot per device size, and a file of the wrong size is refused with "File dimensions are invalid". That is what happened when the 1320×2868 files went into the medium-display slot. (An earlier version of this doc said one size was enough because Apple scales the 6.9-inch set down. That is wrong for the required medium slot.) Sizes are from Apple's [screenshot specifications](https://developer.apple.com/help/app-store-connect/reference/app-information/screenshot-specifications/); no alpha channel is allowed in any of them, and all files here are RGB.
+
+| App Store Connect slot | Folder | Size | Needed? |
+|------------------------|--------|------|---------|
+| iPhone with Dynamic Island (medium display) | `screenshots-ios/1206x2622/` | 1206×2622 (1179×2556 also works) | **Yes.** This is the one iPhone slot App Store Connect requires |
+| iPhone with Dynamic Island (large display) | `screenshots-ios/1320x2868/` | 1320×2868 (1260×2736 and 1290×2796 also work) | Optional |
+| Apple Watch Series 12 | `screenshots-watch/416x496/` | 416×496 | **Yes**, because the app has a watch app. One size covers Series 12, 11 and 10 |
+| iPhone Duo | none yet | 1398×2034 outer, 2007×2853 inner | Not yet. Apple will require them from April 2027 for apps built with the iOS 27.1 SDK or later; they add a "made for iPhone Duo" badge. It needs a layout and a simulator for Duo first |
+| iPad 13" display | none | 2064×2752 | Only if the app runs natively on iPad. UNTIL is an iPhone app, so leave it empty |
+
+The paths above are all under `docs/store-listing/`.
+
+**iPhone slides** (4, each in the two iPhone sizes above):
 
 | # | Headline | Shows |
 |---|----------|-------|
@@ -117,16 +129,26 @@ The old set (see the audit) repeats two headlines, repeats a slide, uses sticker
 
 They come from the iOS Simulator with demo data only (the app's default birth date, no name or e-mail on screen). Rebuild them with `python3 scripts/store-listing/build_ios.py`; how to retake the captures is in [`scripts/store-listing/README.md`](../scripts/store-listing/README.md).
 
+**Apple Watch slides** (4, real captures from a Series 11 46mm simulator, no frame; Apple wants the real watch screen):
+
+| # | Shows |
+|---|-------|
+| 1 | Today: "9h 52m left today" on the sun arc |
+| 2 | November: "14 days left" with the month's dots |
+| 3 | 2026: "45 days left" on the year ring |
+| 4 | Your life: "48.1 years left of 80" |
+
+Rebuild with `python3 scripts/store-listing/build_watch.py`. The times in the corner differ by a minute or two between captures; Apple does not mind. Retake all four at once if you want them identical.
+
 **Still to capture** (these were planned and could not be taken from the simulator in this pass):
 
 | Slide | Why it is missing | What to do |
 |-------|-------------------|------------|
 | Lock Screen widgets (and Dynamic Island) | The simulator would not open the Lock Screen editor | Capture on a real iPhone: long-press the Lock Screen, add the Day widget, screenshot. Dynamic Island needs a Live Activity running on a real iPhone 14 Pro or later |
-| Apple Watch: today's % | Needs a paired watch simulator | Pair one with the iPhone simulator, or capture on a real watch |
 | Countdowns, Counters | The simulator would not focus the text fields, so no demo deadline could be added | Add a deadline ("Product launch") and a counter ("Water") by hand, then capture `Countdowns` and `CustomCounters` |
 | Free to start, 5-day preview | The paywall needs the RevenueCat key and App Store products; the simulator has neither | Capture on a real iPhone with a TestFlight build |
 
-Four strong slides are better than seven repeated ones. Add the missing ones to `SHOTS` in `build_ios.py` when the captures exist; the order to aim for is life, Home Screen, Lock Screen, Watch, countdowns, free-to-start.
+Four strong slides are better than seven repeated ones. Add the missing ones to `SHOTS` in `build_ios.py` when the captures exist; the order to aim for is life, Home Screen, Lock Screen, countdowns, free-to-start.
 
 Also worth doing, in this order: an **app preview video** (15 to 30 seconds: the widgets arriving on a Home Screen, then the Life grid), then **Product Page Optimization** to test the first two screenshots against each other.
 
@@ -214,7 +236,9 @@ Change one thing at a time. Name and keywords together are one change; screensho
 | [ ] | Promotional text pasted | App Store Connect, now |
 | [ ] | 1.0.1 submitted with name, subtitle, keywords and the `hi` + `mr` listings | App Store Connect, this week |
 | [ ] | A native reader checked `hi`, `mr`, `es-MX`, `de-DE`, `ja`, `pt-BR` | you, before pasting |
-| [ ] | New screenshots (4 built) uploaded, old ones removed; Lock Screen, Watch, countdowns and free-to-start captured and added | App Store Connect, design |
+| [ ] | New iPhone screenshots uploaded to the medium-display slot (`1206x2622`), optionally the large slot (`1320x2868`); old ones removed | App Store Connect |
+| [ ] | Apple Watch screenshots uploaded to the Series 12 slot (`screenshots-watch/416x496`) | App Store Connect |
+| [ ] | Lock Screen, countdowns and free-to-start slides captured and added | design, real iPhone |
 | [ ] | Header and Search Results: `header-search/universal.png` uploaded, Preview checked on every device and in Dark Mode | App Store Connect |
 | [ ] | Provider token pasted into `APP_STORE_PROVIDER_TOKEN` and `appStoreCtaUrl` | code, 2 files |
 | [ ] | New Year event submitted | mid-December |

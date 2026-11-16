@@ -61,11 +61,34 @@ python3 scripts/store-listing/build_ios.py     # needs Pillow
 
 | In | Out |
 |----|-----|
-| `docs/store-listing/captures-ios/*.png` (1320×2868) | `docs/store-listing/screenshots-ios/01.png … 04.png` (1320×2868, Apple's 6.9-inch size) |
+| `docs/store-listing/captures-ios/*.png` (1320×2868) | `screenshots-ios/1206x2622/01.png … 04.png` for the **required** "iPhone with Dynamic Island (medium display)" slot, and `screenshots-ios/1320x2868/` for the optional large slot |
+
+Each App Store Connect slot takes only its own sizes; a wrong-size file fails with "File dimensions are invalid". The slot table is in `docs/APP_STORE_LISTING.md`.
 
 Headlines are in `SHOTS` at the top of `build_ios.py`; keep them the same as the table in `docs/APP_STORE_LISTING.md`.
 
 Why not reuse the Play ones: they show Android's status bar and launcher, and Apple rejects screenshots with other platforms in them (Guideline 2.3.10). These come from the iOS Simulator.
+
+### Apple Watch screenshots
+
+```bash
+python3 scripts/store-listing/build_watch.py     # needs Pillow
+```
+
+Reads `docs/store-listing/captures-watch/*.png` (raw captures, 416×496) and writes `screenshots-watch/416x496/NN.png` as RGB (no alpha) for the "Apple Watch Series 12" slot, which also covers Series 11 and 10.
+
+To retake them: create and pair a 46mm watch simulator, install the watch app on it, open it, and capture each page.
+
+```bash
+xcrun simctl create UNTIL_Store_Watch com.apple.CoreSimulator.SimDeviceType.Apple-Watch-Series-11-46mm com.apple.CoreSimulator.SimRuntime.watchOS-26-5
+xcrun simctl pair <watch-udid> <iphone-udid>
+xcrun simctl boot <watch-udid>
+xcrun simctl install <watch-udid> "<DerivedData>/Build/Products/Debug-iphonesimulator/<App>.app/Watch/UNTILWatch Watch App.app"
+xcrun simctl launch <watch-udid> com.developernick.until.watchapp
+xcrun simctl io <watch-udid> screenshot docs/store-listing/captures-watch/01-today.png
+```
+
+Swipe left for each next page (the tool that drives the iPhone simulator also drives the watch one). Installing the iPhone app on a paired simulator did not put the watch app on the watch, so it is installed directly. A 42mm or Ultra simulator gives a different size and App Store Connect will refuse it for this slot.
 
 ### Build the header and search results assets
 

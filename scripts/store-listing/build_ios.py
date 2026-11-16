@@ -5,7 +5,12 @@ Builds the App Store screenshots from real iOS Simulator captures.
   python3 scripts/store-listing/build_ios.py
 
 Reads   docs/store-listing/captures-ios/*.png   (raw iPhone 17 Pro Max screenshots, 1320 x 2868, see README.md)
-Writes  docs/store-listing/screenshots-ios/01.png ... 04.png   (1320 x 2868, Apple's 6.9-inch size)
+Writes  docs/store-listing/screenshots-ios/1206x2622/01.png ... 04.png
+            App Store Connect slot "iPhone with Dynamic Island (medium display)". REQUIRED. Accepts 1179 x 2556 or 1206 x 2622.
+        docs/store-listing/screenshots-ios/1320x2868/01.png ... 04.png
+            Slot "Dynamic Island (large display)". Optional. Accepts 1260 x 2736, 1290 x 2796 or 1320 x 2868.
+        Uploading a size to the wrong slot fails with "File dimensions are invalid".
+        (developer.apple.com/help/app-store-connect/reference/app-information/screenshot-specifications)
 
 Only Pillow is needed. Headlines live in SHOTS below and in docs/APP_STORE_LISTING.md; change both together.
 Why separate from build.py: the Play captures show Android's status bar and launcher, and Apple rejects
@@ -28,7 +33,9 @@ ORANGE = (232, 124, 32)
 WHITE = (255, 255, 255)
 MUTED = (178, 178, 184)
 
-W, H = 1320, 2868
+W, H = 1320, 2868  # the design size; the layout is drawn here and scaled to the other sizes
+# Both iPhone sizes come out of the same layout (their aspect ratios differ by 0.07 percent).
+SIZES = [(1206, 2622), (1320, 2868)]
 
 
 def font(weight, size):
@@ -126,10 +133,15 @@ def screenshot(n, headline, sub, capture_name, phone_width=1120, phone_top=640):
     img, pad = phone(shot, phone_width)
     canvas = canvas.convert('RGBA')
     canvas.alpha_composite(img, ((W - phone_width) // 2 - pad, phone_top - pad))
-    out = os.path.join(OUT, f'{n:02d}.png')
-    os.makedirs(OUT, exist_ok=True)
-    canvas.convert('RGB').save(out, optimize=True)
-    print(f'  wrote screenshots-ios/{n:02d}.png')
+    canvas = canvas.convert('RGB')  # Apple rejects an alpha channel
+    for tw, th in SIZES:
+        folder = os.path.join(OUT, f'{tw}x{th}')
+        os.makedirs(folder, exist_ok=True)
+        out = os.path.join(folder, f'{n:02d}.png')
+        img = canvas if (tw, th) == (W, H) else canvas.resize((tw, th), Image.LANCZOS)
+        assert img.mode == 'RGB' and img.size == (tw, th)
+        img.save(out, optimize=True)
+        print(f'  wrote screenshots-ios/{tw}x{th}/{n:02d}.png')
     return out
 
 
@@ -144,7 +156,7 @@ SHOTS = [
 
 
 if __name__ == '__main__':
-    print('App Store screenshots (1320 x 2868)')
+    print('App Store screenshots (1206 x 2622 required, 1320 x 2868 optional)')
     for i, (headline, sub, cap, extra) in enumerate(SHOTS, start=1):
         screenshot(i, headline, sub, cap, **extra)
     sys.exit(0)
