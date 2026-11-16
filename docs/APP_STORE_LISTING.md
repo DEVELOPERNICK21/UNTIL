@@ -86,21 +86,31 @@ Notes:
 
 ## Screenshots
 
-The old set (see the audit) repeats two headlines, repeats a slide, uses stickers that have nothing to do with the app, and leads with the tasks screen. The new set is one idea per slide, in this order:
+The old set (see the audit) repeats two headlines, repeats a slide, uses stickers that have nothing to do with the app, and leads with the tasks screen. The new set is one idea per slide, real iOS captures, the app's own dark look.
+
+**Built and ready to upload** (`docs/store-listing/screenshots-ios/01.png … 04.png`, 1320×2868, Apple's 6.9-inch size; Apple scales them for smaller iPhones):
 
 | # | Headline | Shows |
 |---|----------|-------|
-| 1 | Your life in weeks | The Life grid |
-| 2 | Day, year and life on your Home Screen | The widgets |
-| 3 | On your Lock Screen | Lock Screen widgets |
-| 4 | Countdowns to what matters | Deadlines |
-| 5 | Tap to count anything | Counters |
-| 6 | Today's % on your wrist | Apple Watch |
-| 7 | Free to start. 5-day Premium preview | The Premium screen |
+| 1 | Your *life* in weeks | The Life grid (1,663 of 4,174 weeks) |
+| 2 | Time left, on your *Home Screen* | The large Day widget (day, month, year, life) and the small Day widget |
+| 3 | Day, year and *life* | Home: today, month, year and life, with today's tasks |
+| 4 | *Show up* daily | Streaks and badges ("a missed day is forgiven") |
 
-How they are made, and how to redo them, is in [`scripts/store-listing/README.md`](../scripts/store-listing/README.md) (App Store section). They are real captures from the iOS Simulator at 1320×2868 (the iPhone 17 Pro Max, Apple's 6.9-inch size), with no real name, e-mail or birth date on screen. Apple scales them down for smaller iPhones, so one size is enough.
+They come from the iOS Simulator with demo data only (the app's default birth date, no name or e-mail on screen). Rebuild them with `python3 scripts/store-listing/build_ios.py`; how to retake the captures is in [`scripts/store-listing/README.md`](../scripts/store-listing/README.md).
 
-Also worth doing, in this order: an **app preview video** (15 to 30 seconds: the widgets arriving on a Home Screen, then the Lock Screen, then the Life grid), then **Product Page Optimization** to test the first two screenshots against each other.
+**Still to capture** (these were planned and could not be taken from the simulator in this pass):
+
+| Slide | Why it is missing | What to do |
+|-------|-------------------|------------|
+| Lock Screen widgets (and Dynamic Island) | The simulator would not open the Lock Screen editor | Capture on a real iPhone: long-press the Lock Screen, add the Day widget, screenshot. Dynamic Island needs a Live Activity running on a real iPhone 14 Pro or later |
+| Apple Watch: today's % | Needs a paired watch simulator | Pair one with the iPhone simulator, or capture on a real watch |
+| Countdowns, Counters | The simulator would not focus the text fields, so no demo deadline could be added | Add a deadline ("Product launch") and a counter ("Water") by hand, then capture `Countdowns` and `CustomCounters` |
+| Free to start, 5-day preview | The paywall needs the RevenueCat key and App Store products; the simulator has neither | Capture on a real iPhone with a TestFlight build |
+
+Four strong slides are better than seven repeated ones. Add the missing ones to `SHOTS` in `build_ios.py` when the captures exist; the order to aim for is life, Home Screen, Lock Screen, Watch, countdowns, free-to-start.
+
+Also worth doing, in this order: an **app preview video** (15 to 30 seconds: the widgets arriving on a Home Screen, then the Life grid), then **Product Page Optimization** to test the first two screenshots against each other.
 
 ---
 
@@ -157,7 +167,7 @@ Change one thing at a time. Name and keywords together are one change; screensho
 | [ ] | Promotional text pasted | App Store Connect, now |
 | [ ] | 1.0.1 submitted with name, subtitle, keywords and the `hi` + `mr` listings | App Store Connect, this week |
 | [ ] | A native reader checked `hi`, `mr`, `es-MX`, `de-DE`, `ja`, `pt-BR` | you, before pasting |
-| [ ] | New screenshots uploaded, old ones removed | App Store Connect |
+| [ ] | New screenshots (4 built) uploaded, old ones removed; Lock Screen, Watch, countdowns and free-to-start captured and added | App Store Connect, design |
 | [ ] | Provider token pasted into `APP_STORE_PROVIDER_TOKEN` and `appStoreCtaUrl` | code, 2 files |
 | [ ] | New Year event submitted | mid-December |
 | [ ] | Featuring nomination sent | App Store Connect |

@@ -5,7 +5,7 @@ Builds the App Store screenshots from real iOS Simulator captures.
   python3 scripts/store-listing/build_ios.py
 
 Reads   docs/store-listing/captures-ios/*.png   (raw iPhone 17 Pro Max screenshots, 1320 x 2868, see README.md)
-Writes  docs/store-listing/screenshots-ios/01.png ... 07.png   (1320 x 2868, Apple's 6.9-inch size)
+Writes  docs/store-listing/screenshots-ios/01.png ... 04.png   (1320 x 2868, Apple's 6.9-inch size)
 
 Only Pillow is needed. Headlines live in SHOTS below and in docs/APP_STORE_LISTING.md; change both together.
 Why separate from build.py: the Play captures show Android's status bar and launcher, and Apple rejects
@@ -53,14 +53,15 @@ def rounded(img, radius):
 
 
 def words_with_color(text):
-    """'Your *life* in weeks' -> [('Your', white), ('life', orange), ('in', white), ('weeks', white)]."""
+    """'Your *life* in weeks' -> [('Your', white), ('life', orange), ('in', white), ('weeks', white)].
+    Punctuation after the closing star is kept: '*year*,' -> 'year,' in orange."""
     out, accent = [], False
     for token in text.split(' '):
-        starts, ends = token.startswith('*'), token.endswith('*')
-        if starts:
+        if token.startswith('*'):
             accent = True
-        out.append((token.strip('*'), ORANGE if accent else WHITE))
-        if ends:
+        closes = accent and '*' in token[1:]
+        out.append((token.replace('*', ''), ORANGE if accent else WHITE))
+        if closes:
             accent = False
     return out
 
@@ -133,14 +134,12 @@ def screenshot(n, headline, sub, capture_name, phone_width=1120, phone_top=640):
 
 
 # (headline with *accent* word, line under it, capture file, layout overrides)
+# Add Lock Screen, Apple Watch and Premium slides when their captures exist (see README.md).
 SHOTS = [
     ('Your *life* in weeks', 'One calm grid. Every week counts', '01-life.png', {}),
-    ('Time left, on your *Home Screen*', 'Day, year and life, live', '02-home-widgets.png', {}),
-    ('And on your *Lock Screen*', 'See it every time you pick up your phone', '03-lock-screen.png', {}),
-    ('*Countdown* to what matters', 'Deadlines, with a widget for the nearest', '04-deadlines.png', {}),
-    ('Tap to *count* anything', 'Water, pages, workouts. +1 from the widget', '05-counters.png', {}),
-    ('Today\'s % on your *wrist*', 'Apple Watch face and Time Hub', '06-watch.png', {}),
-    ('*Free* to start', 'Try Premium for 5 days. Cancel any time', '07-premium.png', {}),
+    ('Time left, on your *Home Screen*', 'Day, month, year and life, live', '02-home-widgets.png', {}),
+    ('Day, year and *life*', 'How much is left, at a glance', '03-home.png', {}),
+    ('*Show up* daily', 'Streaks and badges that forgive a miss', '04-badges.png', {}),
 ]
 
 

@@ -61,7 +61,7 @@ python3 scripts/store-listing/build_ios.py     # needs Pillow
 
 | In | Out |
 |----|-----|
-| `docs/store-listing/captures-ios/*.png` (1320×2868) | `docs/store-listing/screenshots-ios/01.png … 07.png` (1320×2868, Apple's 6.9-inch size) |
+| `docs/store-listing/captures-ios/*.png` (1320×2868) | `docs/store-listing/screenshots-ios/01.png … 04.png` (1320×2868, Apple's 6.9-inch size) |
 
 Headlines are in `SHOTS` at the top of `build_ios.py`; keep them the same as the table in `docs/APP_STORE_LISTING.md`.
 
@@ -81,5 +81,7 @@ xcrun simctl ui <udid> appearance dark
 4. Open a screen with a deep link: `xcrun simctl openurl <udid> until://open/Life` (also `Premium`, `Countdowns`, `CustomCounters`, `Badges`, `DailyTasks`), then `xcrun simctl io <udid> screenshot docs/store-listing/captures-ios/<name>.png`.
 5. Widgets and the Lock Screen need the widgets added by hand from the widget gallery. Use fictional demo data: no real name, e-mail or birth date.
 
-Capture names the script looks for: `01-life`, `02-home-widgets`, `03-lock-screen`, `04-deadlines`, `05-counters`, `06-watch`, `07-premium`.
+Capture names `build_ios.py` looks for today: `01-life`, `02-home-widgets`, `03-home`, `04-badges`. Add `lock-screen`, `watch`, `deadlines`, `counters` and `premium` captures the same way and list them in `SHOTS`.
+
+Tips from the first run: pass `-derivedDataPath` so your own DerivedData is untouched; build with signing on (a build with `CODE_SIGNING_ALLOWED=NO` crashes at launch because the App Group is not accessible); the Debug build shows a "debugger warnings" toast, dismiss it before each capture; the first visit to each screen shows a badge popup, so visit every screen once before the real capture; `xcrun simctl io <udid> screenshot <file>` takes the capture without a screenshot tool.
 
