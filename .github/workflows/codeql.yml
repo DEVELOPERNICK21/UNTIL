@@ -5,7 +5,7 @@
 #   java-kotlin   the Android widgets and native modules. Needs `npm ci` first: the Gradle build loads the
 #                 React Native plugin from node_modules, and without it Gradle stops before compiling.
 #   swift         the iOS app, widgets and watch app. `pod install` and the Xcode build also need
-#                 node_modules, so `npm ci` runs first for it too.
+#                 node_modules, so `npm ci` runs first for it too, and the build is written out (see the step).
 # c-cpp is not scanned: the repository has no C or C++ source of its own (only two Objective-C bridge
 # files), and CodeQL fails a c-cpp job that finds nothing to extract.
 name: "CodeQL Advanced"
@@ -48,7 +48,7 @@ jobs:
         - language: rust
           build-mode: none
         - language: swift
-          build-mode: autobuild
+          build-mode: manual
     steps:
     - name: Checkout repository
       uses: actions/checkout@v7
@@ -91,6 +91,21 @@ jobs:
         chmod +x ./gradlew
         ./gradlew --no-daemon --no-build-cache \
           :app:compileDebugKotlin :app:compileDebugJavaWithJavac
+
+    # Swift is built explicitly. With node_modules installed, CodeQL's autobuild finds every Xcode project
+    # inside it too, fails to read one ("Cannot parse a NULL or zero-length data") and gives up. Building
+    # the app scheme builds the app, the widgets and the watch app, which is all the Swift in the repo.
+    - name: Build the iOS app
+      if: matrix.language == 'swift'
+      shell: bash
+      working-directory: ios
+      run: |
+        pod install
+        xcodebuild clean build \
+          -workspace UNTIL.xcworkspace -scheme UNTIL \
+          -configuration Debug -sdk iphonesimulator \
+          -destination 'generic/platform=iOS Simulator' \
+          CODE_SIGNING_ALLOWED=NO COMPILER_INDEX_STORE_ENABLE=NO
 
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v4
