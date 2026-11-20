@@ -127,13 +127,12 @@
           android:name="android.appwidget.provider"
           android:resource="@xml/widget_countdown_info" />
       </receiver>
+      <!-- The three tap receivers below are only started by the app's own widgets, through explicit
+           PendingIntents (UNTILWidgetWorker). Not exported, so no other app can send them a broadcast
+           and bump a counter or flip a timer. -->
       <receiver
         android:name=".CounterIncrementReceiver"
-        android:exported="true">
-        <intent-filter>
-          <action android:name="app.until.time.INCREMENT_COUNTER" />
-        </intent-filter>
-      </receiver>
+        android:exported="false" />
       <receiver
         android:name=".UNTILDailyTasksWidgetProvider"
         android:exported="true"
@@ -147,11 +146,7 @@
       </receiver>
       <receiver
         android:name=".DailyTasksWidgetTapReceiver"
-        android:exported="true">
-        <intent-filter>
-          <action android:name="app.until.time.TOGGLE_DAILY_TASKS_PAGE" />
-        </intent-filter>
-      </receiver>
+        android:exported="false" />
       <receiver
         android:name=".UNTILHourCalculationWidgetProvider"
         android:exported="true"
@@ -165,11 +160,7 @@
       </receiver>
       <receiver
         android:name=".HourCalculationTapReceiver"
-        android:exported="true">
-        <intent-filter>
-          <action android:name="app.until.time.TOGGLE_HOUR_CALCULATION" />
-        </intent-filter>
-      </receiver>
+        android:exported="false" />
       <service
         android:name=".UNTILOverlayService"
         android:exported="false"

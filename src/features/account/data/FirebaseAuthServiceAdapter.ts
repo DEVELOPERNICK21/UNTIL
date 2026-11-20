@@ -224,11 +224,11 @@ function getAuthModule(): AuthModule | null {
 }
 
 function mapProviders(user: MinimalFirebaseUser): AuthProviderId[] {
-  const ids = (user.providerData ?? []).map(p => p.providerId);
+  const ids = new Set(user.providerData?.map(p => p.providerId));
   const providers: AuthProviderId[] = [];
-  if (ids.includes('google.com')) providers.push('google');
-  if (ids.includes('apple.com')) providers.push('apple');
-  if (ids.includes('password')) providers.push('password');
+  if (ids.has('google.com')) providers.push('google');
+  if (ids.has('apple.com')) providers.push('apple');
+  if (ids.has('password')) providers.push('password');
   if (providers.length === 0) providers.push('password');
   return providers;
 }

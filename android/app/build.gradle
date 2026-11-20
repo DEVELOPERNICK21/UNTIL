@@ -92,6 +92,12 @@ def enableProguardInReleaseBuilds = true
  */
 def jscFlavor = 'io.github.react-native-community:jsc-android:2026004.+'
 
+// Same list the React Native build uses (android/gradle.properties), so what is compiled and what
+// is packaged cannot drift apart. Prebuilt libraries (Skia, Hermes, ...) ship every ABI; this
+// keeps only these.
+def appAbis = (findProperty("reactNativeArchitectures") ?: "armeabi-v7a,arm64-v8a")
+    .toString().split(",").collect { it.trim() }.findAll { !it.isEmpty() }
+
 android {
     ndkVersion rootProject.ext.ndkVersion
     buildToolsVersion rootProject.ext.buildToolsVersion
@@ -108,6 +114,9 @@ android {
             (project.findProperty("untilVersionCode") ?: "35").toString().toInteger()
         )
         versionName "1.3"
+        ndk {
+            abiFilters.addAll(appAbis)
+        }
     }
     signingConfigs {
         debug {

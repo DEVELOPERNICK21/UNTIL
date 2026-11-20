@@ -48,7 +48,12 @@ const MAX_NOTES = 3;
 const MAX_NOTE_LENGTH = 90;
 const MAX_VERSION_NAME_LENGTH = 20;
 
-const PACKAGE = ANDROID_PACKAGE_NAME.replace(/\./g, '\\.');
+/** Every character with a meaning in a regular expression, escaped (backslash included). */
+function escapeRegExp(text: string): string {
+  return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+const PACKAGE = escapeRegExp(ANDROID_PACKAGE_NAME);
 const ANDROID_URL = new RegExp(
   `^(https://play\\.google\\.com/store/apps/details\\?id=${PACKAGE}|market://details\\?id=${PACKAGE})(&\\S*)?$`,
 );
