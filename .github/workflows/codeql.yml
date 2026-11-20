@@ -4,8 +4,9 @@
 #   actions, javascript-typescript, ruby, rust  analysed from source, no build needed.
 #   java-kotlin   the Android widgets and native modules. Needs `npm ci` first: the Gradle build loads the
 #                 React Native plugin from node_modules, and without it Gradle stops before compiling.
-#   swift         the iOS app, widgets and watch app. `pod install` and the Xcode build also need
-#                 node_modules, so `npm ci` runs first for it too, and the build is written out (see the step).
+#   swift         the iOS app, widgets and watch app. Its own job below: it is a full Xcode build of the
+#                 React Native app under the CodeQL tracer, which takes well over half an hour, so it runs
+#                 on pushes to main and on the weekly schedule, not on every pull request.
 # c-cpp is not scanned: the repository has no C or C++ source of its own (only two Objective-C bridge
 # files), and CodeQL fails a c-cpp job that finds nothing to extract.
 name: "CodeQL Advanced"
@@ -21,7 +22,7 @@ on:
 jobs:
   analyze:
     name: Analyze (${{ matrix.language }})
-    runs-on: ${{ (matrix.language == 'swift' && 'macos-latest') || 'ubuntu-latest' }}
+    runs-on: ubuntu-latest
     permissions:
       # required for all workflows
       security-events: write
@@ -47,22 +48,20 @@ jobs:
           build-mode: none
         - language: rust
           build-mode: none
-        - language: swift
-          build-mode: manual
     steps:
     - name: Checkout repository
       uses: actions/checkout@v7
 
-    # The two compiled languages build the React Native app, which reads node_modules.
+    # The Android build reads node_modules (the React Native Gradle plugin lives there).
     - name: Set up Node
-      if: matrix.language == 'java-kotlin' || matrix.language == 'swift'
+      if: matrix.language == 'java-kotlin'
       uses: actions/setup-node@v4
       with:
         node-version: 22
         cache: npm
 
     - name: Install JavaScript dependencies
-      if: matrix.language == 'java-kotlin' || matrix.language == 'swift'
+      if: matrix.language == 'java-kotlin'
       shell: bash
       # --ignore-scripts: nothing here needs a lifecycle script, and it keeps third-party install scripts out of CI.
       run: npm ci --ignore-scripts
@@ -92,11 +91,44 @@ jobs:
         ./gradlew --no-daemon --no-build-cache \
           :app:compileDebugKotlin :app:compileDebugJavaWithJavac
 
+    - name: Perform CodeQL Analysis
+      uses: github/codeql-action/analyze@v4
+      with:
+        category: "/language:${{matrix.language}}"
+
+  analyze-swift:
+    name: Analyze (swift)
+    if: github.event_name != 'pull_request'
+    runs-on: macos-latest
+    permissions:
+      security-events: write
+      packages: read
+      actions: read
+      contents: read
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v7
+
+    - name: Set up Node
+      uses: actions/setup-node@v4
+      with:
+        node-version: 22
+        cache: npm
+
+    - name: Install JavaScript dependencies
+      shell: bash
+      run: npm ci --ignore-scripts
+
+    - name: Initialize CodeQL
+      uses: github/codeql-action/init@v4
+      with:
+        languages: swift
+        build-mode: manual
+
     # Swift is built explicitly. With node_modules installed, CodeQL's autobuild finds every Xcode project
     # inside it too, fails to read one ("Cannot parse a NULL or zero-length data") and gives up. Building
     # the app scheme builds the app, the widgets and the watch app, which is all the Swift in the repo.
     - name: Build the iOS app
-      if: matrix.language == 'swift'
       shell: bash
       working-directory: ios
       run: |
@@ -110,4 +142,4 @@ jobs:
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v4
       with:
-        category: "/language:${{matrix.language}}"
+        category: "/language:swift"
