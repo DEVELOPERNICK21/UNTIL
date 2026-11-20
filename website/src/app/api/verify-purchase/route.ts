@@ -10,11 +10,18 @@
  */
 
 import { NextResponse } from 'next/server';
+import {
+  DEFAULT_PACKAGE_NAME,
+  buildPurchaseLookupUrl,
+  isSubscriptionProduct,
+  isValidProductId,
+  isValidPurchaseToken,
+} from '@/lib/playPurchase';
 
 type Body = {
-  productId?: string;
-  purchaseToken?: string;
-  packageName?: string;
+  productId?: unknown;
+  purchaseToken?: unknown;
+  packageName?: unknown;
 };
 
 async function verifyWithGooglePlay(
@@ -44,19 +51,20 @@ async function verifyWithGooglePlay(
       return { ok: false, error: 'Failed to obtain Google access token' };
     }
 
-    const isSubscription = productId.includes('subscription');
-    const base = `https://androidpublisher.googleapis.com/androidpublisher/v3/applications/${packageName}/purchases`;
-    const url = isSubscription
-      ? `${base}/subscriptions/${productId}/tokens/${encodeURIComponent(purchaseToken)}`
-      : `${base}/products/${productId}/tokens/${encodeURIComponent(purchaseToken)}`;
+    const isSubscription = isSubscriptionProduct(productId);
+    // Throws on anything that is not a plain product id / token / package name, and fixes the host.
+    const url = buildPurchaseLookupUrl({ packageName, productId, purchaseToken });
 
     const res = await fetch(url, {
       headers: { Authorization: `Bearer ${token.token}` },
+      redirect: 'error', // never send the Google token to a redirect target
+      cache: 'no-store',
     });
 
     if (!res.ok) {
-      const text = await res.text();
-      return { ok: false, error: text || `Google API ${res.status}` };
+      // Google's error body can name the project and service account: log it here, do not return it.
+      console.error('verify-purchase: Google Play API answered', res.status);
+      return { ok: false, error: 'Google Play could not verify this purchase' };
     }
 
     const json = (await res.json()) as {
@@ -72,8 +80,9 @@ async function verifyWithGooglePlay(
     const purchased = json.purchaseState === 0;
     return purchased ? { ok: true } : { ok: false, error: 'Product not purchased' };
   } catch (e) {
-    const message = e instanceof Error ? e.message : 'Verification error';
-    return { ok: false, error: message };
+    // Keep the detail in the server log; the caller only needs to know it failed.
+    console.error('verify-purchase:', e instanceof Error ? e.message : e);
+    return { ok: false, error: 'Verification error' };
   }
 }
 
@@ -93,16 +102,33 @@ export async function POST(request: Request) {
     return NextResponse.json({ valid: false, error: 'Invalid JSON' }, { status: 400 });
   }
 
-  const productId = body.productId?.trim();
-  const purchaseToken = body.purchaseToken?.trim();
-  const packageName =
-    body.packageName?.trim() ??
-    process.env.GOOGLE_PLAY_PACKAGE_NAME ??
-    'app.until.time';
+  if (typeof body !== 'object' || body === null) {
+    return NextResponse.json({ valid: false, error: 'Invalid JSON' }, { status: 400 });
+  }
 
+  const productId = typeof body.productId === 'string' ? body.productId.trim() : '';
+  const purchaseToken =
+    typeof body.purchaseToken === 'string' ? body.purchaseToken.trim() : '';
   if (!productId || !purchaseToken) {
     return NextResponse.json(
       { valid: false, error: 'productId and purchaseToken required' },
+      { status: 400 }
+    );
+  }
+  if (!isValidProductId(productId) || !isValidPurchaseToken(purchaseToken)) {
+    return NextResponse.json(
+      { valid: false, error: 'Invalid productId or purchaseToken' },
+      { status: 400 }
+    );
+  }
+
+  // The package is ours, not the caller's. The app sends it, so accept a match and refuse anything else
+  // rather than let a caller pick which app's purchases the server's Google token is used on.
+  const packageName =
+    process.env.GOOGLE_PLAY_PACKAGE_NAME?.trim() || DEFAULT_PACKAGE_NAME;
+  if (typeof body.packageName === 'string' && body.packageName.trim() !== packageName) {
+    return NextResponse.json(
+      { valid: false, error: 'Unknown package' },
       { status: 400 }
     );
   }

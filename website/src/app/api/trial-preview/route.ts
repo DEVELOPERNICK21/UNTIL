@@ -17,7 +17,7 @@ import {
 } from '../../../lib/trialPreviewStore';
 
 type Body = {
-  deviceId?: string;
+  deviceId?: unknown;
 };
 
 export async function POST(request: Request) {
@@ -38,10 +38,18 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: false, error: 'Invalid JSON' }, { status: 400 });
   }
 
-  const deviceId = body.deviceId?.trim();
+  const deviceId = typeof body.deviceId === 'string' ? body.deviceId.trim() : '';
   if (!deviceId) {
     return NextResponse.json(
       { ok: false, error: 'deviceId required' },
+      { status: 400 }
+    );
+  }
+  // Real ids are a UUID or a short hex string. Capping the length and the characters keeps the store
+  // from being fed arbitrary large values by an unauthenticated caller.
+  if (!/^[A-Za-z0-9._:-]{1,128}$/.test(deviceId)) {
+    return NextResponse.json(
+      { ok: false, error: 'deviceId is not valid' },
       { status: 400 }
     );
   }
@@ -59,7 +67,8 @@ export async function POST(request: Request) {
       trialActive,
     });
   } catch (e) {
-    const message = e instanceof Error ? e.message : 'Storage error';
-    return NextResponse.json({ ok: false, error: message }, { status: 503 });
+    // The storage error can name the KV host and credentials' scope; keep it in the log only.
+    console.error('trial-preview:', e instanceof Error ? e.message : e);
+    return NextResponse.json({ ok: false, error: 'Storage error' }, { status: 503 });
   }
 }
