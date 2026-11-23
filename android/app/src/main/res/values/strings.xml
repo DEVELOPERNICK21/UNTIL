@@ -52,4 +52,10 @@
     <string name="widget_premium_unlock_line">Open Until to upgrade</string>
     <string name="widget_life_empty_line1">Set birth date in UNTIL</string>
     <string name="widget_life_empty_line2">to see life progress.</string>
+    <string name="widget_pause_description">One tap starts a minute of slow breathing.</string>
+    <string name="widget_pause_title">Breathe</string>
+    <string name="widget_pause_subtitle">One minute to settle</string>
+    <string name="widget_pause_a11y">Breathe. Starts one minute of slow breathing.</string>
+    <string name="shortcut_pause_short">Breathe</string>
+    <string name="shortcut_pause_long">Breathe for a minute</string>
 </resources>
