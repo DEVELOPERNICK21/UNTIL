@@ -18,6 +18,7 @@ import reflections from './reflections.json';
 import detail from './detail.json';
 import engagement from './engagement.json';
 import activity from './activity.json';
+import pause from './pause.json';
 
 /** Every message of this language, merged into one flat key → message map. */
 export default {
@@ -41,4 +42,5 @@ export default {
   ...detail,
   ...engagement,
   ...activity,
+  ...pause,
 };

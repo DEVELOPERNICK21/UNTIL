@@ -6,6 +6,7 @@ import android.os.Build
 import android.appwidget.AppWidgetManager
 import android.content.ComponentName
 import android.provider.Settings
+import android.view.WindowManager
 import com.facebook.react.bridge.Promise
 import com.facebook.react.bridge.ReactApplicationContext
 import com.facebook.react.bridge.ReactContextBaseJavaModule
@@ -16,6 +17,19 @@ class WidgetBridgeModule(reactContext: ReactApplicationContext) :
     ReactContextBaseJavaModule(reactContext) {
 
     override fun getName(): String = "WidgetBridge"
+
+    /** Keeps the screen on while Pause is showing, and lets go again when it closes. */
+    @ReactMethod
+    fun setKeepScreenAwake(enabled: Boolean) {
+        val activity = reactApplicationContext.currentActivity ?: return
+        activity.runOnUiThread {
+            if (enabled) {
+                activity.window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+            } else {
+                activity.window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+            }
+        }
+    }
 
     @ReactMethod
     fun updateWidgets() {

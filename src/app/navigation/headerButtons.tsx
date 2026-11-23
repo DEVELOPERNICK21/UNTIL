@@ -6,6 +6,8 @@ import React from 'react';
 import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { ProfileIcon, SettingsIcon, ShareIcon } from '../../assets/icons';
+import { PauseIcon } from '../../features/pause';
+import { useTranslation } from '../../shared/i18n/useTranslation';
 import type { useTheme } from '../../shared/theme';
 import type { RootStackParamList } from '../../shared/navigation/types';
 
@@ -25,12 +27,26 @@ export function HomeHeaderActions({
   navigation: NativeStackNavigationProp<RootStackParamList, 'Home'>;
   theme: ReturnType<typeof useTheme>;
 }) {
+  const { t } = useTranslation();
   return (
     <View style={headerButtonStyles.headerActions}>
+      <TouchableOpacity
+        onPress={() => navigation.navigate('Pause')}
+        style={[
+          headerButtonStyles.headerIconButton,
+          getGlassIconButtonStyle(theme),
+        ]}
+        activeOpacity={0.78}
+        accessibilityRole="button"
+        accessibilityLabel={t('pause.entry.a11y')}
+      >
+        <PauseIcon size={HEADER_ICON_SIZE} color={theme.textSecondary} />
+      </TouchableOpacity>
       <TouchableOpacity
         onPress={() => navigation.navigate('ShareSnapshot')}
         style={[
           headerButtonStyles.headerIconButton,
+          headerButtonStyles.headerIconButtonSpacing,
           getGlassIconButtonStyle(theme),
         ]}
         activeOpacity={0.78}
