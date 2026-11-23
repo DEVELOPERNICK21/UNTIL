@@ -5,6 +5,7 @@
 
 import Foundation
 import React
+import UIKit
 import WidgetKit
 
 private let appGroupID = "group.com.developernick.until"
@@ -27,6 +28,13 @@ private let kindHourCalculation = "UNTILHourCalculationWidget"
 @objc(WidgetBridge)
 class WidgetBridge: NSObject {
   @objc static func requiresMainQueueSetup() -> Bool { false }
+
+  /// Keeps the screen from locking while Pause is showing, and lets go again when it closes.
+  @objc func setKeepScreenAwake(_ enabled: Bool) {
+    DispatchQueue.main.async {
+      UIApplication.shared.isIdleTimerDisabled = enabled
+    }
+  }
 
   @objc func setPremiumStatus(_ isPremium: Bool) {
     guard let defaults = UserDefaults(suiteName: appGroupID) else { return }

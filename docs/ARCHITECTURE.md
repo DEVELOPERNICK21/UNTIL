@@ -65,6 +65,7 @@ The only feature-to-feature imports allowed (`FEATURE_DEPENDENCIES` in `__tests_
 | 5 | `countdowns` | premium |
 | 5 | `counters` | premium |
 | 5 | `life` | premium, presence, time |
+| 5 | `pause` | tasks |
 | 5 | `reflections` | onboarding, premium, time |
 | 5 | `share` | premium, time |
 | 6 | `badges` | countdowns, premium, presence, tasks, time |
@@ -72,6 +73,8 @@ The only feature-to-feature imports allowed (`FEATURE_DEPENDENCIES` in `__tests_
 | 6 | `widgets` | countdowns, counters, premium, tasks, time |
 | 7 | `home` | activity, badges, countdowns, premium, presence, reflections, tasks, time |
 | 7 | `settings` | account, activity, app-update, engagement, premium, time |
+
+`pause` uses `tasks` for one thing: the "too much to do" path lets someone pick one of today's open tasks (`useOpenTasksToday`, read-only). It stores nothing.
 
 `countdowns` and `counters` use `premium` for one thing: how many of each a person can keep (`useItemLimit`, `useLimitUpgradePrompt`). The free plan keeps one; Premium holds more. The limit has to follow the person's plan live, so the screens ask `premium` directly instead of going through a port.
 

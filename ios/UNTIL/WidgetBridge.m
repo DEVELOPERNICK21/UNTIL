@@ -7,6 +7,7 @@
 
 @interface RCT_EXTERN_MODULE(WidgetBridge, NSObject)
 RCT_EXTERN_METHOD(setPremiumStatus:(BOOL)isPremium)
+RCT_EXTERN_METHOD(setKeepScreenAwake:(BOOL)enabled)
 RCT_EXTERN_METHOD(setWidgetCache:(NSString *)json)
 RCT_EXTERN_METHOD(setCustomCounters:(NSString *)json)
 RCT_EXTERN_METHOD(setCountdowns:(NSString *)json)

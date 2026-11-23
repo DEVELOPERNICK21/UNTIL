@@ -21,6 +21,7 @@ type OpenableScreen = Extract<
   | 'CustomCounters'
   | 'Badges'
   | 'Premium'
+  | 'Pause'
 >;
 
 const OPENABLE: ReadonlySet<string> = new Set<OpenableScreen>([
@@ -34,6 +35,7 @@ const OPENABLE: ReadonlySet<string> = new Set<OpenableScreen>([
   'CustomCounters',
   'Badges',
   'Premium',
+  'Pause',
 ]);
 
 const OPEN_PATTERN = /^until:\/\/open\/([A-Za-z]+)\/?(?:[?#].*)?$/;
