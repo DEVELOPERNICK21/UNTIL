@@ -58,7 +58,7 @@ const LEGACY_OVERSIZE: Record<string, number> = {
   'features/share/ui/ShareSnapshotScreen.tsx': 1043,
   'features/settings/ui/SettingsScreen.tsx': 658,
   'features/account/ui/AccountScreen.tsx': 734,
-  'features/premium/ui/PremiumPaywallBody.tsx': 747,
+  'features/premium/ui/PremiumPaywallBody.tsx': 739,
   'features/home/ui/HomeScreen.tsx': 544,
   'features/ember/ui/EmberCompanion.tsx': 762,
   'features/onboarding/ui/OnboardingScreen.tsx': 423,

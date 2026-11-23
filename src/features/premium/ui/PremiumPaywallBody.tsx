@@ -2,7 +2,7 @@
  * Shared paywall body — visual-first, psychology-led conversion.
  */
 
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   View,
   StyleSheet,
@@ -59,9 +59,9 @@ import { StudentVerifyModal } from './StudentVerifyModal';
 import { useStudentVerification } from '../hooks/useStudentVerification';
 import { useManageSubscription } from '../hooks/useManageSubscription';
 import { usePaywallVisit } from '../hooks/usePaywallVisit';
+import { usePurchaseFailureAlert } from '../hooks/usePurchaseFailureAlert';
 import {
   logPlanSelected,
-  logPurchaseFailed,
   logRestoreEmpty,
   logRestoreFailed,
   purchaseRevenueParams,
@@ -111,6 +111,8 @@ export function PremiumPaywallBody({
     restorePurchases,
     productIds,
   } = usePurchase();
+  const restoreRef = useRef<(() => void) | null>(null);
+  const handlePurchaseFailure = usePurchaseFailureAlert(source, restoreRef);
   const [restoring, setRestoring] = useState(false);
   const [purchasing, setPurchasing] = useState(false);
   const [termsOpen, setTermsOpen] = useState(false);
@@ -217,21 +219,12 @@ export function PremiumPaywallBody({
         }
         if (result.status === 'error') {
           clearPendingPurchase();
-          logPurchaseFailed({
+          handlePurchaseFailure({
             planId: productId,
-            source,
             priceDisplay,
             code: result.code,
             message: result.message,
           });
-          recordCrashError(
-            new Error(result.message),
-            'PremiumPaywallBody.requestPurchase'
-          );
-          Alert.alert(
-            t('premium.alert.purchaseFailed'),
-            result.message || t('premium.alert.genericError')
-          );
           return;
         }
         clearPendingPurchase();
@@ -253,18 +246,13 @@ export function PremiumPaywallBody({
       } catch (e: unknown) {
         const err = e as { code?: string; message?: string };
         clearPendingPurchase();
-        logPurchaseFailed({
+        handlePurchaseFailure({
           planId: productId,
-          source,
           priceDisplay,
           code: err?.code,
           message: err?.message,
+          error: e,
         });
-        recordCrashError(e, 'PremiumPaywallBody.requestPurchase');
-        Alert.alert(
-          t('premium.alert.purchaseFailed'),
-          err?.message ?? t('premium.alert.genericError')
-        );
       } finally {
         setPurchasing(false);
       }
@@ -283,6 +271,7 @@ export function PremiumPaywallBody({
       access.trialActive,
       onPurchaseSuccess,
       markVisitConverted,
+      handlePurchaseFailure,
       t,
     ]
   );
@@ -318,6 +307,9 @@ export function PremiumPaywallBody({
       setRestoring(false);
     }
   }, [restorePurchases, onPurchaseSuccess, markVisitConverted, source, t]);
+  useEffect(() => {
+    restoreRef.current = onRestore;
+  }, [onRestore]);
 
   const continueDisabled = purchasing || loading;
 
