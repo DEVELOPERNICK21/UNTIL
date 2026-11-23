@@ -99,6 +99,8 @@
   "widgets.island.option.tasks.description": "Tugas yang tersisa hari ini.",
   "widgets.island.option.hour.title": "Timer jam",
   "widgets.island.option.hour.description": "Stopwatch yang bisa kamu mulai dan hentikan dari pulau.",
+  "widgets.island.option.calm.title": "Tenang",
+  "widgets.island.option.calm.description": "Menit tenang hari ini dan tombol Bernapas sekali ketuk.",
   "widgets.island.problem.unsupported": "Dynamic Island memerlukan iOS 16.2 atau lebih baru.",
   "widgets.island.problem.disabled": "Live Activities nonaktif untuk UNTIL. Aktifkan di Pengaturan, lalu kembali dan tekan Mulai.",
   "widgets.island.problem.failed": "Tidak dapat memulainya. Biarkan UNTIL terbuka di layar ini dan tekan Mulai lagi.",

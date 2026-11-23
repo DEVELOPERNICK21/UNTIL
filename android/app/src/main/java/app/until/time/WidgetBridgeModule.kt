@@ -107,6 +107,7 @@ class WidgetBridgeModule(reactContext: ReactApplicationContext) :
                 "month" -> ComponentName(ctx, UNTILMonthWidgetProvider::class.java)
                 "life" -> ComponentName(ctx, UNTILLifeWidgetProvider::class.java)
                 "deadlines" -> ComponentName(ctx, UNTILDeadlinesWidgetProvider::class.java)
+                "pause" -> ComponentName(ctx, UNTILPauseWidgetProvider::class.java)
                 else -> {
                     promise.resolve("unknown_kind")
                     return

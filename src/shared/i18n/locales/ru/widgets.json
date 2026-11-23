@@ -99,6 +99,8 @@
   "widgets.island.option.tasks.description": "Оставшиеся задачи на сегодня.",
   "widgets.island.option.hour.title": "Часовой таймер",
   "widgets.island.option.hour.description": "Секундомер, который можно запускать и останавливать прямо с острова.",
+  "widgets.island.option.calm.title": "Спокойствие",
+  "widgets.island.option.calm.description": "Минуты спокойствия за сегодня и кнопка «Дышать» в одно касание.",
   "widgets.island.problem.unsupported": "Для Dynamic Island нужна iOS 16.2 или новее.",
   "widgets.island.problem.disabled": "Live Activities для UNTIL выключены. Включите их в настройках, затем вернитесь и нажмите «Старт».",
   "widgets.island.problem.failed": "Не удалось запустить. Не закрывайте UNTIL на этом экране и снова нажмите «Старт».",

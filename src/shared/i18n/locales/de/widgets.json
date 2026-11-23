@@ -99,6 +99,8 @@
   "widgets.island.option.tasks.description": "Heute noch offene Aufgaben.",
   "widgets.island.option.hour.title": "Stundentimer",
   "widgets.island.option.hour.description": "Eine Stoppuhr, die du direkt von der Insel starten und stoppen kannst.",
+  "widgets.island.option.calm.title": "Ruhe",
+  "widgets.island.option.calm.description": "Deine Ruheminuten heute und ein Atmen-Knopf mit einem Tipp.",
   "widgets.island.problem.unsupported": "Die Dynamic Island benötigt iOS 16.2 oder neuer.",
   "widgets.island.problem.disabled": "Live Activities sind für UNTIL ausgeschaltet. Schalte sie in den Einstellungen ein, komm zurück und tippe auf Starten.",
   "widgets.island.problem.failed": "Konnte nicht gestartet werden. Lass UNTIL auf diesem Bildschirm geöffnet und tippe erneut auf Starten.",

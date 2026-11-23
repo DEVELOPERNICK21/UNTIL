@@ -48,6 +48,12 @@ struct UNTILLiveActivityAttributes: ActivityAttributes {
         /// Which sticker pack the user picked by tapping the sticker (0, 1 or 2).
         var stickerPack: Int?
         var updatedAt: Int64
+        /// Pause at a glance, for the island's Calm view: seconds practised per local date (YYYY-MM-DD), the daily
+        /// goal and the level name. Counts only, never feelings. Optional so an island started by an older build
+        /// still decodes.
+        var calmRecent: [String: Int]?
+        var calmGoalSeconds: Int?
+        var calmLevel: String?
 
         /// Same state with a different view selected (used by the island buttons).
         func with(activeWidget: String) -> ContentState {

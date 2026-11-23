@@ -99,6 +99,8 @@
   "widgets.island.option.tasks.description": "आज उरलेली कामे.",
   "widgets.island.option.hour.title": "तासांचा टाइमर",
   "widgets.island.option.hour.description": "आयलंडवरून सुरू आणि बंद करता येणारे स्टॉपवॉच.",
+  "widgets.island.option.calm.title": "शांतता",
+  "widgets.island.option.calm.description": "आजचे तुमचे शांत मिनिटे आणि एका टॅपमध्ये श्वास घेण्याचे बटण.",
   "widgets.island.problem.unsupported": "Dynamic Island साठी iOS 16.2 किंवा नवीन हवे.",
   "widgets.island.problem.disabled": "UNTIL साठी Live Activities बंद आहेत. त्या सेटिंग्जमध्ये चालू करा, मग परत येऊन सुरू करा दाबा.",
   "widgets.island.problem.failed": "ते सुरू होऊ शकले नाही. या स्क्रीनवर UNTIL उघडे ठेवा आणि पुन्हा सुरू करा दाबा.",

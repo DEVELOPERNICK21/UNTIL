@@ -2423,7 +2423,7 @@ struct LifeWidget: Widget {
 
 /// What the island can show. Raw value is the string the app stores.
 private enum IslandMode: String, CaseIterable {
-    case day, month, year, life, dailyTasks, hourCalc
+    case day, month, year, life, dailyTasks, hourCalc, calm
 
     init(_ raw: String) {
         self = IslandMode(rawValue: raw) ?? .day
@@ -2437,6 +2437,7 @@ private enum IslandMode: String, CaseIterable {
         case .life: return "Your life"
         case .dailyTasks: return "Tasks"
         case .hourCalc: return "Hour timer"
+        case .calm: return "Calm"
         }
     }
 
@@ -2449,6 +2450,7 @@ private enum IslandMode: String, CaseIterable {
         case .life: return "heart.fill"
         case .dailyTasks: return "checklist"
         case .hourCalc: return "timer"
+        case .calm: return "wind"
         }
     }
 
@@ -2461,6 +2463,7 @@ private enum IslandMode: String, CaseIterable {
         case .life: return "❤️"
         case .dailyTasks: return "✅"
         case .hourCalc: return "⏱️"
+        case .calm: return "🌿"
         }
     }
 
@@ -2478,6 +2481,7 @@ private enum IslandMode: String, CaseIterable {
         case .life: return "Life"
         case .dailyTasks: return "DailyTasks"
         case .hourCalc: return "HourCalculation"
+        case .calm: return "Pause"
         }
     }
 }
@@ -2547,6 +2551,11 @@ private enum IslandStickers {
             ["😌", "😤", "💪", "🦾", "🦸"],
             ["⏳", "⌛️", "🔥", "💥", "⚡️"],
         ],
+        .calm: [
+            ["🌫️", "🍃", "🌿", "🌸", "🪷"],
+            ["😮‍💨", "🙂", "😌", "😊", "🧘"],
+            ["🌊", "🫧", "💧", "🐚", "🌅"],
+        ],
     ]
 
     static func emoji(_ mode: IslandMode, pack: Int, stage: Int) -> String {
@@ -2562,6 +2571,11 @@ private struct IslandModel {
     var isPremium: Bool { state.isPremium }
 
     var mode: IslandMode { IslandMode(state.activeWidget) }
+
+    /// Pause at a glance, from the state the app last sent. Counts only.
+    var calm: CalmGlance {
+        CalmGlance(recent: state.calmRecent ?? [:], goalSeconds: state.calmGoalSeconds ?? 180, level: state.calmLevel ?? "settling")
+    }
 
     /// Views offered on the selector. Life needs a birth date.
     var availableModes: [IslandMode] {
@@ -2579,6 +2593,7 @@ private struct IslandModel {
                 ? Double(state.dailyTasksCompleted) / Double(state.dailyTasksTotal)
                 : 0
         case .hourCalc: return 0
+        case .calm: return calm.progress(Date())
         }
     }
 
@@ -2630,6 +2645,12 @@ private struct IslandModel {
             if minutes < 60 { return 2 }
             if minutes < 120 { return 3 }
             return 4
+        case .calm:
+            let p = calm.progress(Date())
+            if calm.goalReached(Date()) { return 4 }
+            if p >= 0.8 { return 3 }
+            if p >= 0.5 { return 2 }
+            return p > 0 ? 1 : 0
         }
     }
 
@@ -2646,6 +2667,7 @@ private struct IslandModel {
         case .life: return (islandColor(0xFB7185), islandColor(0xF59E0B))
         case .dailyTasks: return (islandColor(0x4ADE80), islandColor(0x2ED3C6))
         case .hourCalc: return (islandColor(0xBB86FC), islandColor(0x22D3EE))
+        case .calm: return (calm.goalReached(Date()) ? islandColor(0xF2C48D) : islandColor(0x2FB6B0), islandColor(0x7FE6DA))
         }
     }
 
@@ -2674,6 +2696,8 @@ private struct IslandModel {
                 : "\(state.dailyTasksCompleted) of \(state.dailyTasksTotal) done"
         case .hourCalc:
             return state.hourCalcIsRunning ? "Running" : "Paused"
+        case .calm:
+            return "\(calm.todayMinutes(Date())) of \(calm.goalMinutes) min today"
         }
     }
 
@@ -2687,6 +2711,7 @@ private struct IslandModel {
         case .dailyTasks:
             return state.dailyTasksTotal == 0 ? nil : "\(state.dailyTasksCompleted)/\(state.dailyTasksTotal)"
         case .hourCalc: return nil
+        case .calm: return "\(calm.todayMinutes(Date()))/\(calm.goalMinutes)"
         }
     }
 
@@ -2762,6 +2787,7 @@ private struct IslandModel {
             if state.dailyTasksTotal == 0 { return "No tasks" }
             if state.dailyTasksCompleted >= state.dailyTasksTotal { return "All done" }
             return "\(state.dailyTasksCompleted) of \(state.dailyTasksTotal)"
+        case .calm: return "\(calm.todayMinutes(Date())) of \(calm.goalMinutes)"
         default: return ""
         }
     }
@@ -2774,6 +2800,7 @@ private struct IslandModel {
             if state.dailyTasksTotal == 0 { return " yet" }
             if state.dailyTasksCompleted >= state.dailyTasksTotal { return "" }
             return " done"
+        case .calm: return " min"
         default: return ""
         }
     }
@@ -2927,7 +2954,7 @@ private struct IslandTrailing: View {
                     .lineLimit(1)
                     .contentTransition(.numericText())
                 if showCaption {
-                    Text(model.mode == .dailyTasks ? "done" : "left")
+                    Text(model.mode == .dailyTasks ? "done" : (model.mode == .calm ? "min" : "left"))
                         .font(.system(size: 10, weight: .medium))
                         .foregroundColor(Design.grayLabel)
                 }
@@ -3152,6 +3179,49 @@ private struct IslandTasksArt: View {
     }
 }
 
+/// Calm: today's minutes, this week's dots, and a round Breathe button that starts the quick calm.
+private struct IslandCalmArt: View {
+    let model: IslandModel
+
+    var body: some View {
+        HStack(spacing: 12) {
+            VStack(alignment: .leading, spacing: 8) {
+                IslandHeroText(model: model, size: 28, alignment: .leading)
+                weekDots
+            }
+            // A Link, not a button: it opens the app on the one-minute quick calm.
+            if let url = URL(string: "until://open/PauseNow") {
+                Link(destination: url) {
+                    ZStack {
+                        Circle().fill(model.accent.opacity(0.18))
+                        Circle().strokeBorder(model.accent, lineWidth: 2.5)
+                        Image(systemName: "wind")
+                            .font(.system(size: 17, weight: .bold))
+                            .foregroundColor(.white)
+                    }
+                    .frame(width: 42, height: 42)
+                    .shadow(color: model.accent.opacity(0.7), radius: 6)
+                }
+                .accessibilityLabel("Breathe for one minute")
+            }
+        }
+    }
+
+    private var weekDots: some View {
+        let week = model.calm.week(Date())
+        let today = model.calm.todayIndex(Date())
+        return HStack(spacing: 7) {
+            ForEach(0..<7, id: \.self) { i in
+                Circle()
+                    .fill(week[i] ? model.accent : Color.white.opacity(0.12))
+                    .overlay(Circle().strokeBorder(i == today ? Color.white.opacity(0.85) : .clear, lineWidth: 1.2))
+                    .frame(width: 9, height: 9)
+            }
+        }
+        .accessibilityHidden(true)
+    }
+}
+
 /// Hour timer: glowing clock, a bar for the current hour, and round controls.
 private struct IslandTimerArt: View {
     let model: IslandModel
@@ -3219,6 +3289,7 @@ private struct IslandArt: View {
             case .life: IslandLifeArt(model: model)
             case .dailyTasks: IslandTasksArt(model: model)
             case .hourCalc: IslandTimerArt(model: model)
+            case .calm: IslandCalmArt(model: model)
             }
         }
         .frame(maxWidth: .infinity)
@@ -3375,6 +3446,8 @@ private struct IslandCompactTrailing: View {
             case .life: Text(model.trailingMetric ?? "")
             case .dailyTasks:
                 Text("\(max(0, model.state.dailyTasksTotal - model.state.dailyTasksCompleted))")
+            case .calm:
+                Text("\(model.calm.todayMinutes(Date()))m")
             }
         }
         .font(.system(size: 13, weight: .bold, design: .rounded))
@@ -3436,85 +3509,225 @@ struct UNTILLiveActivityWidget: Widget {
     }
 }
 
-// MARK: - Pause Widget (one tap into the quick calm)
+// MARK: - Pause at a glance (Breathe widget and the island's Calm view)
 //
-// A doorway, not a dashboard: it shows nothing that changes (no minutes, no feelings) and reads no stored
-// data, so there is nothing to refresh and nothing private on a Lock Screen. The name is deliberately
-// plain ("Breathe") so it is fine to leave where other people can see the screen. A tap opens
-// until://open/PauseNow, which the app turns into the one-minute quick calm (see
-// src/app/navigation/deepLinks.ts). The breathing itself happens in the app; a widget cannot animate.
+// Calm minutes, the daily goal and the level: counts only, never how anyone felt. The app writes the
+// last two weeks keyed by date, so a widget that has not been refreshed since yesterday still reads the
+// right day by itself. Rules mirror features/pause/domain (calmMinutes, goalReached, weekDays, levels).
+struct CalmGlance {
+    let recent: [String: Int]
+    let goalSeconds: Int
+    let level: String
+
+    /// A practice shorter than this does not count towards a dot (same as the app).
+    static let minCountedSeconds = 20
+    static let empty = CalmGlance(recent: [:], goalSeconds: 180, level: "settling")
+    static let sample = CalmGlance(recent: ["sample": 0], goalSeconds: 180, level: "steady")
+
+    private struct Raw: Decodable {
+        let recent: [String: Int]?
+        let goalSeconds: Int?
+        let level: String?
+    }
+
+    init(recent: [String: Int], goalSeconds: Int, level: String) {
+        self.recent = recent
+        self.goalSeconds = max(60, goalSeconds)
+        self.level = level
+    }
+
+    init(json: String?) {
+        guard let data = json?.data(using: .utf8),
+              let raw = try? JSONDecoder().decode(Raw.self, from: data) else {
+            self = .empty
+            return
+        }
+        self.init(recent: raw.recent ?? [:], goalSeconds: raw.goalSeconds ?? 180, level: raw.level ?? "settling")
+    }
+
+    private static func key(_ date: Date) -> String {
+        let f = DateFormatter()
+        f.locale = Locale(identifier: "en_US_POSIX")
+        f.calendar = Calendar.current
+        f.timeZone = Calendar.current.timeZone
+        f.dateFormat = "yyyy-MM-dd"
+        return f.string(from: date)
+    }
+
+    func seconds(on date: Date) -> Int { recent[Self.key(date)] ?? 0 }
+
+    /// Minutes to show: the nearest whole minute, but never 0 for time that really was practised.
+    static func minutes(_ seconds: Int) -> Int {
+        seconds <= 0 ? 0 : max(1, Int((Double(seconds) / 60).rounded()))
+    }
+
+    var goalMinutes: Int { max(1, goalSeconds / 60) }
+    func todayMinutes(_ now: Date) -> Int { Self.minutes(seconds(on: now)) }
+    func goalReached(_ now: Date) -> Bool { todayMinutes(now) >= goalMinutes }
+    /// Same as the app's ring: full once the goal is reached, otherwise the exact share of the goal.
+    func progress(_ now: Date) -> Double {
+        goalReached(now) ? 1 : min(1, Double(seconds(on: now)) / Double(goalSeconds))
+    }
+
+    /// The seven days of this week, Monday first: true where something was practised.
+    func week(_ now: Date) -> [Bool] {
+        var cal = Calendar.current
+        cal.firstWeekday = 2
+        let start = cal.dateInterval(of: .weekOfYear, for: now)?.start ?? cal.startOfDay(for: now)
+        return (0..<7).map { i in
+            let day = cal.date(byAdding: .day, value: i, to: start) ?? start
+            return seconds(on: day) >= Self.minCountedSeconds
+        }
+    }
+
+    /// Index of today in `week`, Monday = 0.
+    func todayIndex(_ now: Date) -> Int {
+        (Calendar.current.component(.weekday, from: now) + 5) % 7
+    }
+
+    var levelName: String {
+        switch level {
+        case "steady": return "Steady"
+        case "still": return "Still"
+        case "deep": return "Deep"
+        case "tranquil": return "Tranquil"
+        default: return "Settling"
+        }
+    }
+}
+
+// MARK: - Pause Widget (calm progress and a one-tap Breathe)
+//
+// Shows today's calm minutes as a ring, the level and this week's dots, and a tap starts the one-minute
+// quick calm (until://open/PauseNow, see src/app/navigation/deepLinks.ts). Counts only, so nothing
+// private shows on a Lock Screen. The name is deliberately plain ("Breathe"). A widget cannot animate:
+// the breathing itself happens in the app.
 struct PauseWidgetEntry: TimelineEntry {
     let date: Date
+    let glance: CalmGlance
 }
 
 struct PauseWidgetProvider: TimelineProvider {
-    func placeholder(in context: Context) -> PauseWidgetEntry { PauseWidgetEntry(date: Date()) }
+    private func load() -> CalmGlance { CalmGlance(json: WidgetCacheReader.loadPauseGlanceJSON()) }
+
+    func placeholder(in context: Context) -> PauseWidgetEntry { PauseWidgetEntry(date: Date(), glance: .sample) }
 
     func getSnapshot(in context: Context, completion: @escaping (PauseWidgetEntry) -> Void) {
-        completion(PauseWidgetEntry(date: Date()))
+        completion(PauseWidgetEntry(date: Date(), glance: context.isPreview ? .sample : load()))
     }
 
     func getTimeline(in context: Context, completion: @escaping (Timeline<PauseWidgetEntry>) -> Void) {
-        // Static content: one entry, never refreshed.
-        completion(Timeline(entries: [PauseWidgetEntry(date: Date())], policy: .never))
+        let now = Date()
+        let glance = load()
+        // A second entry at midnight, so "today" and the week dots roll over without the app.
+        let midnight = Calendar.current.date(byAdding: .day, value: 1, to: Calendar.current.startOfDay(for: now)) ?? now.addingTimeInterval(3600)
+        completion(Timeline(
+            entries: [PauseWidgetEntry(date: now, glance: glance), PauseWidgetEntry(date: midnight, glance: glance)],
+            policy: .atEnd
+        ))
     }
 }
 
 private enum PauseDesign {
     static let accent = Color(red: 0x7F/255, green: 0xE6/255, blue: 0xDA/255)   // #7FE6DA
+    static let warm = Color(red: 0xF2/255, green: 0xC4/255, blue: 0x8D/255)     // #F2C48D, goal reached
     static let text = Color(red: 0xEA/255, green: 0xF6/255, blue: 0xF4/255)     // #EAF6F4
     static let muted = Color(red: 0x9C/255, green: 0xC7/255, blue: 0xC2/255)    // #9CC7C2
+    static let track = Color.white.opacity(0.12)
     static let top = Color(red: 0x0E/255, green: 0x34/255, blue: 0x3C/255)      // #0E343C
     static let bottom = Color(red: 0x06/255, green: 0x14/255, blue: 0x1A/255)   // #06141A
+}
+
+private struct PauseWeekDots: View {
+    let glance: CalmGlance
+    let now: Date
+    var size: CGFloat = 8
+
+    var body: some View {
+        let week = glance.week(now)
+        let today = glance.todayIndex(now)
+        HStack(spacing: size * 0.8) {
+            ForEach(0..<7, id: \.self) { i in
+                Circle()
+                    .fill(week[i] ? PauseDesign.accent : PauseDesign.track)
+                    .overlay(Circle().strokeBorder(i == today ? PauseDesign.text : .clear, lineWidth: 1.2))
+                    .frame(width: size, height: size)
+            }
+        }
+        .accessibilityHidden(true)
+    }
 }
 
 private struct PauseWidgetView: View {
     let entry: PauseWidgetEntry
     @Environment(\.widgetFamily) private var family
 
+    private var minutes: Int { entry.glance.todayMinutes(entry.date) }
+    private var goal: Int { entry.glance.goalMinutes }
+    private var progress: Double { entry.glance.progress(entry.date) }
+    private var reached: Bool { entry.glance.goalReached(entry.date) }
+    private var summary: String { "\(minutes) of \(goal) calm minutes today" }
+
     var body: some View {
         switch family {
         case .accessoryInline:
-            Label("Breathe", systemImage: "wind")
+            Label("\(minutes) of \(goal) min calm", systemImage: "wind")
         case .accessoryCircular:
-            ZStack {
-                AccessoryWidgetBackground()
+            Gauge(value: progress) {
                 Image(systemName: "wind")
-                    .font(.system(size: 22, weight: .semibold))
+            } currentValueLabel: {
+                Text("\(minutes)")
             }
+            .gaugeStyle(.accessoryCircularCapacity)
             .containerBackground(.clear, for: .widget)
-            .accessibilityLabel("Breathe. Starts one minute of slow breathing.")
+            .accessibilityLabel("Breathe. \(summary).")
         case .accessoryRectangular:
-            HStack(spacing: 8) {
-                Image(systemName: "wind")
-                    .font(.system(size: 22, weight: .semibold))
-                VStack(alignment: .leading, spacing: 1) {
-                    Text("Breathe").font(.headline)
-                    Text("One minute to settle").font(.caption)
-                }
-                Spacer(minLength: 0)
+            VStack(alignment: .leading, spacing: 3) {
+                Label("Breathe", systemImage: "wind").font(.headline)
+                Text("\(minutes) of \(goal) min today").font(.caption)
+                ProgressView(value: progress)
             }
             .containerBackground(.clear, for: .widget)
             .accessibilityElement(children: .combine)
         default:
-            VStack(alignment: .leading, spacing: 0) {
-                Image(systemName: "wind")
-                    .font(.system(size: 26, weight: .semibold))
-                    .foregroundColor(PauseDesign.accent)
-                Spacer(minLength: 4)
-                Text("Breathe")
-                    .font(.system(size: 20, weight: .bold, design: .rounded))
-                    .foregroundColor(PauseDesign.text)
-                Text("One minute to settle")
-                    .font(.system(size: 12, weight: .medium))
-                    .foregroundColor(PauseDesign.muted)
-                    .lineLimit(2)
+            VStack(spacing: 8) {
+                HStack(spacing: 4) {
+                    Image(systemName: "wind")
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundColor(PauseDesign.accent)
+                    Text("Breathe")
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundColor(PauseDesign.text)
+                    Spacer(minLength: 0)
+                    Text(entry.glance.levelName)
+                        .font(.system(size: 10, weight: .medium))
+                        .foregroundColor(PauseDesign.muted)
+                }
+                ZStack {
+                    Circle().stroke(PauseDesign.track, lineWidth: 8)
+                    Circle()
+                        .trim(from: 0, to: max(0.02, progress))
+                        .stroke(reached ? PauseDesign.warm : PauseDesign.accent, style: StrokeStyle(lineWidth: 8, lineCap: .round))
+                        .rotationEffect(.degrees(-90))
+                    VStack(spacing: 0) {
+                        Text("\(minutes)")
+                            .font(.system(size: 26, weight: .bold, design: .rounded))
+                            .foregroundColor(PauseDesign.text)
+                        Text("of \(goal) min")
+                            .font(.system(size: 10, weight: .medium))
+                            .foregroundColor(PauseDesign.muted)
+                    }
+                }
+                .frame(width: 86, height: 86)
+                PauseWeekDots(glance: entry.glance, now: entry.date)
             }
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
             .containerBackground(for: .widget) {
                 LinearGradient(colors: [PauseDesign.top, PauseDesign.bottom], startPoint: .topTrailing, endPoint: .bottomLeading)
             }
-            .accessibilityElement(children: .combine)
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel("Breathe. \(summary). Level \(entry.glance.levelName).")
+            .accessibilityHint("Starts one minute of slow breathing.")
         }
     }
 }
@@ -3528,7 +3741,7 @@ struct PauseWidget: Widget {
                 .widgetURL(widgetOpenURL("PauseNow"))
         }
         .configurationDisplayName("Breathe")
-        .description("One tap starts a minute of slow breathing. Home screen and Lock Screen.")
+        .description("Today's calm minutes, and one tap to start a minute of slow breathing.")
         .supportedFamilies([.systemSmall, .accessoryInline, .accessoryCircular, .accessoryRectangular])
     }
 }

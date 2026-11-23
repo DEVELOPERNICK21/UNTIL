@@ -99,6 +99,8 @@
   "widgets.island.option.tasks.description": "आज के बचे हुए कार्य।",
   "widgets.island.option.hour.title": "घंटे का टाइमर",
   "widgets.island.option.hour.description": "एक स्टॉपवॉच जिसे आप आइलैंड से शुरू और बंद कर सकते हैं।",
+  "widgets.island.option.calm.title": "शांति",
+  "widgets.island.option.calm.description": "आज के आपके शांत मिनट और एक टैप में साँस लेने का बटन।",
   "widgets.island.problem.unsupported": "Dynamic Island के लिए iOS 16.2 या नया चाहिए।",
   "widgets.island.problem.disabled": "UNTIL के लिए Live Activities बंद हैं। उन्हें सेटिंग्स में चालू करें, फिर लौटकर शुरू करें दबाएँ।",
   "widgets.island.problem.failed": "यह शुरू नहीं हो सका। इस स्क्रीन पर UNTIL खुला रखें और फिर से शुरू करें दबाएँ।",

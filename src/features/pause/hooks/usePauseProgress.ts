@@ -6,6 +6,7 @@ import { useCallback, useMemo, useState } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
 import { getPauseProgressUseCase, recordPauseSessionUseCase } from '../../../app/di';
 import { now as clockNow, todayIso } from '../../../shared/time/clock';
+import { widgetSync } from '../../../shared/platform/widgetSync';
 import {
   DAILY_GOAL_SECONDS,
   levelFor,
@@ -45,6 +46,12 @@ export function usePauseProgress() {
       hour: now.getHours(),
     });
     setProgress(result.progress);
+    // The Breathe widget and the island's Calm view show today's minutes; tell them.
+    try {
+      widgetSync.syncPauseGlance();
+    } catch {
+      // The widgets are a nicety; a failed sync must never break finishing a session.
+    }
     return result;
   }, []);
 

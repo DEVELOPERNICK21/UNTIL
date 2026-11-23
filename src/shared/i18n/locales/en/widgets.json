@@ -99,6 +99,8 @@
   "widgets.island.option.tasks.description": "Tasks left today.",
   "widgets.island.option.hour.title": "Hour timer",
   "widgets.island.option.hour.description": "A stopwatch you can start and stop from the island.",
+  "widgets.island.option.calm.title": "Calm",
+  "widgets.island.option.calm.description": "Today's calm minutes and a one-tap Breathe button.",
   "widgets.island.problem.unsupported": "The Dynamic Island needs iOS 16.2 or later.",
   "widgets.island.problem.disabled": "Live Activities are off for UNTIL. Turn them on in Settings, then come back and press Start.",
   "widgets.island.problem.failed": "Could not start it. Keep UNTIL open on this screen and press Start again.",
