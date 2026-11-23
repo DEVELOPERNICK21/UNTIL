@@ -432,7 +432,13 @@ weekDaysLeft = obj.optInt("weekDaysLeft", 0),
 
 ### Android build fails
 - `flatMap` over `IntArray`: use `.toList()` – `getAppWidgetIds(it).toList()`
-- MMKV: call `MMKV.initialize(context)` before use
+- MMKV: open the shared storage with `UntilMmkv.storage(context)` (see below). Never call `MMKV.initialize()` yourself.
+
+### Android crash: SIGABRT in `libmmkv.so` (`Scudo ERROR: invalid chunk state when deallocating`)
+
+`MMKV.initialize()` is **not thread safe**: its native half assigns a global `std::string` without a lock, so two threads calling it at once free the same buffer and Android aborts the process. Widget code runs on several WorkManager threads, receivers and the main thread at once, so initializing "before each read" crashed the app in a loop for people with a widget (Crashlytics issue `85c581ed…`, about 1,500 crashes for 20 users in 30 days).
+
+The rule: `app.until.time.UntilMmkv` initializes MMKV once per process under a lock (`MainApplication.onCreate` does it first), and everything else reads through `UntilMmkv.storage(context)`. Code that calls `MMKV.initialize` or `MMKV.mmkvWithID("until-storage")` directly brings the crash back.
 
 ---
 

@@ -3,7 +3,6 @@ package app.until.time
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import com.tencent.mmkv.MMKV
 import org.json.JSONObject
 
 /**
@@ -23,8 +22,7 @@ class HourCalculationTapReceiver : BroadcastReceiver() {
     }
 
     private fun toggleStopwatch(context: Context) {
-        MMKV.initialize(context)
-        val mmkv = MMKV.mmkvWithID(MMKV_ID) ?: return
+        val mmkv = UntilMmkv.storage(context) ?: return
         val json = mmkv.decodeString(KEY_HOUR_CALCULATION) ?: defaultJson()
         try {
             val obj = JSONObject(json)
@@ -62,8 +60,7 @@ class HourCalculationTapReceiver : BroadcastReceiver() {
     }
 
     private fun isStopwatchRunning(context: Context): Boolean {
-        MMKV.initialize(context)
-        val mmkv = MMKV.mmkvWithID(MMKV_ID) ?: return false
+        val mmkv = UntilMmkv.storage(context) ?: return false
         val json = mmkv.decodeString(KEY_HOUR_CALCULATION) ?: return false
         return try {
             JSONObject(json).optBoolean(KEY_IS_RUNNING, false)
@@ -83,7 +80,6 @@ class HourCalculationTapReceiver : BroadcastReceiver() {
 
     companion object {
         const val ACTION_TOGGLE = "app.until.time.TOGGLE_HOUR_CALCULATION"
-        const val MMKV_ID = "until-storage"
         const val KEY_HOUR_CALCULATION = "hour.calculation.widget"
         private const val KEY_TITLE = "title"
         private const val KEY_IS_RUNNING = "isRunning"

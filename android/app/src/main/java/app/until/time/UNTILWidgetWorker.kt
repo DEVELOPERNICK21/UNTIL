@@ -14,7 +14,6 @@ import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
-import com.tencent.mmkv.MMKV
 import org.json.JSONArray
 import org.json.JSONObject
 import java.util.Calendar
@@ -33,7 +32,6 @@ private const val DAILY_TASKS_WIDGET_KEY = "daily.tasks.widget"
 private const val HOUR_CALCULATION_WIDGET_KEY = "hour.calculation.widget"
 private const val PREMIUM_EFFECTIVE_KEY = "premium.effectiveAccess"
 private const val PREMIUM_IS_ACTIVE_KEY = "premium.isActive"
-private const val MMKV_ID = "until-storage"
 private const val WORK_NAME = "UNTILWidgetUpdate"
 private const val DAY_TICK_WORK_NAME = "UNTILDayWidgetTick"
 private const val STOPWATCH_TICK_WORK_NAME = "UNTILStopwatchTick"
@@ -315,8 +313,7 @@ class UNTILWidgetWorker(
 
         private fun loadUserProfile(context: Context): Pair<String?, Int> {
             return try {
-                MMKV.initialize(context)
-                val mmkv = MMKV.mmkvWithID(MMKV_ID) ?: return null to 80
+                val mmkv = UntilMmkv.storage(context) ?: return null to 80
                 val birth = mmkv.decodeString("user.birthDate")
                 val death = if (mmkv.containsKey("user.deathAge")) {
                     mmkv.decodeDouble("user.deathAge", 80.0).toInt().takeIf { it > 0 } ?: 80
@@ -329,8 +326,7 @@ class UNTILWidgetWorker(
 
         private fun loadWidgetCache(context: Context): WidgetCache? {
             return try {
-                MMKV.initialize(context)
-                val mmkv = MMKV.mmkvWithID(MMKV_ID)
+                val mmkv = UntilMmkv.storage(context)
                 val json = mmkv?.decodeString(WIDGET_CACHE_KEY) ?: return null
                 parseCache(json)
             } catch (e: Exception) {
@@ -341,8 +337,7 @@ class UNTILWidgetWorker(
         /** Paid or active in-app preview — written by JS `syncPremiumStatus`. */
         private fun loadEffectivePremium(context: Context): Boolean {
             return try {
-                MMKV.initialize(context)
-                val mmkv = MMKV.mmkvWithID(MMKV_ID) ?: return false
+                val mmkv = UntilMmkv.storage(context) ?: return false
                 if (mmkv.containsKey(PREMIUM_EFFECTIVE_KEY)) {
                     mmkv.decodeBool(PREMIUM_EFFECTIVE_KEY, false)
                 } else {
@@ -357,8 +352,7 @@ class UNTILWidgetWorker(
 
         private fun loadCustomCounters(context: Context): List<CustomCounterModel> {
             return try {
-                MMKV.initialize(context)
-                val mmkv = MMKV.mmkvWithID(MMKV_ID)
+                val mmkv = UntilMmkv.storage(context)
                 val json = mmkv?.decodeString(CUSTOM_COUNTERS_KEY) ?: return emptyList()
                 val arr = org.json.JSONArray(json)
                 (0 until arr.length()).map { i ->
@@ -411,8 +405,7 @@ class UNTILWidgetWorker(
 
         private fun loadCountdowns(context: Context): List<CountdownModel> {
             return try {
-                MMKV.initialize(context)
-                val mmkv = MMKV.mmkvWithID(MMKV_ID)
+                val mmkv = UntilMmkv.storage(context)
                 val json = mmkv?.decodeString(COUNTDOWNS_KEY) ?: return emptyList()
                 val arr = JSONArray(json)
                 (0 until arr.length()).map { i ->
@@ -547,8 +540,7 @@ class UNTILWidgetWorker(
 
         private fun loadDailyTasksPayload(context: Context): DailyTasksPayload? {
             return try {
-                MMKV.initialize(context)
-                val mmkv = MMKV.mmkvWithID(MMKV_ID)
+                val mmkv = UntilMmkv.storage(context)
                 val json = mmkv?.decodeString(DAILY_TASKS_WIDGET_KEY) ?: return null
                 val obj = JSONObject(json)
                 val byCat = mutableMapOf<String, DailyTaskCatStat>()
@@ -757,8 +749,7 @@ class UNTILWidgetWorker(
 
         private fun loadHourCalculationState(context: Context): HourCalculationState? {
             return try {
-                MMKV.initialize(context)
-                val mmkv = MMKV.mmkvWithID(MMKV_ID) ?: return null
+                val mmkv = UntilMmkv.storage(context) ?: return null
                 val json = mmkv.decodeString(HOUR_CALCULATION_WIDGET_KEY) ?: return null
                 val obj = JSONObject(json)
                 HourCalculationState(
