@@ -1,11 +1,12 @@
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
-import { GlassCard, Text } from '../../../shared/ui';
-import { Spacing } from '../../../shared/theme';
+import { Radius, Spacing } from '../../../shared/theme';
 import { useTranslation } from '../../../shared/i18n/useTranslation';
 import type { TranslationKey } from '../../../shared/i18n/translate';
 import type { Weight } from '../domain/pauseFlow';
-import { PauseButton } from './PauseButton';
+import { CalmButton } from './CalmButton';
+import { CalmText } from './CalmText';
+import { CALM } from './calmPalette';
 
 type ReframeWeight = Exclude<Weight, 'load'>;
 
@@ -31,20 +32,20 @@ export function ReframePath({ weight, onDone }: Props) {
   const copy = COPY[weight];
   return (
     <View style={styles.root}>
-      <Text variant="headline" color="primary" accessibilityRole="header" style={styles.title}>
+      <CalmText variant="headline" tone="primary" accessibilityRole="header" style={styles.title}>
         {t(copy.title)}
-      </Text>
-      <Text variant="body" color="secondary" style={styles.body}>
+      </CalmText>
+      <CalmText variant="body" tone="secondary" style={styles.body}>
         {t(copy.body)}
-      </Text>
-      <GlassCard style={styles.step}>
-        <Text variant="body" color="primary">
+      </CalmText>
+      <View style={styles.step}>
+        <CalmText variant="body" tone="primary">
           {t(copy.step)}
-        </Text>
-      </GlassCard>
+        </CalmText>
+      </View>
       <View style={styles.actions}>
-        <PauseButton label={t('common.continue')} onPress={onDone} />
-        <PauseButton variant="quiet" label={t('common.notNow')} onPress={onDone} />
+        <CalmButton variant="solid" label={t('common.continue')} onPress={onDone} />
+        <CalmButton variant="quiet" label={t('common.notNow')} onPress={onDone} />
       </View>
     </View>
   );
@@ -64,6 +65,11 @@ const styles = StyleSheet.create({
     marginBottom: Spacing[3],
   },
   step: {
+    backgroundColor: CALM.card,
+    borderColor: CALM.cardBorder,
+    borderWidth: 1,
+    borderRadius: Radius.md,
+    padding: Spacing[3],
     marginBottom: Spacing[3],
   },
   actions: {

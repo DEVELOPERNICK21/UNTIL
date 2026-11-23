@@ -1,11 +1,11 @@
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
-import { Text } from '../../../shared/ui';
 import { Spacing } from '../../../shared/theme';
 import { useTranslation } from '../../../shared/i18n/useTranslation';
 import type { TranslationKey } from '../../../shared/i18n/translate';
 import { WEIGHTS, type Weight } from '../domain/pauseFlow';
-import { PauseButton } from './PauseButton';
+import { CalmButton } from './CalmButton';
+import { CalmText } from './CalmText';
 
 const LABELS: Record<Weight, TranslationKey> = {
   load: 'pause.weight.load',
@@ -25,17 +25,17 @@ export function WeightStep({ onWeight }: Props) {
   const { t } = useTranslation();
   return (
     <View style={styles.root}>
-      <Text variant="headline" color="primary" accessibilityRole="header" style={styles.title}>
+      <CalmText variant="headline" tone="primary" accessibilityRole="header" style={styles.title}>
         {t('pause.weight.title')}
-      </Text>
-      <Text variant="body" color="secondary" style={styles.subtitle}>
+      </CalmText>
+      <CalmText variant="body" tone="secondary" style={styles.subtitle}>
         {t('pause.weight.subtitle')}
-      </Text>
+      </CalmText>
       <View style={styles.choices}>
         {WEIGHTS.map(weight => (
-          <PauseButton key={weight} label={t(LABELS[weight])} onPress={() => onWeight(weight)} />
+          <CalmButton key={weight} label={t(LABELS[weight])} onPress={() => onWeight(weight)} />
         ))}
-        <PauseButton variant="quiet" label={t('pause.weight.skip')} onPress={() => onWeight(null)} />
+        <CalmButton variant="quiet" label={t('pause.weight.skip')} onPress={() => onWeight(null)} />
       </View>
     </View>
   );

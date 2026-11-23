@@ -1,7 +1,8 @@
 /**
- * Public API of the pause feature: a minute to settle when time feels like too much. Other features
- * and the app import from here only; everything else in this folder is private.
+ * Public API of the pause feature: a calm space for when time feels like too much. Other features and
+ * the app import from here only; everything else in this folder is private.
  */
 
-export { PauseScreen } from './ui/PauseScreen';
+export { PauseHubScreen } from './ui/PauseHubScreen';
+export { PauseSessionScreen } from './ui/PauseSessionScreen';
 export { PauseIcon } from './ui/PauseIcon';

@@ -69,7 +69,6 @@ const LEGACY_OVERSIZE: Record<string, number> = {
   'features/widgets/data/WidgetSync.ts': 574,
   'features/account/data/FirebaseAuthServiceAdapter.ts': 536,
   'features/widgets/ui/WidgetCustomizationScreen.tsx': 472,
-  'app/navigation/RootNavigator.tsx': 316,
   'features/tasks/ui/TasksComingSoonScreen.tsx': 504,
   'features/time/ui/PeriodDetailScreen.tsx': 454,
   'features/account/ui/IdentitySetupScreen.tsx': 472,
