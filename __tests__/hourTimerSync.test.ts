@@ -58,6 +58,7 @@ describe('syncHourCalculationWidget', () => {
       getAccessStateUseCase: {
         execute: () => ({ isPremium: false, trialActive: false }),
       },
+      getPauseGlance: () => ({ recent: {}, goalSeconds: 180, level: 'settling' }),
     } as never);
   });
   afterEach(() => jest.useRealTimers());

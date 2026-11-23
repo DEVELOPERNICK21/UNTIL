@@ -228,6 +228,7 @@ class UNTILOverlayService : Service() {
         "month" -> R.drawable.ic_overlay_calendar
         "year" -> R.drawable.ic_overlay_globe
         "life" -> R.drawable.ic_overlay_heart
+        "calm" -> R.drawable.ic_pause_wind
         else -> R.drawable.ic_overlay_day
     }
 
@@ -236,6 +237,7 @@ class UNTILOverlayService : Service() {
         if (sticker == null) return
         val (minScale, maxScale, duration) = when (widgetType) {
             "life" -> Triple(1f, 1.22f, 520L)
+            "calm" -> Triple(0.96f, 1.08f, 2200L)
             "year" -> Triple(0.96f, 1.1f, 1400L)
             "month" -> Triple(0.97f, 1.12f, 900L)
             else -> Triple(0.96f, 1.1f, 1100L)
@@ -281,7 +283,7 @@ class UNTILOverlayService : Service() {
             val hourCalcJson = mmkv.decodeString(HOUR_CALCULATION_WIDGET_KEY)
             val hourState = hourCalcJson?.let { parseHourCalc(it) }
 
-            buildOverlayState(widgetType, cache, dailyPayload, hourState)
+            buildOverlayState(widgetType, cache, dailyPayload, hourState, PauseGlance.load(this))
         } catch (e: Exception) {
             OverlayState.default()
         }
@@ -336,7 +338,8 @@ class UNTILOverlayService : Service() {
         widgetType: String,
         cache: WidgetCache?,
         dailyPayload: DailyPayload?,
-        hourState: HourState?
+        hourState: HourState?,
+        calm: PauseGlance = PauseGlance.EMPTY
     ): OverlayState {
         val c = cache ?: return OverlayState.default().copy(widgetType = widgetType)
         val now = System.currentTimeMillis()
@@ -396,6 +399,23 @@ class UNTILOverlayService : Service() {
                     glanceRow = "D${c.dayPercentDone}% · M${c.monthPercent}% · Y${c.yearPercent}%",
                     notifTitle = "Tasks · $done/$total",
                     notifText = if (total > 0) "$pct% done" else "No tasks yet",
+                    endAtMs = null
+                )
+            }
+            "calm" -> {
+                val minutes = calm.todayMinutes()
+                val goal = calm.goalMinutes
+                val pct = (calm.progress() * 100).toInt().coerceIn(0, 100)
+                OverlayState(
+                    widgetType = widgetType,
+                    leading = "$minutes/$goal",
+                    trailing = "min",
+                    expandedTitle = "$minutes of $goal min",
+                    expandedSubtitle = "${calm.levelName} · calm today",
+                    progress = pct,
+                    glanceRow = "D${c.dayPercentDone}% · M${c.monthPercent}% · Y${c.yearPercent}%",
+                    notifTitle = "Calm · $minutes of $goal min",
+                    notifText = "${calm.levelName} · tap to breathe",
                     endAtMs = null
                 )
             }
@@ -530,6 +550,7 @@ class UNTILOverlayService : Service() {
                     "life" -> Color.parseColor("#FF6B8A")
                     "year" -> Color.parseColor("#4DA3FF")
                     "month" -> Color.parseColor("#E87C20")
+                    "calm" -> Color.parseColor("#2FB6B0")
                     else -> Color.parseColor("#BB86FC")
                 }
                 val progressStyle = Notification.ProgressStyle()

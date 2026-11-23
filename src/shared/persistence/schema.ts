@@ -174,6 +174,10 @@ export const STORAGE_KEYS = {
   // Pause: calm minutes per day, practices tried, milestones. Counts only, never feelings. Owner: MmkvPauseProgressRepository.
   PAUSE_PROGRESS: 'pause.progress',
 
+  // Pause at a glance for the widgets, the island and the overlay (calm seconds per recent day, goal, level).
+  // Counts only. Owner: features/widgets/data/WidgetSync.ts, read by the native widget code.
+  PAUSE_GLANCE: 'pause.glance',
+
   // Badges (earned ids, celebrations already shown). Owner: MmkvBadgeRepository.
   BADGES_STATE: 'gamification.badgesState',
 

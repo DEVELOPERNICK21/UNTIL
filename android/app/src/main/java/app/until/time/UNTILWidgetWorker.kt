@@ -204,6 +204,7 @@ class UNTILWidgetWorker(
             val counters = loadCustomCounters(context)
             val countdowns = loadCountdowns(context)
             val dailyTasksPayload = loadDailyTasksPayload(context)
+            UNTILPauseWidgetProvider.refresh(context)
 
             val dayIds = appWidgetManager.getAppWidgetIds(dayProvider)
             val lifeIds = appWidgetManager.getAppWidgetIds(lifeProvider)
@@ -230,7 +231,8 @@ class UNTILWidgetWorker(
             if (appWidgetManager.getAppWidgetIds(monthProvider).isNotEmpty() ||
                 appWidgetManager.getAppWidgetIds(yearProvider).isNotEmpty() ||
                 appWidgetManager.getAppWidgetIds(countdownProvider).isNotEmpty() ||
-                appWidgetManager.getAppWidgetIds(lifeProvider).isNotEmpty()) {
+                appWidgetManager.getAppWidgetIds(lifeProvider).isNotEmpty() ||
+                UNTILPauseWidgetProvider.isPlaced(context)) {
                 scheduleDailyMidnight(context)
             }
 

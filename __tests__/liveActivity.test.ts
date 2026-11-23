@@ -39,6 +39,10 @@ import {
   refreshLiveActivity,
   startLiveActivity,
 } from '../src/features/widgets/data/WidgetSync';
+import {
+  getLiveActivityWidgetType,
+  setLiveActivityWidgetType,
+} from '../src/features/widgets/data/liveActivityType';
 import { STORAGE_KEYS } from '../src/shared/persistence/schema';
 
 const cache = {
@@ -86,7 +90,30 @@ beforeEach(() => {
     getAccessStateUseCase: { execute: () => ({}) },
     getCustomCountersUseCase: {},
     getCountdownsUseCase: {},
+    getPauseGlance: () => ({ recent: { '2026-11-23': 120 }, goalSeconds: 180, level: 'steady' }),
   } as never);
+});
+
+describe('the Calm view of the island', () => {
+  it('sends calm minutes as counts only, by date, with the goal and level', async () => {
+    await startLiveActivity('calm');
+    const sent = JSON.parse(mockBridge.startActivity.mock.calls[0][0]);
+    expect(sent.activeWidget).toBe('calm');
+    expect(sent.calmRecent).toEqual({ '2026-11-23': 120 });
+    expect(sent.calmGoalSeconds).toBe(180);
+    expect(sent.calmLevel).toBe('steady');
+    // Nothing about how anyone felt can be in the state: only these three calm fields are new.
+    expect(Object.keys(sent).filter(key => key.startsWith('calm')).sort()).toEqual([
+      'calmGoalSeconds',
+      'calmLevel',
+      'calmRecent',
+    ]);
+  });
+
+  it('is a view the app remembers like any other', () => {
+    setLiveActivityWidgetType('calm');
+    expect(getLiveActivityWidgetType()).toBe('calm');
+  });
 });
 
 describe('startLiveActivity', () => {

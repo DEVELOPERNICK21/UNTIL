@@ -6,13 +6,13 @@ import {
   updateLiveActivity,
   endLiveActivity,
   getLiveActivityStatus,
+} from '../data/WidgetSync';
+import type { LiveActivityStatus } from '../data/WidgetSync';
+import {
   getLiveActivityWidgetType,
   setLiveActivityWidgetType,
-} from '../data/WidgetSync';
-import type {
-  LiveActivityStatus,
-  LiveActivityWidgetType,
-} from '../data/WidgetSync';
+  type LiveActivityWidgetType,
+} from '../data/liveActivityType';
 import { useAccessControl } from '../../premium';
 import { useTranslation } from '../../../shared/i18n/useTranslation';
 import type {
@@ -58,6 +58,11 @@ const WIDGET_OPTIONS: {
     type: 'hourCalc',
     titleKey: 'widgets.island.option.hour.title',
     descriptionKey: 'widgets.island.option.hour.description',
+  },
+  {
+    type: 'calm',
+    titleKey: 'widgets.island.option.calm.title',
+    descriptionKey: 'widgets.island.option.calm.description',
   },
 ];
 

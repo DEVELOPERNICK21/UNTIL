@@ -14,6 +14,7 @@ private let customCountersKey = "custom.counters"
 private let countdownsKey = "countdowns"
 private let dailyTasksWidgetKey = "daily.tasks.widget"
 private let hourCalculationWidgetKey = "hour.calculation.widget"
+private let pauseGlanceKey = "pause.glance"
 
 private let premiumKey = "premium.isActive"
 private let kindDay = "UNTILDayWidget"
@@ -24,6 +25,7 @@ private let kindCountdown = "UNTILCountdownWidget"
 private let kindDeadlines = "UNTILDeadlinesWidget"
 private let kindDailyTasks = "UNTILDailyTasksWidget"
 private let kindHourCalculation = "UNTILHourCalculationWidget"
+private let kindPause = "UNTILPauseWidget"
 
 @objc(WidgetBridge)
 class WidgetBridge: NSObject {
@@ -73,6 +75,14 @@ class WidgetBridge: NSObject {
     defaults.synchronize()
     WidgetCenter.shared.reloadTimelines(ofKind: kindDailyTasks)
     WatchConnectivityBridge.shared.pushCachedIfAvailable()
+  }
+
+  /// Pause at a glance (counts only) for the Breathe widget. The island gets the same numbers in its own state.
+  @objc func setPauseGlance(_ json: String) {
+    guard let defaults = UserDefaults(suiteName: appGroupID) else { return }
+    defaults.set(json, forKey: pauseGlanceKey)
+    defaults.synchronize()
+    WidgetCenter.shared.reloadTimelines(ofKind: kindPause)
   }
 
   @objc func setHourCalculationState(_ json: String) {

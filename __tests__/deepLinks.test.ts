@@ -163,11 +163,21 @@ describe('quick calm entry points on the phone', () => {
     expect(isQuickCalmUrl('until://open/PauseNow')).toBe(true);
   });
 
-  it('shows nothing private: the widgets carry no data from the app', () => {
+  it('the widgets read Pause counts and nothing else of the app', () => {
     const swift = read('ios/UNTILWidgets/UNTILWidgets.swift');
     const start = swift.indexOf('struct PauseWidgetProvider');
-    const end = swift.indexOf('struct PauseWidget: Widget');
-    const pauseBlock = swift.slice(start, end);
-    expect(pauseBlock).not.toMatch(/WidgetCacheReader|loadJSON|UserDefaults|MMKV/);
+    const end = swift.indexOf('private enum PauseDesign');
+    const provider = swift.slice(start, end);
+    expect(provider).toContain('loadPauseGlanceJSON');
+    expect(provider).not.toMatch(/loadJSON|loadDailyTasks|loadCountdowns|loadCustomCounters|loadHourCalculation/);
+
+    const kotlin = read('android/app/src/main/java/app/until/time/PauseGlance.kt');
+    expect(kotlin).toContain('pause.glance');
+    // The only fields read from storage are counts: seconds by date, the goal and the level.
+    expect([...kotlin.matchAll(/opt(?:Int|String|JSONObject)\("(\w+)"/g)].map(m => m[1]).sort()).toEqual([
+      'goalSeconds',
+      'level',
+      'recent',
+    ]);
   });
 });

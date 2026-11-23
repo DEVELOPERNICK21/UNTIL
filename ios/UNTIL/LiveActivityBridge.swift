@@ -153,7 +153,10 @@ class LiveActivityBridge: NSObject {
       isPremium: state.isPremium,
       stickerPack: UserDefaults(suiteName: IslandActions.appGroupID)?
         .object(forKey: IslandActions.stickerPackKey) as? Int,
-      updatedAt: state.updatedAt
+      updatedAt: state.updatedAt,
+      calmRecent: state.calmRecent,
+      calmGoalSeconds: state.calmGoalSeconds,
+      calmLevel: state.calmLevel
     )
   }
 
@@ -208,7 +211,14 @@ class LiveActivityBridge: NSObject {
       hourCalcIsRunning: obj["hourCalcIsRunning"] as? Bool ?? false,
       hourCalcStartMs: int64("hourCalcStartMs").flatMap { $0 > 0 ? $0 : nil },
       isPremium: obj["isPremium"] as? Bool ?? false,
-      updatedAt: int64("updatedAt") ?? Int64(Date().timeIntervalSince1970 * 1000)
+      updatedAt: int64("updatedAt") ?? Int64(Date().timeIntervalSince1970 * 1000),
+      calmRecent: (obj["calmRecent"] as? [String: Any])?.compactMapValues { value in
+        if let n = value as? Int { return n }
+        if let n = value as? Double { return Int(n) }
+        return nil
+      },
+      calmGoalSeconds: int("calmGoalSeconds"),
+      calmLevel: obj["calmLevel"] as? String
     )
   }
 }
@@ -241,4 +251,7 @@ private struct LiveActivityState {
   let hourCalcStartMs: Int64?
   let isPremium: Bool
   let updatedAt: Int64
+  let calmRecent: [String: Int]?
+  let calmGoalSeconds: Int?
+  let calmLevel: String?
 }

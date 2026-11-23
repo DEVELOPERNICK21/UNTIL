@@ -76,6 +76,7 @@ The logic is `domain/pauseProgress.ts`: `recordSession`, `levelFor`, `weekDays`,
 ## Privacy
 
 - **What is stored, on this phone only:** one JSON value (`pause.progress` in MMKV, see `shared/persistence/schema.ts`) holding per-day practised seconds, total seconds, the session count, which practices were tried, and which milestones were earned. It is never sent anywhere. Uninstalling the app removes it.
+- **A second copy of the counts for the widgets:** `pause.glance` (MMKV, and the iOS App Group) holds the last two weeks of seconds by date, the goal and the level, so the Breathe widget and the island can show them. Same counts, nothing more; the island's own state carries the same three fields.
 - **What is never stored or sent:** how the person said they felt, what felt heavy, which task they picked, the round. These live only in the screen's memory and are gone when it closes. Do not add them to storage or to analytics: that would be health-adjacent data, and the point of the screen is that it is safe to be honest on it.
 - **Two anonymous analytics events:** `pause_started` and `pause_completed`, with no parameters.
 - The closing line says so: "Your answers here aren't saved or shared. Only your calm minutes stay on this phone." Keep that true.
@@ -102,26 +103,30 @@ A breathing exercise is useless if the phone locks 30 seconds in. While a practi
 ## Where it is
 
 - Home header, first button (wind icon). Accessibility label: "Pause. A minute to settle."
-- Deep links: `until://open/Pause` opens the hub; `until://open/PauseNow` skips the hub and starts the one-minute quick calm (see [One tap from outside the app](#one-tap-from-outside-the-app)). `PauseSession` (practice, optional `instant`) is the session route; it is not deep-linkable.
+- Deep links: `until://open/Pause` opens the hub; `until://open/PauseNow` skips the hub and starts the one-minute quick calm (see [Outside the app](#outside-the-app-the-breathe-widget-and-the-islands-calm-view)). `PauseSession` (practice, optional `instant`) is the session route; it is not deep-linkable.
 - Code: `src/features/pause/` (`domain` pure, `data` MMKV repository, `hooks`, `ui`). Composition root: `src/app/di/pause.ts`. It reads today's open tasks through `useOpenTasksToday` from the `tasks` feature (the only dependency; see ARCHITECTURE.md).
 - Copy: `pause` namespace in `src/shared/i18n/locales/<code>/pause.json` (all 11 languages).
 - The calm colours are local to the feature (`ui/calmPalette.ts`) and do not follow light/dark mode: the hub is always the same dark teal, on purpose, so it feels like a different room.
 
-## One tap from outside the app
+## Outside the app: the Breathe widget and the island's Calm view
 
-A bad moment is not the time to find an app. Three entry points all open `until://open/PauseNow`, which the app turns into the quick calm (cyclic sighing, one minute, no ready step). A second tap while a session is already on screen does not restart it.
+A bad moment is not the time to find an app, and a button alone tells you nothing. So the widgets show today's calm progress, and a tap starts the one-minute quick calm (cyclic sighing, no ready step) through `until://open/PauseNow`. A second tap while a session is already on screen does not restart it.
 
-| Where | What |
-|-------|------|
-| Android home screen | "Breathe" widget (3x1, `UNTILPauseWidgetProvider`) |
-| Android app icon | Long-press shortcut "Breathe" (`res/xml/shortcuts.xml`) |
-| iPhone Lock Screen and Home Screen | "Breathe" widget (`PauseWidget` in `UNTILWidgets.swift`): circular, rectangular, inline and small |
+| Where | What it shows | Tap |
+|-------|---------------|-----|
+| Android home screen | "Breathe" widget (4x2): ring with today's minutes, level, this week's dots | quick calm |
+| Android app icon | long-press shortcut "Breathe" | quick calm |
+| Android floating overlay | a **Calm** view in the overlay picker: minutes today and level | opens the app |
+| iPhone Lock Screen and Home Screen | "Breathe" widget: ring (small), gauge (circular), progress bar (rectangular), text (inline) | quick calm |
+| iPhone Dynamic Island / Lock Screen activity | a **Calm** view in the island picker: minutes today, week dots, and a round Breathe button | the button starts the quick calm; the rest opens the hub |
 
-- **Nothing private on the widget.** It carries no minutes, no progress and no feelings, and reads no stored data, so there is nothing to refresh and nothing to leak on a Lock Screen.
-- **The name is plain on purpose.** "Breathe", not "Anxiety" or "Panic", so it is fine to leave where other people can see the screen.
-- A widget cannot animate; it is only the doorway. The breathing happens in the app.
-- The widget text is English only, like the other widgets in the app.
-- Not done: iPhone Home Screen quick actions (long-press the icon). They need AppDelegate code and are a sensible follow-up.
+- **Counts only.** What reaches the widgets is `PauseGlance`: calm seconds per recent date, the daily goal and the level (`domain/pauseGlance.ts`). Never how anyone felt, what felt heavy or which task was picked, so nothing private shows on a Lock Screen. Tests pin the exact fields.
+- **Reads the right day by itself.** The glance is keyed by date, not "today", so a widget that has not been refreshed since yesterday still shows today as 0 and rolls the week dots over at midnight (iOS: a second timeline entry; Android: the existing midnight refresh).
+- **When it updates.** After each recorded session (`usePauseProgress.record` -> `widgetSync.syncPauseGlance`), and with every widget-cache sync (app start, returning to the app). iOS writes the App Group (`WidgetBridge.setPauseGlance`); Android writes the shared MMKV key `pause.glance`.
+- **Rules are mirrored, not shared.** Minutes (nearest whole, at least 1), the 3-minute goal, the week (Monday first, 20 s to count) and the level names are re-implemented in Swift and Kotlin. If the rules in `pauseProgress.ts` change, change `CalmGlance` (UNTILWidgets.swift) and `PauseGlance.kt` too.
+- **The name is plain on purpose.** "Breathe" / "Calm", not "Anxiety" or "Panic", so it is fine to leave where other people can see the screen. Text on the widgets and the island is English only, like the other widgets; the picker names are translated.
+- A widget cannot animate. The breathing itself happens in the app. A live "in / hold / out" guide on the island was considered and left out: it can only follow along while the app is running, which adds little over the screen already in front of you.
+- Not done: iPhone Home Screen quick actions (long-press the icon). They need AppDelegate code.
 
 ## Not in this version, on purpose
 
@@ -129,6 +134,7 @@ A bad moment is not the time to find an app. Three entry points all open `until:
 - **Sound.** Needs an audio library and assets, and many people use the app where they cannot play sound.
 - **Gentle mode** (hide the ticking seconds, switch reflections to the "Quiet" tone). It touches other screens and deserves its own change.
 - **Night mode** (hide every clock until morning), the Apple Watch.
+- **A live breathing guide on the island** (see above).
 - **A countdown hiding option** for "something is coming up". It needs the countdowns feature and a decision about what "hidden" means for widgets.
 - **A year-in-review card** of calm minutes (counts only).
 
