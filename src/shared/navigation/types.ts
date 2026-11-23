@@ -34,4 +34,5 @@ export type RootStackParamList = {
   Premium: undefined;
   TasksComingSoon: undefined;
   Account: undefined;
+  Pause: undefined;
 };

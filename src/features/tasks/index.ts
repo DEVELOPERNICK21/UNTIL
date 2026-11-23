@@ -3,6 +3,7 @@
  * everything else in this folder is private. Add an export deliberately when another module needs it.
  */
 
+export { useOpenTasksToday } from './hooks/useOpenTasksToday';
 export { DailyTasksScreen } from './ui/DailyTasksScreen';
 export { GoalDetailScreen } from './ui/GoalDetailScreen';
 export { MonthlyGoalsScreen } from './ui/MonthlyGoalsScreen';

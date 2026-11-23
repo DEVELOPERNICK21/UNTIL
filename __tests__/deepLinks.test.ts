@@ -21,6 +21,7 @@ describe('parseOpenScreenUrl', () => {
     );
     expect(parseOpenScreenUrl('until://open/Premium')).toBe('Premium');
     expect(parseOpenScreenUrl('until://open/Badges')).toBe('Badges');
+    expect(parseOpenScreenUrl('until://open/Pause')).toBe('Pause');
   });
 
   it('tolerates a trailing slash, query and whitespace', () => {
