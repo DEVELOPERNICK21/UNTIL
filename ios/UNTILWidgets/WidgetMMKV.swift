@@ -13,6 +13,7 @@ enum WidgetCacheReader {
     static let countdownsKey = "countdowns"
     static let dailyTasksWidgetKey = "daily.tasks.widget"
     static let hourCalculationWidgetKey = "hour.calculation.widget"
+    static let pauseGlanceKey = "pause.glance"
     static let premiumKey = "premium.isActive"
 
     static var isPremium: Bool {
@@ -38,6 +39,12 @@ enum WidgetCacheReader {
     static func loadDailyTasksStatsJSON() -> String? {
         guard let defaults = UserDefaults(suiteName: appGroupID) else { return nil }
         return defaults.string(forKey: dailyTasksWidgetKey)
+    }
+
+    /// Pause at a glance (counts only), written by the app's WidgetBridge.setPauseGlance.
+    static func loadPauseGlanceJSON() -> String? {
+        guard let defaults = UserDefaults(suiteName: appGroupID) else { return nil }
+        return defaults.string(forKey: pauseGlanceKey)
     }
 
     static func loadHourCalculationJSON() -> String? {

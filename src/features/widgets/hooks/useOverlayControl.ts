@@ -11,7 +11,7 @@ import {
   stopOverlay,
   updateOverlay,
 } from '../data/WidgetSync';
-import type { OverlayWidgetType } from '../data/WidgetSync';
+import type { OverlayWidgetType } from '../data/liveActivityType';
 import { useAccessControl } from '../../premium';
 import { useTranslation } from '../../../shared/i18n/useTranslation';
 import type { TranslationKey } from '../../../shared/i18n/translate';
@@ -49,6 +49,11 @@ const WIDGET_OPTIONS: {
     type: 'hourCalc',
     titleKey: 'widgets.island.option.hour.title',
     descriptionKey: 'widgets.tile.comingSoon',
+  },
+  {
+    type: 'calm',
+    titleKey: 'widgets.island.option.calm.title',
+    descriptionKey: 'widgets.island.option.calm.description',
   },
 ];
 

@@ -25,6 +25,13 @@ import { todayIso } from '../../../shared/time/clock';
 import { registerWidgetSync } from '../../../shared/platform/widgetSync';
 import { MS_PER_HOUR } from '../../../shared/time/constants';
 import {
+  getLiveActivityWidgetType,
+  LIVE_ACTIVITY_WIDGET_TYPES,
+  setLiveActivityWidgetType,
+  type LiveActivityWidgetType,
+  type OverlayWidgetType,
+} from './liveActivityType';
+import {
   DEFAULT_HOUR_TIMER,
   normalizeTimerTitle,
   parseHourTimerState,
@@ -33,6 +40,16 @@ import {
   type HourTimerState,
 } from '../domain/hourTimer';
 
+/**
+ * Pause at a glance: calm seconds per recent day, the daily goal and the level. Counts only.
+ * Declared here, not imported, so the widgets never depend on the pause feature (app/di wires it).
+ */
+export type PauseGlancePayload = {
+  recent: Record<string, number>;
+  goalSeconds: number;
+  level: string;
+};
+
 /** Use cases WidgetSync reads from. Injected by di.ts so this file never imports di. */
 export type WidgetSyncSources = {
   syncWidgetUseCase: SyncWidgetUseCase;
@@ -40,6 +57,7 @@ export type WidgetSyncSources = {
   getCountdownsUseCase: GetCountdownsUseCase;
   getDailyTaskStatsUseCase: GetDailyTaskStatsUseCase;
   getAccessStateUseCase: GetAccessStateUseCase;
+  getPauseGlance: () => PauseGlancePayload;
 };
 
 let sources: WidgetSyncSources | null = null;
@@ -52,6 +70,7 @@ export function configureWidgetSync(next: WidgetSyncSources): void {
     syncDailyTasksWidget,
     syncCustomCounters,
     syncCountdowns,
+    syncPauseGlance,
   });
 }
 
@@ -86,6 +105,7 @@ export function syncWidgetCache(): void {
   };
   const json = JSON.stringify(cache);
   setString(STORAGE_KEYS.WIDGET_CACHE, json);
+  pushPauseGlance();
   const { WidgetBridge } = NativeModules;
   if (Platform.OS === 'ios') {
     if (WidgetBridge?.setWidgetCache) {
@@ -114,6 +134,22 @@ export function syncPremiumStatus(): void {
   } else if (Platform.OS === 'android' && WidgetBridge?.updateWidgets) {
     WidgetBridge.updateWidgets();
   }
+}
+
+/** Write Pause's calm minutes where the native widgets read them (counts only). iOS: App Group; Android: MMKV. */
+function pushPauseGlance(): void {
+  const json = JSON.stringify(src().getPauseGlance());
+  setString(STORAGE_KEYS.PAUSE_GLANCE, json);
+  const bridge = NativeModules.WidgetBridge;
+  if (Platform.OS === 'ios' && bridge?.setPauseGlance) bridge.setPauseGlance(json);
+}
+
+/** A Pause session was recorded: update the Breathe widget, the island's Calm view and the Android overlay. */
+export function syncPauseGlance(): void {
+  pushPauseGlance();
+  updateLiveActivity(); // each of these does nothing on the other platform
+  updateOverlay();
+  if (Platform.OS === 'android') NativeModules.WidgetBridge?.updateWidgets?.();
 }
 
 /** Push custom counters to native so counter widgets can reload with latest data. */
@@ -204,43 +240,6 @@ export function getHourCalculationState(): HourCalculationState {
   }
 }
 
-export type LiveActivityWidgetType =
-  | 'day'
-  | 'month'
-  | 'year'
-  | 'life'
-  | 'dailyTasks'
-  | 'hourCalc';
-
-const LIVE_ACTIVITY_WIDGET_TYPES: LiveActivityWidgetType[] = [
-  'day',
-  'month',
-  'year',
-  'life',
-  'dailyTasks',
-  'hourCalc',
-];
-
-/** Android overlay widget type (same options as Live Activity). */
-export type OverlayWidgetType = LiveActivityWidgetType;
-
-/** Get stored Live Activity widget type. */
-export function getLiveActivityWidgetType(): LiveActivityWidgetType {
-  const stored = getString(STORAGE_KEYS.LIVE_ACTIVITY_WIDGET_TYPE);
-  if (
-    stored &&
-    LIVE_ACTIVITY_WIDGET_TYPES.includes(stored as LiveActivityWidgetType)
-  ) {
-    return stored as LiveActivityWidgetType;
-  }
-  return 'day';
-}
-
-/** Set Live Activity widget type and persist. */
-export function setLiveActivityWidgetType(type: LiveActivityWidgetType): void {
-  setString(STORAGE_KEYS.LIVE_ACTIVITY_WIDGET_TYPE, type);
-}
-
 /** Build Live Activity state from all widget sources. Used for Dynamic Island / Lock Screen. */
 export function buildLiveActivityState(
   activeWidget?: LiveActivityWidgetType,
@@ -249,6 +248,7 @@ export function buildLiveActivityState(
   const cache = src().syncWidgetUseCase.execute();
   const dailyPayload = src().getDailyTaskStatsUseCase.getWidgetPayload(todayIso());
   const hourState = getHourCalculationState();
+  const calm = src().getPauseGlance();
 
   return {
     activeWidget: widget,
@@ -277,6 +277,9 @@ export function buildLiveActivityState(
     hourCalcIsRunning: hourState.isRunning,
     hourCalcStartMs: hourState.isRunning ? hourState.startTimeMs : null,
     isPremium: readEffectivePremiumForNativeBridge(),
+    calmRecent: calm.recent,
+    calmGoalSeconds: calm.goalSeconds,
+    calmLevel: calm.level,
     updatedAt: Date.now(),
   };
 }

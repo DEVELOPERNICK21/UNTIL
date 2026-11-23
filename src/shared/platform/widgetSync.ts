@@ -15,6 +15,8 @@ export type WidgetSyncApi = {
   syncDailyTasksWidget(): void;
   syncCustomCounters(): void;
   syncCountdowns(): void;
+  /** Pause's calm minutes changed (a session was recorded). */
+  syncPauseGlance(): void;
 };
 
 let implementation: WidgetSyncApi | null = null;
@@ -36,4 +38,5 @@ export const widgetSync: WidgetSyncApi = {
   syncDailyTasksWidget: () => api().syncDailyTasksWidget(),
   syncCustomCounters: () => api().syncCustomCounters(),
   syncCountdowns: () => api().syncCountdowns(),
+  syncPauseGlance: () => api().syncPauseGlance(),
 };

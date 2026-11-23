@@ -38,11 +38,13 @@ export type LiveActivityWidgetType =
   | 'year'
   | 'life'
   | 'dailyTasks'
-  | 'hourCalc';
+  | 'hourCalc'
+  | 'calm';
 
 export const FREE_LIVE_ACTIVITY_TYPES: LiveActivityWidgetType[] = [
   'day',
   'year',
+  'calm',
 ];
 
 export const PREMIUM_LIVE_ACTIVITY_TYPES: LiveActivityWidgetType[] = [

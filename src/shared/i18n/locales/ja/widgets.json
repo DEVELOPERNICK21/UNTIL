@@ -99,6 +99,8 @@
   "widgets.island.option.tasks.description": "今日の残りのタスク。",
   "widgets.island.option.hour.title": "時間タイマー",
   "widgets.island.option.hour.description": "アイランドから開始・停止できるストップウォッチ。",
+  "widgets.island.option.calm.title": "落ち着き",
+  "widgets.island.option.calm.description": "今日の穏やかな時間と、ワンタップで始める呼吸ボタン。",
   "widgets.island.problem.unsupported": "Dynamic IslandにはiOS 16.2以降が必要です。",
   "widgets.island.problem.disabled": "UNTILのLive Activitiesがオフです。設定でオンにしてから戻り、「開始」を押してください。",
   "widgets.island.problem.failed": "開始できませんでした。この画面でUNTILを開いたまま、もう一度「開始」を押してください。",

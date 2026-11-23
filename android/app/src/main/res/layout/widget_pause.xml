@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Pause: one button. Nothing to read, nothing to decide; a tap starts one minute of breathing. -->
+<!-- Breathe: today's calm minutes, the level and the week; a tap starts one minute of slow breathing. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/widget_root"
     android:layout_width="match_parent"
@@ -7,40 +7,83 @@
     android:background="@drawable/widget_pause_background"
     android:orientation="horizontal"
     android:gravity="center_vertical"
-    android:paddingStart="16dp"
-    android:paddingEnd="16dp"
-    android:contentDescription="@string/widget_pause_a11y">
+    android:padding="14dp">
 
     <ImageView
-        android:layout_width="32dp"
-        android:layout_height="32dp"
-        android:src="@drawable/ic_pause_wind"
+        android:id="@+id/pause_ring"
+        android:layout_width="84dp"
+        android:layout_height="84dp"
+        android:src="@drawable/widget_pause_ring_preview"
+        android:scaleType="fitCenter"
         android:importantForAccessibility="no" />
 
     <LinearLayout
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_weight="1"
-        android:layout_marginStart="12dp"
+        android:layout_marginStart="14dp"
         android:orientation="vertical">
 
-        <TextView
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="@string/widget_pause_title"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <ImageView
+                android:layout_width="18dp"
+                android:layout_height="18dp"
+                android:src="@drawable/ic_pause_wind"
+                android:importantForAccessibility="no" />
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginStart="6dp"
+                android:text="@string/widget_pause_title"
+                android:textColor="#EAF6F4"
+                android:textSize="15sp"
+                android:textStyle="bold"
+                android:maxLines="1" />
+
+            <TextView
+                android:id="@+id/pause_level"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Settling"
+                android:textColor="#9CC7C2"
+                android:textSize="11sp"
+                android:maxLines="1" />
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/pause_summary"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:text="0 of 3 min today"
             android:textColor="#EAF6F4"
-            android:textSize="17sp"
+            android:textSize="14sp"
             android:textStyle="bold"
-            android:maxLines="1"
-            android:ellipsize="end" />
+            android:maxLines="1" />
+
+        <ImageView
+            android:id="@+id/pause_week"
+            android:layout_width="wrap_content"
+            android:layout_height="14dp"
+            android:layout_marginTop="8dp"
+            android:adjustViewBounds="true"
+            android:scaleType="fitStart"
+            android:importantForAccessibility="no" />
 
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
             android:text="@string/widget_pause_subtitle"
             android:textColor="#9CC7C2"
-            android:textSize="12sp"
-            android:maxLines="1"
-            android:ellipsize="end" />
+            android:textSize="11sp"
+            android:maxLines="1" />
     </LinearLayout>
 </LinearLayout>

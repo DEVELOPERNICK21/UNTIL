@@ -18,6 +18,8 @@ import { getCustomCountersUseCase } from './counters';
 import { getCountdownsUseCase } from './countdowns';
 import { getDailyTaskStatsUseCase, getStoredTasksForDayUseCase } from './tasks';
 import { getAccessStateUseCase } from './premium';
+import { getPauseGlanceUseCase } from './pause';
+import { todayIso } from '../../shared/time/clock';
 import {
   countdownRepository,
   subscriptionRepository,
@@ -31,6 +33,7 @@ configureWidgetSync({
   getCountdownsUseCase,
   getDailyTaskStatsUseCase,
   getAccessStateUseCase,
+  getPauseGlance: () => getPauseGlanceUseCase.execute(todayIso()),
 });
 
 configureRetentionNotifications({

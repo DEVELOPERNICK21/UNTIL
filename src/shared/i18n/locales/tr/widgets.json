@@ -99,6 +99,8 @@
   "widgets.island.option.tasks.description": "Bugün kalan görevler.",
   "widgets.island.option.hour.title": "Saat zamanlayıcı",
   "widgets.island.option.hour.description": "Adadan başlatıp durdurabileceğin bir kronometre.",
+  "widgets.island.option.calm.title": "Sakinlik",
+  "widgets.island.option.calm.description": "Bugünkü sakin dakikalarınız ve tek dokunuşla Nefes al düğmesi.",
   "widgets.island.problem.unsupported": "Dynamic Island için iOS 16.2 veya üzeri gerekir.",
   "widgets.island.problem.disabled": "UNTIL için Live Activities kapalı. Ayarlar'dan aç, sonra geri dönüp Başlat'a bas.",
   "widgets.island.problem.failed": "Başlatılamadı. UNTIL'i bu ekranda açık tut ve Başlat'a yeniden bas.",

@@ -99,6 +99,8 @@
   "widgets.island.option.tasks.description": "Tareas que quedan hoy.",
   "widgets.island.option.hour.title": "Temporizador de horas",
   "widgets.island.option.hour.description": "Un cronómetro que puedes iniciar y detener desde la isla.",
+  "widgets.island.option.calm.title": "Calma",
+  "widgets.island.option.calm.description": "Tus minutos de calma de hoy y un botón para respirar con un toque.",
   "widgets.island.problem.unsupported": "La Dynamic Island requiere iOS 16.2 o posterior.",
   "widgets.island.problem.disabled": "Las Live Activities están desactivadas para UNTIL. Actívalas en Ajustes, vuelve y pulsa Iniciar.",
   "widgets.island.problem.failed": "No se pudo iniciar. Mantén UNTIL abierta en esta pantalla y pulsa Iniciar de nuevo.",

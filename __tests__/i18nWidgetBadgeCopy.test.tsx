@@ -202,6 +202,12 @@ jest.mock('../src/features/widgets/data/WidgetSync', () => ({
   syncHourCalculationWidget: (...args: unknown[]) => mockSyncHour(...args),
 }));
 
+// Which island view is chosen lives in its own module; the screens read it from there.
+jest.mock('../src/features/widgets/data/liveActivityType', () => ({
+  getLiveActivityWidgetType: () => 'day',
+  setLiveActivityWidgetType: jest.fn(),
+}));
+
 jest.mock('../src/shared/platform/widgetPin', () => ({
   canPinWidgets: () => Promise.resolve(true),
   requestPinWidget: (...args: unknown[]) => mockRequestPin(...args),
