@@ -33,16 +33,17 @@ export function QuestionLayout({
   return (
     <View style={styles.questionBlock}>
       <Animated.View style={[styles.emberCenter, emberEnter]}>
-        <Ember progress={emberProgress} size={48} />
+        <Ember progress={emberProgress} size={56} />
       </Animated.View>
       <Animated.View style={titleEnter}>
         <Text
-          variant="sectionTitle"
+          variant="headline"
+          accessibilityRole="header"
           style={[
             styles.questionTitle,
             {
               color: theme.textPrimary,
-              fontFamily: getFontFamilyForWeight(Weight.semibold),
+              fontFamily: getFontFamilyForWeight(Weight.bold),
             },
           ]}
         >
@@ -67,13 +68,13 @@ export function InterstitialBeat() {
       </Animated.View>
       <Animated.View style={title}>
         <Text
-          variant="sectionTitle"
+          variant="headline"
           style={[
             styles.title,
+            styles.statement,
             {
               color: theme.textPrimary,
-              fontFamily: getFontFamilyForWeight(Weight.semibold),
-              fontSize: Typography.sectionTitle,
+              fontFamily: getFontFamilyForWeight(Weight.bold),
             },
           ]}
         >
@@ -145,13 +146,16 @@ export function LoaderBeat() {
 
 const styles = StyleSheet.create({
   centerBlock: {
+    flexGrow: 1,
+    justifyContent: 'center',
     alignItems: 'center',
-    gap: Spacing[3],
+    gap: Spacing[4],
     paddingVertical: Spacing[6],
   },
   questionBlock: {
     gap: Spacing[3],
-    paddingVertical: Spacing[4],
+    paddingTop: Spacing[6],
+    paddingBottom: Spacing[4],
   },
   emberCenter: {
     alignItems: 'center',
@@ -159,9 +163,15 @@ const styles = StyleSheet.create({
   },
   questionTitle: {
     textAlign: 'center',
-    marginBottom: Spacing[2],
+    marginBottom: Spacing[3],
+    lineHeight: Typography.headline * 1.25,
+    paddingHorizontal: Spacing[2],
   },
   title: {
     textAlign: 'center',
+  },
+  statement: {
+    lineHeight: Typography.headline * 1.3,
+    maxWidth: 340,
   },
 });

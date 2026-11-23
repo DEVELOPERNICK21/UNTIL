@@ -15,53 +15,55 @@ import { t } from '../../../shared/i18n/translate';
 export interface QuizOption<T extends string> {
   value: T;
   label: string;
+  /** A small picture that says the answer at a glance. Emoji, so it needs no translation. */
+  emoji?: string;
 }
 
 export function getGoalOptions(): QuizOption<OnboardingGoal>[] {
   return [
-    { value: 'people', label: t('onboarding.goal.people') },
-    { value: 'focus', label: t('onboarding.goal.focus') },
-    { value: 'health', label: t('onboarding.goal.health') },
-    { value: 'calm', label: t('onboarding.goal.calm') },
-    { value: 'other', label: t('onboarding.goal.other') },
+    { value: 'people', label: t('onboarding.goal.people'), emoji: '🫶' },
+    { value: 'focus', label: t('onboarding.goal.focus'), emoji: '🎯' },
+    { value: 'health', label: t('onboarding.goal.health'), emoji: '💚' },
+    { value: 'calm', label: t('onboarding.goal.calm'), emoji: '🌿' },
+    { value: 'other', label: t('onboarding.goal.other'), emoji: '✨' },
   ];
 }
 
 export function getDrainOptions(): QuizOption<OnboardingDrain>[] {
   return [
-    { value: 'social', label: t('onboarding.drain.social') },
-    { value: 'work', label: t('onboarding.drain.work') },
-    { value: 'busywork', label: t('onboarding.drain.busywork') },
-    { value: 'priorities', label: t('onboarding.drain.priorities') },
-    { value: 'unsure', label: t('onboarding.drain.unsure') },
+    { value: 'social', label: t('onboarding.drain.social'), emoji: '📱' },
+    { value: 'work', label: t('onboarding.drain.work'), emoji: '💼' },
+    { value: 'busywork', label: t('onboarding.drain.busywork'), emoji: '🗂️' },
+    { value: 'priorities', label: t('onboarding.drain.priorities'), emoji: '🧭' },
+    { value: 'unsure', label: t('onboarding.drain.unsure'), emoji: '🤔' },
   ];
 }
 
 export function getValuesOptions(): QuizOption<OnboardingValues>[] {
   return [
-    { value: 'people', label: t('onboarding.values.people') },
-    { value: 'focus', label: t('onboarding.values.focus') },
-    { value: 'health', label: t('onboarding.values.health') },
-    { value: 'calm', label: t('onboarding.values.calm') },
-    { value: 'rest', label: t('onboarding.values.rest') },
-    { value: 'other', label: t('onboarding.values.other') },
+    { value: 'people', label: t('onboarding.values.people'), emoji: '🫶' },
+    { value: 'focus', label: t('onboarding.values.focus'), emoji: '🎯' },
+    { value: 'health', label: t('onboarding.values.health'), emoji: '💚' },
+    { value: 'calm', label: t('onboarding.values.calm'), emoji: '🌿' },
+    { value: 'rest', label: t('onboarding.values.rest'), emoji: '🌙' },
+    { value: 'other', label: t('onboarding.values.other'), emoji: '✨' },
   ];
 }
 
 export function getCadenceOptions(): QuizOption<OnboardingCadence>[] {
   return [
-    { value: 'checkins', label: t('onboarding.cadence.checkins') },
-    { value: 'widgets', label: t('onboarding.cadence.widgets') },
-    { value: 'both', label: t('onboarding.cadence.both') },
-    { value: 'unsure', label: t('onboarding.cadence.unsure') },
+    { value: 'checkins', label: t('onboarding.cadence.checkins'), emoji: '🔔' },
+    { value: 'widgets', label: t('onboarding.cadence.widgets'), emoji: '🧩' },
+    { value: 'both', label: t('onboarding.cadence.both'), emoji: '🌟' },
+    { value: 'unsure', label: t('onboarding.cadence.unsure'), emoji: '🤔' },
   ];
 }
 
 export function getReadinessOptions(): QuizOption<OnboardingReadiness>[] {
   return [
-    { value: 'ready', label: t('onboarding.readiness.ready') },
-    { value: 'gentle', label: t('onboarding.readiness.gentle') },
-    { value: 'exploring', label: t('onboarding.readiness.exploring') },
+    { value: 'ready', label: t('onboarding.readiness.ready'), emoji: '🚀' },
+    { value: 'gentle', label: t('onboarding.readiness.gentle'), emoji: '🌱' },
+    { value: 'exploring', label: t('onboarding.readiness.exploring'), emoji: '👀' },
   ];
 }
 

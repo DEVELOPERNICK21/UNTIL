@@ -7,21 +7,17 @@ import {
   View,
   StyleSheet,
   TouchableOpacity,
-  Platform,
   ScrollView,
   Vibration,
   ActivityIndicator,
 } from 'react-native';
-import DateTimePicker, {
-  type DateTimePickerEvent,
-} from '@react-native-community/datetimepicker';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import {
   SafeAreaView,
   useSafeAreaInsets,
 } from 'react-native-safe-area-context';
-import Svg, { Path, Rect, Circle } from 'react-native-svg';
+import Svg, { Path, Circle } from 'react-native-svg';
 import { Text, Card, Slider, PeriodGlyph } from '../../../shared/ui';
 import {
   useTheme,
@@ -37,28 +33,11 @@ import { useUpdateUserProfile } from '../../time';
 import { useOnboardingFunnel } from '../../onboarding';
 import type { AuthStackParamList } from '../../../shared/navigation/types';
 import { useTranslation } from '../../../shared/i18n/useTranslation';
+import { BirthDatePicker } from './BirthDatePicker';
 
 const LIFESPAN_MIN = 40;
 const LIFESPAN_MAX = 120;
 const DEFAULT_LIFESPAN = 80;
-
-function CalendarMark({ color }: { color: string }) {
-  return (
-    <Svg width={22} height={22} viewBox="0 0 24 24" accessibilityElementsHidden>
-      <Rect
-        x={3}
-        y={5}
-        width={18}
-        height={16}
-        rx={2}
-        stroke={color}
-        strokeWidth={1.6}
-        fill="none"
-      />
-      <Path d="M8 3v4M16 3v4M3 10h18" stroke={color} strokeWidth={1.6} />
-    </Svg>
-  );
-}
 
 function InfoMark({ color }: { color: string }) {
   return (
@@ -88,9 +67,7 @@ function waitForNextFrame(): Promise<void> {
 }
 
 export function IdentitySetupScreen() {
-  const { t, formatDate } = useTranslation();
-  const formatDisplayDate = (date: Date) =>
-    formatDate(date, { day: 'numeric', month: 'long', year: 'numeric' });
+  const { t } = useTranslation();
   const navigation =
     useNavigation<
       NativeStackNavigationProp<AuthStackParamList, 'IdentitySetup'>
@@ -103,7 +80,6 @@ export function IdentitySetupScreen() {
   const { setStep } = useOnboardingFunnel();
 
   const [birthDate, setBirthDate] = useState(new Date(1995, 0, 1));
-  const [showPicker, setShowPicker] = useState(false);
   const [lifespan, setLifespan] = useState(DEFAULT_LIFESPAN);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -194,48 +170,7 @@ export function IdentitySetupScreen() {
                 {t('account.identity.required')}
               </Text>
             </View>
-            <TouchableOpacity
-              style={[
-                styles.datePill,
-                {
-                  borderColor: theme.divider,
-                  backgroundColor: theme.cardLighter,
-                },
-              ]}
-              onPress={() => setShowPicker(true)}
-              activeOpacity={0.85}
-              accessibilityRole="button"
-              accessibilityLabel={t('account.identity.birthDateA11y', {
-                date: formatDisplayDate(birthDate),
-              })}
-            >
-              <Text
-                variant="title"
-                style={[styles.dateValue, { color: theme.textPrimary }]}
-              >
-                {formatDisplayDate(birthDate)}
-              </Text>
-              <CalendarMark color={theme.textSecondary} />
-            </TouchableOpacity>
-            {showPicker ? (
-              <View style={styles.datePickerWrap}>
-                <DateTimePicker
-                  value={birthDate}
-                  mode="date"
-                  display={Platform.OS === 'ios' ? 'spinner' : 'spinner'}
-                  maximumDate={new Date()}
-                  onChange={(event: DateTimePickerEvent, d?: Date) => {
-                    if (event.type === 'dismissed' || !d) {
-                      setShowPicker(false);
-                      return;
-                    }
-                    setBirthDate(d);
-                    Vibration.vibrate(10);
-                    setShowPicker(false);
-                  }}
-                />
-              </View>
-            ) : null}
+            <BirthDatePicker value={birthDate} onChange={setBirthDate} />
           </View>
 
           <View style={styles.fieldBlock}>
@@ -394,22 +329,6 @@ const styles = StyleSheet.create({
   fieldLabelMuted: {
     letterSpacing: 0.3,
     opacity: 0.65,
-  },
-  dateValue: {
-    flex: 1,
-  },
-  datePill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderRadius: Radius.full,
-    paddingVertical: Spacing.lg,
-    paddingHorizontal: Spacing.xl,
-    minHeight: 72,
-  },
-  datePickerWrap: {
-    borderRadius: Radius.lg,
-    overflow: 'hidden',
   },
   lifespanValueRow: {
     flexDirection: 'row',
