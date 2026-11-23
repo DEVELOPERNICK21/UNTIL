@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Long-press the app icon: a one-tap way into the quick calm. Opens the same link as the widget. -->
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+    <shortcut
+        android:shortcutId="pause_now"
+        android:enabled="true"
+        android:icon="@drawable/ic_pause_wind"
+        android:shortcutShortLabel="@string/shortcut_pause_short"
+        android:shortcutLongLabel="@string/shortcut_pause_long">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:data="until://open/PauseNow"
+            android:targetPackage="app.until.time"
+            android:targetClass="app.until.time.MainActivity" />
+    </shortcut>
+</shortcuts>

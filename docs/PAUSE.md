@@ -102,17 +102,33 @@ A breathing exercise is useless if the phone locks 30 seconds in. While a practi
 ## Where it is
 
 - Home header, first button (wind icon). Accessibility label: "Pause. A minute to settle."
-- Deep link: `until://open/Pause` opens the hub. `PauseSession` (practice, optional `instant`) is the session route; it is not deep-linkable.
+- Deep links: `until://open/Pause` opens the hub; `until://open/PauseNow` skips the hub and starts the one-minute quick calm (see [One tap from outside the app](#one-tap-from-outside-the-app)). `PauseSession` (practice, optional `instant`) is the session route; it is not deep-linkable.
 - Code: `src/features/pause/` (`domain` pure, `data` MMKV repository, `hooks`, `ui`). Composition root: `src/app/di/pause.ts`. It reads today's open tasks through `useOpenTasksToday` from the `tasks` feature (the only dependency; see ARCHITECTURE.md).
 - Copy: `pause` namespace in `src/shared/i18n/locales/<code>/pause.json` (all 11 languages).
 - The calm colours are local to the feature (`ui/calmPalette.ts`) and do not follow light/dark mode: the hub is always the same dark teal, on purpose, so it feels like a different room.
+
+## One tap from outside the app
+
+A bad moment is not the time to find an app. Three entry points all open `until://open/PauseNow`, which the app turns into the quick calm (cyclic sighing, one minute, no ready step). A second tap while a session is already on screen does not restart it.
+
+| Where | What |
+|-------|------|
+| Android home screen | "Breathe" widget (3x1, `UNTILPauseWidgetProvider`) |
+| Android app icon | Long-press shortcut "Breathe" (`res/xml/shortcuts.xml`) |
+| iPhone Lock Screen and Home Screen | "Breathe" widget (`PauseWidget` in `UNTILWidgets.swift`): circular, rectangular, inline and small |
+
+- **Nothing private on the widget.** It carries no minutes, no progress and no feelings, and reads no stored data, so there is nothing to refresh and nothing to leak on a Lock Screen.
+- **The name is plain on purpose.** "Breathe", not "Anxiety" or "Panic", so it is fine to leave where other people can see the screen.
+- A widget cannot animate; it is only the doorway. The breathing happens in the app.
+- The widget text is English only, like the other widgets in the app.
+- Not done: iPhone Home Screen quick actions (long-press the icon). They need AppDelegate code and are a sensible follow-up.
 
 ## Not in this version, on purpose
 
 - **Haptic pacing.** iOS cannot pace the built-in `Vibration` API; it needs a small native library. Android pulses alone would make the two platforms feel different.
 - **Sound.** Needs an audio library and assets, and many people use the app where they cannot play sound.
 - **Gentle mode** (hide the ticking seconds, switch reflections to the "Quiet" tone). It touches other screens and deserves its own change.
-- **Night mode** (hide every clock until morning), widget and shortcut entry points to the quick calm, the Apple Watch.
+- **Night mode** (hide every clock until morning), the Apple Watch.
 - **A countdown hiding option** for "something is coming up". It needs the countdowns feature and a decision about what "hidden" means for widgets.
 - **A year-in-review card** of calm minutes (counts only).
 

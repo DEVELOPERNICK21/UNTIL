@@ -1,9 +1,25 @@
-import { parseOpenScreenUrl } from '../src/app/navigation/deepLinks';
+import * as fs from 'fs';
+import * as path from 'path';
+import {
+  isQuickCalmUrl,
+  openScreenFromUrl,
+  parseOpenScreenUrl,
+} from '../src/app/navigation/deepLinks';
+import { rootNavigationRef } from '../src/shared/navigation/rootNavigationRef';
 
-// The navigation library is ESM; only the URL parser is under test here.
+// The navigation library is ESM, so the ref is replaced by a stand-in the tests can steer.
 jest.mock('../src/shared/navigation/rootNavigationRef', () => ({
-  rootNavigationRef: { isReady: () => false, navigate: jest.fn() },
+  rootNavigationRef: {
+    isReady: jest.fn(() => false),
+    getCurrentRoute: jest.fn(() => ({ name: 'Home' })),
+    navigate: jest.fn(),
+  },
 }));
+
+// The feature's screens are not needed to read its constants; use the real values without them.
+jest.mock('../src/features/pause', () =>
+  jest.requireActual('../src/features/pause/domain/practices'),
+);
 
 describe('parseOpenScreenUrl', () => {
   it('accepts the screens the island links to', () => {
@@ -64,3 +80,94 @@ describe('widget tap targets', () => {
   });
 });
 
+
+describe('quick calm link (widget and shortcut)', () => {
+  const nav = rootNavigationRef as unknown as {
+    isReady: jest.Mock;
+    getCurrentRoute: jest.Mock;
+    navigate: jest.Mock;
+  };
+
+  beforeEach(() => {
+    nav.isReady.mockReturnValue(true);
+    nav.getCurrentRoute.mockReturnValue({ name: 'Home' });
+    nav.navigate.mockClear();
+  });
+
+  it('is recognised, with a query or trailing slash', () => {
+    expect(isQuickCalmUrl('until://open/PauseNow')).toBe(true);
+    expect(isQuickCalmUrl('until://open/PauseNow/')).toBe(true);
+    expect(isQuickCalmUrl('until://open/PauseNow?from=widget')).toBe(true);
+    expect(isQuickCalmUrl('until://open/Pause')).toBe(false);
+    expect(isQuickCalmUrl('until://open/PauseNow/extra')).toBe(false);
+    expect(isQuickCalmUrl(null)).toBe(false);
+  });
+
+  it('is not an ordinary screen link', () => {
+    expect(parseOpenScreenUrl('until://open/PauseNow')).toBeNull();
+  });
+
+  it('starts the one-minute sigh with no ready step', () => {
+    expect(openScreenFromUrl('until://open/PauseNow')).toBe(true);
+    expect(nav.navigate).toHaveBeenCalledWith('PauseSession', {
+      practice: 'sigh',
+      instant: true,
+    });
+  });
+
+  it('does not restart a session that is already running', () => {
+    nav.getCurrentRoute.mockReturnValue({ name: 'PauseSession' });
+    expect(openScreenFromUrl('until://open/PauseNow')).toBe(true);
+    expect(nav.navigate).not.toHaveBeenCalled();
+  });
+
+  it('still opens the hub for the plain Pause link', () => {
+    expect(openScreenFromUrl('until://open/Pause')).toBe(true);
+    expect(nav.navigate).toHaveBeenCalledWith('Pause');
+  });
+
+  it('leaves other links alone', () => {
+    expect(openScreenFromUrl('until://open/Settings')).toBe(false);
+    expect(nav.navigate).not.toHaveBeenCalled();
+  });
+});
+
+/** The native entry points are Kotlin, XML and Swift; this keeps them sending the link the app expects. */
+describe('quick calm entry points on the phone', () => {
+  const root = path.join(__dirname, '..');
+  const read = (file: string) => fs.readFileSync(path.join(root, file), 'utf8');
+
+  it('the Android widget sends the quick calm link', () => {
+    const kotlin = read('android/app/src/main/java/app/until/time/UNTILPauseWidgetProvider.kt');
+    const url = /Uri\.parse\("(until:\/\/[^"]+)"\)/.exec(kotlin)?.[1];
+    expect(isQuickCalmUrl(url ?? null)).toBe(true);
+  });
+
+  it('the Android app shortcut sends the quick calm link', () => {
+    const xml = read('android/app/src/main/res/xml/shortcuts.xml');
+    const url = /android:data="([^"]+)"/.exec(xml)?.[1];
+    expect(isQuickCalmUrl(url ?? null)).toBe(true);
+    expect(read('android/app/src/main/AndroidManifest.xml')).toContain('@xml/shortcuts');
+  });
+
+  it('the Android widget is registered', () => {
+    const manifest = read('android/app/src/main/AndroidManifest.xml');
+    expect(manifest).toContain('.UNTILPauseWidgetProvider');
+    expect(manifest).toContain('@xml/widget_pause_info');
+  });
+
+  it('the iOS widget sends the quick calm route and is in the bundle', () => {
+    const swift = read('ios/UNTILWidgets/UNTILWidgets.swift');
+    expect(swift).toMatch(/\.widgetURL\(widgetOpenURL\("PauseNow"\)\)/);
+    expect(swift).toMatch(/HourCalculationWidget\(\)\s+PauseWidget\(\)/);
+    expect(isQuickCalmUrl('until://open/PauseNow')).toBe(true);
+  });
+
+  it('shows nothing private: the widgets carry no data from the app', () => {
+    const swift = read('ios/UNTILWidgets/UNTILWidgets.swift');
+    const start = swift.indexOf('struct PauseWidgetProvider');
+    const end = swift.indexOf('struct PauseWidget: Widget');
+    const pauseBlock = swift.slice(start, end);
+    expect(pauseBlock).not.toMatch(/WidgetCacheReader|loadJSON|UserDefaults|MMKV/);
+  });
+});
