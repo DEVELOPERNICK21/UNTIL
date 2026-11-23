@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
-import { Text } from '../../../shared/ui';
-import { Radius, Spacing, useTheme } from '../../../shared/theme';
+import { Radius, Spacing } from '../../../shared/theme';
 import { useTranslation } from '../../../shared/i18n/useTranslation';
 import { useOpenTasksToday } from '../../tasks';
-import { PauseButton } from './PauseButton';
+import { CalmButton } from './CalmButton';
+import { CalmText } from './CalmText';
+import { CALM } from './calmPalette';
 
 interface Props {
   /** `focus` is the task chosen, if any. It goes to the closing step and nowhere else. */
@@ -17,7 +18,6 @@ interface Props {
  */
 export function LoadPath({ onDone }: Props) {
   const { t } = useTranslation();
-  const theme = useTheme();
   const tasks = useOpenTasksToday(3);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [missing, setMissing] = useState(false);
@@ -37,12 +37,12 @@ export function LoadPath({ onDone }: Props) {
 
   return (
     <View style={styles.root}>
-      <Text variant="headline" color="primary" accessibilityRole="header" style={styles.title}>
+      <CalmText variant="headline" tone="primary" accessibilityRole="header" style={styles.title}>
         {t('pause.load.title')}
-      </Text>
-      <Text variant="body" color="secondary" style={styles.body}>
+      </CalmText>
+      <CalmText variant="body" tone="secondary" style={styles.body}>
         {tasks.length > 0 ? t('pause.load.body') : t('pause.load.noTasks')}
-      </Text>
+      </CalmText>
 
       <View style={styles.list} accessibilityRole="radiogroup">
         {tasks.map(task => {
@@ -59,35 +59,27 @@ export function LoadPath({ onDone }: Props) {
               accessibilityLabel={task.title}
               style={[
                 styles.row,
-                {
-                  backgroundColor: theme.glassBg,
-                  borderColor: selected ? theme.percent : theme.glassBorder,
-                },
+                { backgroundColor: selected ? CALM.cardSelected : CALM.card, borderColor: selected ? CALM.accent : CALM.cardBorder },
               ]}
             >
-              <View style={[styles.dot, { borderColor: selected ? theme.percent : theme.textMuted }]}>
-                {selected ? <View style={[styles.dotFill, { backgroundColor: theme.percent }]} /> : null}
+              <View style={[styles.dot, { borderColor: selected ? CALM.accent : CALM.textMuted }]}>
+                {selected ? <View style={[styles.dotFill, { backgroundColor: CALM.accent }]} /> : null}
               </View>
-              <Text variant="body" color="primary" numberOfLines={2} style={styles.rowText}>
+              <CalmText variant="body" tone="primary" numberOfLines={2} style={styles.rowText}>
                 {task.title}
-              </Text>
+              </CalmText>
             </Pressable>
           );
         })}
       </View>
 
-      <Text
-        variant="caption"
-        color="secondary"
-        accessibilityLiveRegion="polite"
-        style={[styles.error, { color: theme.percent }]}
-      >
+      <CalmText variant="caption" tone="warm" accessibilityLiveRegion="polite" style={styles.error}>
         {missing ? t('pause.load.pickFirst') : ' '}
-      </Text>
+      </CalmText>
 
       <View style={styles.actions}>
-        <PauseButton label={t('pause.load.go')} onPress={go} />
-        <PauseButton variant="quiet" label={t('common.notNow')} onPress={() => onDone()} />
+        <CalmButton label={t('pause.load.go')} onPress={go} />
+        <CalmButton variant="quiet" label={t('common.notNow')} onPress={() => onDone()} />
       </View>
     </View>
   );

@@ -1,6 +1,6 @@
 /**
- * How someone moves through a Pause. In particular: "still tight" gets one slower round, then moves
- * on, and no step can be skipped into by the wrong action.
+ * How someone moves through one Pause session. In particular: "still tight" gets one gentler round, then
+ * moves on, and no step can be reached by the wrong action.
  */
 
 import {
@@ -12,114 +12,116 @@ import {
   type PauseState,
 } from '../src/features/pause/domain/pauseFlow';
 
-const run = (actions: PauseAction[], from: PauseState = initialPauseState): PauseState =>
-  actions.reduce(pauseReducer, from);
+const fresh = (): PauseState => initialPauseState('box', true);
+const run = (actions: PauseAction[], from: PauseState = fresh()): PauseState => actions.reduce(pauseReducer, from);
+const done = (seconds = 60): PauseAction => ({ type: 'practiceDone', seconds });
 
-describe('pauseReducer', () => {
-  it('starts breathing at the steady pace, in round 1', () => {
-    expect(initialPauseState).toEqual({
-      step: 'breathe',
-      round: 1,
-      pace: 'steady',
-      weight: null,
-      stillTight: false,
-      focus: null,
-    });
+describe('starting', () => {
+  it('opens on "ready" for a chosen practice, with its own default length', () => {
+    expect(initialPauseState('wind', false)).toMatchObject({ step: 'ready', practice: 'wind', seconds: 180, round: 1 });
   });
 
-  it('goes from breathing to the check-in', () => {
-    expect(run([{ type: 'breathDone' }]).step).toBe('checkIn');
+  it('opens straight on the practice for the panic button', () => {
+    expect(initialPauseState('sigh', true)).toMatchObject({ step: 'breathe', practice: 'sigh', seconds: 60 });
+  });
+
+  it('starts with nothing practised, no weight, no focus, not tight', () => {
+    expect(fresh()).toMatchObject({ practiceSeconds: 0, weight: null, focus: null, stillTight: false });
+  });
+
+  it('"start" picks the length and begins, only from "ready"', () => {
+    const s = pauseReducer(initialPauseState('coherent', false), { type: 'start', seconds: 300 });
+    expect(s).toMatchObject({ step: 'breathe', seconds: 300 });
+    const already = fresh();
+    expect(pauseReducer(already, { type: 'start', seconds: 300 })).toBe(already);
+  });
+});
+
+describe('practising and checking in', () => {
+  it('counts the seconds practised and moves to the check-in', () => {
+    const s = run([done(95)]);
+    expect(s.step).toBe('checkIn');
+    expect(s.practiceSeconds).toBe(95);
+  });
+
+  it('never counts negative time', () => {
+    expect(run([done(-30)]).practiceSeconds).toBe(0);
   });
 
   it.each(['calmer', 'same'] as const)('moves on to "what feels heavy" after "%s"', feeling => {
-    const s = run([{ type: 'breathDone' }, { type: 'feeling', feeling }]);
+    const s = run([done(), { type: 'feeling', feeling }]);
     expect(s.step).toBe('weight');
     expect(s.stillTight).toBe(false);
   });
 
-  it('gives "still tight" one more, slower, round', () => {
-    const s = run([{ type: 'breathDone' }, { type: 'feeling', feeling: 'tight' }]);
-    expect(s).toMatchObject({ step: 'breathe', round: 2, pace: 'slow', stillTight: false });
+  it('gives "still tight" one more round, with a gentler pattern, and adds up the time', () => {
+    const s = run([done(60), { type: 'feeling', feeling: 'tight' }]);
+    expect(s).toMatchObject({ step: 'breathe', round: 2, practice: 'coherent', stillTight: false });
+    expect(run([done(60), { type: 'feeling', feeling: 'tight' }, done(60)]).practiceSeconds).toBe(120);
   });
 
-  it('does not loop: still tight after the last round moves on and remembers it', () => {
+  it('from slow breathing the gentler round is the long exhale', () => {
+    const s = run([done(), { type: 'feeling', feeling: 'tight' }], initialPauseState('coherent', true));
+    expect(s.practice).toBe('extended');
+  });
+
+  it('keeps a gentler round between one and three minutes', () => {
+    const long = pauseReducer(initialPauseState('box', true), { type: 'practiceDone', seconds: 300 });
+    const long2 = { ...long, seconds: 300 };
+    expect(pauseReducer(long2, { type: 'feeling', feeling: 'tight' }).seconds).toBe(180);
+    const short = { ...long, seconds: 20 };
+    expect(pauseReducer(short, { type: 'feeling', feeling: 'tight' }).seconds).toBe(60);
+  });
+
+  it('does not loop: still tight twice moves on and remembers it', () => {
     expect(MAX_ROUNDS).toBe(2);
     const s = run([
-      { type: 'breathDone' },
-      { type: 'feeling', feeling: 'tight' },
-      { type: 'breathDone' },
-      { type: 'feeling', feeling: 'tight' },
+      done(), { type: 'feeling', feeling: 'tight' },
+      done(), { type: 'feeling', feeling: 'tight' },
     ]);
     expect(s).toMatchObject({ step: 'weight', round: 2, stillTight: true });
   });
 
   it('forgets "still tight" when the second round helped', () => {
     const s = run([
-      { type: 'breathDone' },
-      { type: 'feeling', feeling: 'tight' },
-      { type: 'breathDone' },
-      { type: 'feeling', feeling: 'calmer' },
+      done(), { type: 'feeling', feeling: 'tight' },
+      done(), { type: 'feeling', feeling: 'calmer' },
     ]);
     expect(s.stillTight).toBe(false);
   });
+});
+
+describe('what feels heavy, and the path', () => {
+  const toWeight = (): PauseAction[] => [done(), { type: 'feeling', feeling: 'same' }];
 
   it.each(WEIGHTS)('opens the path for "%s"', weight => {
-    const s = run([
-      { type: 'breathDone' },
-      { type: 'feeling', feeling: 'same' },
-      { type: 'weight', weight },
-    ]);
-    expect(s).toMatchObject({ step: 'path', weight });
+    expect(run([...toWeight(), { type: 'weight', weight }])).toMatchObject({ step: 'path', weight });
   });
 
   it('skipping the question goes straight to the close', () => {
-    const s = run([
-      { type: 'breathDone' },
-      { type: 'feeling', feeling: 'same' },
-      { type: 'weight', weight: null },
-    ]);
-    expect(s).toMatchObject({ step: 'close', weight: null });
+    expect(run([...toWeight(), { type: 'weight', weight: null }])).toMatchObject({ step: 'close', weight: null });
   });
 
-  it('ends after the path', () => {
-    const s = run([
-      { type: 'breathDone' },
-      { type: 'feeling', feeling: 'calmer' },
-      { type: 'weight', weight: 'load' },
-      { type: 'pathDone' },
-    ]);
-    expect(s.step).toBe('close');
-  });
-
-  it('carries the one thing chosen to the close, and trims it', () => {
-    const toPath = [
-      { type: 'breathDone' },
-      { type: 'feeling', feeling: 'calmer' },
-      { type: 'weight', weight: 'load' },
-    ] as PauseAction[];
-    expect(run([...toPath, { type: 'pathDone', focus: '  Book the dentist ' }]).focus).toBe(
-      'Book the dentist',
-    );
+  it('carries the one thing chosen to the close, trimmed, and treats blank as none', () => {
+    const toPath = [...toWeight(), { type: 'weight', weight: 'load' }] as PauseAction[];
+    expect(run([...toPath, { type: 'pathDone', focus: '  Book the dentist ' }]).focus).toBe('Book the dentist');
     expect(run([...toPath, { type: 'pathDone' }]).focus).toBeNull();
     expect(run([...toPath, { type: 'pathDone', focus: '   ' }]).focus).toBeNull();
   });
+});
 
-  it('ignores an action that does not belong to the current step', () => {
-    expect(run([{ type: 'feeling', feeling: 'calmer' }])).toBe(initialPauseState);
-    expect(run([{ type: 'weight', weight: 'load' }])).toBe(initialPauseState);
-    expect(run([{ type: 'pathDone' }])).toBe(initialPauseState);
+describe('wrong actions', () => {
+  it('are ignored, and keep the same state object so nothing re-renders', () => {
+    const start = fresh();
+    expect(pauseReducer(start, { type: 'feeling', feeling: 'calmer' })).toBe(start);
+    expect(pauseReducer(start, { type: 'weight', weight: 'load' })).toBe(start);
+    expect(pauseReducer(start, { type: 'pathDone' })).toBe(start);
 
-    const atCheckIn = run([{ type: 'breathDone' }]);
-    expect(pauseReducer(atCheckIn, { type: 'breathDone' })).toBe(atCheckIn);
-  });
+    const atCheckIn = run([done()]);
+    expect(pauseReducer(atCheckIn, done())).toBe(atCheckIn);
 
-  it('keeps the same state object for an ignored action, so nothing re-renders', () => {
-    const atClose = run([
-      { type: 'breathDone' },
-      { type: 'feeling', feeling: 'calmer' },
-      { type: 'weight', weight: null },
-    ]);
+    const atClose = run([done(), { type: 'feeling', feeling: 'calmer' }, { type: 'weight', weight: null }]);
     expect(pauseReducer(atClose, { type: 'pathDone' })).toBe(atClose);
-    expect(pauseReducer(atClose, { type: 'breathDone' })).toBe(atClose);
+    expect(pauseReducer(atClose, done())).toBe(atClose);
   });
 });

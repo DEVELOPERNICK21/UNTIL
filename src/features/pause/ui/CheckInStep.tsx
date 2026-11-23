@@ -1,10 +1,10 @@
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
-import { Text } from '../../../shared/ui';
 import { Spacing } from '../../../shared/theme';
 import { useTranslation } from '../../../shared/i18n/useTranslation';
 import type { Feeling } from '../domain/pauseFlow';
-import { PauseButton } from './PauseButton';
+import { CalmButton } from './CalmButton';
+import { CalmText } from './CalmText';
 
 interface Props {
   onFeeling: (feeling: Feeling) => void;
@@ -15,13 +15,13 @@ export function CheckInStep({ onFeeling }: Props) {
   const { t } = useTranslation();
   return (
     <View style={styles.root}>
-      <Text variant="headline" color="primary" accessibilityRole="header" style={styles.title}>
+      <CalmText variant="headline" tone="primary" accessibilityRole="header" style={styles.title}>
         {t('pause.checkin.title')}
-      </Text>
+      </CalmText>
       <View style={styles.choices}>
-        <PauseButton label={t('pause.checkin.calmer')} onPress={() => onFeeling('calmer')} />
-        <PauseButton label={t('pause.checkin.same')} onPress={() => onFeeling('same')} />
-        <PauseButton label={t('pause.checkin.tight')} onPress={() => onFeeling('tight')} />
+        <CalmButton label={t('pause.checkin.calmer')} onPress={() => onFeeling('calmer')} />
+        <CalmButton label={t('pause.checkin.same')} onPress={() => onFeeling('same')} />
+        <CalmButton label={t('pause.checkin.tight')} onPress={() => onFeeling('tight')} />
       </View>
     </View>
   );

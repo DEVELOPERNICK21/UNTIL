@@ -171,6 +171,9 @@ export const STORAGE_KEYS = {
   PRESENCE_STREAK_FREEZE: 'engagement.presenceStreakFreeze',
   PRESENCE_STREAK_SAVER_ID: 'engagement.presenceStreakSaverId',
 
+  // Pause: calm minutes per day, practices tried, milestones. Counts only, never feelings. Owner: MmkvPauseProgressRepository.
+  PAUSE_PROGRESS: 'pause.progress',
+
   // Badges (earned ids, celebrations already shown). Owner: MmkvBadgeRepository.
   BADGES_STATE: 'gamification.badgesState',
 

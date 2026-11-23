@@ -1,20 +1,17 @@
 /**
- * The hook that follows a round of breathing, on a fake clock.
+ * The hook that follows one session of breathing, on a fake clock.
  */
 
 import React from 'react';
 import ReactTestRenderer, { act } from 'react-test-renderer';
-import { useBreathing } from '../src/features/pause/hooks/useBreathing';
-import { BREATH_PACES, ROUND_MS, breathLengthMs } from '../src/features/pause/domain/breathing';
-import type { BreathPaceName } from '../src/features/pause/domain/breathing';
+import { useBreathing, type BreathingView } from '../src/features/pause/hooks/useBreathing';
+import { cycleMs, sessionMs, type BreathTechniqueId } from '../src/features/pause/domain/breathing';
 
-type Snapshot = ReturnType<typeof useBreathing>;
+let latest: BreathingView;
+const onComplete = jest.fn();
 
-let latest: Snapshot;
-const onDone = jest.fn();
-
-function Probe({ pace, trackProgress }: { pace: BreathPaceName; trackProgress?: boolean }) {
-  latest = useBreathing({ pace, onRoundComplete: onDone, trackProgress });
+function Probe({ technique, seconds = 60 }: { technique: BreathTechniqueId; seconds?: number }) {
+  latest = useBreathing({ technique, totalMs: sessionMs(technique, seconds), onComplete });
   return null;
 }
 
@@ -31,70 +28,93 @@ function mount(element: React.ReactElement): ReactTestRenderer.ReactTestRenderer
 describe('useBreathing', () => {
   beforeEach(() => {
     jest.useFakeTimers();
-    onDone.mockClear();
+    onComplete.mockClear();
   });
   afterEach(() => jest.useRealTimers());
 
-  it('starts breathing in, and cannot be skipped yet', () => {
-    mount(<Probe pace="steady" />);
+  it('starts breathing in and cannot be skipped yet', () => {
+    mount(<Probe technique="extended" />);
     expect(latest.phase).toBe('inhale');
     expect(latest.canContinue).toBe(false);
+    expect(latest.progress).toBe(0);
   });
 
-  it('switches to breathing out when the in-breath is over', () => {
-    mount(<Probe pace="steady" />);
-    advance(BREATH_PACES.steady.inhaleMs - 200);
+  it('switches phase on time, through a hold', () => {
+    mount(<Probe technique="box" />);
+    advance(3900);
     expect(latest.phase).toBe('inhale');
-    advance(400);
+    advance(200);
+    expect(latest.phase).toBe('hold');
+    advance(4000);
     expect(latest.phase).toBe('exhale');
-    advance(BREATH_PACES.steady.exhaleMs);
-    expect(latest.phase).toBe('inhale');
+    advance(4000);
+    expect(latest.phase).toBe('rest');
+  });
+
+  it('counts the seconds left in the current part of the breath, for following 4-7-8', () => {
+    mount(<Probe technique="wind" />);
+    advance(100);
+    expect(latest.secondsLeft).toBe(4);
+    advance(1000);
+    expect(latest.secondsLeft).toBe(3);
+    advance(3000);
+    expect(latest.phase).toBe('hold');
+    expect(latest.secondsLeft).toBe(7);
+  });
+
+  it('follows the double breath in of cyclic sighing', () => {
+    mount(<Probe technique="sigh" />);
+    advance(2100);
+    expect(latest.phase).toBe('top');
+    advance(1000);
+    expect(latest.phase).toBe('exhale');
   });
 
   it('allows moving on after one full breath, not before', () => {
-    mount(<Probe pace="steady" />);
-    advance(breathLengthMs(BREATH_PACES.steady) - 300);
+    mount(<Probe technique="extended" />);
+    advance(cycleMs('extended') - 300);
     expect(latest.canContinue).toBe(false);
     advance(500);
     expect(latest.canContinue).toBe(true);
   });
 
-  it('uses the slower rhythm when asked', () => {
-    mount(<Probe pace="slow" />);
-    advance(BREATH_PACES.steady.inhaleMs + 200);
-    expect(latest.phase).toBe('inhale');
-    advance(BREATH_PACES.slow.inhaleMs);
-    expect(latest.phase).toBe('exhale');
+  it('fills the ring as the session goes', () => {
+    mount(<Probe technique="extended" seconds={60} />);
+    advance(30000);
+    expect(latest.progress).toBeGreaterThan(0.45);
+    expect(latest.progress).toBeLessThan(0.55);
   });
 
-  it('calls back once when the round is over, and then stops ticking', () => {
-    mount(<Probe pace="steady" />);
-    advance(ROUND_MS - 500);
-    expect(onDone).not.toHaveBeenCalled();
-    advance(1000);
-    expect(onDone).toHaveBeenCalledTimes(1);
-    advance(ROUND_MS * 2);
-    expect(onDone).toHaveBeenCalledTimes(1);
+  it('calls back once when the session is over, with the seconds practised, and then stops ticking', () => {
+    mount(<Probe technique="extended" seconds={60} />);
+    advance(59000);
+    expect(onComplete).not.toHaveBeenCalled();
+    advance(2000);
+    expect(onComplete).toHaveBeenCalledTimes(1);
+    expect(onComplete).toHaveBeenCalledWith(60);
+    advance(120000);
+    expect(onComplete).toHaveBeenCalledTimes(1);
     expect(jest.getTimerCount()).toBe(0);
   });
 
-  it('tracks progress through the phase only when asked', () => {
-    mount(<Probe pace="steady" trackProgress />);
-    advance(BREATH_PACES.steady.inhaleMs / 2);
-    expect(latest.phaseProgress).toBeGreaterThan(0.4);
-    expect(latest.phaseProgress).toBeLessThan(0.6);
+  it('reports the seconds practised so far for someone who leaves early', () => {
+    mount(<Probe technique="extended" seconds={180} />);
+    advance(25000);
+    expect(latest.practisedSeconds()).toBe(25);
+  });
 
-    mount(<Probe pace="steady" />);
-    advance(BREATH_PACES.steady.inhaleMs / 2);
-    expect(latest.phaseProgress).toBe(0);
+  it('never reports more than the session length', () => {
+    mount(<Probe technique="extended" seconds={60} />);
+    jest.setSystemTime(Date.now() + 10 * 60 * 1000);
+    expect(latest.practisedSeconds()).toBe(60);
   });
 
   it('stops its timer when the screen goes away, without calling back', () => {
-    const r = mount(<Probe pace="steady" />);
+    const r = mount(<Probe technique="box" />);
     advance(5000);
     act(() => r.unmount());
     expect(jest.getTimerCount()).toBe(0);
-    advance(ROUND_MS);
-    expect(onDone).not.toHaveBeenCalled();
+    advance(120000);
+    expect(onComplete).not.toHaveBeenCalled();
   });
 });
