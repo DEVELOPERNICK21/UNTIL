@@ -3,14 +3,7 @@
  */
 
 import React, { useEffect, useRef, useState } from 'react';
-import {
-  View,
-  StyleSheet,
-  Pressable,
-  Vibration,
-  Animated,
-  Easing,
-} from 'react-native';
+import { View, StyleSheet, Pressable, Vibration, Animated } from 'react-native';
 import { Text, PeriodGlyph, Ember } from '../../../shared/ui';
 import {
   useTheme,
@@ -24,6 +17,7 @@ import {
 import { useTranslation } from '../../../shared/i18n/useTranslation';
 import { useEnter } from './onboardingMotion';
 import { useReduceMotion } from '../../../shared/ui/useReduceMotion';
+import { WelcomeGlow } from './WelcomeGlow';
 
 type FeatureId = 'day' | 'widgets' | 'life';
 
@@ -48,7 +42,6 @@ export function InteractiveWelcome({
   const theme = useTheme();
   const reduceMotion = useReduceMotion();
   const [selected, setSelected] = useState<FeatureId | null>(null);
-  const glow = useRef(new Animated.Value(0)).current;
   const brandScale = useRef(new Animated.Value(0.92)).current;
   const brandOpacity = useRef(new Animated.Value(0)).current;
   const headline = useEnter(active, 120);
@@ -59,13 +52,11 @@ export function InteractiveWelcome({
     if (!active) {
       brandScale.setValue(0.92);
       brandOpacity.setValue(0);
-      glow.setValue(0);
       return;
     }
     if (reduceMotion) {
       brandScale.setValue(1);
       brandOpacity.setValue(1);
-      glow.setValue(0.5);
       return;
     }
     Animated.parallel([
@@ -81,56 +72,19 @@ export function InteractiveWelcome({
         useNativeDriver: true,
       }),
     ]).start();
-
-    const loop = Animated.loop(
-      Animated.sequence([
-        Animated.timing(glow, {
-          toValue: 1,
-          duration: 1800,
-          easing: Easing.inOut(Easing.sin),
-          useNativeDriver: true,
-        }),
-        Animated.timing(glow, {
-          toValue: 0,
-          duration: 1800,
-          easing: Easing.inOut(Easing.sin),
-          useNativeDriver: true,
-        }),
-      ])
-    );
-    loop.start();
-    return () => loop.stop();
-  }, [active, brandScale, brandOpacity, glow, reduceMotion]);
+  }, [active, brandScale, brandOpacity, reduceMotion]);
 
   return (
     <View style={styles.hero}>
       <Animated.View
-        pointerEvents="none"
         style={[
-          styles.glow,
-          {
-            backgroundColor: theme.percent,
-            opacity: glow.interpolate({
-              inputRange: [0, 1],
-              outputRange: [0.1, 0.22],
-            }),
-            transform: [
-              {
-                scale: glow.interpolate({
-                  inputRange: [0, 1],
-                  outputRange: [0.92, 1.12],
-                }),
-              },
-            ],
-          },
+          styles.brandBlock,
+          { opacity: brandOpacity, transform: [{ scale: brandScale }] },
         ]}
-      />
-
-      <Animated.View
-        style={{ opacity: brandOpacity, transform: [{ scale: brandScale }] }}
       >
         <View style={styles.emberRow}>
-          <Ember progress={0.32} size={64} />
+          <WelcomeGlow active={active} />
+          <Ember progress={0.32} size={84} />
         </View>
         <Text variant="micro" style={[styles.eyebrow, { color: theme.percent }]}>
           {t('onboarding.welcome.eyebrow')}
@@ -241,49 +195,54 @@ const styles = StyleSheet.create({
   hero: {
     flexGrow: 1,
     justifyContent: 'center',
+    alignItems: 'center',
     paddingBottom: Spacing.lg,
   },
-  glow: {
-    position: 'absolute',
-    width: 280,
-    height: 280,
-    borderRadius: 140,
-    top: '6%',
-    alignSelf: 'center',
+  brandBlock: {
+    alignItems: 'center',
   },
   emberRow: {
-    marginBottom: Spacing.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: 240,
+    height: 240,
+    marginBottom: Spacing.xs,
   },
   eyebrow: {
     letterSpacing: 2,
     marginBottom: Spacing.sm,
+    textAlign: 'center',
   },
   brand: {
     fontSize: Typography.large + 8,
     letterSpacing: 4,
     marginBottom: Spacing.md,
+    textAlign: 'center',
   },
   headline: {
     marginBottom: Spacing.md,
     lineHeight: Typography.headline * 1.25,
+    textAlign: 'center',
   },
   body: {
     lineHeight: Typography.body * 1.55,
-    marginBottom: Spacing.lg,
+    marginBottom: Spacing.xl,
     maxWidth: 340,
+    textAlign: 'center',
+    alignSelf: 'center',
   },
   featureRow: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
+    alignSelf: 'stretch',
     gap: Spacing.sm,
   },
   featureChip: {
+    flex: 1,
     alignItems: 'center',
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: Spacing.md,
     borderRadius: Radius.lg,
     borderWidth: 1,
-    minWidth: 96,
   },
   featureBlurb: {
     marginTop: Spacing.md,
@@ -293,5 +252,6 @@ const styles = StyleSheet.create({
   },
   tapCue: {
     marginTop: Spacing.md,
+    textAlign: 'center',
   },
 });

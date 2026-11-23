@@ -94,6 +94,9 @@ function OptionRow<T extends string>({
           Vibration.vibrate(8);
           onSelect(option.value);
         }}
+        accessibilityRole="radio"
+        accessibilityState={{ selected: isSelected }}
+        accessibilityLabel={option.label}
         style={[
           styles.row,
           {
@@ -101,21 +104,53 @@ function OptionRow<T extends string>({
               ? 'rgba(232, 124, 32, 0.14)'
               : theme.cardBase,
             borderColor: isSelected ? theme.percent : theme.divider,
+            borderWidth: isSelected ? 2 : 1,
           },
         ]}
       >
+        {option.emoji ? (
+          <View
+            style={[
+              styles.badge,
+              {
+                backgroundColor: isSelected
+                  ? 'rgba(232, 124, 32, 0.18)'
+                  : theme.cardLighter,
+              },
+            ]}
+            accessibilityElementsHidden
+            importantForAccessibility="no-hide-descendants"
+          >
+            <Text style={styles.emoji}>{option.emoji}</Text>
+          </View>
+        ) : null}
         <Text
           variant="body"
           style={[
             styles.label,
             {
               color: isSelected ? theme.percent : theme.textPrimary,
-              fontFamily: getFontFamilyForWeight(Weight.medium),
+              fontFamily: getFontFamilyForWeight(
+                isSelected ? Weight.semibold : Weight.medium,
+              ),
             },
           ]}
         >
           {option.label}
         </Text>
+        <View
+          style={[
+            styles.radio,
+            {
+              borderColor: isSelected ? theme.percent : theme.divider,
+              backgroundColor: isSelected ? theme.percent : 'transparent',
+            },
+          ]}
+          accessibilityElementsHidden
+          importantForAccessibility="no-hide-descendants"
+        >
+          {isSelected ? <Text style={styles.check}>✓</Text> : null}
+        </View>
       </TouchableOpacity>
     </Animated.View>
   );
@@ -145,17 +180,45 @@ export function QuizOptionList<T extends string>({
 
 const styles = StyleSheet.create({
   list: {
-    gap: Spacing[2],
+    gap: Spacing[3],
     width: '100%',
   },
   row: {
-    borderWidth: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing[3],
     borderRadius: Radius.lg,
-    paddingVertical: Spacing[3],
-    paddingHorizontal: Spacing[4],
+    minHeight: 64,
+    paddingVertical: Spacing[2],
+    paddingHorizontal: Spacing[3],
+  },
+  badge: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  emoji: {
+    fontSize: 22,
   },
   label: {
-    fontSize: Typography.body,
-    textAlign: 'center',
+    flex: 1,
+    fontSize: Typography.lead,
+    textAlign: 'left',
+  },
+  radio: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    borderWidth: 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  check: {
+    color: '#0E0E10',
+    fontSize: 13,
+    lineHeight: 15,
+    fontWeight: '700',
   },
 });

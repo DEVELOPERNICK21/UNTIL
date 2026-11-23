@@ -31,10 +31,11 @@ export function ResultsBeat({
 
   return (
     <View style={styles.resultsBlock}>
-      <Animated.View style={header}>
-        <Ember progress={0.88} size={64} />
+      <Animated.View style={[styles.header, header]}>
+        <Ember progress={0.88} size={72} />
         <Text
           variant="display"
+          accessibilityRole="header"
           style={[
             styles.title,
             {
@@ -56,36 +57,23 @@ export function ResultsBeat({
 
       <View style={styles.cards}>
         {cards.map((card, index) => (
-          <ResultCard key={card.id} text={card.text} index={index} />
+          <ResultCard key={card.id} id={card.id} text={card.text} index={index} />
         ))}
       </View>
 
       <View style={styles.resultsFooter}>
-        <TouchableOpacity
-          style={[styles.halfBtn, { borderColor: theme.divider }]}
-          onPress={onBack}
-          activeOpacity={0.75}
-        >
-          <Text style={{ color: theme.textPrimary }}>
-            {t('onboarding.cta.back')}
-          </Text>
-        </TouchableOpacity>
-        <Animated.View style={[{ flex: 1 }, { transform: [{ scale }] }]}>
+        <Animated.View style={[styles.fullWidth, { transform: [{ scale }] }]}>
           <TouchableOpacity
-            style={[
-              styles.halfBtnFill,
-              {
-                backgroundColor: theme.percent,
-                borderColor: theme.percent,
-              },
-            ]}
+            style={[styles.primaryBtn, { backgroundColor: theme.percent }]}
             onPress={() => {
               bounce();
               onContinue();
             }}
             activeOpacity={0.9}
+            accessibilityRole="button"
           >
             <Text
+              variant="sectionTitle"
               style={{
                 color: '#0E0E10',
                 fontFamily: getFontFamilyForWeight(Weight.semibold),
@@ -95,12 +83,29 @@ export function ResultsBeat({
             </Text>
           </TouchableOpacity>
         </Animated.View>
+        <TouchableOpacity
+          style={styles.backLink}
+          onPress={onBack}
+          activeOpacity={0.7}
+          accessibilityRole="button"
+        >
+          <Text variant="body" style={{ color: theme.textSecondary }}>
+            {t('onboarding.cta.back')}
+          </Text>
+        </TouchableOpacity>
       </View>
     </View>
   );
 }
 
-function ResultCard({ text, index }: { text: string; index: number }) {
+/** One small picture per result, so the three lines read as three separate wins. */
+const RESULT_EMOJI: Record<string, string> = {
+  reclaim: '⏳',
+  plan: '🎯',
+  cadence: '📲',
+};
+
+function ResultCard({ id, text, index }: { id: string; text: string; index: number }) {
   const theme = useTheme();
   const enter = useEnter(true, 120 + index * 90);
 
@@ -115,7 +120,9 @@ function ResultCard({ text, index }: { text: string; index: number }) {
         },
       ]}
     >
-      <Text style={{ color: theme.percent, marginRight: Spacing[2] }}>✓</Text>
+      <View style={[styles.resultBadge, { backgroundColor: theme.cardLighter }]}>
+        <Text style={styles.resultEmoji}>{RESULT_EMOJI[id] ?? '✓'}</Text>
+      </View>
       <Text
         variant="body"
         style={{
@@ -126,13 +133,44 @@ function ResultCard({ text, index }: { text: string; index: number }) {
       >
         {text}
       </Text>
+      <Text style={{ color: theme.percent, marginLeft: Spacing[2] }}>✓</Text>
     </Animated.View>
   );
 }
 
 const styles = StyleSheet.create({
+  header: {
+    alignItems: 'center',
+    paddingTop: Spacing[4],
+  },
   title: {
     textAlign: 'center',
+  },
+  fullWidth: {
+    width: '100%',
+  },
+  primaryBtn: {
+    borderRadius: Radius.lg,
+    paddingVertical: Spacing[3],
+    minHeight: 52,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  backLink: {
+    minHeight: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  resultBadge: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: Spacing[3],
+  },
+  resultEmoji: {
+    fontSize: 20,
   },
   subtitle: {
     textAlign: 'center',
@@ -155,25 +193,11 @@ const styles = StyleSheet.create({
     borderRadius: Radius.lg,
     paddingVertical: Spacing[3],
     paddingHorizontal: Spacing[3],
+    minHeight: 64,
   },
   resultsFooter: {
-    flexDirection: 'row',
-    gap: Spacing[2],
     width: '100%',
     marginTop: Spacing[4],
-    alignItems: 'center',
-  },
-  halfBtn: {
-    flex: 1,
-    borderWidth: 1,
-    borderRadius: Radius.lg,
-    paddingVertical: Spacing[3],
-    alignItems: 'center',
-  },
-  halfBtnFill: {
-    borderWidth: 1,
-    borderRadius: Radius.lg,
-    paddingVertical: Spacing[3],
-    alignItems: 'center',
+    gap: Spacing[1],
   },
 });
