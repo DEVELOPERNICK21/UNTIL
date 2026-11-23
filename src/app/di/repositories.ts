@@ -3,6 +3,7 @@
  */
 
 import { MmkvPresenceRepository } from '../../features/presence/data/MmkvPresenceRepository';
+import { MmkvPauseProgressRepository } from '../../features/pause/data/MmkvPauseProgressRepository';
 import { MmkvBadgeRepository } from '../../features/badges/data/MmkvBadgeRepository';
 import { MmkvTimeRepository } from '../../features/time/data/MmkvTimeRepository';
 import { MmkvSubscriptionRepository } from '../../features/premium/data/MmkvSubscriptionRepository';
@@ -33,6 +34,7 @@ import { RevenueCatPurchasesRepository } from '../../features/premium/data/Reven
 import { RevenueCatPaywallPresenter } from '../../features/premium/data/RevenueCatPaywallPresenter';
 
 export const presenceRepository = new MmkvPresenceRepository();
+export const pauseProgressRepository = new MmkvPauseProgressRepository();
 
 export const badgeRepository = new MmkvBadgeRepository();
 

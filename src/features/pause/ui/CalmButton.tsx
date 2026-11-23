@@ -1,19 +1,18 @@
 import React from 'react';
 import { Pressable, StyleSheet } from 'react-native';
-import { Text } from '../../../shared/ui';
-import { Radius, Spacing, useTheme } from '../../../shared/theme';
+import { Radius, Spacing } from '../../../shared/theme';
+import { CalmText } from './CalmText';
+import { CALM } from './calmPalette';
 
 interface Props {
   label: string;
   onPress: () => void;
-  /** `solid` is a choice or the next step. `quiet` is a way out, drawn without a box. */
-  variant?: 'solid' | 'quiet';
+  /** `solid` is the next step, `soft` is a choice, `quiet` is a way out. */
+  variant?: 'solid' | 'soft' | 'quiet';
   accessibilityHint?: string;
 }
 
-export function PauseButton({ label, onPress, variant = 'solid', accessibilityHint }: Props) {
-  const theme = useTheme();
-  const quiet = variant === 'quiet';
+export function CalmButton({ label, onPress, variant = 'soft', accessibilityHint }: Props) {
   return (
     <Pressable
       onPress={onPress}
@@ -22,14 +21,18 @@ export function PauseButton({ label, onPress, variant = 'solid', accessibilityHi
       accessibilityHint={accessibilityHint}
       style={({ pressed }) => [
         styles.button,
-        !quiet && { backgroundColor: theme.glassBg, borderColor: theme.glassBorder },
-        !quiet && styles.boxed,
+        variant === 'solid' && styles.solid,
+        variant === 'soft' && styles.soft,
         pressed && styles.pressed,
       ]}
     >
-      <Text variant="body" color={quiet ? 'secondary' : 'primary'} style={styles.label}>
+      <CalmText
+        variant="body"
+        tone={variant === 'solid' ? 'primary' : variant === 'quiet' ? 'secondary' : 'primary'}
+        style={[styles.label, variant === 'solid' && styles.solidLabel]}
+      >
         {label}
-      </Text>
+      </CalmText>
     </Pressable>
   );
 }
@@ -44,8 +47,16 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignSelf: 'stretch',
   },
-  boxed: {
+  soft: {
+    backgroundColor: CALM.card,
     borderWidth: 1,
+    borderColor: CALM.cardBorder,
+  },
+  solid: {
+    backgroundColor: CALM.accent,
+  },
+  solidLabel: {
+    color: CALM.bgTop,
   },
   pressed: {
     opacity: 0.7,

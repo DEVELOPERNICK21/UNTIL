@@ -35,4 +35,10 @@ export type RootStackParamList = {
   TasksComingSoon: undefined;
   Account: undefined;
   Pause: undefined;
+  /** `practice` mirrors PracticeId in features/pause (shared cannot import features). */
+  PauseSession: {
+    practice: 'sigh' | 'coherent' | 'box' | 'extended' | 'wind' | 'grounding';
+    /** The panic button: skip the "ready" step and start at once. */
+    instant?: boolean;
+  };
 };

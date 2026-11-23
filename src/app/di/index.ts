@@ -17,6 +17,7 @@ export {
 } from './repositories';
 export { observeTimeStateUseCase, updateUserProfileUseCase } from './time';
 export { getPresenceStreakUseCase, recordPresenceUseCase } from './presence';
+export { getPauseProgressUseCase, recordPauseSessionUseCase } from './pause';
 export {
   acknowledgeBadgesUseCase,
   evaluateBadgesUseCase,
