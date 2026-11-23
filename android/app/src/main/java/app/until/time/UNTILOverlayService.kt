@@ -28,12 +28,10 @@ import android.widget.ProgressBar
 import android.widget.TextView
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
-import com.tencent.mmkv.MMKV
 import org.json.JSONObject
 
 private const val NOTIFICATION_CHANNEL_ID = "until_live_progress"
 private const val NOTIFICATION_ID = 9001
-private const val MMKV_ID = "until-storage"
 private const val WIDGET_CACHE_KEY = "widget.cache"
 private const val PREMIUM_EFFECTIVE_KEY = "premium.effectiveAccess"
 private const val PREMIUM_IS_ACTIVE_KEY = "premium.isActive"
@@ -81,7 +79,7 @@ class UNTILOverlayService : Service() {
                     stopSelf()
                     return START_STICKY
                 }
-                MMKV.mmkvWithID(MMKV_ID)?.encode(OVERLAY_ENABLED_KEY, true)
+                UntilMmkv.storage(this)?.encode(OVERLAY_ENABLED_KEY, true)
                 if (canDrawOverlays()) {
                     showOverlay()
                 } else {
@@ -109,7 +107,7 @@ class UNTILOverlayService : Service() {
         try {
             stopForeground(STOP_FOREGROUND_REMOVE)
         } catch (e: Exception) { /* ignore */ }
-        MMKV.mmkvWithID(MMKV_ID)?.encode(OVERLAY_ENABLED_KEY, false)
+        UntilMmkv.storage(this)?.encode(OVERLAY_ENABLED_KEY, false)
         super.onDestroy()
     }
 
@@ -263,8 +261,7 @@ class UNTILOverlayService : Service() {
 
     private fun loadOverlayState(): OverlayState {
         return try {
-            MMKV.initialize(this)
-            val mmkv = MMKV.mmkvWithID(MMKV_ID) ?: return OverlayState.default()
+            val mmkv = UntilMmkv.storage(this) ?: return OverlayState.default()
             var widgetType = mmkv.decodeString(OVERLAY_WIDGET_TYPE_KEY, "day") ?: "day"
             val hasPremium = if (mmkv.containsKey(PREMIUM_EFFECTIVE_KEY)) {
                 mmkv.decodeBool(PREMIUM_EFFECTIVE_KEY, false)

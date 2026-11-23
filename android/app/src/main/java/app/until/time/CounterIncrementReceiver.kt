@@ -3,7 +3,6 @@ package app.until.time
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import com.tencent.mmkv.MMKV
 import org.json.JSONArray
 import org.json.JSONObject
 
@@ -19,8 +18,7 @@ class CounterIncrementReceiver : BroadcastReceiver() {
 
     private fun incrementCounterInStorage(context: Context, counterId: String): Boolean {
         return try {
-            MMKV.initialize(context)
-            val mmkv = MMKV.mmkvWithID(MMKV_ID) ?: return false
+            val mmkv = UntilMmkv.storage(context) ?: return false
             val json = mmkv.decodeString(CUSTOM_COUNTERS_KEY) ?: return false
             val arr = JSONArray(json)
             val newArr = JSONArray()
@@ -46,7 +44,6 @@ class CounterIncrementReceiver : BroadcastReceiver() {
     companion object {
         const val ACTION_INCREMENT = "app.until.time.INCREMENT_COUNTER"
         const val EXTRA_COUNTER_ID = "counter_id"
-        private const val MMKV_ID = "until-storage"
         private const val CUSTOM_COUNTERS_KEY = "custom.counters"
     }
 }
