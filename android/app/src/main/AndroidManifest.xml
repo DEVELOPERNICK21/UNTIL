@@ -47,7 +47,23 @@
             <category android:name="android.intent.category.BROWSABLE" />
             <data android:scheme="until" android:host="increment-counter" />
         </intent-filter>
+        <meta-data
+            android:name="android.app.shortcuts"
+            android:resource="@xml/shortcuts" />
       </activity>
+
+      <!-- Pause: a button that starts the quick calm. No data of its own, so nothing to refresh. -->
+      <receiver
+        android:name=".UNTILPauseWidgetProvider"
+        android:exported="true"
+        android:label="Until Breathe">
+        <intent-filter>
+          <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+        </intent-filter>
+        <meta-data
+          android:name="android.appwidget.provider"
+          android:resource="@xml/widget_pause_info" />
+      </receiver>
 
       <receiver
         android:name=".UNTILDayWidgetProvider"

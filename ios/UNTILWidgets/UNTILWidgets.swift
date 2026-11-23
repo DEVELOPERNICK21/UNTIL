@@ -3436,6 +3436,103 @@ struct UNTILLiveActivityWidget: Widget {
     }
 }
 
+// MARK: - Pause Widget (one tap into the quick calm)
+//
+// A doorway, not a dashboard: it shows nothing that changes (no minutes, no feelings) and reads no stored
+// data, so there is nothing to refresh and nothing private on a Lock Screen. The name is deliberately
+// plain ("Breathe") so it is fine to leave where other people can see the screen. A tap opens
+// until://open/PauseNow, which the app turns into the one-minute quick calm (see
+// src/app/navigation/deepLinks.ts). The breathing itself happens in the app; a widget cannot animate.
+struct PauseWidgetEntry: TimelineEntry {
+    let date: Date
+}
+
+struct PauseWidgetProvider: TimelineProvider {
+    func placeholder(in context: Context) -> PauseWidgetEntry { PauseWidgetEntry(date: Date()) }
+
+    func getSnapshot(in context: Context, completion: @escaping (PauseWidgetEntry) -> Void) {
+        completion(PauseWidgetEntry(date: Date()))
+    }
+
+    func getTimeline(in context: Context, completion: @escaping (Timeline<PauseWidgetEntry>) -> Void) {
+        // Static content: one entry, never refreshed.
+        completion(Timeline(entries: [PauseWidgetEntry(date: Date())], policy: .never))
+    }
+}
+
+private enum PauseDesign {
+    static let accent = Color(red: 0x7F/255, green: 0xE6/255, blue: 0xDA/255)   // #7FE6DA
+    static let text = Color(red: 0xEA/255, green: 0xF6/255, blue: 0xF4/255)     // #EAF6F4
+    static let muted = Color(red: 0x9C/255, green: 0xC7/255, blue: 0xC2/255)    // #9CC7C2
+    static let top = Color(red: 0x0E/255, green: 0x34/255, blue: 0x3C/255)      // #0E343C
+    static let bottom = Color(red: 0x06/255, green: 0x14/255, blue: 0x1A/255)   // #06141A
+}
+
+private struct PauseWidgetView: View {
+    let entry: PauseWidgetEntry
+    @Environment(\.widgetFamily) private var family
+
+    var body: some View {
+        switch family {
+        case .accessoryInline:
+            Label("Breathe", systemImage: "wind")
+        case .accessoryCircular:
+            ZStack {
+                AccessoryWidgetBackground()
+                Image(systemName: "wind")
+                    .font(.system(size: 22, weight: .semibold))
+            }
+            .containerBackground(.clear, for: .widget)
+            .accessibilityLabel("Breathe. Starts one minute of slow breathing.")
+        case .accessoryRectangular:
+            HStack(spacing: 8) {
+                Image(systemName: "wind")
+                    .font(.system(size: 22, weight: .semibold))
+                VStack(alignment: .leading, spacing: 1) {
+                    Text("Breathe").font(.headline)
+                    Text("One minute to settle").font(.caption)
+                }
+                Spacer(minLength: 0)
+            }
+            .containerBackground(.clear, for: .widget)
+            .accessibilityElement(children: .combine)
+        default:
+            VStack(alignment: .leading, spacing: 0) {
+                Image(systemName: "wind")
+                    .font(.system(size: 26, weight: .semibold))
+                    .foregroundColor(PauseDesign.accent)
+                Spacer(minLength: 4)
+                Text("Breathe")
+                    .font(.system(size: 20, weight: .bold, design: .rounded))
+                    .foregroundColor(PauseDesign.text)
+                Text("One minute to settle")
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundColor(PauseDesign.muted)
+                    .lineLimit(2)
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+            .containerBackground(for: .widget) {
+                LinearGradient(colors: [PauseDesign.top, PauseDesign.bottom], startPoint: .topTrailing, endPoint: .bottomLeading)
+            }
+            .accessibilityElement(children: .combine)
+        }
+    }
+}
+
+struct PauseWidget: Widget {
+    let kind: String = "UNTILPauseWidget"
+
+    var body: some WidgetConfiguration {
+        StaticConfiguration(kind: kind, provider: PauseWidgetProvider()) { entry in
+            PauseWidgetView(entry: entry)
+                .widgetURL(widgetOpenURL("PauseNow"))
+        }
+        .configurationDisplayName("Breathe")
+        .description("One tap starts a minute of slow breathing. Home screen and Lock Screen.")
+        .supportedFamilies([.systemSmall, .accessoryInline, .accessoryCircular, .accessoryRectangular])
+    }
+}
+
 // MARK: - Widget Bundle
 @main
 struct UNTILWidgetsBundle: WidgetBundle {
@@ -3449,6 +3546,7 @@ struct UNTILWidgetsBundle: WidgetBundle {
         DeadlinesWidget()
         DailyTasksWidget()
         HourCalculationWidget()
+        PauseWidget()
         UNTILLiveActivityWidget()
     }
 }
