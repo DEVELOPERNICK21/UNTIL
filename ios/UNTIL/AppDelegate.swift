@@ -8,70 +8,37 @@ import ReactAppDependencyProvider
 
 @main
 class AppDelegate: UIResponder, UIApplicationDelegate {
-  var window: UIWindow?
-
   var reactNativeDelegate: ReactNativeDelegate?
   var reactNativeFactory: RCTReactNativeFactory?
 
   private var reactNativeStarted = false
-  private var launchOptionsForDeferredStart: [UIApplication.LaunchOptionsKey: Any]?
 
   func application(
     _ application: UIApplication,
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil
   ) -> Bool {
-    window = UIWindow(frame: UIScreen.main.bounds)
-
     WatchConnectivityBridge.start()
-
-    // A Dynamic Island button wakes the app in the background just to run its intent.
-    // Nothing needs Firebase or JavaScript then, so skip that boot and the island answers
-    // right away. It all starts as soon as the user really opens the app.
-    if application.applicationState == .background {
-      launchOptionsForDeferredStart = launchOptions
-      Logger(subsystem: "com.developernick.until", category: "island")
-        .debug("background launch, React Native deferred")
-      return true
-    }
-
-    startReactNativeIfNeeded(launchOptions: launchOptions)
+    // The window and React Native start when the first scene connects (see SceneDelegate).
+    // A Dynamic Island button that wakes the app in the background never creates a scene, so
+    // Firebase and JavaScript stay off and the island answers right away.
     return true
-  }
-
-  func applicationDidBecomeActive(_ application: UIApplication) {
-    startReactNativeIfNeeded(launchOptions: launchOptionsForDeferredStart)
-    launchOptionsForDeferredStart = nil
-  }
-
-  // `until://open/<Screen>` links from the Dynamic Island, Lock Screen card and widgets.
-  func application(
-    _ app: UIApplication,
-    open url: URL,
-    options: [UIApplication.OpenURLOptionsKey: Any] = [:]
-  ) -> Bool {
-    if !reactNativeStarted {
-      // The app was only woken for an island button. Boot React Native with the link so
-      // Linking.getInitialURL() sees it.
-      launchOptionsForDeferredStart = nil
-      startReactNativeIfNeeded(launchOptions: [.url: url])
-      return true
-    }
-    return RCTLinkingManager.application(app, open: url, options: options)
   }
 
   func application(
     _ application: UIApplication,
-    continue userActivity: NSUserActivity,
-    restorationHandler: @escaping ([UIUserActivityRestoring]?) -> Void
-  ) -> Bool {
-    RCTLinkingManager.application(
-      application,
-      continue: userActivity,
-      restorationHandler: restorationHandler
-    )
+    configurationForConnecting connectingSceneSession: UISceneSession,
+    options: UIScene.ConnectionOptions
+  ) -> UISceneConfiguration {
+    let configuration = UISceneConfiguration(name: "Default Configuration", sessionRole: connectingSceneSession.role)
+    configuration.delegateClass = SceneDelegate.self
+    return configuration
   }
 
-  private func startReactNativeIfNeeded(launchOptions: [UIApplication.LaunchOptionsKey: Any]?) {
+  /// Boots React Native into the scene's window. Safe to call more than once.
+  func startReactNativeIfNeeded(
+    in window: UIWindow,
+    launchOptions: [UIApplication.LaunchOptionsKey: Any]?
+  ) {
     guard !reactNativeStarted else { return }
     reactNativeStarted = true
 
@@ -93,6 +60,73 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
       in: window,
       launchOptions: launchOptions
     )
+  }
+}
+
+/// iOS 27 requires apps to use the scene lifecycle: an app that makes its window in the AppDelegate
+/// and has no scene manifest hangs on its launch screen. The window is made here, from the scene.
+@objc(SceneDelegate)
+class SceneDelegate: UIResponder, UIWindowSceneDelegate {
+  var window: UIWindow?
+
+  private var appDelegate: AppDelegate? { UIApplication.shared.delegate as? AppDelegate }
+  private var launchOptionsForDeferredStart: [UIApplication.LaunchOptionsKey: Any]?
+
+  func scene(
+    _ scene: UIScene,
+    willConnectTo session: UISceneSession,
+    options connectionOptions: UIScene.ConnectionOptions
+  ) {
+    guard let windowScene = scene as? UIWindowScene else { return }
+    window = UIWindow(windowScene: windowScene)
+
+    // `until://open/<Screen>` links from the Dynamic Island, Lock Screen card and widgets, and
+    // web links, arrive here when the app is opened by them. Hand the first one to React Native
+    // so Linking.getInitialURL() sees it.
+    var launchOptions: [UIApplication.LaunchOptionsKey: Any] = [:]
+    if let url = connectionOptions.urlContexts.first?.url {
+      launchOptions[.url] = url
+    } else if let activity = connectionOptions.userActivities.first {
+      launchOptions[.userActivityDictionary] = [
+        UIApplication.LaunchOptionsKey.userActivityType: activity.activityType,
+        "UIApplicationLaunchOptionsUserActivityKey": activity,
+      ]
+    }
+
+    // A scene created while the app is still in the background (nothing on screen yet) waits
+    // until it is really opened, as the old background-launch path did.
+    if UIApplication.shared.applicationState == .background {
+      launchOptionsForDeferredStart = launchOptions
+      Logger(subsystem: "com.developernick.until", category: "island")
+        .debug("background scene, React Native deferred")
+      return
+    }
+    start(with: launchOptions)
+  }
+
+  func sceneDidBecomeActive(_ scene: UIScene) {
+    guard let pending = launchOptionsForDeferredStart else { return }
+    launchOptionsForDeferredStart = nil
+    start(with: pending)
+  }
+
+  func scene(_ scene: UIScene, openURLContexts URLContexts: Set<UIOpenURLContext>) {
+    for context in URLContexts {
+      RCTLinkingManager.application(UIApplication.shared, open: context.url, options: [:])
+    }
+  }
+
+  func scene(_ scene: UIScene, continue userActivity: NSUserActivity) {
+    _ = RCTLinkingManager.application(
+      UIApplication.shared,
+      continue: userActivity,
+      restorationHandler: { _ in }
+    )
+  }
+
+  private func start(with launchOptions: [UIApplication.LaunchOptionsKey: Any]) {
+    guard let window else { return }
+    appDelegate?.startReactNativeIfNeeded(in: window, launchOptions: launchOptions)
   }
 }
 
